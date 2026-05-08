@@ -8387,18 +8387,20 @@ async function supaGuardarPlan(planCtx, planData){
   } catch(e){ console.warn('supaGuardarPlan error:', e); }
 }
 
-/* ── Cargar plan guardado al iniciar sesión ── */
+/* ── Cargar plan guardado al iniciar sesión (raw fetch) ── */
 async function supaCargarPlan(){
-  if(!supa || !currentUser) return;
+  if(!currentUser) return;
   try {
-    const { data, error } = await supa
-      .from('planes')
-      .select('*')
-      .eq('user_id', currentUser.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-    if(error || !data) return;
+    const sbKeyC = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawC   = sbKeyC ? localStorage.getItem(sbKeyC) : null;
+    const tokC   = (() => { try { const s = JSON.parse(rawC); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const resp = await fetch(
+      `${SUPA_URL}/rest/v1/planes?select=*&user_id=eq.${currentUser.id}&order=created_at.desc&limit=1`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokC}`, 'Accept': 'application/json' } }
+    );
+    const arr  = resp.ok ? await resp.json() : [];
+    const data = Array.isArray(arr) && arr.length ? arr[0] : null;
+    if(!data) return;
     // Restaurar contexto del chat con el plan guardado
     window._chatPlanCtx = {
       nombre:   data.nombre,
@@ -9565,13 +9567,16 @@ async function applyPatientView(){
   document.body.classList.add('patient-mode');
 
   try {
-    const { data } = await supa
-      .from('planes')
-      .select('*')
-      .eq('patient_id', currentUser.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+    // Raw fetch — bypasa supa.from() que puede colgar en móviles
+    const sbKeyP = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawP   = sbKeyP ? localStorage.getItem(sbKeyP) : null;
+    const tokP   = (() => { try { const s = JSON.parse(rawP); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const planResp = await fetch(
+      `${SUPA_URL}/rest/v1/planes?select=*&patient_id=eq.${currentUser.id}&order=created_at.desc&limit=1`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokP}`, 'Accept': 'application/json' } }
+    );
+    const planArr = planResp.ok ? await planResp.json() : [];
+    const data    = Array.isArray(planArr) && planArr.length ? planArr[0] : null;
 
     const banner = document.getElementById('patient-plan-banner');
 
