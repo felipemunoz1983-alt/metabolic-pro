@@ -9496,20 +9496,31 @@ function shareViaWhatsApp(){
   const appUrl  = window.location.origin + window.location.pathname;
 
   const msg =
-`Hola ${nombre||''}! 👋
+`🌟 ¡Hola ${nombre||''}! Tengo algo especial para ti.
 
-Te comparto tu acceso al *Centro Metabólico Pro* — aquí podrás ver tu plan nutricional personalizado. 🥗
+A partir de hoy comienzas tu proceso de cambio real — no otra dieta, sino un *plan nutricional diseñado específicamente para ti*, basado en tu metabolismo, tu objetivo y tu estilo de vida. 💚
 
-*Tu código de invitación:*
-🎟️ *${code}*
+Aquí podrás ver tu plan de alimentación completo, hacer seguimiento de tus comidas y evolucionar semana a semana con mi acompañamiento.
 
-*Pasos para ingresar:*
-1. Entra a la app: ${appUrl}
-2. Haz clic en *"🎟️ Con código"*
-3. Ingresa el código: *${code}*
-4. Crea tu cuenta con tu nombre, correo y contraseña
+━━━━━━━━━━━━━━━━━━━
+🎟️ *TU CÓDIGO DE ACCESO:*
 
-El código es válido por *7 días*. Cualquier duda, escríbeme. 💪`;
+✨ *${code}* ✨
+
+━━━━━━━━━━━━━━━━━━━
+
+*¿Cómo ingresar? (3 pasos simples)*
+
+1️⃣ Abre este link:
+🔗 ${appUrl}
+
+2️⃣ Toca *"🎟️ Con código"*
+
+3️⃣ Ingresa tu código *${code}* y crea tu cuenta
+
+⏳ El código es válido por *7 días*
+
+Recuerda: los grandes cambios empiezan con una decisión. ¡Ya la tomaste! 🚀 Cualquier duda, aquí estoy. 💪`;
 
   // Si hay teléfono, enviar directo; si no, abrir WhatsApp sin número
   let phone = rawPhone;
