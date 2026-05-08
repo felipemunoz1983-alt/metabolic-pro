@@ -9152,13 +9152,18 @@ async function profCargarPacientes(){
   container.innerHTML = '<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0">⏳ Cargando pacientes...</p>';
 
   try {
-    const { data: patients, error } = await supa
-      .from('profiles')
-      .select('id,nombre,email')
-      .eq('professional_id', currentUser.id)
-      .eq('role', 'patient');
+    // Token desde localStorage — bypasa supa.from() que puede colgar
+    const sbKeyPac = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawPac   = sbKeyPac ? localStorage.getItem(sbKeyPac) : null;
+    const tokPac   = (() => { try { const s = JSON.parse(rawPac); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const headers  = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokPac}`, 'Accept': 'application/json' };
 
-    if(error) throw error;
+    // 1. Cargar pacientes
+    const pResp = await fetch(
+      `${SUPA_URL}/rest/v1/profiles?select=id,nombre,email,whatsapp&professional_id=eq.${currentUser.id}&role=eq.patient`,
+      { headers }
+    );
+    const patients = pResp.ok ? await pResp.json() : [];
 
     if(!patients || patients.length === 0){
       container.innerHTML = `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
@@ -9167,16 +9172,15 @@ async function profCargarPacientes(){
       return;
     }
 
-    // Cargar planes asignados
+    // 2. Cargar planes asignados
     let planesData = [];
     try {
-      const ids = patients.map(p => p.id);
-      const { data: planes } = await supa
-        .from('planes')
-        .select('id,patient_id,objetivo,kcal,visibility_settings')
-        .eq('professional_id', currentUser.id)
-        .in('patient_id', ids);
-      planesData = planes || [];
+      const ids = patients.map(p => p.id).join(',');
+      const plResp = await fetch(
+        `${SUPA_URL}/rest/v1/planes?select=id,patient_id,objetivo,kcal,visibility_settings&professional_id=eq.${currentUser.id}&patient_id=in.(${ids})`,
+        { headers }
+      );
+      planesData = plResp.ok ? await plResp.json() : [];
     } catch(e){}
 
     container.innerHTML = patients.map(patient => {
@@ -9185,7 +9189,7 @@ async function profCargarPacientes(){
     }).join('');
 
   } catch(e){
-    container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">Error: ${e.message}</p>`;
+    container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">Error cargando pacientes: ${e.message}</p>`;
   }
 }
 
@@ -9385,7 +9389,6 @@ function buildPatientCard(patient, plan){
 async function profToggleVis(patientId, planId, section, value){
   if(!planId){
     alert('Primero asigna un plan a este paciente para poder controlar su visibilidad.');
-    // Revert toggle visually
     const card = document.getElementById('pcard-'+patientId);
     if(card){
       const checkboxes = card.querySelectorAll('input[type=checkbox]');
@@ -9396,12 +9399,21 @@ async function profToggleVis(patientId, planId, section, value){
     return;
   }
   try {
-    const { data } = await supa.from('planes')
-      .select('visibility_settings').eq('id', planId).single();
-    const updated = Object.assign({}, data?.visibility_settings||{}, {[section]: value});
-    const { error } = await supa.from('planes')
-      .update({ visibility_settings: updated }).eq('id', planId);
-    if(error) throw error;
+    const sbKeyV = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawV   = sbKeyV ? localStorage.getItem(sbKeyV) : null;
+    const tokV   = (() => { try { const s = JSON.parse(rawV); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokV}`, 'Accept': 'application/json', 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+    // Leer visibility actual
+    const getResp = await fetch(`${SUPA_URL}/rest/v1/planes?select=visibility_settings&id=eq.${planId}&limit=1`, { headers });
+    const getArr  = getResp.ok ? await getResp.json() : [];
+    const current = getArr[0]?.visibility_settings || {};
+    const updated = Object.assign({}, current, {[section]: value});
+    // Actualizar
+    await fetch(`${SUPA_URL}/rest/v1/planes?id=eq.${planId}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify({ visibility_settings: updated })
+    });
   } catch(e){ console.warn('Toggle vis error:', e.message); }
 }
 
@@ -9416,33 +9428,43 @@ async function profAsignarPlan(patientId, planId){
   if(!ok) return;
 
   try {
+    const sbKeyA = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawA   = sbKeyA ? localStorage.getItem(sbKeyA) : null;
+    const tokA   = (() => { try { const s = JSON.parse(rawA); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokA}`, 'Content-Type': 'application/json', 'Prefer': 'return=representation' };
+
     if(planId){
       // Actualizar plan existente
-      const { error } = await supa.from('planes').update({
-        nombre: pctx.nombre, objetivo: pctx.objetivo,
-        kcal: pctx.kcal, macros: pctx.mac,
-        plan_data: window._lastPlanData,
-        professional_id: currentUser.id
-      }).eq('id', planId);
-      if(error) throw error;
+      const r = await fetch(`${SUPA_URL}/rest/v1/planes?id=eq.${planId}`, {
+        method: 'PATCH', headers,
+        body: JSON.stringify({
+          nombre: pctx.nombre, objetivo: pctx.objetivo,
+          kcal: pctx.kcal, macros: pctx.mac,
+          plan_data: window._lastPlanData,
+          professional_id: currentUser.id
+        })
+      });
+      if(!r.ok) throw new Error(await r.text());
     } else {
       // Insertar nuevo plan para este paciente
-      const { error } = await supa.from('planes').insert({
-        patient_id: patientId,
-        professional_id: currentUser.id,
-        nombre: pctx.nombre, objetivo: pctx.objetivo,
-        kcal: pctx.kcal, macros: pctx.mac,
-        plan_data: window._lastPlanData,
-        visibility_settings: {
-          desayuno:true, colacion_manana:true, almuerzo:true,
-          once:true, cena:true, dashboard:true,
-          macros_detalle:true, chatbot:true, recetas:true, scanner:false
-        }
+      const r = await fetch(`${SUPA_URL}/rest/v1/planes`, {
+        method: 'POST', headers,
+        body: JSON.stringify({
+          patient_id: patientId,
+          professional_id: currentUser.id,
+          nombre: pctx.nombre, objetivo: pctx.objetivo,
+          kcal: pctx.kcal, macros: pctx.mac,
+          plan_data: window._lastPlanData,
+          visibility_settings: {
+            desayuno:true, colacion_manana:true, almuerzo:true,
+            once:true, cena:true, dashboard:true,
+            macros_detalle:true, chatbot:true, recetas:true, scanner:false
+          }
+        })
       });
-      if(error) throw error;
+      if(!r.ok) throw new Error(await r.text());
     }
     showPlanSavedToast();
-    // Refrescar lista de pacientes
     setTimeout(profCargarPacientes, 800);
   } catch(e){ alert('Error al asignar plan: ' + e.message); }
 }
