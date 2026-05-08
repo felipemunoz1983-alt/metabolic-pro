@@ -3977,7 +3977,10 @@ sandwich_helado_nap:{kcal:150,p:2.0,c:24,g:5,porcion:"1 unidad (103mL)",gramos:1
   alergenos:["Leche","Trigo","Soya (lecitina)","Almendras","Nueces"]},
 triton_naranja:{kcal:475,p:5.1,c:74.5,g:17.4,porcion:"3 galletas (31,6g)",gramos:31.6,cat:"Ultra Procesado"},
 chocolate_sahne_nuss:{kcal:559,p:11,c:46,g:36,porcion:"2 cuadritos (31g)",gramos:31,cat:"Ultra Procesado",
-  alergenos:["Almendras","Soya","Leche"]}};
+  alergenos:["Almendras","Soya","Leche"]},
+donuts_chocolate_costa:{kcal:522,p:4.9,c:65.6,g:26.7,porcion:"5 unidades (36g)",gramos:36,cat:"Ultra Procesado",
+  alergenos:["Gluten","Leche","Soya","Huevos"],
+  sellos:["Alto en azúcares","Alto en grasas saturadas","Alto en calorías"]}};
 
 /* ══════════════════════════════════════════════════════════
    APP_MODE — Cambia aquí para desplegar MetaPRO o MetaFIT
@@ -4044,7 +4047,7 @@ function itemProtein(food,grams){const f=alimentos[food];return{food,grams,porci
 function itemEgg(qty){const f=alimentos["huevo"];const porcion=qty===1?"1 unidad":(qty+" unidades");return{food:"huevo",grams:Math.round(f.gramos*qty),porcion}}
 const customLabels={};
 function label(food){return customLabels[food]||{salmon:"salmón",frutosSecos:"frutos secos",whey:"proteína whey",pollo:"pollo",pavo:"pavo",carne:"carne magra",merluza:"merluza",tofu:"tofu",tempeh:"tempeh",huevo:"huevos",clara_huevo:"claras de huevo",legumbres:"legumbres",arroz:"arroz",pasta:"pasta",papa:"papa",quinoa:"quinoa",avena:"avena",palta:"palta",aceite:"aceite de oliva",yogur:"yogurt alto en proteínas",fruta:"fruta",verduras:"verduras",pan_molde:"pan molde",queso_laminado:"queso laminado",jamon_pierna:"jamón pierna",moroketo_nutrevo:"Galletón Moroketo Proteína",alfajor_nutrevo:"Alfajor Proteico Keto Nutrevo",wild_protein:"barra Wild Protein",chia:"semillas de chía",ricotta:"ricotta",miel:"miel",nueces:"nueces",cottage:"cottage",semillas:"semillas",
-chips_papas:"papas fritas snack",galletas_dulces:"galletas dulces",chocolate_leche:"chocolate con leche",bebida_cola:"bebida cola/gaseosa",helado:"helado",doritos:"doritos/nachos",kuchen:"kuchen/pastel",gomitas:"gomitas/dulces",barra_cereal_azucar:"barra de cereal azucarada",nuggets:"nuggets",sandwich_helado_nap:"sandwich de helado Neapolitan",triton_naranja:"galletas Tritón sabor naranja",chocolate_sahne_nuss:"chocolate con almendras Sahne-Nuss",atun:"atún en agua"}[food]||food}
+chips_papas:"papas fritas snack",galletas_dulces:"galletas dulces",chocolate_leche:"chocolate con leche",bebida_cola:"bebida cola/gaseosa",helado:"helado",doritos:"doritos/nachos",kuchen:"kuchen/pastel",gomitas:"gomitas/dulces",barra_cereal_azucar:"barra de cereal azucarada",nuggets:"nuggets",sandwich_helado_nap:"sandwich de helado Neapolitan",triton_naranja:"galletas Tritón sabor naranja",chocolate_sahne_nuss:"chocolate con almendras Sahne-Nuss",donuts_chocolate_costa:"galletas Donuts Chocolate Costa",atun:"atún en agua"}[food]||food}
 function comida(nombre,items){let total={kcal:0,p:0,c:0,g:0};items.forEach(i=>{const x=calc(i.food,i.grams);total.kcal+=x.kcal;total.p+=x.p;total.c+=x.c;total.g+=x.g});return{nombre,items,total}}
 function formatItems(items){return items.filter(i=>i.grams>0).map(i=>i.porcion+" "+label(i.food)+" ("+i.grams+" g)").join(" · ")}
 function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colManKeys,protGrams,protGramsCena,onceKeys,_eggsQtyOnce,_sandwichQtyOnce,ultraKeys){
