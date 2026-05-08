@@ -3290,6 +3290,18 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
           <div class="option-chips" id="ultra-chips"></div>
           <span class="field-hint">Opcional. Si seleccionas, aparecerán rotando en el plan con su información nutricional real.</span>
         </div>
+        <div class="field" style="margin-top:12px;" id="ultra-dias-field">
+          <label>¿Cuántos días a la semana los incluyes?</label>
+          <div class="option-chips" id="ultra-dias-chips">
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="1"> 1 día</label>
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="2" checked> 2 días</label>
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="3"> 3 días</label>
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="4"> 4 días</label>
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="5"> 5 días</label>
+            <label class="option-chip"><input type="radio" name="ultra-dias" value="7"> Todos los días</label>
+          </div>
+          <span class="field-hint">El antojo aparecerá solo los primeros N días del plan de 7 días.</span>
+        </div>
       </div>
     </div>
 
@@ -4050,7 +4062,7 @@ function label(food){return customLabels[food]||{salmon:"salmón",frutosSecos:"f
 chips_papas:"papas fritas snack",galletas_dulces:"galletas dulces",chocolate_leche:"chocolate con leche",bebida_cola:"bebida cola/gaseosa",helado:"helado",doritos:"doritos/nachos",kuchen:"kuchen/pastel",gomitas:"gomitas/dulces",barra_cereal_azucar:"barra de cereal azucarada",nuggets:"nuggets",sandwich_helado_nap:"sandwich de helado Neapolitan",triton_naranja:"galletas Tritón sabor naranja",chocolate_sahne_nuss:"chocolate con almendras Sahne-Nuss",donuts_chocolate_costa:"galletas Donuts Chocolate Costa",atun:"atún en agua"}[food]||food}
 function comida(nombre,items){let total={kcal:0,p:0,c:0,g:0};items.forEach(i=>{const x=calc(i.food,i.grams);total.kcal+=x.kcal;total.p+=x.p;total.c+=x.c;total.g+=x.g});return{nombre,items,total}}
 function formatItems(items){return items.filter(i=>i.grams>0).map(i=>i.porcion+" "+label(i.food)+" ("+i.grams+" g)").join(" · ")}
-function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colManKeys,protGrams,protGramsCena,onceKeys,_eggsQtyOnce,_sandwichQtyOnce,ultraKeys){
+function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colManKeys,protGrams,protGramsCena,onceKeys,_eggsQtyOnce,_sandwichQtyOnce,ultraKeys,ultraDias){
   const prot=detectarProteina(almuerzo,tend,rech),
         carb=detectarCarbo(almuerzo),
         cena=detectarProteina(cenaMenu||"",tend,rech)||
@@ -4106,9 +4118,10 @@ function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colM
   const onceKeysArr=onceKeys&&onceKeys.length?onceKeys:["yogur_frutossecos_am"];
   const onceKey=onceKeysArr[(dia-1)%onceKeysArr.length];
   const onceOpt=colMañanaOpts[onceKey]||colMañanaOpts["yogur_frutossecos_am"];
-  // Colación ultra procesada (solo si el usuario eligió alguna)
+  // Colación ultra procesada (solo si el usuario eligió alguna y el día cae dentro del límite)
   const ultraComidas = [];
-  if(ultraKeys && ultraKeys.length){
+  const _ultraDias = ultraDias || 7;
+  if(ultraKeys && ultraKeys.length && dia <= _ultraDias){
     const uKey = ultraKeys[(dia-1)%ultraKeys.length];
     const uOpt = ultraOpts[uKey];
     if(uOpt){
@@ -5248,6 +5261,8 @@ function generarSistema(){
   // Ultra procesados (opcional — solo si el usuario seleccionó alguno)
   let ultraKeys=[...[...document.querySelectorAll('input[name="ultra-chips"]:checked')].map(x=>x.value)];
   if(ultraKeys.length===0) ultraKeys=null; // null = no incluir en el plan
+  const ultraDiasEl = document.querySelector('input[name="ultra-dias"]:checked');
+  const ultraDias = ultraDiasEl ? Number(ultraDiasEl.value) : 2;
 
   if(!edad||!peso||!talla||!dias||!dur){
     document.getElementById("salida").innerHTML=`<div class="card" style="border-left:4px solid #ef4444;"><b>⚠️ Faltan datos obligatorios.</b> Completa edad, peso, talla, días de entrenamiento y duración.</div>`;
@@ -5267,7 +5282,7 @@ function generarSistema(){
 
       let plan=[];
       for(let i=1;i<=7;i++){
-        const d=generarDia(i,alm[(i-1)%alm.length],cenas[(i-1)%cenas.length],obj,tend,rech,desKeys,dias,colManKeys,protGrams,protGramsCena,onceKeys,eggsQtyOnce,sandwichQtyOnce,ultraKeys);
+        const d=generarDia(i,alm[(i-1)%alm.length],cenas[(i-1)%cenas.length],obj,tend,rech,desKeys,dias,colManKeys,protGrams,protGramsCena,onceKeys,eggsQtyOnce,sandwichQtyOnce,ultraKeys,ultraDias);
         const rawKcal=d.comidas.reduce((s,c)=>s+c.total.kcal,0);
         const scale=kcal/rawKcal;
         // Solo escalan carbohidratos y grasas de acompañamiento
