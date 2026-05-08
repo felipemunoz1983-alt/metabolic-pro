@@ -8460,6 +8460,9 @@ supa.auth.onAuthStateChange(async (event, session) => {
   }
   if((event === 'SIGNED_IN' || event === 'INITIAL_SESSION') && session?.user){
     if(window.location.hash.includes('type=recovery')) return;
+    // Si authInit() ya cargó el usuario desde localStorage, no re-ejecutar
+    // (evita doble authSetUser que resetea currentRole a 'patient')
+    if(currentUser && currentUser.id === session.user.id) return;
     currentAccessToken = session.access_token || '';
     await authSetUser(session.user);
     document.getElementById('auth-overlay').classList.remove('show');
@@ -9541,6 +9544,8 @@ Recuerda: los grandes cambios empiezan con una decisión. ¡Ya la tomaste! 🚀 
    VISTA PACIENTE
 ══════════════════════════════════════ */
 async function applyPatientView(){
+  // Nunca aplicar vista paciente a un profesional
+  if(currentRole === 'professional') return;
   document.body.classList.add('patient-mode');
 
   try {
