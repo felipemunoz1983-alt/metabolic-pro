@@ -8651,9 +8651,17 @@ async function authSubmit(){
 
 /* ── Cerrar sesión ── */
 async function authLogout(){
-  await supa.auth.signOut();
+  // Limpiar sesión directo desde localStorage (evita hang de supa.auth.signOut())
+  try {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('sb-') || k.includes('supabase'))
+      .forEach(k => localStorage.removeItem(k));
+  } catch(_){}
+  // Intentar signOut en background sin bloquear la UI
+  try { supa.auth.signOut().catch(()=>{}); } catch(_){}
   currentUser = null;
   currentPlan = 'gratuito';
+  currentRole = 'patient';
   document.getElementById('user-bar').classList.remove('show');
   document.getElementById('auth-overlay').classList.add('show');
   authTab('login');
