@@ -8650,21 +8650,17 @@ async function authSubmit(){
 }
 
 /* ── Cerrar sesión ── */
-async function authLogout(){
-  // Limpiar sesión directo desde localStorage (evita hang de supa.auth.signOut())
+function authLogout(){
+  // Limpiar sesión directo desde localStorage
   try {
     Object.keys(localStorage)
       .filter(k => k.startsWith('sb-') || k.includes('supabase'))
       .forEach(k => localStorage.removeItem(k));
   } catch(_){}
-  // Intentar signOut en background sin bloquear la UI
+  // Intentar signOut en background sin bloquear
   try { supa.auth.signOut().catch(()=>{}); } catch(_){}
-  currentUser = null;
-  currentPlan = 'gratuito';
-  currentRole = 'patient';
-  document.getElementById('user-bar').classList.remove('show');
-  document.getElementById('auth-overlay').classList.add('show');
-  authTab('login');
+  // Recargar la página — forma más confiable de mostrar login limpio
+  window.location.reload();
 }
 
 /* ── Helpers UI ── */
