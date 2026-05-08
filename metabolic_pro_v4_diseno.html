@@ -2709,6 +2709,15 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
 .prof-panel-tabs{display:flex;border-bottom:2px solid #EAF4FB;background:#f8fafc;flex-shrink:0;}
 .prof-panel-tabs button{flex:1;padding:10px 6px;border:none;background:transparent;font-size:12px;font-weight:700;color:#6B7C93;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s;}
 .prof-panel-tabs button.active{color:#0C3547;border-bottom-color:#29ABE2;}
+.msg-patient-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8fafc;border-radius:10px;margin-bottom:8px;border:1px solid #EAF4FB;}
+.msg-patient-name{font-size:13px;font-weight:700;color:#0C3547;}
+.msg-patient-obj{font-size:11px;color:#6B7C93;margin-top:2px;}
+.msg-btns{display:flex;gap:6px;flex-shrink:0;}
+.btn-msg-habito{background:#22c55e;color:#fff;border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-msg-habito:hover{background:#16a34a;}
+.btn-msg-checkin{background:#29ABE2;color:#fff;border:none;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;}
+.btn-msg-checkin:hover{background:#0e8fc2;}
+.msg-legend{font-size:11px;color:#6B7C93;line-height:1.6;padding:10px 12px;background:#f0f9ff;border-radius:8px;border:1px solid #bae6fd;margin-bottom:14px;}
 .prof-panel-body{flex:1;overflow-y:auto;padding:16px;}
 
 /* ── Patient cards ── */
@@ -8231,6 +8240,7 @@ Ejemplos:
   <div class="prof-panel-tabs">
     <button class="active" onclick="profTab('patients')">👥 Mis Pacientes</button>
     <button onclick="profTab('invite')">🎟️ Invitar Paciente</button>
+    <button onclick="profTab('mensajes')">📲 Mensajes</button>
   </div>
   <div class="prof-panel-body">
 
@@ -8244,6 +8254,18 @@ Ejemplos:
           Para asignar un plan: genera primero el plan nutricional del paciente,<br>
           luego haz clic en <b>"Asignar plan actual"</b> en su tarjeta.
         </p>
+      </div>
+    </div>
+
+    <!-- Tab: Mensajes semanales -->
+    <div id="prof-tab-mensajes" style="display:none">
+      <div class="msg-legend">
+        <b>📅 Lunes</b> → Hábito saludable personalizado según objetivo<br>
+        <b>📅 Jueves</b> → Check-in: ¿cómo va con su intervención nutricional?<br>
+        Haz clic en el botón del paciente para abrir WhatsApp con el mensaje listo.
+      </div>
+      <div id="prof-msg-list">
+        <p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0">⏳ Cargando...</p>
       </div>
     </div>
 
@@ -9085,9 +9107,11 @@ function profPanelClose(){
 }
 function profTab(t){
   document.querySelectorAll('.prof-panel-tabs button').forEach((b,i)=>
-    b.classList.toggle('active', i === (['patients','invite'].indexOf(t))));
-  document.getElementById('prof-tab-patients').style.display = t==='patients' ? 'block' : 'none';
-  document.getElementById('prof-tab-invite').style.display   = t==='invite'   ? 'block' : 'none';
+    b.classList.toggle('active', i === (['patients','invite','mensajes'].indexOf(t))));
+  document.getElementById('prof-tab-patients').style.display  = t==='patients' ? 'block' : 'none';
+  document.getElementById('prof-tab-invite').style.display    = t==='invite'   ? 'block' : 'none';
+  document.getElementById('prof-tab-mensajes').style.display  = t==='mensajes' ? 'block' : 'none';
+  if(t==='mensajes') profCargarMensajes();
 }
 
 async function profCargarPacientes(){
@@ -9129,6 +9153,148 @@ async function profCargarPacientes(){
     }).join('');
 
   } catch(e){
+    container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">Error: ${e.message}</p>`;
+  }
+}
+
+/* ── Mensajes semanales ── */
+const MENSAJES_HABITO = {
+  'perdida grasa': [
+    '🥗 *Hábito de la semana:* Incluye una porción de verduras en cada comida. Las fibras te ayudan a sentirte lleno por más tiempo y reducen la absorción de azúcar. ¡Pequeños cambios, grandes resultados!',
+    '💧 *Hábito de la semana:* Bebe un vaso de agua 15 minutos antes de cada comida. Esto reduce el apetito naturalmente y mejora tu digestión. ¡Tu cuerpo te lo agradecerá!',
+    '🚶 *Hábito de la semana:* Agrega 10 minutos de caminata después del almuerzo. Ayuda a controlar el azúcar en sangre y activa tu metabolismo en el momento clave del día.',
+    '🍽️ *Hábito de la semana:* Come despacio y sin pantallas. Tarda al menos 20 minutos en cada comida — tu cerebro necesita ese tiempo para registrar la saciedad.',
+    '🌙 *Hábito de la semana:* Evita comer 2 horas antes de dormir. Cuando duermes tu metabolismo baja — darle tiempo a tu cuerpo de procesar lo comido marca la diferencia.',
+    '🧪 *Hábito de la semana:* Reemplaza una bebida azucarada por agua con limón o té sin azúcar. Solo ese cambio puede reducir hasta 500 calorías semanales.',
+  ],
+  'hipertrofia': [
+    '💪 *Hábito de la semana:* Asegúrate de consumir proteína dentro de los 30-60 minutos después de entrenar. Es la ventana anabólica donde tus músculos absorben mejor los nutrientes.',
+    '😴 *Hábito de la semana:* Duerme 7-9 horas. La hormona de crecimiento se libera principalmente durante el sueño profundo — es cuando tus músculos realmente crecen.',
+    '🥚 *Hábito de la semana:* Distribuye tu proteína en 4-5 comidas durante el día. La síntesis proteica se maximiza con 20-40g por ingesta, no en una sola comida grande.',
+    '🏋️ *Hábito de la semana:* Registra tus cargas de entrenamiento. La progresión de carga es el estímulo #1 para el crecimiento muscular — si no mides, no progresas.',
+    '🍌 *Hábito de la semana:* Incluye carbohidratos antes de tu entrenamiento. Son el combustible principal para levantar más peso y generar mayor tensión muscular.',
+    '💧 *Hábito de la semana:* Mantente bien hidratado — la deshidratación del 2% reduce el rendimiento hasta un 20%. Bebe agua constante durante el día, no solo durante el entreno.',
+  ],
+  'recomposicion': [
+    '⚖️ *Hábito de la semana:* La recomposición requiere paciencia — enfócate en el rendimiento, no en el peso. Si levantas más peso y tu ropa queda mejor, estás progresando.',
+    '🥩 *Hábito de la semana:* Prioriza la proteína en cada comida. Es el macronutriente que permite simultáneamente perder grasa y ganar músculo — la clave de la recomposición.',
+    '📊 *Hábito de la semana:* Toma fotos de progreso cada 2 semanas. La báscula puede mentir (músculo pesa más que grasa), pero las fotos muestran la transformación real.',
+    '🛌 *Hábito de la semana:* Optimiza tu recuperación. En recomposición tu cuerpo trabaja doble — necesita dormir bien, manejar el estrés y respetar los días de descanso.',
+    '🥗 *Hábito de la semana:* Come más en los días de entrenamiento y menos en los días de descanso. Ajustar calorías según actividad acelera la recomposición corporal.',
+    '🚫 *Hábito de la semana:* Elimina el alcohol por 30 días. Bloquea la síntesis proteica hasta 24h y convierte calorías directamente en grasa abdominal.',
+  ],
+  'mantenimiento': [
+    '🎯 *Hábito de la semana:* El mantenimiento no es piloto automático — es elección consciente. Sigue registrando tus comidas al menos 3 días a la semana para no perder el ritmo.',
+    '🔄 *Hábito de la semana:* Varía tus fuentes de proteína esta semana. Prueba una que no consumas frecuentemente: legumbres, pescado, huevos, lácteos. La variedad nutre mejor.',
+    '🧘 *Hábito de la semana:* El estrés crónico eleva el cortisol y promueve el almacenamiento de grasa abdominal. Incluye 10 minutos de respiración profunda o meditación.',
+    '🏃 *Hábito de la semana:* Agrega un tipo de movimiento diferente esta semana. Si haces pesas, prueba una caminata larga. Si haces cardio, prueba fuerza. El cuerpo se adapta al cambio.',
+    '🫙 *Hábito de la semana:* Prepara tus snacks saludables con anticipación. Tener opciones listas evita las malas decisiones cuando aparece el hambre de improvisto.',
+    '💡 *Hábito de la semana:* Revisa tus porciones sin contar calorías — usa tu mano como guía: palma = proteína, puño = vegetales, cupped hand = carbohidratos, pulgar = grasas.',
+  ],
+  'rendimiento deportivo': [
+    '⚡ *Hábito de la semana:* Consume carbohidratos 1-2 horas antes de competir o entrenar fuerte. Son el combustible de alta octanaje que necesita tu rendimiento.',
+    '🧂 *Hábito de la semana:* No subestimes los electrolitos. Sodio, potasio y magnesio son cruciales para la contracción muscular y la hidratación celular en atletas.',
+    '🔋 *Hábito de la semana:* La recuperación ES parte del entrenamiento. Planifica tus comidas post-ejercicio con proteína + carbohidratos en los primeros 30-60 minutos.',
+    '📈 *Hábito de la semana:* Periodiza tu nutrición como periodizas tu entrenamiento. Más calorías en semanas de alta carga, menos en semanas de descarga. Sincroniza tu cuerpo.',
+    '🫀 *Hábito de la semana:* El hierro es crítico para el rendimiento — transporta oxígeno a tus músculos. Incluye carnes rojas, legumbres o espinacas con vitamina C para mejor absorción.',
+    '💤 *Hábito de la semana:* Duerme como un atleta de élite. La privación de sueño reduce la fuerza hasta 15% y aumenta el cortisol. 8 horas mínimo en semanas de carga alta.',
+  ],
+  'default': [
+    '🌿 *Hábito de la semana:* Incorpora más colores en tu plato. Cada color vegetal representa diferentes antioxidantes y vitaminas — más variedad, más nutrición.',
+    '💧 *Hábito de la semana:* Hidratación constante: bebe agua a lo largo del día, no solo cuando tienes sed. La sed es señal de deshidratación leve ya instalada.',
+    '🍳 *Hábito de la semana:* Cocina más en casa. Cuando preparas tu propia comida controlas los ingredientes, las porciones y los aceites — la base de una alimentación saludable.',
+    '🕐 *Hábito de la semana:* Respeta tus horarios de comida. La regularidad alimentaria regula tu metabolismo, mejora el sueño y reduce el picoteo impulsivo.',
+    '🚶 *Hábito de la semana:* Muévete 30 minutos cada día, aunque sea caminando. El movimiento regular tiene más impacto en la salud a largo plazo que el ejercicio intenso esporádico.',
+    '🧘 *Hábito de la semana:* Come con atención plena — sin pantallas, despacio, saboreando. Mejora la digestión y reduce significativamente el consumo calórico total.',
+  ]
+};
+
+function getMensajeHabito(objetivo) {
+  const key = Object.keys(MENSAJES_HABITO).find(k => objetivo && objetivo.toLowerCase().includes(k)) || 'default';
+  const msgs = MENSAJES_HABITO[key];
+  // Rotar según semana del año para variar
+  const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return msgs[week % msgs.length];
+}
+
+function getMensajeCheckin(nombre, objetivo) {
+  const obj = objetivo || 'tu objetivo';
+  return `Hola ${nombre||''} 👋
+
+¿Cómo vas esta semana con tu plan nutricional? 🥗
+
+Me gustaría saber:
+1️⃣ ¿Pudiste seguir el plan la mayoría de los días?
+2️⃣ ¿Hubo algo que te costó más?
+3️⃣ ¿Cómo te sientes con ${obj}?
+
+Recuerda que cada paso cuenta — ¡estoy aquí para ayudarte! 💪
+
+Respóndeme con tranquilidad, toda la información me ayuda a ajustar tu plan. 🙌`;
+}
+
+async function profCargarMensajes() {
+  const container = document.getElementById('prof-msg-list');
+  container.innerHTML = '<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0">⏳ Cargando...</p>';
+
+  try {
+    const sbKey = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const raw   = sbKey ? localStorage.getItem(sbKey) : null;
+    const tok   = (() => { try { const s = JSON.parse(raw); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+
+    // Cargar pacientes con whatsapp
+    const pResp = await fetch(
+      `${SUPA_URL}/rest/v1/profiles?select=id,nombre,email,whatsapp&professional_id=eq.${currentUser.id}&role=eq.patient`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tok}` } }
+    );
+    const patients = pResp.ok ? await pResp.json() : [];
+
+    if(!patients.length) {
+      container.innerHTML = `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
+        No tienes pacientes aún.<br>Usa <b>Invitar Paciente</b> para agregar el primero.</p>`;
+      return;
+    }
+
+    // Cargar objetivos desde planes
+    const ids = patients.map(p => p.id);
+    const plResp = await fetch(
+      `${SUPA_URL}/rest/v1/planes?select=patient_id,objetivo&professional_id=eq.${currentUser.id}&patient_id=in.(${ids.join(',')})`,
+      { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tok}` } }
+    );
+    const planes = plResp.ok ? await plResp.json() : [];
+
+    container.innerHTML = patients.map(patient => {
+      const plan = planes.find(p => p.patient_id === patient.id);
+      const obj  = plan?.objetivo || '';
+      const objLabel = obj || 'Sin plan asignado';
+      const phone = (patient.whatsapp||'').replace(/\D/g,'');
+      const phoneFull = phone && !phone.startsWith('56') ? '56'+phone : phone;
+
+      const msgHabito  = encodeURIComponent(`Hola ${patient.nombre||''} 👋\n\n${getMensajeHabito(obj)}\n\nCualquier duda, escríbeme. ¡Ánimo esta semana! 💪`);
+      const msgCheckin = encodeURIComponent(getMensajeCheckin(patient.nombre, obj));
+
+      const urlHabito  = phoneFull ? `https://wa.me/${phoneFull}?text=${msgHabito}`  : `https://wa.me/?text=${msgHabito}`;
+      const urlCheckin = phoneFull ? `https://wa.me/${phoneFull}?text=${msgCheckin}` : `https://wa.me/?text=${msgCheckin}`;
+
+      return `<div class="msg-patient-row">
+        <div style="flex:1;min-width:0;margin-right:10px;">
+          <div class="msg-patient-name">${patient.nombre||patient.email}</div>
+          <div class="msg-patient-obj">🎯 ${objLabel}${patient.whatsapp ? ' · 📱 '+patient.whatsapp : ' · <span style="color:#f59e0b">Sin WhatsApp</span>'}</div>
+        </div>
+        <div class="msg-btns">
+          <button class="btn-msg-habito" onclick="window.open('${urlHabito}','_blank')" title="Mensaje de hábito saludable (Lunes)">🌿 Hábito</button>
+          <button class="btn-msg-checkin" onclick="window.open('${urlCheckin}','_blank')" title="Check-in semanal (Jueves)">📊 Check-in</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    if(!patients.some(p => p.whatsapp)) {
+      container.innerHTML += `<p style="font-size:11px;color:#f59e0b;text-align:center;margin-top:10px;">
+        ⚠️ Los pacientes sin WhatsApp guardado abrirán WhatsApp sin número destino.<br>
+        Pídeles que actualicen su WhatsApp en la app.</p>`;
+    }
+
+  } catch(e) {
     container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">Error: ${e.message}</p>`;
   }
 }
