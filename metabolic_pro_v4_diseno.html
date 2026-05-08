@@ -4099,13 +4099,13 @@ function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colM
   // Desayuno del día (rotación entre seleccionados)
   const desKey=desKeys[(dia-1)%desKeys.length];
   const desOpt=desayunosOpts[desKey];
-  // Colación mañana del día (rotación entre seleccionadas)
-  const colManKey=(colManKeys||["yogur_frutossecos_am"])[(dia-1)%(colManKeys||["yogur_frutossecos_am"]).length];
-  const colManOpt=colMañanaOpts[colManKey]||colMañanaOpts["yogur_frutossecos_am"];
-  // Once del día (rotación entre seleccionadas, usa opciones de desayuno)
-  const onceKeysArr=onceKeys&&onceKeys.length?onceKeys:["huevos_revueltos"];
+  // Colación mañana del día (rotación entre seleccionadas — usa opciones tipo desayuno)
+  const colManKey=(colManKeys||["avena_proteica"])[(dia-1)%(colManKeys||["avena_proteica"]).length];
+  const colManOpt=desayunosOpts[colManKey]||desayunosOpts["avena_proteica"];
+  // Once del día (rotación entre seleccionadas — usa opciones tipo colación)
+  const onceKeysArr=onceKeys&&onceKeys.length?onceKeys:["yogur_frutossecos_am"];
   const onceKey=onceKeysArr[(dia-1)%onceKeysArr.length];
-  const onceOpt=desayunosOpts[onceKey]||desayunosOpts["huevos_revueltos"];
+  const onceOpt=colMañanaOpts[onceKey]||colMañanaOpts["yogur_frutossecos_am"];
   // Colación ultra procesada (solo si el usuario eligió alguna)
   const ultraComidas = [];
   if(ultraKeys && ultraKeys.length){
@@ -4654,8 +4654,8 @@ function initChips(){
     });
   }
   buildChips("desayunos-chips",desayunosOpts,"avena_proteica");
-  buildChips("col-manana-chips",colMañanaOpts,"yogur_frutossecos_am");
-  buildChips("once-chips",desayunosOpts,"avena_proteica");
+  buildChips("col-manana-chips",desayunosOpts,"avena_proteica");
+  buildChips("once-chips",colMañanaOpts,"yogur_frutossecos_am");
   buildChips("almuerzos-chips",almuerzosOpts,"pollo_arroz");
   buildChips("cenas-chips",cenasOpts,"pollo_verduras");
   buildChips("ultra-chips",ultraOpts,null); // sin selección por defecto (opcional)
@@ -5230,9 +5230,9 @@ function generarSistema(){
   let desKeys=[...[...document.querySelectorAll('input[name="desayunos-chips"]:checked')].map(x=>x.value)];
   if(desKeys.length===0) desKeys=["avena_proteica"];
   let colManKeys=[...[...document.querySelectorAll('input[name="col-manana-chips"]:checked')].map(x=>x.value)];
-  if(colManKeys.length===0) colManKeys=["yogur_frutossecos_am"];
+  if(colManKeys.length===0) colManKeys=["avena_proteica"];
   let onceKeys=[...[...document.querySelectorAll('input[name="once-chips"]:checked')].map(x=>x.value)];
-  if(onceKeys.length===0) onceKeys=["avena_proteica"];
+  if(onceKeys.length===0) onceKeys=["yogur_frutossecos_am"];
   const protGramsEl = document.querySelector('input[name="prot-gramos-alm"]:checked');
   const protGrams = protGramsEl ? Number(protGramsEl.value) : 200;
   const protGramsCenaEl = document.querySelector('input[name="prot-gramos-cena"]:checked');
