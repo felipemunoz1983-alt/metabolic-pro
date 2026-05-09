@@ -9450,6 +9450,7 @@ async function profAsignarPlan(patientId, planId){
       const r = await fetch(`${SUPA_URL}/rest/v1/planes`, {
         method: 'POST', headers,
         body: JSON.stringify({
+          user_id: patientId,
           patient_id: patientId,
           professional_id: currentUser.id,
           nombre: pctx.nombre, objetivo: pctx.objetivo,
