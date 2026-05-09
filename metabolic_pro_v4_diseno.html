@@ -1775,6 +1775,41 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
 @keyframes fadeInDown { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
 .receta-img { width: 100%; height: 200px; object-fit: cover; display: block; }
 .receta-body { padding: 14px 16px; }
+/* ── Layout responsivo para foto + contenido ── */
+.receta-flex-row {
+  display: flex; gap: 0; align-items: stretch; min-height: 240px;
+}
+.receta-img-col {
+  position: relative; width: 220px; min-width: 220px; flex-shrink: 0;
+  border-radius: 0 10px 10px 0; overflow: hidden;
+}
+.receta-img-col img {
+  width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .3s;
+}
+.receta-img-col-badge {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(12,53,71,.92));
+  color: white; font-size: 11px; font-weight: 600;
+  padding: 20px 10px 10px; line-height: 1.4; text-align: center;
+}
+.prod-img-col {
+  position: relative; width: 180px; min-width: 180px; flex-shrink: 0;
+  border-radius: 0 10px 10px 0; overflow: hidden;
+}
+.prod-img-col img {
+  width: 100%; height: 100%; object-fit: cover; display: block; transition: opacity .3s;
+}
+.prod-img-col-badge {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: linear-gradient(transparent, rgba(90,0,0,.90));
+  color: white; font-size: 10.5px; font-weight: 600;
+  padding: 20px 10px 10px; line-height: 1.4; text-align: center;
+}
+@media (max-width: 520px) {
+  .receta-flex-row { flex-direction: column; min-height: unset; }
+  .receta-img-col  { width: 100%; min-width: unset; border-radius: 0; min-height: 180px; }
+  .prod-img-col    { width: 100%; min-width: unset; border-radius: 0; min-height: 160px; }
+}
 .receta-section-title {
   font-size: 11.5px; font-weight: 800; color: var(--navy);
   text-transform: uppercase; letter-spacing: .5px; margin: 12px 0 6px;
@@ -5386,7 +5421,7 @@ function generarSistema(){
           const productoHtml=c.foto?`
             <span class="receta-toggle" id="btn-${prodId}" onclick="toggleReceta('${prodId}')">📦 Ver producto</span>
             <div class="receta-card" id="${prodId}">
-              <div style="display:flex;gap:0;align-items:stretch;min-height:200px">
+              <div class="receta-flex-row">
                 <div class="receta-body" style="flex:1;min-width:0;padding:14px 16px">
                   <div class="receta-section-title">📊 Información nutricional · Por porción</div>
                   <ul class="receta-ingredients" style="margin-bottom:10px">
@@ -5404,24 +5439,16 @@ function generarSistema(){
                     <span style="font-size:11px">Verificar etiqueta antes del consumo. No recomendado para personas con alergia a estos ingredientes.</span>
                   </div>`:""}
                 </div>
-                <div style="position:relative;width:200px;min-width:200px;flex-shrink:0;
-                  border-radius:0 10px 10px 0;overflow:hidden;
-                  background:linear-gradient(135deg,#b91c1c,#ef4444)">
-                  <img src="${c.foto}" alt="${c.nombre}"
-                    onerror="this.style.opacity='0'"
-                    style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
-                  ${c.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
-                    background:linear-gradient(transparent,rgba(90,0,0,.90));
-                    color:white;font-size:10.5px;font-weight:600;padding:22px 10px 10px;
-                    line-height:1.4;text-align:center">${c.badge}</div>`:""}
+                <div class="prod-img-col" style="background:linear-gradient(135deg,#b91c1c,#ef4444)">
+                  <img src="${c.foto}" alt="${c.nombre}" onerror="this.style.opacity='0'">
+                  ${c.badge?`<div class="prod-img-col-badge">${c.badge}</div>`:""}
                 </div>
               </div>
             </div>`:"";
           const recetaHtml=r?`
             <span class="receta-toggle" id="btn-${recId}" onclick="toggleReceta('${recId}')">📖 Ver receta</span>
             <div class="receta-card" id="${recId}">
-              <div style="display:flex;gap:0;align-items:stretch;min-height:260px">
-                <!-- Columna izquierda: contenido -->
+              <div class="receta-flex-row">
                 <div class="receta-body" style="flex:1;min-width:0">
                   <div class="receta-section-title">🔹 Ingredientes (1 porción)</div>
                   <ul class="receta-ingredients">${r.ingredientes.map(i=>`<li>${i}</li>`).join("")}</ul>
@@ -5437,17 +5464,9 @@ function generarSistema(){
                     </div>`).join("")}
                   </div>
                 </div>
-                <!-- Columna derecha: foto -->
-                <div style="position:relative;width:220px;min-width:220px;flex-shrink:0;
-                  border-radius:0 10px 10px 0;overflow:hidden;
-                  background:linear-gradient(135deg,#0C3547,#29ABE2)">
-                  <img src="${r.img}" alt="${c.nombre}"
-                    onerror="this.style.opacity='0'"
-                    style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
-                  ${r.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
-                    background:linear-gradient(transparent,rgba(12,53,71,.92));
-                    color:white;font-size:11px;font-weight:600;padding:22px 10px 10px;
-                    line-height:1.4;text-align:center">${r.badge}</div>`:""}
+                <div class="receta-img-col" style="background:linear-gradient(135deg,#0C3547,#29ABE2)">
+                  <img src="${r.img}" alt="${c.nombre}" onerror="this.style.opacity='0'">
+                  ${r.badge?`<div class="receta-img-col-badge">${r.badge}</div>`:""}
                 </div>
               </div>
             </div>`:"";
@@ -10251,7 +10270,7 @@ function renderPatientPlan(planData){
           recetaHtml = `
             <span class="receta-toggle" id="btn-${recId}" onclick="toggleReceta('${recId}')">📖 Ver receta</span>
             <div class="receta-card" id="${recId}">
-              <div style="display:flex;gap:0;align-items:stretch;min-height:240px">
+              <div class="receta-flex-row">
                 <div class="receta-body" style="flex:1;min-width:0">
                   <div class="receta-section-title">🔹 Ingredientes (1 porción)</div>
                   <ul class="receta-ingredients">${r.ingredientes.map(i=>`<li>${i}</li>`).join('')}</ul>
@@ -10267,16 +10286,9 @@ function renderPatientPlan(planData){
                     </div>`).join('')}
                   </div>
                 </div>
-                <div style="position:relative;width:200px;min-width:200px;flex-shrink:0;
-                  border-radius:0 10px 10px 0;overflow:hidden;
-                  background:linear-gradient(135deg,#0C3547,#29ABE2)">
-                  <img src="${r.img}" alt="${c.nombre}"
-                    onerror="this.style.opacity='0'"
-                    style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
-                  ${r.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
-                    background:linear-gradient(transparent,rgba(12,53,71,.92));
-                    color:white;font-size:11px;font-weight:600;padding:20px 10px 10px;
-                    line-height:1.4;text-align:center">${r.badge}</div>`:''}
+                <div class="receta-img-col" style="background:linear-gradient(135deg,#0C3547,#29ABE2)">
+                  <img src="${r.img}" alt="${c.nombre}" onerror="this.style.opacity='0'">
+                  ${r.badge?`<div class="receta-img-col-badge">${r.badge}</div>`:''}
                 </div>
               </div>
             </div>`;
@@ -10292,7 +10304,7 @@ function renderPatientPlan(planData){
         productoHtml = `
           <span class="receta-toggle" id="btn-${prodId}" onclick="toggleReceta('${prodId}')">📦 Ver producto</span>
           <div class="receta-card" id="${prodId}">
-            <div style="display:flex;gap:0;align-items:stretch;min-height:180px">
+            <div class="receta-flex-row">
               <div class="receta-body" style="flex:1;min-width:0;padding:14px 16px">
                 <div class="receta-section-title">📊 Información nutricional · Por porción</div>
                 <ul class="receta-ingredients" style="margin-bottom:10px">
@@ -10309,16 +10321,9 @@ function renderPatientPlan(planData){
                   Contiene: <b>${c.alergenos.join(' · ')}</b>
                 </div>`:''}
               </div>
-              <div style="position:relative;width:180px;min-width:180px;flex-shrink:0;
-                border-radius:0 10px 10px 0;overflow:hidden;
-                background:linear-gradient(135deg,#b91c1c,#ef4444)">
-                <img src="${c.foto}" alt="${c.nombre}"
-                  onerror="this.style.opacity='0'"
-                  style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
-                ${c.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
-                  background:linear-gradient(transparent,rgba(90,0,0,.90));
-                  color:white;font-size:10.5px;font-weight:600;padding:20px 10px 10px;
-                  line-height:1.4;text-align:center">${c.badge}</div>`:''}
+              <div class="prod-img-col" style="background:linear-gradient(135deg,#b91c1c,#ef4444)">
+                <img src="${c.foto}" alt="${c.nombre}" onerror="this.style.opacity='0'">
+                ${c.badge?`<div class="prod-img-col-badge">${c.badge}</div>`:''}
               </div>
             </div>
           </div>`;
