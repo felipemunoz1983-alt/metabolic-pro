@@ -7990,6 +7990,17 @@ async function chatSend(){
 
 /* ── Llamada a Claude Haiku vía Supabase Edge Function ── */
 async function callClaudeChat(history){
+  // Token robusto: primero currentAccessToken, si está vacío cae a localStorage
+  let tok = currentAccessToken;
+  if(!tok){
+    const sbK = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const raw = sbK ? localStorage.getItem(sbK) : null;
+    tok = (() => { try { const s = JSON.parse(raw); return s?.access_token || ''; } catch(_){ return ''; } })();
+  }
+  if(!tok){
+    throw new Error('Sesión no encontrada. Por favor recarga la página e inicia sesión de nuevo.');
+  }
+
   const controller = new AbortController();
   const tid = setTimeout(() => controller.abort(), 30000); // 30 s timeout
   try {
@@ -7999,7 +8010,7 @@ async function callClaudeChat(history){
       headers: {
         'Content-Type': 'application/json',
         'apikey': SUPA_KEY,
-        'Authorization': `Bearer ${currentAccessToken}`
+        'Authorization': `Bearer ${tok}`
       },
       body: JSON.stringify({
         messages: history,
