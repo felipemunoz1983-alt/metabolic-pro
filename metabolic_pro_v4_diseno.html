@@ -7769,7 +7769,7 @@ IMPORTANTE: Adapta SIEMPRE tu respuesta al momento del día. Si el paciente preg
 • Adherencia promedio al plan: ${avgComp}%
 • Días con registro: ${keys.length}`;
     if(avgComp < 70) ctx += `\n• ⚠️ Adherencia baja — prioriza motivación y ajuste de plan`;
-    if(avgKcal < cfg.targetKcal * 0.8) ctx += `\n• ⚠️ Consumo muy por debajo de la meta — riesgo de pérdida muscular`;
+    if(cfg && avgKcal < cfg.targetKcal * 0.8) ctx += `\n• ⚠️ Consumo muy por debajo de la meta — riesgo de pérdida muscular`;
   }
 
   // ── Inyectar plan nutricional completo si fue generado ──
