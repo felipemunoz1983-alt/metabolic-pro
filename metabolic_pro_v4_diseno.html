@@ -8311,6 +8311,18 @@ Ejemplos:
 
     <!-- Tab: Pacientes -->
     <div id="prof-tab-patients">
+      <!-- Buscador -->
+      <div style="position:sticky;top:0;background:#fff;z-index:10;padding-bottom:10px;margin-bottom:4px;">
+        <div style="position:relative;">
+          <span style="position:absolute;left:11px;top:50%;transform:translateY(-50%);font-size:15px;pointer-events:none;opacity:.55;">🔍</span>
+          <input type="text" id="prof-search"
+            placeholder="Buscar por nombre, correo o teléfono…"
+            oninput="profFiltrarPacientes()"
+            style="width:100%;box-sizing:border-box;padding:9px 12px 9px 36px;border:1.5px solid #D6E3ED;border-radius:10px;font-size:13px;color:#0C3547;outline:none;background:#f8fafc;transition:border-color .2s;"
+            onfocus="this.style.borderColor='#29ABE2'" onblur="this.style.borderColor='#D6E3ED'">
+        </div>
+        <div id="prof-search-count" style="font-size:11px;color:#6B7C93;margin-top:5px;min-height:16px;padding-left:2px;"></div>
+      </div>
       <div id="prof-patients-list">
         <p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0">⏳ Cargando...</p>
       </div>
@@ -9173,6 +9185,8 @@ async function inviteRegister(){
 function profPanelOpen(){
   document.getElementById('prof-panel').classList.add('open');
   document.getElementById('prof-panel-overlay').classList.add('show');
+  const srch = document.getElementById('prof-search');
+  if(srch) srch.value = '';
   profCargarPacientes();
 }
 function profPanelClose(){
@@ -9186,6 +9200,49 @@ function profTab(t){
   document.getElementById('prof-tab-invite').style.display    = t==='invite'   ? 'block' : 'none';
   document.getElementById('prof-tab-mensajes').style.display  = t==='mensajes' ? 'block' : 'none';
   if(t==='mensajes') profCargarMensajes();
+}
+
+/* ── Caché local de pacientes (para búsqueda sin re-fetch) ── */
+let _profPatientsData = []; // [{patient, plan}, ...]
+
+function profRenderPacientes(filter){
+  const container = document.getElementById('prof-patients-list');
+  const countEl   = document.getElementById('prof-search-count');
+  const q = (filter||'').toLowerCase().trim();
+
+  const filtered = q
+    ? _profPatientsData.filter(({patient}) =>
+        (patient.nombre  ||'').toLowerCase().includes(q) ||
+        (patient.email   ||'').toLowerCase().includes(q) ||
+        (patient.whatsapp||'').replace(/\D/g,'').includes(q.replace(/\D/g,''))
+      )
+    : _profPatientsData;
+
+  if(countEl){
+    const total = _profPatientsData.length;
+    if(total === 0){
+      countEl.textContent = '';
+    } else if(q){
+      countEl.textContent = `${filtered.length} de ${total} paciente${total!==1?'s':''}`;
+    } else {
+      countEl.textContent = `${total} paciente${total!==1?'s':''}`;
+    }
+  }
+
+  if(filtered.length === 0){
+    container.innerHTML = q
+      ? `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0">
+           😔 Sin resultados para "<b>${q}</b>"</p>`
+      : `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
+           No tienes pacientes registrados aún.<br>
+           Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.</p>`;
+    return;
+  }
+  container.innerHTML = filtered.map(({patient,plan}) => buildPatientCard(patient, plan)).join('');
+}
+
+function profFiltrarPacientes(){
+  profRenderPacientes(document.getElementById('prof-search')?.value || '');
 }
 
 async function profCargarPacientes(){
@@ -9216,9 +9273,8 @@ async function profCargarPacientes(){
     }
 
     if(!Array.isArray(patients) || patients.length === 0){
-      container.innerHTML = `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
-        No tienes pacientes registrados aún.<br>
-        Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.</p>`;
+      _profPatientsData = [];
+      profRenderPacientes('');
       return;
     }
 
@@ -9233,10 +9289,13 @@ async function profCargarPacientes(){
       planesData = plResp.ok ? await plResp.json() : [];
     } catch(e){}
 
-    container.innerHTML = patients.map(patient => {
-      const plan = planesData.find(p => p.patient_id === patient.id);
-      return buildPatientCard(patient, plan);
-    }).join('');
+    // Guardar en caché y renderizar (respeta filtro activo)
+    _profPatientsData = patients.map(patient => ({
+      patient,
+      plan: planesData.find(p => p.patient_id === patient.id) || null
+    }));
+    const activeFilter = document.getElementById('prof-search')?.value || '';
+    profRenderPacientes(activeFilter);
 
   } catch(e){
     container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">Error cargando pacientes: ${e.message}</p>`;
