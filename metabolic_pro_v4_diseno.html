@@ -9186,12 +9186,21 @@ async function profCargarPacientes(){
       `${SUPA_URL}/rest/v1/profiles?select=id,nombre,email,whatsapp&professional_id=eq.${currentUser.id}&role=eq.patient`,
       { headers }
     );
-    const patients = pResp.ok ? await pResp.json() : [];
+    const pBody = await pResp.text();
+    let patients = [];
+    try { patients = JSON.parse(pBody); } catch(_){}
 
-    if(!patients || patients.length === 0){
+    if(!pResp.ok){
+      container.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:10px">
+        Error API (${pResp.status}): ${pBody}</p>`;
+      return;
+    }
+
+    if(!Array.isArray(patients) || patients.length === 0){
       container.innerHTML = `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
         No tienes pacientes registrados aún.<br>
-        Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.</p>`;
+        Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.<br>
+        <span style="font-size:10px;opacity:.6">uid: ${currentUser.id}</span></p>`;
       return;
     }
 
