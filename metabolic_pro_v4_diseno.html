@@ -4282,8 +4282,8 @@ function generarDia(dia,almuerzo,cenaMenu,obj,tend,rech,desKeys,diasEntreno,colM
   const desKey=desKeys[(dia-1)%desKeys.length];
   const desOpt=desayunosOpts[desKey];
   // Colación mañana del día (rotación entre seleccionadas — usa opciones tipo desayuno)
-  const colManKey=(colManKeys||["avena_proteica"])[(dia-1)%(colManKeys||["avena_proteica"]).length];
-  const colManOpt=desayunosOpts[colManKey]||desayunosOpts["avena_proteica"];
+  const colManKey=(colManKeys||["yogur_frutossecos_am"])[(dia-1)%(colManKeys||["yogur_frutossecos_am"]).length];
+  const colManOpt=colMañanaOpts[colManKey]||colMañanaOpts["yogur_frutossecos_am"];
   // Once del día (rotación entre seleccionadas — usa opciones tipo colación)
   const onceKeysArr=onceKeys&&onceKeys.length?onceKeys:["yogur_frutossecos_am"];
   const onceKey=onceKeysArr[(dia-1)%onceKeysArr.length];
@@ -4837,7 +4837,7 @@ function initChips(){
     });
   }
   buildChips("desayunos-chips",desayunosOpts,"avena_proteica");
-  buildChips("col-manana-chips",desayunosOpts,"avena_proteica");
+  buildChips("col-manana-chips",colMañanaOpts,"yogur_frutossecos_am");
   buildChips("once-chips",colMañanaOpts,"yogur_frutossecos_am");
   buildChips("almuerzos-chips",almuerzosOpts,"pollo_arroz");
   buildChips("cenas-chips",cenasOpts,"pollo_verduras");
