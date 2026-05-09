@@ -9199,8 +9199,7 @@ async function profCargarPacientes(){
     if(!Array.isArray(patients) || patients.length === 0){
       container.innerHTML = `<p style="text-align:center;color:#6B7C93;font-size:13px;padding:20px 0;line-height:1.6">
         No tienes pacientes registrados aún.<br>
-        Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.<br>
-        <span style="font-size:10px;opacity:.6">uid: ${currentUser.id}</span></p>`;
+        Usa la pestaña <b>Invitar Paciente</b> para agregar el primero.</p>`;
       return;
     }
 
