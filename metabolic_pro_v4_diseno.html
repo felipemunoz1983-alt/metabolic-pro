@@ -9877,7 +9877,7 @@ function renderCumplimientoSummary(planData){
     const pct = total > 0 ? Math.round((done / total) * 100) : 0;
     const pctClass = pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red';
     // Día corto: "Lunes", "Martes" etc. — tomar primera palabra
-    const shortDay = day.dia.replace(/^(Día \d+\s*[·-]?\s*)/i,'').split(' ')[0] || day.dia;
+    const shortDay = String(day.dia).replace(/^(Día \d+\s*[·-]?\s*)/i,'').split(' ')[0] || `Día ${day.dia}`;
 
     return `<div class="cumplimiento-day">
       <div class="cumplimiento-day-label">${shortDay}</div>
