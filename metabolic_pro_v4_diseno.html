@@ -9475,7 +9475,7 @@ async function profVerSeguimiento(patientId, planId, nombre){
       day.comidas.forEach(c => { if(doneMap[`${day.dia}||${c.nombre}`]) done++; });
       const pct      = total > 0 ? Math.round((done/total)*100) : 0;
       const cls      = pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red';
-      const shortDay = day.dia.replace(/^(Día \d+\s*[·\-]?\s*)/i,'').split(' ')[0] || `D${day.dia}`;
+      const shortDay = `Día ${day.dia}`;
       return `<div class="prof-seg-day">
         <span class="prof-seg-day-name">${shortDay}</span>
         <div class="prof-seg-bar-outer">
