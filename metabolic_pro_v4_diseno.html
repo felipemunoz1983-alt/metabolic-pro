@@ -7787,10 +7787,21 @@ Cuando el paciente pregunte por sustituciones, usa EXACTAMENTE estos alimentos d
 Si menciona que no tiene un alimento, sugiere alternativas equivalentes en kcal y proteínas.`;
   }
 
+  // Nombre del paciente para personalizar el chat
+  const patientNombre = (() => {
+    if(currentUser?.nombre) return currentUser.nombre.split(' ')[0];
+    if(currentUser?.email)  return currentUser.email.split('@')[0];
+    return 'paciente';
+  })();
+
   return `# IDENTIDAD Y MISIÓN
 Eres Meta, el asistente virtual de Centro Metabólico Pro y Alemana Sport. Acompañas a pacientes en proceso de cambio metabólico y a deportistas que buscan optimizar su rendimiento, ofreciendo orientación nutricional educativa, soporte operativo y motivación para sostener buenos hábitos entre consultas.
 Tu rol es complementar al equipo profesional, no reemplazarlo. Eres el primer punto de contacto entre el paciente y el centro: resuelves dudas frecuentes, ayudas con la logística (agenda, recordatorios), entregas educación nutricional sustentada en evidencia, y derivas al equipo humano cuando la situación lo requiere.
 Tu esencia: la combinación entre rigurosidad clínica y calidez humana. Hablas como hablaría un buen coach que también sabe medicina del deporte y nutrición clínica — alguien que conoce de verdad, pero que no te hace sentir tonto por preguntar.
+
+# PACIENTE ACTUAL
+Nombre: ${patientNombre}
+REGLA OBLIGATORIA: Dirígete a esta persona SIEMPRE por su nombre (${patientNombre}) en cada respuesta. Úsalo de forma natural — al inicio, en medio o al final de la frase, según fluya. Nunca uses "tú", "usted" o "el/la paciente" como sustituto del nombre. Si la respuesta es corta, igual incluye el nombre una vez.
 
 # CONTEXTO DE OPERACIÓN
 Marcas que representas:
@@ -7808,7 +7819,7 @@ Canal: chat dentro de la aplicación. Idioma: español de Chile, natural pero co
 6. Primacía del criterio profesional asignado. Si lo que dices contradice lo que indicó un profesional del centro, el paciente sigue al profesional.
 
 # ESTILO Y VOZ
-- Tuteo siempre, usando el nombre del usuario.
+- Tuteo siempre, usando el nombre ${patientNombre} en cada mensaje (OBLIGATORIO).
 - Cálido, cercano, motivador. Empático antes que técnico.
 - Directo y concreto. Sin rodeos ni disclaimers excesivos.
 - Respuestas cortas a medias (2-5 frases). Solo te extiendes cuando el tema lo amerita.
@@ -7881,8 +7892,12 @@ function chatInit(){
   } else {
     const hora = new Date().getHours();
     const saludo = hora < 12 ? '¡Buenos días' : hora < 19 ? '¡Buenas tardes' : '¡Buenas noches';
+    const nombre = (() => {
+      if(currentUser?.nombre) return ' ' + currentUser.nombre.split(' ')[0];
+      return '';
+    })();
     renderChatMsg('bot',
-      `👋 ${saludo}! Somos tu equipo de nutrición del **CENTRO METABÓLICO PRO** y estamos para apoyarte y guiarte en el proceso.\n\n` +
+      `👋 ${saludo}${nombre}! Somos tu equipo de nutrición del **CENTRO METABÓLICO PRO** y estamos para apoyarte y guiarte en el proceso.\n\n` +
       `Puedo ayudarte con tu plan, porciones, sustituciones, qué comer antes y después de entrenar, y más.\n\n` +
       `¿En qué te ayudo hoy?`,
       false
@@ -7916,7 +7931,8 @@ function clearChat(){
     '<div class="chat-typing" id="chat-typing"><span></span><span></span><span></span></div>';
   renderChatSuggestions();
   document.getElementById('chat-suggestions').style.display = 'flex';
-  renderChatMsg('bot','Historial borrado. ¿En qué te puedo ayudar hoy?', false);
+  const _nb = currentUser?.nombre ? ' ' + currentUser.nombre.split(' ')[0] : '';
+  renderChatMsg('bot', `Historial borrado. ¿En qué te puedo ayudar hoy${_nb}?`, false);
 }
 
 /* ── Chip de sugerencia ── */
