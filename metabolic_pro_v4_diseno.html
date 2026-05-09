@@ -2748,6 +2748,29 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
 .btn-whatsapp:hover{background:#128C7E;}
 .btn-assign-plan{background:#29ABE2;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px;display:block;}
 .btn-assign-plan:hover{background:#0e8fc2;}
+.btn-seguimiento{background:#0C3547;color:#fff;border:none;border-radius:7px;padding:5px 10px;font-size:10px;font-weight:700;cursor:pointer;margin-top:4px;display:block;width:100%;}
+.btn-seguimiento:hover{background:#0e4f6a;}
+.prof-seg-panel{margin-top:12px;padding-top:12px;border-top:2px dashed #EAF4FB;}
+.prof-seg-title{font-size:11px;font-weight:800;color:#0C3547;letter-spacing:.4px;text-transform:uppercase;margin-bottom:10px;}
+.prof-seg-kpi-row{display:flex;gap:8px;margin-bottom:12px;}
+.prof-seg-kpi{flex:1;background:#EAF4FB;border-radius:10px;padding:10px 8px;text-align:center;}
+.prof-seg-kpi-val{font-size:20px;font-weight:900;color:#0C3547;display:block;}
+.prof-seg-kpi-lbl{font-size:10px;color:#6B7C93;font-weight:600;margin-top:2px;display:block;}
+.prof-seg-day{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.prof-seg-day-name{font-size:11px;font-weight:700;color:#374151;width:52px;flex-shrink:0;}
+.prof-seg-bar-outer{flex:1;height:10px;background:#EAF4FB;border-radius:6px;overflow:hidden;}
+.prof-seg-bar-inner{height:100%;border-radius:6px;transition:width .4s;}
+.prof-seg-bar-inner.green{background:#22c55e;}
+.prof-seg-bar-inner.yellow{background:#f59e0b;}
+.prof-seg-bar-inner.red{background:#ef4444;}
+.prof-seg-pct{font-size:11px;font-weight:800;width:36px;text-align:right;flex-shrink:0;}
+.prof-seg-pct.green{color:#16a34a;}
+.prof-seg-pct.yellow{color:#d97706;}
+.prof-seg-pct.red{color:#dc2626;}
+.prof-seg-meals{margin-top:10px;}
+.prof-seg-meal-row{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:7px;margin-bottom:4px;font-size:11px;}
+.prof-seg-meal-row.done{background:#dcfce7;color:#166534;}
+.prof-seg-meal-row.pending{background:#f1f5f9;color:#64748b;}
 .btn-gen-invite{width:100%;background:linear-gradient(135deg,#0C3547,#0e4f6a);color:#fff;border:none;border-radius:10px;padding:12px;font-size:13px;font-weight:700;cursor:pointer;margin-top:12px;}
 
 /* ── Professional button in user-bar ── */
@@ -9368,7 +9391,8 @@ function buildPatientCard(patient, plan){
 
   const planStatus = plan
     ? `<div class="patient-card-plan">✅ Plan activo · ${plan.kcal} kcal</div>
-       <button class="btn-assign-plan" onclick="profAsignarPlan('${patient.id}','${planId}')">↗ Actualizar plan</button>`
+       <button class="btn-assign-plan" onclick="profAsignarPlan('${patient.id}','${planId}')">↗ Actualizar plan</button>
+       <button class="btn-seguimiento" onclick="profVerSeguimiento('${patient.id}','${planId}','${(patient.nombre||'').replace(/'/g,"\\'")}')">📊 Ver seguimiento</button>`
     : `<div class="patient-no-plan">⏳ Sin plan asignado</div>
        <button class="btn-assign-plan" onclick="profAsignarPlan('${patient.id}','')">+ Asignar plan actual</button>`;
 
@@ -9383,7 +9407,113 @@ function buildPatientCard(patient, plan){
     </div>
     <div class="vis-section-title">Visibilidad para el paciente</div>
     <div class="vis-grid">${togglesHtml}</div>
+    <div class="prof-seg-panel" id="seg-${patient.id}" style="display:none">
+      <div class="prof-seg-title">📊 Dashboard de seguimiento</div>
+      <div id="seg-content-${patient.id}">
+        <p style="text-align:center;color:#6B7C93;font-size:12px;padding:8px 0">⏳ Cargando...</p>
+      </div>
+    </div>
   </div>`;
+}
+
+async function profVerSeguimiento(patientId, planId, nombre){
+  const panel   = document.getElementById('seg-'+patientId);
+  const content = document.getElementById('seg-content-'+patientId);
+  if(!panel) return;
+
+  // Toggle: cerrar si ya está abierto
+  if(panel.style.display === 'block'){
+    panel.style.display = 'none';
+    return;
+  }
+  panel.style.display = 'block';
+  content.innerHTML = '<p style="text-align:center;color:#6B7C93;font-size:12px;padding:8px 0">⏳ Cargando seguimiento...</p>';
+
+  try {
+    const sbKeyS = Object.keys(localStorage).find(k => k.startsWith('sb-') && k.endsWith('-auth-token'));
+    const rawS   = sbKeyS ? localStorage.getItem(sbKeyS) : null;
+    const tokS   = (() => { try { const s = JSON.parse(rawS); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
+    const headers = { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tokS}`, 'Accept': 'application/json' };
+
+    // 1. Cargar registros de cumplimiento del paciente
+    const cumResp = await fetch(
+      `${SUPA_URL}/rest/v1/cumplimiento?select=dia,tiempo_comida,completado,fecha&plan_id=eq.${planId}&patient_id=eq.${patientId}&order=fecha.desc`,
+      { headers }
+    );
+    const cumData = cumResp.ok ? await cumResp.json() : [];
+
+    // 2. Cargar plan_data para saber cuántas comidas tiene cada día
+    const planResp = await fetch(
+      `${SUPA_URL}/rest/v1/planes?select=plan_data,kcal,objetivo&id=eq.${planId}&limit=1`,
+      { headers }
+    );
+    const planArr  = planResp.ok ? await planResp.json() : [];
+    const planInfo = planArr[0];
+    const planDays = planInfo?.plan_data?.plan || [];
+
+    // 3. Construir mapa: "dia||tiempo_comida" → completado
+    const doneMap = {};
+    cumData.forEach(r => { doneMap[`${r.dia}||${r.tiempo_comida}`] = r.completado; });
+
+    // 4. KPIs globales
+    let totalComidas = 0, totalDone = 0;
+    planDays.forEach(day => {
+      day.comidas.forEach(c => {
+        totalComidas++;
+        if(doneMap[`${day.dia}||${c.nombre}`]) totalDone++;
+      });
+    });
+    const pctGlobal   = totalComidas > 0 ? Math.round((totalDone/totalComidas)*100) : 0;
+    const diasConDatos = [...new Set(cumData.filter(r=>r.completado).map(r=>r.dia))].length;
+    const colorGlobal  = pctGlobal >= 80 ? '#22c55e' : pctGlobal >= 50 ? '#f59e0b' : '#ef4444';
+    const emoji        = pctGlobal >= 80 ? '🟢' : pctGlobal >= 50 ? '🟡' : '🔴';
+
+    // 5. Barras por día
+    const barsHtml = planDays.map(day => {
+      const total = day.comidas.length;
+      let done = 0;
+      day.comidas.forEach(c => { if(doneMap[`${day.dia}||${c.nombre}`]) done++; });
+      const pct      = total > 0 ? Math.round((done/total)*100) : 0;
+      const cls      = pct >= 80 ? 'green' : pct >= 50 ? 'yellow' : 'red';
+      const shortDay = day.dia.replace(/^(Día \d+\s*[·\-]?\s*)/i,'').split(' ')[0] || `D${day.dia}`;
+      return `<div class="prof-seg-day">
+        <span class="prof-seg-day-name">${shortDay}</span>
+        <div class="prof-seg-bar-outer">
+          <div class="prof-seg-bar-inner ${cls}" style="width:${pct}%"></div>
+        </div>
+        <span class="prof-seg-pct ${cls}">${done}/${total}</span>
+      </div>`;
+    }).join('');
+
+    // 6. Detalle de última actividad (comidas completadas)
+    const lastDone = cumData.filter(r=>r.completado).slice(0,5);
+    const lastHtml = lastDone.length
+      ? lastDone.map(r=>`<div class="prof-seg-meal-row done">✅ ${r.dia} · ${r.tiempo_comida}</div>`).join('')
+      : `<div style="font-size:11px;color:#6B7C93;text-align:center;padding:6px">Sin comidas registradas aún.</div>`;
+
+    content.innerHTML = `
+      <div class="prof-seg-kpi-row">
+        <div class="prof-seg-kpi">
+          <span class="prof-seg-kpi-val" style="color:${colorGlobal}">${emoji} ${pctGlobal}%</span>
+          <span class="prof-seg-kpi-lbl">Adherencia global</span>
+        </div>
+        <div class="prof-seg-kpi">
+          <span class="prof-seg-kpi-val">${totalDone}</span>
+          <span class="prof-seg-kpi-lbl">Comidas completadas</span>
+        </div>
+        <div class="prof-seg-kpi">
+          <span class="prof-seg-kpi-val">${diasConDatos}</span>
+          <span class="prof-seg-kpi-lbl">Días con registro</span>
+        </div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:#0C3547;margin-bottom:8px;">Adherencia por día</div>
+      ${barsHtml || '<p style="font-size:11px;color:#6B7C93">Sin datos de plan.</p>'}
+      <div style="font-size:11px;font-weight:700;color:#0C3547;margin:12px 0 6px;">Últimas comidas registradas</div>
+      <div class="prof-seg-meals">${lastHtml}</div>`;
+
+  } catch(e){
+    content.innerHTML = `<p style="color:#ef4444;font-size:12px;padding:8px">Error: ${e.message}</p>`;
+  }
 }
 
 async function profToggleVis(patientId, planId, section, value){
