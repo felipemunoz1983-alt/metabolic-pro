@@ -10068,13 +10068,13 @@ function renderPatientPlan(planData){
     'Once':                  vis.once               !== false,
     'Cena':                  vis.cena               !== false,
   };
-  const showMacros = vis.macros_detalle !== false;
+  const showMacros  = vis.macros_detalle !== false;
+  const showRecetas = vis.recetas        !== false;
 
   const html = planData.plan.map((day, dayIdx) => {
     const comidasHtml = day.comidas.map((c, mealIdx) => {
-      // Determinar tipo de comida
       const mealKey = Object.keys(mealMap).find(k => c.nombre.startsWith(k));
-      if(mealKey && !mealMap[mealKey]) return ''; // ocultar sección
+      if(mealKey && !mealMap[mealKey]) return '';
 
       const itemsHtml = (c.items||[]).map(it => {
         const foodLabel = (typeof label === 'function') ? label(it.food) : it.food;
@@ -10089,6 +10089,102 @@ function renderPatientPlan(planData){
             🥑 ${Math.round(c.total.g)}g grasas
            </div>`
         : '';
+
+      // ── Receta (si la comida tiene receta asociada y el profesional la habilitó) ──
+      let recetaHtml = '';
+      if(showRecetas){
+        // Detectar receta por nombre de opción en desayunosOpts
+        let recetaKey = null;
+        const matchDes = Object.values(desayunosOpts).find(o => o.receta && o.name && c.nombre.includes(o.name));
+        if(matchDes) recetaKey = matchDes.receta;
+        if(!recetaKey){
+          const matchAlm = Object.values(almuerzosOpts).find(o => o.receta && o.name && c.nombre.includes(o.name));
+          if(matchAlm) recetaKey = matchAlm.receta;
+        }
+        if(!recetaKey){
+          const matchCen = Object.values(cenasOpts||{}).find(o => o.receta && o.name && c.nombre.includes(o.name));
+          if(matchCen) recetaKey = matchCen.receta;
+        }
+        if(!recetaKey && c.nombre.toLowerCase().includes('omelette')) recetaKey = 'omelette';
+
+        const r = recetaKey ? RECETAS[recetaKey] : null;
+        if(r){
+          const recId = `prec-d${dayIdx}-m${mealIdx}`;
+          recetaHtml = `
+            <span class="receta-toggle" id="btn-${recId}" onclick="toggleReceta('${recId}')">📖 Ver receta</span>
+            <div class="receta-card" id="${recId}">
+              <div style="display:flex;gap:0;align-items:stretch;min-height:240px">
+                <div class="receta-body" style="flex:1;min-width:0">
+                  <div class="receta-section-title">🔹 Ingredientes (1 porción)</div>
+                  <ul class="receta-ingredients">${r.ingredientes.map(i=>`<li>${i}</li>`).join('')}</ul>
+                  ${r.opcional?`<div class="receta-opcional">👉 Opcional: ${r.opcional}</div>`:''}
+                  <div class="receta-section-title">🔹 Preparación</div>
+                  <div class="receta-steps">${r.pasos.map((p,idx)=>`
+                    <div class="receta-step">
+                      <div class="receta-step-num">${idx+1}</div>
+                      <div>
+                        <div class="receta-step-text"><b>${p.titulo}:</b> ${p.desc}</div>
+                        ${p.nota?`<div class="receta-step-note">💡 ${p.nota}</div>`:''}
+                      </div>
+                    </div>`).join('')}
+                  </div>
+                </div>
+                <div style="position:relative;width:200px;min-width:200px;flex-shrink:0;
+                  border-radius:0 10px 10px 0;overflow:hidden;
+                  background:linear-gradient(135deg,#0C3547,#29ABE2)">
+                  <img src="${r.img}" alt="${c.nombre}"
+                    onerror="this.style.opacity='0'"
+                    style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
+                  ${r.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
+                    background:linear-gradient(transparent,rgba(12,53,71,.92));
+                    color:white;font-size:11px;font-weight:600;padding:20px 10px 10px;
+                    line-height:1.4;text-align:center">${r.badge}</div>`:''}
+                </div>
+              </div>
+            </div>`;
+        }
+      }
+
+      // ── Foto de producto ultra procesado ──
+      let productoHtml = '';
+      if(c.foto){
+        const _prodFoodKey = c.items[0]?.food;
+        const _prodFood = _prodFoodKey ? alimentos[_prodFoodKey] : null;
+        const prodId = `pprod-d${dayIdx}-m${mealIdx}`;
+        productoHtml = `
+          <span class="receta-toggle" id="btn-${prodId}" onclick="toggleReceta('${prodId}')">📦 Ver producto</span>
+          <div class="receta-card" id="${prodId}">
+            <div style="display:flex;gap:0;align-items:stretch;min-height:180px">
+              <div class="receta-body" style="flex:1;min-width:0;padding:14px 16px">
+                <div class="receta-section-title">📊 Información nutricional · Por porción</div>
+                <ul class="receta-ingredients" style="margin-bottom:10px">
+                  <li><b>Porción:</b> ${_prodFood?.porcion||'1 porción'}</li>
+                  <li><b>Energía:</b> ${_prodFood ? Math.round(_prodFood.kcal*(_prodFood.gramos/100)) : '—'} kcal</li>
+                  <li><b>Proteínas:</b> ${_prodFood ? Math.round(_prodFood.p*(_prodFood.gramos/100)*10)/10 : '—'} g</li>
+                  <li><b>Carbohidratos:</b> ${_prodFood ? Math.round(_prodFood.c*(_prodFood.gramos/100)*10)/10 : '—'} g</li>
+                  <li><b>Grasas:</b> ${_prodFood ? Math.round(_prodFood.g*(_prodFood.gramos/100)*10)/10 : '—'} g</li>
+                </ul>
+                ${c.alergenos&&c.alergenos.length?`
+                <div class="receta-section-title" style="color:#92400e">⚠️ Alérgenos declarados</div>
+                <div style="font-size:12px;color:#78350f;background:#fef3c7;border:1px solid #f59e0b;
+                  border-radius:7px;padding:7px 10px;line-height:1.6">
+                  Contiene: <b>${c.alergenos.join(' · ')}</b>
+                </div>`:''}
+              </div>
+              <div style="position:relative;width:180px;min-width:180px;flex-shrink:0;
+                border-radius:0 10px 10px 0;overflow:hidden;
+                background:linear-gradient(135deg,#b91c1c,#ef4444)">
+                <img src="${c.foto}" alt="${c.nombre}"
+                  onerror="this.style.opacity='0'"
+                  style="width:100%;height:100%;object-fit:cover;display:block;transition:opacity .3s">
+                ${c.badge?`<div style="position:absolute;bottom:0;left:0;right:0;
+                  background:linear-gradient(transparent,rgba(90,0,0,.90));
+                  color:white;font-size:10.5px;font-weight:600;padding:20px 10px 10px;
+                  line-height:1.4;text-align:center">${c.badge}</div>`:''}
+              </div>
+            </div>
+          </div>`;
+      }
 
       // Checkbox cumplimiento
       const ckId = `ck-${dayIdx}-${mealIdx}`;
@@ -10106,6 +10202,8 @@ function renderPatientPlan(planData){
         <div class="patient-meal-name">${c.nombre}</div>
         <div class="patient-meal-items">${itemsHtml}</div>
         ${macrosHtml}
+        ${recetaHtml}
+        ${productoHtml}
         ${checkHtml}
       </div>`;
     }).join('');
