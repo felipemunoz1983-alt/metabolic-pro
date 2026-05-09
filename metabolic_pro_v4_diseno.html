@@ -1483,6 +1483,32 @@ textarea {
 }
 @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
 
+/* ── Trial Banner ── */
+#trial-banner {
+  font-size:13px; font-weight:600; color:#fff;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+#trial-banner.trial-active  { background:linear-gradient(90deg,#0a7c5c,#0d9e74); }
+#trial-banner.trial-expired { background:linear-gradient(90deg,#991b1b,#b91c1c); }
+.trial-text    { font-size:13px; font-weight:700; }
+.trial-days-chip {
+  background:rgba(255,255,255,.22); padding:2px 10px; border-radius:20px;
+  font-size:11px; font-weight:800; letter-spacing:.3px;
+}
+.btn-trial-cta {
+  padding:7px 18px; border:none; border-radius:20px; font-size:12px; font-weight:800;
+  cursor:pointer; white-space:nowrap; transition:.15s;
+  background:rgba(255,255,255,.25); color:#fff;
+}
+.btn-trial-cta:hover { background:rgba(255,255,255,.38); }
+.btn-trial-cta-urgent { background:linear-gradient(135deg,#f59e0b,#d97706); }
+.btn-trial-cta-urgent:hover { opacity:.9; }
+@media(max-width:480px){
+  #trial-banner { padding:10px 14px; gap:8px; }
+  .trial-text   { font-size:12px; }
+  .btn-trial-cta { padding:6px 14px; font-size:11px; }
+}
+
 /* ── Auth Modal ── */
 #auth-overlay {
   display:none; position:fixed; inset:0; background:rgba(12,53,71,.55);
@@ -3019,6 +3045,9 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
     </div>
   </div>
 </div>
+
+<!-- BANNER TRIAL / SUSCRIPCIÓN (paciente) -->
+<div id="trial-banner" style="display:none;align-items:center;justify-content:space-between;gap:12px;padding:10px 20px;flex-wrap:wrap;"></div>
 
 <!-- ── BARRA DE USUARIO ── -->
 <div id="user-bar">
@@ -7967,7 +7996,7 @@ async function chatSend(){
   }
 
   // ── Verificar límite plan gratuito ──
-  if(currentPlan !== 'premium' && !canSendFreeMsg()){
+  if(currentPlan !== 'premium' && !isTrialActive && !canSendFreeMsg()){
     renderChatMsg('bot',
       '⭐ **Has alcanzado el límite de ' + FREE_MSG_LIMIT + ' mensajes gratuitos por día.**\n\n' +
       'Activa **Plan Premium** ($6.000/mes) para consultas ilimitadas con tu Nutricionista IA 24/7.\n\n' +
@@ -8005,7 +8034,7 @@ async function chatSend(){
     if(chatHistory.length > 40) chatHistory = chatHistory.slice(-40);
     saveChat();
     // Incrementar contador gratuito solo tras respuesta exitosa
-    if(currentPlan !== 'premium') incrementChatCount();
+    if(currentPlan !== 'premium' && !isTrialActive) incrementChatCount();
     if(!chatOpen) document.getElementById('chat-badge').classList.add('show');
   } catch(err){
     showTyping(false);
@@ -8233,14 +8262,14 @@ function incrementChatCount(){
 }
 
 function canSendFreeMsg(){
-  if(currentPlan === 'premium') return true;
+  if(currentPlan === 'premium' || isTrialActive) return true;
   return getChatDailyData().count < FREE_MSG_LIMIT;
 }
 
 function updateChatCounterUI(){
   const el = document.getElementById('chat-free-counter');
   if(!el) return;
-  if(currentPlan === 'premium'){ el.style.display='none'; return; }
+  if(currentPlan === 'premium' || isTrialActive){ el.style.display='none'; return; }
   el.style.display = 'block';
   const remaining = Math.max(0, FREE_MSG_LIMIT - getChatDailyData().count);
   if(remaining === 0){
@@ -8459,6 +8488,9 @@ let currentUser        = null;
 let currentPlan        = 'gratuito';
 let currentAccessToken = '';
 let authMode           = 'login';
+let currentTrialEndsAt = null;
+let isTrialActive      = false;
+const TRIAL_DAYS       = 7;
 
 /* ── Guardar plan generado en Supabase ── */
 async function supaGuardarPlan(planCtx, planData){
@@ -8604,7 +8636,7 @@ async function authSetUser(user){
     const raw2   = sbKey2 ? localStorage.getItem(sbKey2) : null;
     const tok2   = (() => { try { const s = JSON.parse(raw2); return s?.access_token ?? SUPA_KEY; } catch(_){ return SUPA_KEY; } })();
     const profResp = await fetch(
-      `${SUPA_URL}/rest/v1/profiles?select=nombre,plan,role,professional_id&id=eq.${user.id}&limit=1`,
+      `${SUPA_URL}/rest/v1/profiles?select=nombre,plan,role,professional_id,created_at&id=eq.${user.id}&limit=1`,
       { headers: { 'apikey': SUPA_KEY, 'Authorization': `Bearer ${tok2}` } }
     );
     const profData = profResp.ok ? await profResp.json() : [];
@@ -8614,6 +8646,7 @@ async function authSetUser(user){
       nombre               = profile.nombre          || nombre;
       currentRole          = profile.role            || 'patient';
       currentProfessionalId= profile.professional_id || null;
+      computeTrialStatus(profile);
     }
   } catch(e) { console.warn('Perfil no disponible:', e); }
 
@@ -8635,6 +8668,7 @@ async function authSetUser(user){
   if(profBtn) profBtn.style.display = currentRole === 'professional' ? 'inline-block' : 'none';
 
   document.getElementById('user-bar').classList.add('show');
+  renderTrialBanner();
 
   // Cargar extras de perfil (WhatsApp, expiración plan)
   loadProfileExtras().catch(() => {});
@@ -8652,7 +8686,7 @@ async function authSetUser(user){
 /* ── Aplicar restricciones según plan ── */
 function applyPlanRestrictions(){
   // Premium: acceso completo. Gratuito: sin dashboard ni chat
-  const isPremium = currentPlan === 'premium';
+  const isPremium = currentPlan === 'premium' || isTrialActive;
   const dashBtn = document.querySelector('[onclick="openDashboard()"]');
   const chatFab = document.getElementById('chat-fab');
   if(dashBtn){
@@ -8663,6 +8697,56 @@ function applyPlanRestrictions(){
   if(chatFab){
     chatFab.title = isPremium ? '' : '⭐ Solo plan Premium';
     chatFab.onclick = isPremium ? toggleChat : () => showUpgradeAlert();
+  }
+}
+
+/* ══════════════════════════════════════
+   TRIAL DE 7 DÍAS
+══════════════════════════════════════ */
+function computeTrialStatus(profile){
+  currentTrialEndsAt = null;
+  isTrialActive      = false;
+  if(currentPlan === 'premium' || currentRole === 'professional') return;
+  const createdAt = profile?.created_at ? new Date(profile.created_at) : null;
+  if(!createdAt) return;
+  const trialEnds  = new Date(createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  currentTrialEndsAt = trialEnds;
+  isTrialActive      = new Date() < trialEnds;
+}
+
+function getTrialDaysLeft(){
+  if(!currentTrialEndsAt) return 0;
+  const diff = currentTrialEndsAt - new Date();
+  return Math.max(0, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+}
+
+function renderTrialBanner(){
+  const banner = document.getElementById('trial-banner');
+  if(!banner) return;
+  if(currentRole === 'professional' || currentPlan === 'premium'){
+    banner.style.display = 'none';
+    return;
+  }
+  banner.style.display = 'flex';
+  if(isTrialActive){
+    const d = getTrialDaysLeft();
+    banner.className = 'trial-active';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:15px">🎁</span>
+        <span class="trial-text">Período de prueba gratuita</span>
+        <span class="trial-days-chip">${d} día${d!==1?'s':''} restante${d!==1?'s':''}</span>
+      </div>
+      <button class="btn-trial-cta" onclick="openUpgradeModal()">Ver planes ⭐</button>`;
+  } else {
+    banner.className = 'trial-expired';
+    banner.innerHTML = `
+      <div>
+        <span style="font-size:15px">⚠️</span>
+        <span class="trial-text">Tu período de prueba ha terminado</span>
+        <span style="font-size:11px;opacity:.75;display:block;margin-top:2px;padding-left:26px">Suscríbete para seguir usando todas las funciones</span>
+      </div>
+      <button class="btn-trial-cta btn-trial-cta-urgent" onclick="openUpgradeModal()">Suscribirme ahora</button>`;
   }
 }
 
