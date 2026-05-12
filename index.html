@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Centro Metabólico Pro</title>
+  <meta name="description" content="Plataforma clínica de nutrición deportiva y metabólica · Centro Metabólico Pro">
+
+  <!-- Redirect inmediato si el navegador soporta meta refresh (fallback sin JS) -->
+  <meta http-equiv="refresh" content="0; url=metabolic_pro_v4_diseno.html">
+
+  <!-- Open Graph para que los links compartidos en WhatsApp/Facebook tengan vista previa -->
+  <meta property="og:title" content="Centro Metabólico Pro · Plan nutricional personalizado">
+  <meta property="og:description" content="Evaluación clínica, plan nutricional y seguimiento profesional. Diseñado por nutricionistas para resultados reales.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://felipemunoz1983-alt.github.io/metabolic-pro/">
+
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%;font-family:'Inter','Segoe UI',system-ui,sans-serif}
+    body{
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #dbeafe 100%);
+      display:flex;align-items:center;justify-content:center;
+      color:#0C3547;
+    }
+    .splash{
+      text-align:center;
+      animation: fadeIn 0.4s ease-out;
+    }
+    .logo{
+      font-size:28px;
+      font-weight:700;
+      letter-spacing:-0.02em;
+      color:#039CE0;
+      margin-bottom:8px;
+    }
+    .subtitle{
+      font-size:14px;
+      color:#64748b;
+      font-weight:500;
+      margin-bottom:32px;
+    }
+    .spinner{
+      width:44px;height:44px;
+      border:3px solid #e0f2fe;
+      border-top-color:#1DAEEC;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+      margin:0 auto 20px;
+    }
+    .loading-text{
+      font-size:13px;
+      color:#94a3b8;
+      font-weight:500;
+      letter-spacing:0.02em;
+    }
+    .fallback{
+      margin-top:24px;
+      font-size:13px;
+      color:#64748b;
+    }
+    .fallback a{
+      color:#039CE0;
+      text-decoration:none;
+      font-weight:600;
+      border-bottom:1px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .fallback a:hover{ border-bottom-color:#039CE0; }
+    @keyframes spin{ to { transform: rotate(360deg); } }
+    @keyframes fadeIn{
+      from { opacity:0; transform: translateY(8px); }
+      to   { opacity:1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash">
+    <div class="logo">Centro Metabólico Pro</div>
+    <div class="subtitle">Nutrición clínica deportiva</div>
+    <div class="spinner"></div>
+    <div class="loading-text">Cargando aplicación…</div>
+    <noscript>
+      <div class="fallback">
+        Si no eres redirigido automáticamente,
+        <a href="metabolic_pro_v4_diseno.html">haz click aquí</a>.
+      </div>
+    </noscript>
+  </div>
+
+  <script>
+    // Redirect que PRESERVA query string (fbclid, utm_source, etc.)
+    // Importante para tu tracking de Facebook Ads y campañas
+    (function(){
+      var qs   = window.location.search || '';   // ?fbclid=...&utm_source=...
+      var hash = window.location.hash   || '';   // #algo
+      var target = 'metabolic_pro_v4_diseno.html' + qs + hash;
+      // Replace en vez de href: no agrega entrada al historial
+      window.location.replace(target);
+    })();
+  </script>
+</body>
+</html>
