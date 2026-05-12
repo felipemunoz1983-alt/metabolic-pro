@@ -3236,10 +3236,88 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
     </div>
   </div>
 
-  <!-- Paso 4: Preferencias -->
+  <!-- Paso 4: Salud digestiva (módulo clínico) -->
   <div class="card full">
     <div class="card-header">
       <div class="step-badge">4</div>
+      <h2>Salud digestiva</h2>
+      <span class="card-icon">🧬</span>
+    </div>
+
+    <div class="info-box" style="margin-bottom:14px;">
+      <span class="info-icon">💡</span>
+      <span>Estas preguntas ajustan automáticamente las preparaciones del plan. Un mismo objetivo puede llevar a planes distintos según la tolerancia digestiva del paciente.</span>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">🎈</span> Hinchazón abdominal</label>
+      <div class="option-chips" id="dig-hinchazon-chips">
+        <label class="option-chip"><input type="radio" name="dig-hinchazon" value="nunca" checked> Nunca</label>
+        <label class="option-chip"><input type="radio" name="dig-hinchazon" value="ocasional"> Ocasional</label>
+        <label class="option-chip"><input type="radio" name="dig-hinchazon" value="frecuente"> Frecuente</label>
+        <label class="option-chip"><input type="radio" name="dig-hinchazon" value="diaria"> Diaria</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">🔥</span> Reflujo o acidez</label>
+      <div class="option-chips" id="dig-reflujo-chips">
+        <label class="option-chip"><input type="radio" name="dig-reflujo" value="nunca" checked> Nunca</label>
+        <label class="option-chip"><input type="radio" name="dig-reflujo" value="ocasional"> Ocasional</label>
+        <label class="option-chip"><input type="radio" name="dig-reflujo" value="frecuente"> Frecuente</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">🌀</span> Ritmo intestinal habitual</label>
+      <div class="option-chips" id="dig-ritmo-chips">
+        <label class="option-chip"><input type="radio" name="dig-ritmo" value="normal" checked> Normal</label>
+        <label class="option-chip"><input type="radio" name="dig-ritmo" value="constipacion"> Constipación</label>
+        <label class="option-chip"><input type="radio" name="dig-ritmo" value="diarrea"> Diarrea</label>
+        <label class="option-chip"><input type="radio" name="dig-ritmo" value="alternado"> Alternado</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">⚠️</span> Intolerancias percibidas <span style="font-weight:400;color:var(--muted)">(marca todas las que apliquen)</span></label>
+      <div class="option-chips" id="dig-intolerancias-chips">
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="lactosa"> Lácteos / lactosa</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="gluten"> Gluten / trigo</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="legumbres"> Legumbres</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="cruciferas"> Crucíferas (brócoli, coliflor, repollo)</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="cebolla_ajo"> Cebolla / ajo crudos</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="fodmap"> FODMAPs (manzana, pera, miel, sandía)</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="huevo"> Huevo</label>
+        <label class="option-chip"><input type="checkbox" name="dig-intolerancias" value="frutos_secos"> Frutos secos</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">🩺</span> Diagnóstico previo de SIBO, SII o colon irritable</label>
+      <div class="option-chips" id="dig-diag-chips">
+        <label class="option-chip"><input type="radio" name="dig-diag" value="no" checked> No</label>
+        <label class="option-chip"><input type="radio" name="dig-diag" value="si_sibo"> Sí — SIBO</label>
+        <label class="option-chip"><input type="radio" name="dig-diag" value="si_sii"> Sí — SII / colon irritable</label>
+        <label class="option-chip"><input type="radio" name="dig-diag" value="sospecha"> No, pero sospecha</label>
+      </div>
+    </div>
+
+    <div class="field">
+      <label><span class="lbl-icon">⏰</span> Horario en que aparecen las molestias <span style="font-weight:400;color:var(--muted)">(si las hay)</span></label>
+      <div class="option-chips" id="dig-horario-chips">
+        <label class="option-chip"><input type="checkbox" name="dig-horario" value="manana"> Mañana / ayunas</label>
+        <label class="option-chip"><input type="checkbox" name="dig-horario" value="post_almuerzo"> Después del almuerzo</label>
+        <label class="option-chip"><input type="checkbox" name="dig-horario" value="tarde"> Tarde</label>
+        <label class="option-chip"><input type="checkbox" name="dig-horario" value="noche"> Noche / al acostarse</label>
+        <label class="option-chip"><input type="checkbox" name="dig-horario" value="no_aplica"> No tengo molestias</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Paso 5: Preferencias por tiempo de comida -->
+  <div class="card full">
+    <div class="card-header">
+      <div class="step-badge">5</div>
       <h2>Preferencias por tiempo de comida</h2>
       <span class="card-icon">🍽️</span>
     </div>
@@ -3450,10 +3528,10 @@ input::placeholder { color: #c0cdd8; font-weight: 400; }
 
   </div>
 
-  <!-- ── Sección 5: Alimentos personalizados ── -->
+  <!-- ── Sección 6: Alimentos personalizados ── -->
   <div class="card full">
     <div class="card-header">
-      <div class="step-badge">5</div>
+      <div class="step-badge">6</div>
       <h2>Alimentos personalizados</h2>
       <span class="card-icon">🥫</span>
     </div>
@@ -5397,25 +5475,194 @@ function setLoading(v){
   else{btn.classList.remove("loading");txt.textContent="Generar Plan Nutricional + PowerPoint";btn.disabled=false;}
 }
 
+
+/* ══════════════════════════════════════
+   MÓDULO DIGESTIVO — exclusiones clínicas
+   Mapas y funciones para filtrar alimentos y opciones según perfil digestivo
+   del paciente. Aplica criterios low-FODMAP (Monash), guías ESPEN para SII/SIBO
+   y NICE NG61 para reflujo.
+══════════════════════════════════════ */
+
+const EXCLUSIONES_DIGESTIVAS = {
+  lactosa:      ["ricotta", "cottage", "queso_laminado"],
+  gluten:       ["pan_molde", "pasta", "avena"],
+  legumbres:    ["legumbres"],
+  cruciferas:   [],
+  cebolla_ajo:  [],
+  fodmap:       ["miel", "frutosSecos"],
+  huevo:        ["huevo", "clara_huevo"],
+  frutos_secos: ["frutosSecos", "nueces", "semillas", "chia"]
+};
+
+const EXCLUSIONES_REFLUJO = [
+  "chips_papas", "doritos", "chocolate_leche", "chocolate_sahne_nuss",
+  "helado", "sandwich_helado_nap", "nuggets"
+];
+
+const EXCLUSIONES_DIARREA = [
+  "chia", "semillas", "frutosSecos", "ricotta", "cottage",
+  "legumbres", "bebida_cola", "gomitas", "chocolate_leche"
+];
+
+const EXCLUSIONES_MENU_POR_BANDERA = {
+  sibo_activo: [
+    "atun_palta", "ensalada_prot_atun_cena", "ensalada_prot_pollo_cena",
+    "yogur_granola", "chia_pudding_des", "cottage_frutas_des", "tostadas_ricotta_des"
+  ],
+  reflujo_frecuente: [
+    "salmon_ensalada", "atun_palta", "omelette_cena",
+    "ensalada_prot_atun_cena", "ensalada_prot_pollo_cena"
+  ],
+  cruciferas: ["pollo_verduras", "pavo_vapor", "merluza_verduras"],
+  cebolla_ajo: ["pollo_verduras", "carne_horno", "merluza_verduras"]
+};
+
+function leerPerfilDigestivo(){
+  const q = (sel)=> (document.querySelector(sel)||{}).value;
+  const qa = (sel)=> [...document.querySelectorAll(sel)].map(x=>x.value);
+  const hinchazon = q('input[name="dig-hinchazon"]:checked') || "nunca";
+  const reflujo   = q('input[name="dig-reflujo"]:checked')   || "nunca";
+  const ritmo     = q('input[name="dig-ritmo"]:checked')     || "normal";
+  const diag      = q('input[name="dig-diag"]:checked')      || "no";
+  const intolerancias = qa('input[name="dig-intolerancias"]:checked');
+  const horario       = qa('input[name="dig-horario"]:checked');
+
+  let severidad = "ninguna";
+  if(diag==="si_sibo" || diag==="sospecha" || hinchazon==="diaria" || intolerancias.length>=3){
+    severidad = "severa";
+  } else if(diag==="si_sii" || hinchazon==="frecuente" || intolerancias.length>=1){
+    severidad = "moderada";
+  } else if(hinchazon==="ocasional" || reflujo!=="nunca" || ritmo!=="normal"){
+    severidad = "leve";
+  }
+  return { hinchazon, reflujo, ritmo, diag, intolerancias, horario, severidad };
+}
+
+function alimentosExcluidos(perfil){
+  const excluidos = new Set();
+  perfil.intolerancias.forEach(int => {
+    (EXCLUSIONES_DIGESTIVAS[int] || []).forEach(a => excluidos.add(a));
+  });
+  if(perfil.diag === "si_sibo" || perfil.diag === "sospecha"){
+    EXCLUSIONES_DIGESTIVAS.fodmap.forEach(a => excluidos.add(a));
+    EXCLUSIONES_DIGESTIVAS.legumbres.forEach(a => excluidos.add(a));
+  }
+  if(perfil.reflujo === "frecuente"){
+    EXCLUSIONES_REFLUJO.forEach(a => excluidos.add(a));
+  }
+  if(perfil.ritmo === "diarrea" || perfil.ritmo === "alternado"){
+    EXCLUSIONES_DIARREA.forEach(a => excluidos.add(a));
+  }
+  return excluidos;
+}
+
+function filtrarOpcionesPorDigestivo(opcionesObj, excluidos){
+  const filtrado = {};
+  Object.entries(opcionesObj).forEach(([key, opt]) => {
+    if(typeof opt.items === "function"){
+      const items = opt.items();
+      if(items.some(it => excluidos.has(it.food))) return;
+    }
+    filtrado[key] = opt;
+  });
+  return filtrado;
+}
+
+function filtrarMenusPorDigestivo(opcionesObj, perfil){
+  const banderas = [];
+  if(perfil.diag === "si_sibo" || perfil.diag === "sospecha") banderas.push("sibo_activo");
+  if(perfil.reflujo === "frecuente") banderas.push("reflujo_frecuente");
+  if(perfil.intolerancias.includes("cruciferas")) banderas.push("cruciferas");
+  if(perfil.intolerancias.includes("cebolla_ajo")) banderas.push("cebolla_ajo");
+
+  const bloqueados = new Set();
+  banderas.forEach(b => (EXCLUSIONES_MENU_POR_BANDERA[b] || []).forEach(k => bloqueados.add(k)));
+
+  const filtrado = {};
+  Object.entries(opcionesObj).forEach(([key, opt]) => {
+    if(!bloqueados.has(key)) filtrado[key] = opt;
+  });
+  return filtrado;
+}
+
+function alertasDigestivasParaProfesional(perfil){
+  const alertas = [];
+  if(perfil.diag === "si_sibo")      alertas.push({nivel:"alta",  texto:"Paciente refiere SIBO diagnosticado. Plan generado en low-FODMAP."});
+  if(perfil.diag === "sospecha")     alertas.push({nivel:"media", texto:"Sospecha de SIBO no confirmada. Plan precautorio low-FODMAP. Sugerir test de hidrógeno espirado."});
+  if(perfil.hinchazon === "diaria")  alertas.push({nivel:"alta",  texto:"Hinchazón diaria reportada. Evaluar derivación a gastroenterología."});
+  if(perfil.reflujo === "frecuente") alertas.push({nivel:"media", texto:"Reflujo frecuente. Plan excluye irritantes. Revisar timing de cena (≥3h antes de dormir)."});
+  if(perfil.ritmo === "diarrea")     alertas.push({nivel:"alta",  texto:"Diarrea habitual. Plan bajo en fibra insoluble. Revisar hidratación y electrolitos."});
+  if(perfil.intolerancias.length >= 3) alertas.push({nivel:"media", texto:`Múltiples intolerancias percibidas (${perfil.intolerancias.length}). Confirmar si son reales o restrictivas.`});
+  return alertas;
+}
+
+function notaDigestivaParaPaciente(perfil){
+  if(perfil.severidad === "ninguna") return "";
+  const tags = [];
+  if(perfil.intolerancias.includes("lactosa"))   tags.push("sin lácteos altos en lactosa");
+  if(perfil.intolerancias.includes("gluten"))    tags.push("sin gluten");
+  if(perfil.intolerancias.includes("legumbres")) tags.push("sin legumbres");
+  if(perfil.diag === "si_sibo" || perfil.diag === "sospecha") tags.push("bajo en FODMAPs");
+  if(perfil.reflujo === "frecuente") tags.push("apto para reflujo");
+  if(perfil.ritmo === "diarrea")     tags.push("bajo en fibra insoluble");
+  if(tags.length === 0) return "Tu plan se ajustó a tu perfil digestivo declarado.";
+  return `Tu plan se ajustó automáticamente: ${tags.join(" · ")}.`;
+}
+
+async function guardarPerfilDigestivo(perfil){
+  if(typeof currentUser === "undefined" || !currentUser?.id || !currentAccessToken) return;
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/perfiles_digestivos`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPA_KEY,
+        "Authorization": `Bearer ${currentAccessToken}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+      },
+      body: JSON.stringify({ user_id: currentUser.id, ...perfil })
+    });
+  } catch(err) {
+    console.warn("[digestivo] No se pudo guardar perfil:", err);
+  }
+}
+
+/* ── Fin del módulo digestivo ── */
+
 /* ─── Main ─── */
 function generarSistema(){
   const nombre=n("nombre"),sexo=n("sexo"),edad=num("edad"),peso=num("peso"),talla=num("talla"),grasa=num("grasa"),
         obj=n("objetivo"),dias=num("dias"),dur=num("duracion"),tipo=n("tipo"),tend=n("tendencia"),cron=n("cronotipo"),
-        reeMed=num("reeMedido"),rq=num("rq"),rech=n("rechazos"),
-        almKeys=[...[...document.querySelectorAll('input[name="almuerzos-chips"]:checked')].map(x=>x.value)],
-        alm=(almKeys.length?almKeys:["pollo_arroz"]).map(k=>almuerzosOpts[k].menu);
+        reeMed=num("reeMedido"),rq=num("rq"),rech=n("rechazos");
+
+  // ── PERFIL DIGESTIVO: leer, construir exclusiones y filtrar catálogos ──
+  const __perfilDig = leerPerfilDigestivo();
+  const __excluidos = alimentosExcluidos(__perfilDig);
+  // Filtramos catálogos basados en items() (desayunos, colaciones)
+  const __desayunosOptsF = filtrarOpcionesPorDigestivo(desayunosOpts, __excluidos);
+  const __colMananaOptsF = filtrarOpcionesPorDigestivo(colMañanaOpts, __excluidos);
+  const __colTardeOptsF  = filtrarOpcionesPorDigestivo(colTardeOpts,  __excluidos);
+  // Filtramos menús string (almuerzos, cenas) por banderas digestivas
+  const __almuerzosOptsF = filtrarMenusPorDigestivo(almuerzosOpts, __perfilDig);
+  const __cenasOptsF     = filtrarMenusPorDigestivo(cenasOpts,     __perfilDig);
+  // Exponemos para PPT/Supabase
+  window.__lastPerfilDigestivo = __perfilDig;
+  // ── fin perfil digestivo ──
+
+  let almKeys=[...document.querySelectorAll('input[name="almuerzos-chips"]:checked')].map(x=>x.value);
+  const alm=(almKeys.filter(k=>__almuerzosOptsF[k]).length?almKeys.filter(k=>__almuerzosOptsF[k]):[Object.keys(__almuerzosOptsF)[0]]).map(k=>__almuerzosOptsF[k].menu);
 
   // Leer chips de cena
   const cenasKeys=[...[...document.querySelectorAll('input[name="cenas-chips"]:checked')].map(x=>x.value)];
-  const cenas=(cenasKeys.length?cenasKeys:["pollo_verduras"]).map(k=>cenasOpts[k].menu);
+  const cenas=(cenasKeys.filter(k=>__cenasOptsF[k]).length?cenasKeys.filter(k=>__cenasOptsF[k]):[Object.keys(__cenasOptsF)[0]]).map(k=>__cenasOptsF[k].menu);
 
   // Leer chips seleccionados
   let desKeys=[...[...document.querySelectorAll('input[name="desayunos-chips"]:checked')].map(x=>x.value)];
-  if(desKeys.length===0) desKeys=["avena_proteica"];
+  desKeys = desKeys.filter(k=>__desayunosOptsF[k]); if(desKeys.length===0) desKeys=[Object.keys(__desayunosOptsF)[0] || "avena_proteica"];
   let colManKeys=[...[...document.querySelectorAll('input[name="col-manana-chips"]:checked')].map(x=>x.value)];
-  if(colManKeys.length===0) colManKeys=["avena_proteica"];
+  colManKeys = colManKeys.filter(k=>__colMananaOptsF[k]); if(colManKeys.length===0) colManKeys=[Object.keys(__colMananaOptsF)[0] || "avena_proteica"];
   let onceKeys=[...[...document.querySelectorAll('input[name="once-chips"]:checked')].map(x=>x.value)];
-  if(onceKeys.length===0) onceKeys=["yogur_frutossecos_am"];
+  onceKeys = onceKeys.filter(k=>__colTardeOptsF[k] || colTardeOpts[k]); if(onceKeys.length===0) onceKeys=[Object.keys(__colTardeOptsF)[0] || "yogur_frutossecos_am"];
   const protGramsEl = document.querySelector('input[name="prot-gramos-alm"]:checked');
   const protGrams = protGramsEl ? Number(protGramsEl.value) : 200;
   const protGramsCenaEl = document.querySelector('input[name="prot-gramos-cena"]:checked');
@@ -5488,6 +5735,36 @@ function generarSistema(){
         </div>
         <p style="font-size:12.5px;color:var(--muted);margin-top:10px">📋 Base: ${reeMed?"Calorimetría indirecta ingresada":"Harris-Benedict estimada"}${mac.nota?` · ${mac.nota}`:""}${grasa?` · % grasa declarado: ${grasa}%`:""}</p>
       </div>`;
+
+      // ── NUEVO: tarjeta de ajuste digestivo y alertas clínicas ──
+      const __notaDigPac = notaDigestivaParaPaciente(__perfilDig);
+      if(__notaDigPac){
+        html += `<div class="card" style="border-left:4px solid var(--cyan);background:#f0f9ff;margin-top:14px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span style="font-size:22px;">🧬</span>
+            <div>
+              <b style="color:var(--navy);">Ajuste digestivo aplicado</b>
+              <p style="margin:4px 0 0;font-size:13px;color:var(--text);">${__notaDigPac}</p>
+            </div>
+          </div>
+        </div>`;
+      }
+      const __alertasDig = alertasDigestivasParaProfesional(__perfilDig);
+      if(__alertasDig.length > 0 && (typeof APP_MODE === "undefined" || APP_MODE === "pro")){
+        const __items = __alertasDig.map(a => {
+          const __color = a.nivel === "alta" ? "#ef4444" : "#f59e0b";
+          return `<li style="margin-bottom:8px;padding-left:8px;border-left:3px solid ${__color};list-style:none;">
+            <b style="color:${__color};">${a.nivel.toUpperCase()}</b> · ${a.texto}
+          </li>`;
+        }).join("");
+        html += `<div class="card" style="border-left:4px solid #f59e0b;margin-top:14px;">
+          <b style="color:#92400e;">⚠ Alertas clínicas para el profesional</b>
+          <ul style="list-style:none;padding:10px 0 0 0;margin:0;">${__items}</ul>
+        </div>`;
+      }
+      // Persistir perfil en Supabase (silencioso si no hay sesión)
+      try { guardarPerfilDigestivo(__perfilDig); } catch(_) {}
+
 
       /* ── Sección 2: Plan diario ── */
       html+=`<div class="card result-section">
