@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { PlanGenerator } from '@/components/plan/PlanGenerator'
+import { PlanResult } from '@/components/plan/PlanResult'
 import type { Profile } from '@/types'
+import type { NutritionResult, FormData } from '@/lib/nutrition'
 import { motion } from 'framer-motion'
 
 export default function PacientePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [result, setResult] = useState<NutritionResult | null>(null)
+  const [formData, setFormData] = useState<FormData | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -23,11 +28,16 @@ export default function PacientePage() {
     load()
   }, [])
 
+  function handleResult(r: NutritionResult, f: FormData) {
+    setResult(r)
+    setFormData(f)
+  }
+
   return (
     <div className="min-h-screen bg-[#F0F4F8]">
       {/* Header */}
       <header className="bg-gradient-to-r from-[#081F2D] via-[#0C3547] to-[#0e4f6a] shadow-lg">
-        <div className="max-w-6xl mx-auto px-6 py-5 flex items-center gap-4">
+        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center gap-4">
           <div className="w-11 h-11 bg-gradient-to-br from-[#29ABE2] to-[#1a7fad] rounded-xl flex items-center justify-center text-white font-black text-base">
             C|M
           </div>
@@ -39,9 +49,7 @@ export default function PacientePage() {
           </div>
           <div className="ml-auto flex items-center gap-3">
             {profile && (
-              <span className="text-sm text-[#9EC8E0] font-medium">
-                {profile.nombre}
-              </span>
+              <span className="text-sm text-[#9EC8E0] font-medium">{profile.nombre}</span>
             )}
             <button
               onClick={() => supabase.auth.signOut().then(() => window.location.href = '/login')}
@@ -54,38 +62,17 @@ export default function PacientePage() {
       </header>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {/* Plan nutricional */}
-          <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-6 col-span-full">
-            <h2 className="text-lg font-bold text-[#0C3547] mb-2">📋 Tu Plan Nutricional</h2>
-            <p className="text-sm text-[#6B7C93]">Aquí se mostrará tu plan nutricional personalizado.</p>
-          </div>
-
-          {/* Dashboard calorías */}
-          <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-6">
-            <h2 className="text-base font-bold text-[#0C3547] mb-2">📊 Dashboard calórico</h2>
-            <p className="text-sm text-[#6B7C93]">Registro diario de adherencia.</p>
-          </div>
-
-          {/* Chat IA */}
-          <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-6">
-            <h2 className="text-base font-bold text-[#0C3547] mb-2">🤖 Chat IA Nutricional</h2>
-            <p className="text-sm text-[#6B7C93]">Consulta a tu nutricionista virtual 24/7.</p>
-          </div>
-
-          {/* Plan Premium */}
-          <div className="bg-gradient-to-br from-[#0C3547] to-[#145272] rounded-2xl shadow p-6 text-white">
-            <h2 className="text-base font-bold mb-2">⭐ Plan Premium</h2>
-            <p className="text-sm text-[#9EC8E0] mb-4">Desbloquea todas las funciones.</p>
-            <button className="bg-[#29ABE2] text-white text-sm font-bold px-4 py-2 rounded-xl hover:bg-[#1a9ed4] transition">
-              Ver planes
-            </button>
-          </div>
+      <main className="max-w-4xl mx-auto px-6 py-10">
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+          {result && formData ? (
+            <PlanResult
+              result={result}
+              form={formData}
+              onReset={() => { setResult(null); setFormData(null) }}
+            />
+          ) : (
+            <PlanGenerator onResult={handleResult} />
+          )}
         </motion.div>
       </main>
     </div>
