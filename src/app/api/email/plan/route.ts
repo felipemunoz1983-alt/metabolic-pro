@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendMail } from '@/lib/mailer'
 
 interface PlanEmailBody {
   patientEmail: string
@@ -42,46 +43,21 @@ function buildHtml(body: PlanEmailBody): string {
                 <td style="padding:20px 24px;">
                   <p style="margin:0 0 16px;font-size:11px;font-weight:700;letter-spacing:2px;color:#8ba5be;text-transform:uppercase;">Resumen de tu plan</p>
                   <table width="100%" cellpadding="0" cellspacing="0">
+                    ${[
+                      ['Objetivo', planObjetivo],
+                      ['Kcal/dia', `${planKcal} kcal`],
+                      ['Proteina', `${macros.p}g`],
+                      ['Carbohidratos', `${macros.c}g`],
+                      ['Grasas', `${macros.g}g`],
+                    ].map(([label, value], i, arr) => `
                     <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;">
-                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">Objetivo</span>
+                      <td style="padding:8px 0;${i < arr.length - 1 ? 'border-bottom:1px solid #e2ecf4;' : ''}">
+                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">${label}</span>
                       </td>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;text-align:right;">
-                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${planObjetivo}</span>
+                      <td style="padding:8px 0;${i < arr.length - 1 ? 'border-bottom:1px solid #e2ecf4;' : ''}text-align:right;">
+                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${value}</span>
                       </td>
-                    </tr>
-                    <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;">
-                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">Kcal/dia</span>
-                      </td>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;text-align:right;">
-                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${planKcal} kcal</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;">
-                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">Proteina</span>
-                      </td>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;text-align:right;">
-                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${macros.p}g</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;">
-                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">Carbohidratos</span>
-                      </td>
-                      <td style="padding:8px 0;border-bottom:1px solid #e2ecf4;text-align:right;">
-                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${macros.c}g</span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td style="padding:8px 0;">
-                        <span style="font-size:13px;color:#4a6b80;font-weight:600;">Grasas</span>
-                      </td>
-                      <td style="padding:8px 0;text-align:right;">
-                        <span style="font-size:13px;color:#0C1F2C;font-weight:800;">${macros.g}g</span>
-                      </td>
-                    </tr>
+                    </tr>`).join('')}
                   </table>
                 </td>
               </tr>
@@ -116,14 +92,6 @@ function buildHtml(body: PlanEmailBody): string {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.warn('[email/plan] RESEND_API_KEY not set — skipping email')
-    return NextResponse.json({ ok: true, skipped: true })
-  }
-
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'Centro Metabolico <noreply@centrometabolico.cl>'
-
   let body: PlanEmailBody
   try {
     body = (await req.json()) as PlanEmailBody
@@ -131,34 +99,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const html = buildHtml(body)
+  const result = await sendMail({
+    to: body.patientEmail,
+    subject: 'Tu profesional ha preparado un nuevo plan nutricional',
+    html: buildHtml(body),
+  })
 
-  let resendRes: Response
-  try {
-    resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [body.patientEmail],
-        subject: 'Tu profesional ha preparado un nuevo plan nutricional',
-        html,
-      }),
-    })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('[email/plan] fetch error:', message)
-    return NextResponse.json({ error: message }, { status: 500 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
-  if (!resendRes.ok) {
-    const errText = await resendRes.text()
-    console.error('[email/plan] Resend error:', resendRes.status, errText)
-    return NextResponse.json({ error: errText }, { status: 500 })
-  }
-
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, skipped: result.skipped })
 }

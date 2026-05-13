@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendMail } from '@/lib/mailer'
 
 interface InviteEmailBody {
   patientEmail: string
@@ -8,7 +9,7 @@ interface InviteEmailBody {
 }
 
 function buildHtml(body: InviteEmailBody): string {
-  const { professionalName, inviteLink, appUrl } = body
+  const { professionalName, inviteLink } = body
   return `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Invitacion a Centro Metabolico Pro</title></head>
@@ -93,14 +94,6 @@ function buildHtml(body: InviteEmailBody): string {
 }
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    console.warn('[email/invite] RESEND_API_KEY not set — skipping email')
-    return NextResponse.json({ ok: true, skipped: true })
-  }
-
-  const fromEmail = process.env.RESEND_FROM_EMAIL ?? 'Centro Metabolico <noreply@centrometabolico.cl>'
-
   let body: InviteEmailBody
   try {
     body = (await req.json()) as InviteEmailBody
@@ -108,34 +101,15 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const html = buildHtml(body)
+  const result = await sendMail({
+    to: body.patientEmail,
+    subject: `${body.professionalName} te invita a Centro Metabolico Pro`,
+    html: buildHtml(body),
+  })
 
-  let resendRes: Response
-  try {
-    resendRes = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: fromEmail,
-        to: [body.patientEmail],
-        subject: `${body.professionalName} te invita a Centro Metabolico Pro`,
-        html,
-      }),
-    })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('[email/invite] fetch error:', message)
-    return NextResponse.json({ error: message }, { status: 500 })
+  if (!result.ok) {
+    return NextResponse.json({ error: result.error }, { status: 500 })
   }
 
-  if (!resendRes.ok) {
-    const errText = await resendRes.text()
-    console.error('[email/invite] Resend error:', resendRes.status, errText)
-    return NextResponse.json({ error: errText }, { status: 500 })
-  }
-
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, skipped: result.skipped })
 }

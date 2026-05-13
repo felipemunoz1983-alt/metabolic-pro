@@ -7,6 +7,7 @@ import { OBJETIVO_LABELS } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
 import { WeeklyPlan } from './WeeklyPlan'
+import { ShoppingList } from './ShoppingList'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
 import { cn } from '@/lib/utils'
 
@@ -231,6 +232,9 @@ export function PlanResult({ result, form, onReset }: Props) {
 
       {/* Plan semanal detallado */}
       <WeeklyPlan plan={weekPlan} />
+
+      {/* Lista de supermercado generada automáticamente */}
+      <ShoppingList plan={weekPlan} />
 
       {/* Productos Nutrevo recomendados según objetivo */}
       <NutrievoPanel objetivo={form.objetivo} />

@@ -1,1 +1,1 @@
-export type Tab = 'plan' | 'dashboard' | 'chat' | 'historial' | 'pacientes'
+export type Tab = 'plan' | 'dashboard' | 'chat' | 'historial' | 'pacientes' | 'perfil'

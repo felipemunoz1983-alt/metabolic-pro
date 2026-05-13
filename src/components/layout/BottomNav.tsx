@@ -4,9 +4,8 @@ import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
 import type { Tab } from './types'
 import {
-  LayoutDashboard, ClipboardList, Bot, History, Users, LogOut, Lock,
+  LayoutDashboard, ClipboardList, Bot, History, Users, UserCircle, Lock,
 } from 'lucide-react'
-import { createClient } from '@/lib/supabase'
 import { hasAccess } from '@/types'
 
 const NAV_BASE: { id: Tab; icon: React.ElementType; label: string }[] = [
@@ -14,6 +13,7 @@ const NAV_BASE: { id: Tab; icon: React.ElementType; label: string }[] = [
   { id: 'plan',      icon: ClipboardList,   label: 'Nutrición' },
   { id: 'chat',      icon: Bot,             label: 'Asistente' },
   { id: 'historial', icon: History,         label: 'Historial' },
+  { id: 'perfil',    icon: UserCircle,      label: 'Perfil' },
 ]
 
 const NAV_PRO: { id: Tab; icon: React.ElementType; label: string } = {
@@ -29,9 +29,12 @@ interface Props {
 const GATED_TABS: Tab[] = ['chat']
 
 export function BottomNav({ profile, activeTab, onTabChange }: Props) {
-  const supabase = createClient()
   const isPro = profile?.role === 'professional'
-  const navItems = isPro ? [...NAV_BASE, NAV_PRO] : NAV_BASE
+  // Professionals: replace last base item (perfil) temporarily after pacientes
+  const navItems = isPro
+    ? [...NAV_BASE.slice(0, 3), NAV_PRO, NAV_BASE[4]]   // dashboard, plan, chat, pacientes, perfil
+    : NAV_BASE
+
   const userHasAccess = profile ? hasAccess(profile) : false
 
   return (
@@ -45,6 +48,8 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
         const Icon = item.icon
         const isActive = activeTab === item.id
         const isLocked = GATED_TABS.includes(item.id) && !userHasAccess
+        const isPerfil  = item.id === 'perfil'
+
         return (
           <button
             key={item.id}
@@ -62,7 +67,19 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
               'w-8 h-8 flex items-center justify-center rounded-xl transition-all relative',
               isActive ? 'bg-[#29ABE2]/15' : ''
             )}>
-              <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              {/* Avatar initial for perfil */}
+              {isPerfil && profile ? (
+                <div className={cn(
+                  'w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-black transition-all',
+                  isActive
+                    ? 'bg-[#29ABE2]/30 text-[#29ABE2] border border-[#29ABE2]/50'
+                    : 'bg-white/10 text-[#6B8FA8]'
+                )}>
+                  {profile.nombre?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              ) : (
+                <Icon size={18} strokeWidth={isActive ? 2.5 : 2} />
+              )}
               {isLocked && (
                 <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full flex items-center justify-center">
                   <Lock size={7} className="text-white" />
@@ -76,17 +93,6 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
           </button>
         )
       })}
-
-      {/* Sign out — compact */}
-      <button
-        onClick={() => supabase.auth.signOut().then(() => window.location.href = '/login')}
-        className="flex-none px-3 flex flex-col items-center justify-center gap-0.5 py-2.5 text-[#3D5A70] hover:text-red-400 transition-colors"
-      >
-        <div className="w-8 h-8 flex items-center justify-center rounded-xl">
-          <LogOut size={16} />
-        </div>
-        <span className="text-[9px] font-semibold leading-none">Salir</span>
-      </button>
     </nav>
   )
 }

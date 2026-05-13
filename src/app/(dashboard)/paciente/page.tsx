@@ -13,6 +13,7 @@ import { Historial } from '@/components/historial/Historial'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { FoodScanner } from '@/components/dashboard/FoodScanner'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
+import { PerfilPanel } from '@/components/perfil/PerfilPanel'
 import type { Profile } from '@/types'
 import { hasAccess } from '@/types'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
@@ -85,6 +86,7 @@ function TopBar({
     chat:       { title: 'Asistente IA',   subtitle: 'Consulta clínica inteligente' },
     historial:  { title: 'Historial',      subtitle: 'Planes y seguimiento anteriores' },
     pacientes:  { title: 'Mis Pacientes',  subtitle: 'Panel profesional — gestión y seguimiento' },
+    perfil:     { title: 'Mi Perfil',      subtitle: 'Cuenta, suscripción y ajustes' },
   }
   const { title, subtitle } = TAB_LABELS[activeTab]
   const today = new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -313,6 +315,11 @@ export default function PacientePage() {
                   professionalId={userId}
                   professionalName={profile?.nombre ?? undefined}
                 />
+              )}
+
+              {/* ── Perfil ── */}
+              {activeTab === 'perfil' && profile && userId && (
+                <PerfilPanel profile={profile} userId={userId} />
               )}
             </motion.div>
           </AnimatePresence>

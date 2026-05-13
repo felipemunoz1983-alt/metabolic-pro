@@ -52,6 +52,31 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         .update({ plan: planType, premium_until: premiumUntil.toISOString() })
         .eq('id', payment.user_id)
 
+      // Fire confirmation email (best-effort — don't block redirect on failure)
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('email, nombre')
+          .eq('id', payment.user_id)
+          .single()
+
+        if (profile?.email) {
+          await fetch(`${appUrl}/api/email/payment-confirm`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              userEmail:    profile.email,
+              userName:     profile.nombre ?? 'Usuario',
+              planType,
+              premiumUntil: premiumUntil.toISOString(),
+              appUrl,
+            }),
+          })
+        }
+      } catch (emailErr) {
+        console.error('[webpay/confirm] email send failed (non-fatal):', emailErr)
+      }
+
       return NextResponse.redirect(`${appUrl}/payment/success`)
     } else {
       await supabase

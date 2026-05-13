@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
 import type { Tab } from './types'
@@ -10,7 +9,6 @@ import {
   ClipboardList,
   Bot,
   History,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Activity,
@@ -18,6 +16,7 @@ import {
   Star,
   Clock,
   Lock,
+  UserCircle,
 } from 'lucide-react'
 import { isOnTrial, trialDaysLeft, hasAccess } from '@/types'
 
@@ -26,6 +25,7 @@ const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: str
   { id: 'plan',      label: 'Nutrición',    icon: ClipboardList,   sublabel: 'Plan alimentario' },
   { id: 'chat',      label: 'Asistente IA', icon: Bot,             sublabel: 'Consulta clínica' },
   { id: 'historial', label: 'Historial',    icon: History,         sublabel: 'Planes anteriores' },
+  { id: 'perfil',    label: 'Mi Perfil',    icon: UserCircle,      sublabel: 'Cuenta y suscripción' },
 ]
 
 const NAV_PRO: { id: Tab; label: string; icon: React.ElementType; sublabel: string } = {
@@ -39,7 +39,6 @@ interface Props {
 }
 
 export function Sidebar({ profile, activeTab, onTabChange }: Props) {
-  const supabase = createClient()
   const [collapsed, setCollapsed] = useState(false)
 
   const isPro = profile?.role === 'professional'
@@ -206,44 +205,46 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
         )
       })()}
 
-      {/* User + sign out */}
-      <div className={cn('border-t border-white/5 p-3', collapsed && 'flex flex-col items-center gap-2')}>
-        {profile && !collapsed && (
-          <div className="flex items-center gap-2.5 mb-2 px-1">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#29ABE2]/30 to-[#1a6fa0]/30 border border-[#29ABE2]/30 flex items-center justify-center flex-shrink-0">
+      {/* User mini-card at bottom */}
+      {profile && (
+        <div className={cn('border-t border-white/5 p-3', collapsed && 'flex justify-center')}>
+          {!collapsed ? (
+            <button
+              onClick={() => onTabChange('perfil')}
+              className="w-full flex items-center gap-2.5 px-2 py-2 rounded-xl hover:bg-white/5 transition text-left group"
+            >
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#29ABE2]/30 to-[#1a6fa0]/30 border border-[#29ABE2]/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-[11px] font-bold text-[#29ABE2]">
+                  {profile.nombre?.charAt(0).toUpperCase() || 'U'}
+                </span>
+              </div>
+              <div className="overflow-hidden flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-white truncate">{profile.nombre || 'Usuario'}</p>
+                <span className={cn(
+                  'text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mt-0.5',
+                  profile.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-[#6B8FA8]'
+                )}>
+                  {profile.plan === 'professional' ? '⭐ Profesional'
+                    : profile.plan === 'patient' ? '⭐ Paciente'
+                    : profile.plan === 'individual' ? '⭐ Individual'
+                    : 'Gratuito'}
+                </span>
+              </div>
+              <ChevronRight size={12} className="text-[#3D5A70] group-hover:text-white transition flex-shrink-0" />
+            </button>
+          ) : (
+            <button
+              onClick={() => onTabChange('perfil')}
+              title="Mi Perfil"
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-[#29ABE2]/30 to-[#1a6fa0]/30 border border-[#29ABE2]/30 flex items-center justify-center hover:border-[#29ABE2]/60 transition"
+            >
               <span className="text-[11px] font-bold text-[#29ABE2]">
                 {profile.nombre?.charAt(0).toUpperCase() || 'U'}
               </span>
-            </div>
-            <div className="overflow-hidden flex-1 min-w-0">
-              <p className="text-[11px] font-semibold text-white truncate">{profile.nombre || 'Usuario'}</p>
-              <span className={cn(
-                'text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mt-0.5',
-                profile.plan !== 'gratuito'
-                  ? 'bg-amber-500/20 text-amber-400'
-                  : 'bg-white/10 text-[#6B8FA8]'
-              )}>
-                {profile.plan === 'professional' ? '⭐ Profesional'
-                  : profile.plan === 'patient' ? '⭐ Paciente'
-                  : profile.plan === 'individual' ? '⭐ Individual'
-                  : 'Gratuito'}
-              </span>
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => supabase.auth.signOut().then(() => window.location.href = '/login')}
-          title="Cerrar sesión"
-          className={cn(
-            'flex items-center gap-2.5 text-[#3D5A70] hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all',
-            collapsed ? 'p-2.5 w-full justify-center' : 'w-full px-3 py-2'
+            </button>
           )}
-        >
-          <LogOut size={14} />
-          {!collapsed && <span className="text-[11px] font-semibold">Cerrar sesión</span>}
-        </button>
-      </div>
+        </div>
+      )}
     </aside>
   )
 }
