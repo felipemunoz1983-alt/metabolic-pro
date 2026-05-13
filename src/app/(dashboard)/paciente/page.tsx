@@ -2,14 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase'
+import { Navbar, type Tab } from '@/components/layout/Navbar'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
 import { PlanResult } from '@/components/plan/PlanResult'
+import { CalorieDashboard } from '@/components/dashboard/CalorieDashboard'
+import { ChatIA } from '@/components/chat/ChatIA'
 import type { Profile } from '@/types'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 export default function PacientePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<Tab>('plan')
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
   const supabase = createClient()
@@ -18,6 +23,7 @@ export default function PacientePage() {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
+      setUserId(user.id)
       const { data } = await supabase
         .from('profiles')
         .select('*')
@@ -35,45 +41,57 @@ export default function PacientePage() {
 
   return (
     <div className="min-h-screen bg-[#F0F4F8]">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-[#081F2D] via-[#0C3547] to-[#0e4f6a] shadow-lg">
-        <div className="max-w-4xl mx-auto px-6 py-5 flex items-center gap-4">
-          <div className="w-11 h-11 bg-gradient-to-br from-[#29ABE2] to-[#1a7fad] rounded-xl flex items-center justify-center text-white font-black text-base">
-            C|M
-          </div>
-          <div>
-            <h1 className="text-xl font-extrabold text-white">
-              Centro Metabólico <span className="text-[#29ABE2]">Pro</span>
-            </h1>
-            <p className="text-xs text-[#9EC8E0]">Generador de Plan Nutricional</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            {profile && (
-              <span className="text-sm text-[#9EC8E0] font-medium">{profile.nombre}</span>
-            )}
-            <button
-              onClick={() => supabase.auth.signOut().then(() => window.location.href = '/login')}
-              className="text-xs text-[#9EC8E0] border border-[#9EC8E0]/30 px-3 py-1.5 rounded-lg hover:bg-white/10 transition"
-            >
-              Cerrar sesión
-            </button>
-          </div>
-        </div>
-      </header>
+      <Navbar profile={profile} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-6 py-10">
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          {result && formData ? (
-            <PlanResult
-              result={result}
-              form={formData}
-              onReset={() => { setResult(null); setFormData(null) }}
-            />
-          ) : (
-            <PlanGenerator onResult={handleResult} />
-          )}
-        </motion.div>
+      <main className="max-w-5xl mx-auto px-6 py-8">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Tab: Plan */}
+            {activeTab === 'plan' && (
+              result && formData ? (
+                <PlanResult
+                  result={result}
+                  form={formData}
+                  onReset={() => { setResult(null); setFormData(null) }}
+                />
+              ) : (
+                <PlanGenerator onResult={handleResult} />
+              )
+            )}
+
+            {/* Tab: Dashboard */}
+            {activeTab === 'dashboard' && userId && (
+              <CalorieDashboard
+                userId={userId}
+                targetKcal={result?.kcal ? Math.round(result.kcal) : 2000}
+              />
+            )}
+
+            {/* Tab: Chat IA */}
+            {activeTab === 'chat' && (
+              <ChatIA
+                userName={profile?.nombre || 'Paciente'}
+                targetKcal={result?.kcal ? Math.round(result.kcal) : undefined}
+                objetivo={formData?.objetivo}
+              />
+            )}
+
+            {/* Tab: Historial */}
+            {activeTab === 'historial' && (
+              <div className="bg-white rounded-2xl border border-[#D6E3ED] p-8 text-center">
+                <p className="text-4xl mb-3">🗂️</p>
+                <h3 className="text-lg font-bold text-[#0C3547] mb-2">Historial de Planes</h3>
+                <p className="text-[#6B7C93] text-sm">Próximamente — Memoria de planes anteriores</p>
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </main>
     </div>
   )
