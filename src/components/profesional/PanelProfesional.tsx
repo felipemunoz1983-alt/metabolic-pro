@@ -12,7 +12,7 @@ import {
   Search, Plus, ArrowLeft, User, Users,
   Target, TrendingUp, Clock,
   CheckCircle, AlertCircle, RefreshCw,
-  Link2, Mail, Copy, X, UserPlus,
+  Link2, Mail, Copy, X, UserPlus, Send,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -111,9 +111,13 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
 function PatientDetail({
   patient,
   onBack,
+  professionalId,
+  professionalName,
 }: {
   patient: PatientRow
   onBack: () => void
+  professionalId: string
+  professionalName: string
 }) {
   const supabase = createClient()
   const [logs, setLogs] = useState<PatientRow['lastLog'][]>([])
@@ -121,6 +125,7 @@ function PatientDetail({
   const [view, setView] = useState<'overview' | 'plan'>('overview')
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
   const [planForm, setPlanForm] = useState<FormData | null>(null)
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   useEffect(() => {
     async function loadLogs() {
@@ -148,14 +153,51 @@ function PatientDetail({
 
   const ultimoPeso = logs.find(l => l?.peso)?.peso
 
-  function handlePlanResult(r: NutritionResult, f: FormData) {
+  async function handlePlanResult(r: NutritionResult, f: FormData) {
     setPlanResult(r)
     setPlanForm(f)
+
+    // Save plan to Supabase
+    await supabase.from('planes_nutricionales').insert({
+      user_id: patient.id,
+      professional_id: professionalId,
+      objetivo: f.objetivo,
+      kcal: Math.round(r.kcal),
+      proteina: r.macros.p,
+      carbohidrato: r.macros.c,
+      grasa: r.macros.g,
+      plan_json: { form: f, result: r },
+    })
+
+    // Send email notification
+    setEmailStatus('sending')
+    try {
+      const res = await fetch('/api/email/plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientEmail: patient.email,
+          patientName: patient.nombre,
+          professionalName,
+          planKcal: Math.round(r.kcal),
+          planObjetivo: f.objetivo,
+          macros: { p: r.macros.p, c: r.macros.c, g: r.macros.g },
+          appUrl: typeof window !== 'undefined' ? window.location.origin : '',
+        }),
+      })
+      if (res.ok) {
+        setEmailStatus('sent')
+      } else {
+        setEmailStatus('error')
+      }
+    } catch {
+      setEmailStatus('error')
+    }
   }
 
   if (view === 'plan') {
     return (
-      <div className="px-8 py-6 max-w-3xl mx-auto">
+      <div className="px-4 py-4 md:px-8 md:py-6 max-w-3xl mx-auto">
         {/* Back */}
         <button
           onClick={() => { setView('overview'); setPlanResult(null); setPlanForm(null) }}
@@ -165,11 +207,31 @@ function PatientDetail({
         </button>
 
         {planResult && planForm ? (
-          <PlanResult
-            result={planResult}
-            form={planForm}
-            onReset={() => { setPlanResult(null); setPlanForm(null) }}
-          />
+          <>
+            <PlanResult
+              result={planResult}
+              form={planForm}
+              onReset={() => { setPlanResult(null); setPlanForm(null); setEmailStatus('idle') }}
+            />
+            {emailStatus === 'sending' && (
+              <div className="mt-4 flex items-center gap-2 bg-[#F0F6FA] border border-[#E2ECF4] rounded-xl px-4 py-3">
+                <RefreshCw size={14} className="text-[#8BA5BE] animate-spin flex-shrink-0" />
+                <p className="text-xs text-[#6B7C93] font-medium">Enviando notificacion al paciente...</p>
+              </div>
+            )}
+            {emailStatus === 'sent' && (
+              <div className="mt-4 flex items-center gap-2 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <CheckCircle size={14} className="text-green-600 flex-shrink-0" />
+                <p className="text-xs text-green-700 font-medium">Plan guardado y email enviado a {patient.email}</p>
+              </div>
+            )}
+            {emailStatus === 'error' && (
+              <div className="mt-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+                <p className="text-xs text-amber-700 font-medium">Plan guardado. No se pudo enviar el email.</p>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className="bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl px-4 py-3 mb-6 flex items-center gap-3">
@@ -186,7 +248,7 @@ function PatientDetail({
   }
 
   return (
-    <div className="px-8 py-6 max-w-4xl mx-auto">
+    <div className="px-4 py-4 md:px-8 md:py-6 max-w-4xl mx-auto">
       {/* Back + header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -232,7 +294,7 @@ function PatientDetail({
         </div>
 
         {/* KPI row */}
-        <div className="grid grid-cols-4 gap-3 mt-5">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
           {[
             { label: 'Planes generados', value: patient.planCount ?? 0, unit: '' },
             { label: 'Adherencia media', value: adherenciaMedia !== null ? `${adherenciaMedia}%` : '—', unit: '' },
@@ -313,10 +375,12 @@ function PatientDetail({
 // ─── Modal Vincular Paciente ──────────────────────────────────────────────────
 function ModalVincular({
   professionalId,
+  professionalName,
   onClose,
   onSuccess,
 }: {
   professionalId: string
+  professionalName: string
   onClose: () => void
   onSuccess: () => void
 }) {
@@ -326,6 +390,7 @@ function ModalVincular({
   const [status, setStatus] = useState<'idle' | 'loading' | 'found' | 'not_found' | 'already' | 'done' | 'error'>('idle')
   const [foundProfile, setFoundProfile] = useState<Profile | null>(null)
   const [copied, setCopied] = useState(false)
+  const [inviteEmailStatus, setInviteEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   // Código corto visual + link completo con ID decodificable
   const inviteCode = btoa(professionalId).slice(0, 12).toUpperCase()
@@ -365,6 +430,31 @@ function ModalVincular({
     navigator.clipboard.writeText(inviteLink)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  async function sendInviteEmail() {
+    if (!email.trim()) return
+    setInviteEmailStatus('sending')
+    try {
+      const res = await fetch('/api/email/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientEmail: email.trim().toLowerCase(),
+          professionalName,
+          inviteLink,
+          appUrl: typeof window !== 'undefined' ? window.location.origin : '',
+        }),
+      })
+      setInviteEmailStatus(res.ok ? 'sent' : 'error')
+    } catch {
+      setInviteEmailStatus('error')
+    }
+  }
+
+  function shareWhatsApp() {
+    const text = `Hola! Te invito a registrarte en Centro Metabolico Pro para hacer seguimiento de tu alimentacion conmigo. Usa este link: ${inviteLink}`
+    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
   return (
@@ -441,8 +531,33 @@ function ModalVincular({
               {/* Results */}
               <AnimatePresence mode="wait">
                 {status === 'not_found' && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 font-medium">
-                    ⚠️ No se encontró ningún usuario con ese email. Comparte el link de invitación para que se registre.
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-2">
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-700 font-medium">
+                      Paciente no registrado aun. Enviamosle una invitacion por email.
+                    </div>
+                    {inviteEmailStatus === 'idle' && (
+                      <button
+                        onClick={sendInviteEmail}
+                        className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition"
+                      >
+                        <Send size={12} /> Enviar invitacion a {email.trim().toLowerCase()}
+                      </button>
+                    )}
+                    {inviteEmailStatus === 'sending' && (
+                      <div className="flex items-center justify-center gap-2 text-xs text-[#8BA5BE] py-2">
+                        <RefreshCw size={12} className="animate-spin" /> Enviando...
+                      </div>
+                    )}
+                    {inviteEmailStatus === 'sent' && (
+                      <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-bold text-center">
+                        Email de invitacion enviado
+                      </div>
+                    )}
+                    {inviteEmailStatus === 'error' && (
+                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 font-medium text-center">
+                        No se pudo enviar el email. Comparte el link manualmente.
+                      </div>
+                    )}
                   </motion.div>
                 )}
                 {status === 'already' && (
@@ -514,13 +629,24 @@ function ModalVincular({
                 </div>
               </div>
 
+              {/* WhatsApp share */}
+              <button
+                onClick={shareWhatsApp}
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition"
+              >
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                Compartir por WhatsApp
+              </button>
+
               {/* Instrucciones */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <p className="text-xs font-bold text-amber-700 mb-1">📋 Instrucciones para el paciente</p>
-                <ol className="text-xs text-amber-600 space-y-1 list-decimal list-inside">
+              <div className="bg-[#F8FBFD] border border-[#E2ECF4] rounded-xl p-3">
+                <p className="text-xs font-bold text-[#0C3547] mb-1">Instrucciones para el paciente</p>
+                <ol className="text-xs text-[#6B7C93] space-y-1 list-decimal list-inside">
                   <li>Abre el link de registro</li>
-                  <li>Completa nombre, email y contraseña</li>
-                  <li>¡Listo! Aparece en tu panel automáticamente</li>
+                  <li>Completa nombre, email y contrasena</li>
+                  <li>Aparece en tu panel automaticamente</li>
                 </ol>
               </div>
             </div>
@@ -532,7 +658,13 @@ function ModalVincular({
 }
 
 // ─── Main Panel Profesional ───────────────────────────────────────────────────
-export function PanelProfesional({ professionalId }: { professionalId: string }) {
+export function PanelProfesional({
+  professionalId,
+  professionalName,
+}: {
+  professionalId: string
+  professionalName?: string
+}) {
   const supabase = createClient()
   const [patients, setPatients] = useState<PatientRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -558,7 +690,19 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
 
     if (!profiles) { setLoading(false); return }
 
-    // 2. Enrich with last log + plan count for each patient
+    // 2. Batch-fetch plan counts for all patients in one query
+    const patientIds = profiles.map(p => p.id)
+    const { data: planRows } = await supabase
+      .from('planes_nutricionales')
+      .select('user_id')
+      .in('user_id', patientIds)
+
+    const planCountMap: Record<string, number> = {}
+    planRows?.forEach(r => {
+      planCountMap[r.user_id] = (planCountMap[r.user_id] || 0) + 1
+    })
+
+    // 3. Enrich with last log + plan count
     const enriched = await Promise.all(profiles.map(async (p) => {
       const { data: lastLog } = await supabase
         .from('registros_diarios')
@@ -571,7 +715,7 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
       return {
         ...p,
         lastLog: lastLog || undefined,
-        planCount: 0, // TODO: connect to plans table when available
+        planCount: planCountMap[p.id] || 0,
       } as PatientRow
     }))
 
@@ -602,17 +746,20 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
       <PatientDetail
         patient={selected}
         onBack={() => setSelected(null)}
+        professionalId={professionalId}
+        professionalName={professionalName ?? 'Tu profesional'}
       />
     )
   }
 
   return (
-    <div className="px-8 py-6">
+    <div className="px-4 py-4 md:px-8 md:py-6">
       {/* Modal */}
       <AnimatePresence>
         {showModal && (
           <ModalVincular
             professionalId={professionalId}
+            professionalName={professionalName ?? 'Tu profesional'}
             onClose={() => setShowModal(false)}
             onSuccess={loadPatients}
           />
@@ -620,7 +767,7 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
         <div>
           <h2 className="text-lg font-extrabold text-[#0C1F2C]">Mis Pacientes</h2>
           <p className="text-xs text-[#8BA5BE] mt-0.5">
@@ -632,19 +779,19 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
             onClick={loadPatients}
             className="flex items-center gap-2 text-xs text-[#8BA5BE] border border-[#E2ECF4] px-3 py-2 rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
           >
-            <RefreshCw size={12} /> Actualizar
+            <RefreshCw size={12} /> <span className="hidden sm:inline">Actualizar</span>
           </button>
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
           >
-            <UserPlus size={13} /> Agregar paciente
+            <UserPlus size={13} /> Agregar
           </button>
         </div>
       </div>
 
       {/* Search + filter */}
-      <div className="flex gap-3 mb-5">
+      <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex-1 relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
           <input
@@ -679,7 +826,7 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
 
       {/* Stats summary */}
       {!loading && patients.length > 0 && (
-        <div className="grid grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
             {
               label: 'Total pacientes',
@@ -731,7 +878,7 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => (
             <div key={i} className="bg-white rounded-2xl border border-[#E2ECF4] p-5 animate-pulse">
               <div className="flex items-center gap-3 mb-4">
@@ -773,7 +920,7 @@ export function PanelProfesional({ professionalId }: { professionalId: string })
 
       {/* Patient grid */}
       {!loading && filtered.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <AnimatePresence>
             {filtered.map(patient => (
               <PatientCard

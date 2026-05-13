@@ -1,46 +1,42 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function proxy(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request })
+// Lightweight optimistic check - only reads cookie, no network calls.
+// Full auth verification happens in the page component via supabase.auth.getUser().
+// See: /docs/app/guides/authentication#optimistic-checks-with-proxy-optional
+export function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const isLoginPage    = request.nextUrl.pathname.startsWith('/login')
-  const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
+  const isLoginPage    = pathname.startsWith('/login')
+  const isRegisterPage = pathname.startsWith('/register')
   const isAuthPage     = isLoginPage || isRegisterPage
 
-  // Unauthenticated users can only visit auth pages
-  if (!user && !isAuthPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Look for any Supabase auth token cookie (set by @supabase/ssr createBrowserClient)
+  // Cookie names follow the pattern: sb-<project-ref>-auth-token*
+  const allCookies = request.cookies.getAll()
+  const hasSession = allCookies.some(
+    (c) => c.name.startsWith('sb-') && c.name.includes('-auth-token') && c.value.length > 10
+  )
+
+  // Unauthenticated: redirect to login unless already on an auth page
+  if (!hasSession && !isAuthPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/login'
+    return NextResponse.redirect(url)
   }
 
-  // Logged-in users are redirected away from /login
-  // But NOT from /register — they may be following an invite link (?pro=)
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/paciente', request.url))
+  // Authenticated users visiting /login go to app
+  // Allow /register so invite links work even when logged in
+  if (hasSession && isLoginPage) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/paciente'
+    return NextResponse.redirect(url)
   }
 
-  return supabaseResponse
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: [
+    '/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)\$).*)',
+  ],
 }

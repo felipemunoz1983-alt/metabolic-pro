@@ -163,7 +163,7 @@ export function Historial({ userId }: { userId: string }) {
   if (selected) {
     const { form, result } = selected.plan_json
     return (
-      <div className="px-8 py-6 max-w-3xl mx-auto">
+      <div className="px-4 py-4 md:px-8 md:py-6 max-w-3xl mx-auto">
         <button
           onClick={() => setSelected(null)}
           className="flex items-center gap-2 text-sm text-[#8BA5BE] hover:text-[#0C1F2C] mb-6 transition-colors"
@@ -180,7 +180,7 @@ export function Historial({ userId }: { userId: string }) {
   }
 
   return (
-    <div className="px-8 py-6 max-w-4xl mx-auto">
+    <div className="px-4 py-4 md:px-8 md:py-6 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -199,7 +199,7 @@ export function Historial({ userId }: { userId: string }) {
 
       {/* Stats summary */}
       {!loading && plans.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
           {[
             { label: 'Pérdida de grasa', key: 'perdida grasa', icon: '🔥', color: 'text-red-600', bg: 'bg-red-50 border-red-100' },
             { label: 'Mantenimiento',    key: 'mantenimiento', icon: '⚖️',  color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },

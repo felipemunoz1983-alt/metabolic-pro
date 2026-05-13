@@ -18,9 +18,29 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false) }
-    else router.push('/paciente')
+
+    // 10-second timeout in case fetch hangs (e.g. bad env var encoding)
+    const timer = setTimeout(() => {
+      setError('Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.')
+      setLoading(false)
+    }, 10000)
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      clearTimeout(timer)
+      if (error) {
+        setError(error.message)
+        setLoading(false)
+      } else {
+        // Full navigation ensures auth cookies are sent with the next server request
+        window.location.href = '/paciente'
+      }
+    } catch (err: unknown) {
+      clearTimeout(timer)
+      const msg = err instanceof Error ? err.message : 'Error de conexión. Intenta de nuevo.'
+      setError(msg)
+      setLoading(false)
+    }
   }
 
   return (

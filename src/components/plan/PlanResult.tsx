@@ -157,7 +157,7 @@ export function PlanResult({ result, form, onReset }: Props) {
         </div>
 
         {/* Métricas principales */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           {[
             { label: 'Kcal/día', value: Math.round(kcal).toLocaleString(), unit: 'kcal', color: 'text-[#29ABE2]' },
             { label: 'Proteína', value: macros.p, unit: 'g', color: 'text-green-400' },
@@ -176,7 +176,7 @@ export function PlanResult({ result, form, onReset }: Props) {
       {/* Datos clínicos */}
       <div className="bg-white rounded-2xl border border-[#D6E3ED] p-5">
         <h3 className="text-sm font-bold text-[#0C3547] mb-3 uppercase tracking-wide">📊 Datos clínicos</h3>
-        <div className="grid grid-cols-3 gap-4 text-center">
+        <div className="grid grid-cols-3 gap-2 text-center">
           <div>
             <span className="text-xs text-[#6B7C93] block">TMB (Harris-Benedict)</span>
             <span className="text-lg font-bold text-[#0C3547]">{bmr.toLocaleString()}</span>
