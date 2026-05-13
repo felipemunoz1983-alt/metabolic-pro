@@ -7,6 +7,7 @@ import { OBJETIVO_LABELS } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
 import { WeeklyPlan } from './WeeklyPlan'
+import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -230,6 +231,9 @@ export function PlanResult({ result, form, onReset }: Props) {
 
       {/* Plan semanal detallado */}
       <WeeklyPlan plan={weekPlan} />
+
+      {/* Productos Nutrevo recomendados según objetivo */}
+      <NutrievoPanel objetivo={form.objetivo} />
     </motion.div>
   )
 }

@@ -12,6 +12,7 @@ import { PanelProfesional } from '@/components/profesional/PanelProfesional'
 import { Historial } from '@/components/historial/Historial'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { FoodScanner } from '@/components/dashboard/FoodScanner'
+import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
 import type { Profile } from '@/types'
 import { hasAccess } from '@/types'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
@@ -280,6 +281,9 @@ export default function PacientePage() {
                     targetKcal={result?.kcal ? Math.round(result.kcal) : 2000}
                     macros={result?.macros}
                   />
+                  <div className="mt-4">
+                    <NutrievoPanel objetivo={formData?.objetivo} />
+                  </div>
                 </div>
               )}
 

@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
+import { getNutrievoAIContext } from '@/lib/nutrevo'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -36,7 +37,9 @@ ${objetivo ? `Objetivo: ${objetivo}` : ''}
 
 REGLA OBLIGATORIA: Dirígete SIEMPRE a esta persona por su nombre "${firstName}".
 Responde en español, de forma cercana, profesional y motivadora.
-Limita tus respuestas a máximo 3 párrafos cortos.`
+Limita tus respuestas a máximo 3 párrafos cortos.
+
+${getNutrievoAIContext()}`
 
   useEffect(() => {
     // Mensaje de bienvenida
