@@ -11,6 +11,7 @@ import { ChatIA } from '@/components/chat/ChatIA'
 import { PanelProfesional } from '@/components/profesional/PanelProfesional'
 import { Historial } from '@/components/historial/Historial'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
+import { FoodScanner } from '@/components/dashboard/FoodScanner'
 import type { Profile } from '@/types'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import {
@@ -277,6 +278,11 @@ export default function PacientePage() {
 
       {/* ── Bottom nav — mobile only ── */}
       <BottomNav profile={profile} activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {/* ── Food Scanner — visible on dashboard tab ── */}
+      {activeTab === 'dashboard' && userId && (
+        <FoodScanner userId={userId} />
+      )}
     </div>
   )
 }
