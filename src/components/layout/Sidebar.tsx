@@ -17,8 +17,9 @@ import {
   Users,
   Star,
   Clock,
+  Lock,
 } from 'lucide-react'
-import { isOnTrial, trialDaysLeft } from '@/types'
+import { isOnTrial, trialDaysLeft, hasAccess } from '@/types'
 
 const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: string }[] = [
   { id: 'dashboard', label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
@@ -96,11 +97,12 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
           const Icon = item.icon
           const isActive = activeTab === item.id
           const isPacientes = item.id === 'pacientes'
+          const isLocked = item.id === 'chat' && profile ? !hasAccess(profile) : false
           return (
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              title={collapsed ? item.label : undefined}
+              title={collapsed ? (isLocked ? `${item.label} — Plan de pago requerido` : item.label) : undefined}
               className={cn(
                 'w-full flex items-center gap-3 rounded-xl transition-all duration-150 text-left group',
                 collapsed ? 'justify-center p-2.5' : 'px-3 py-2.5',
@@ -108,20 +110,29 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
                   ? 'bg-[#29ABE2]/15 text-[#29ABE2]'
                   : isPacientes
                   ? 'text-[#6B8FA8] hover:bg-emerald-500/10 hover:text-emerald-400'
+                  : isLocked
+                  ? 'text-[#2A3F50] hover:bg-white/5 hover:text-[#4A6070]'
                   : 'text-[#6B8FA8] hover:bg-white/5 hover:text-white'
               )}
             >
               <div className={cn(
-                'flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-all',
+                'flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-lg transition-all relative',
                 isActive ? 'bg-[#29ABE2]/20' : 'group-hover:bg-white/5'
               )}>
                 <Icon size={15} strokeWidth={isActive ? 2.5 : 2} />
+                {isLocked && (
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-amber-500 rounded-full flex items-center justify-center">
+                    <Lock size={7} className="text-white" />
+                  </div>
+                )}
               </div>
 
               {!collapsed && (
                 <div className="overflow-hidden flex-1">
                   <p className={cn('text-[12px] font-semibold leading-tight', isActive && 'font-bold')}>{item.label}</p>
-                  <p className="text-[10px] text-[#3D5A70] leading-tight mt-0.5">{item.sublabel}</p>
+                  <p className="text-[10px] text-[#3D5A70] leading-tight mt-0.5">
+                    {isLocked ? 'Plan de pago requerido' : item.sublabel}
+                  </p>
                 </div>
               )}
 

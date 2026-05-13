@@ -13,6 +13,7 @@ import { Historial } from '@/components/historial/Historial'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { FoodScanner } from '@/components/dashboard/FoodScanner'
 import type { Profile } from '@/types'
+import { hasAccess } from '@/types'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import {
   getPatientNotifications,
@@ -22,8 +23,42 @@ import {
   type AppNotification,
 } from '@/lib/notifications'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Bell } from 'lucide-react'
+import { Calendar, Bell, Lock, Star } from 'lucide-react'
 import { BottomNav } from '@/components/layout/BottomNav'
+
+// ── Premium gate ──────────────────────────────────────────────────────────────
+function PremiumGate({ feature, description }: { feature: string; description: string }) {
+  return (
+    <div className="flex-1 flex items-center justify-center p-8 min-h-[400px]">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-center max-w-sm"
+      >
+        <div className="w-20 h-20 bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-400/30 rounded-3xl flex items-center justify-center mx-auto mb-5">
+          <Lock size={32} className="text-amber-500" />
+        </div>
+        <h2 className="text-xl font-black text-[#0C1F2C] mb-2">{feature}</h2>
+        <p className="text-sm text-[#8BA5BE] mb-6 leading-relaxed">{description}</p>
+        <div className="bg-white border border-[#E2ECF4] rounded-2xl p-4 mb-6 text-left space-y-2">
+          {['Asistente IA nutricional 24/7', 'Escaneo de alimentos con cámara', 'Planes personalizados ilimitados'].map(f => (
+            <div key={f} className="flex items-center gap-2.5">
+              <Star size={11} className="text-amber-400 flex-shrink-0" />
+              <span className="text-xs text-[#4A6070]">{f}</span>
+            </div>
+          ))}
+        </div>
+        <a
+          href="/upgrade"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-6 py-3 rounded-xl hover:opacity-90 transition"
+        >
+          <Star size={14} className="text-amber-400" />
+          Ver planes de pago
+        </a>
+      </motion.div>
+    </div>
+  )
+}
 
 // ── Top header bar ────────────────────────────────────────────────────────────
 interface TopBarProps {
@@ -250,13 +285,17 @@ export default function PacientePage() {
 
               {/* ── Chat IA ── */}
               {activeTab === 'chat' && (
-                <div className="h-full flex flex-col px-3 py-4 md:px-6 md:py-6">
-                  <ChatIA
-                    userName={profile?.nombre || 'Paciente'}
-                    targetKcal={result?.kcal ? Math.round(result.kcal) : undefined}
-                    objetivo={formData?.objetivo}
-                  />
-                </div>
+                profile && hasAccess(profile) ? (
+                  <div className="h-full flex flex-col px-3 py-4 md:px-6 md:py-6">
+                    <ChatIA
+                      userName={profile?.nombre || 'Paciente'}
+                      targetKcal={result?.kcal ? Math.round(result.kcal) : undefined}
+                      objetivo={formData?.objetivo}
+                    />
+                  </div>
+                ) : (
+                  <PremiumGate feature="Asistente IA" description="Consulta nutricional inteligente disponible 24/7 con tu nutricionista virtual." />
+                )
               )}
 
               {/* ── Historial ── */}
@@ -279,8 +318,8 @@ export default function PacientePage() {
       {/* ── Bottom nav — mobile only ── */}
       <BottomNav profile={profile} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      {/* ── Food Scanner — visible on dashboard tab ── */}
-      {activeTab === 'dashboard' && userId && (
+      {/* ── Food Scanner — only for paid/trial users on dashboard ── */}
+      {activeTab === 'dashboard' && userId && profile && hasAccess(profile) && (
         <FoodScanner userId={userId} />
       )}
     </div>
