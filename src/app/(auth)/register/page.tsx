@@ -25,6 +25,7 @@ function RegisterForm() {
   const proParam      = searchParams.get('pro')
   const professionalId = decodeProParam(proParam)
   const isLinked      = !!professionalId
+  const isProfessionalRegister = searchParams.get('type') === 'pro' && !isLinked
 
   const [nombre,  setNombre]  = useState('')
   const [email,   setEmail]   = useState('')
@@ -69,12 +70,12 @@ function RegisterForm() {
     const userId = authData.user?.id
     if (!userId) { setError('Error al crear la cuenta. Intenta nuevamente.'); setLoading(false); return }
 
-    // 2. Create profile — role 'patient', plan 'gratuito'
+    // 2. Create profile
     const profilePayload: Record<string, unknown> = {
       id:     userId,
       nombre: nombre.trim(),
       email:  email.trim().toLowerCase(),
-      role:   'patient',
+      role:   isProfessionalRegister ? 'professional' : 'patient',
       plan:   'gratuito',
       ...(isLinked && { professional_id: professionalId }),
     }
@@ -131,12 +132,22 @@ function RegisterForm() {
   // ── Form ──
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      {/* Professional link badge */}
+      {/* Patient invite badge */}
       {isLinked && (
         <div className="mb-5 flex items-center gap-2.5 bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl px-3.5 py-2.5">
           <ShieldCheck size={14} className="text-[#29ABE2] flex-shrink-0" />
           <p className="text-xs text-[#0C3547]">
             Registrándote con un <span className="font-bold text-[#29ABE2]">código profesional</span> — quedarás vinculado automáticamente.
+          </p>
+        </div>
+      )}
+
+      {/* Professional register badge */}
+      {isProfessionalRegister && (
+        <div className="mb-5 flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-xl px-3.5 py-2.5">
+          <ShieldCheck size={14} className="text-emerald-600 flex-shrink-0" />
+          <p className="text-xs text-emerald-800">
+            Registro como <span className="font-bold">Profesional</span> — tendrás acceso al panel de gestión de pacientes.
           </p>
         </div>
       )}
