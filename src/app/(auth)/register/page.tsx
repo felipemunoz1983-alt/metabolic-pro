@@ -28,12 +28,13 @@ function RegisterForm() {
   const professionalId = decodeProParam(proParam)
   const isLinked      = !!professionalId
   const isProfessionalRegister = searchParams.get('type') === 'pro' && !isLinked
+  const noProfile     = searchParams.get('reason') === 'no_profile'
 
   const [nombre,  setNombre]  = useState('')
   const [email,   setEmail]   = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
-  const [error,   setError]   = useState('')
+  const [error,   setError]   = useState(noProfile ? 'Tu sesión anterior no tiene cuenta registrada. Crea una nueva cuenta para continuar.' : '')
   const [loading, setLoading] = useState(false)
   const [done,    setDone]    = useState(false)
   const [autoLinked, setAutoLinked] = useState(false)

@@ -164,14 +164,28 @@ export default function PacientePage() {
   useEffect(() => {
     async function load() {
       const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
+
+      // No auth session → login
+      if (!user) {
+        window.location.href = '/login'
+        return
+      }
+
       setUserId(user.id)
 
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
+
+      // Auth user exists but no profile → sign out and send to register
+      if (profileError || !profileData) {
+        await supabase.auth.signOut()
+        window.location.href = '/register?reason=no_profile'
+        return
+      }
+
       setProfile(profileData)
 
       // Load read state from localStorage
