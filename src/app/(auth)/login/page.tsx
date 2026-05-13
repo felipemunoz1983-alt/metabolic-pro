@@ -28,14 +28,27 @@ export default function LoginPage() {
     }, 10000)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password })
       clearTimeout(timer)
       if (error) {
         setError(error.message)
         setLoading(false)
       } else {
-        // Full navigation ensures auth cookies are sent with the next server request
-        window.location.href = '/paciente'
+        // Check if profile exists before entering the app
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('id', authData.user!.id)
+          .single()
+
+        if (!profile) {
+          // Auth exists but no profile → sign out and go to register
+          await supabase.auth.signOut()
+          setError('No encontramos una cuenta registrada con este email. Por favor regístrate.')
+          setLoading(false)
+        } else {
+          window.location.href = '/paciente'
+        }
       }
     } catch (err: unknown) {
       clearTimeout(timer)
