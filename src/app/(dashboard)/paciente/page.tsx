@@ -166,15 +166,30 @@ export default function PacientePage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       setUserId(user.id)
-      const { data } = await supabase
+
+      const { data: profileData } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
-      setProfile(data)
+      setProfile(profileData)
 
       // Load read state from localStorage
       setReadIds(getReadIds(user.id))
+
+      // Auto-load most recent plan so patient sees it on first login
+      const { data: latestPlan } = await supabase
+        .from('planes_nutricionales')
+        .select('plan_json')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+
+      if (latestPlan?.plan_json?.result && latestPlan?.plan_json?.form) {
+        setResult(latestPlan.plan_json.result)
+        setFormData(latestPlan.plan_json.form)
+      }
     }
     load()
   }, [])
