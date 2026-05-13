@@ -2,11 +2,15 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
 
 export const metadata: Metadata = {
   title: "Centro Metabólico Pro",
-  description: "Generador de Plan Nutricional · Motor clínico-comercial",
+  description: "Motor clínico-comercial · Planes nutricionales personalizados",
 };
 
 export default function RootLayout({
@@ -15,8 +19,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="es" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-[#F0F4F8] text-[#1E2D3D]">
+    <html lang="es" className={inter.variable}>
+      <body className="antialiased">
         {children}
       </body>
     </html>

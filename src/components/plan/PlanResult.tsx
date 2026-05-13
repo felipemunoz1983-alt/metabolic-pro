@@ -1,8 +1,13 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import { OBJETIVO_LABELS } from '@/lib/nutrition'
+import { generarPlan } from '@/lib/planGenerator'
+import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
+import { WeeklyPlan } from './WeeklyPlan'
+import { cn } from '@/lib/utils'
 
 interface Props {
   result: NutritionResult
@@ -10,8 +15,125 @@ interface Props {
   onReset: () => void
 }
 
+const ALERT_STYLES: Record<ClinicalAlert['nivel'], { bg: string; border: string; text: string; icon: string }> = {
+  alta:  { bg: 'bg-red-50',   border: 'border-red-400',   text: 'text-red-800',   icon: '🚨' },
+  media: { bg: 'bg-amber-50', border: 'border-amber-300', text: 'text-amber-800', icon: '⚠️' },
+  baja:  { bg: 'bg-blue-50',  border: 'border-blue-300',  text: 'text-blue-800',  icon: '💡' },
+  info:  { bg: 'bg-slate-50', border: 'border-slate-300', text: 'text-slate-700', icon: 'ℹ️' },
+}
+
+// ─── Panel de alertas clínicas ────────────────────────────────────────────────
+function ClinicalPanel({ form }: { form: FormData }) {
+  const [open, setOpen] = useState(false)
+  const perfil = useMemo(() => generarPerfilClinico(form), [form])
+
+  if (perfil.alertasProfesional.length === 0 && !perfil.notaPaciente) return null
+
+  const altasCount = perfil.alertasProfesional.filter(a => a.nivel === 'alta').length
+  const mediasCount = perfil.alertasProfesional.filter(a => a.nivel === 'media').length
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#D6E3ED] overflow-hidden">
+      {/* Header colapsable */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="w-full flex items-center justify-between p-5 hover:bg-[#F8FBFD] transition text-left"
+      >
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🩺</span>
+          <div>
+            <p className="text-sm font-bold text-[#0C3547]">Perfil clínico del paciente</p>
+            <div className="flex gap-2 mt-0.5 flex-wrap">
+              {altasCount > 0 && (
+                <span className="text-xs bg-red-100 text-red-700 font-bold px-2 py-0.5 rounded-full">
+                  🚨 {altasCount} alerta{altasCount > 1 ? 's' : ''} alta{altasCount > 1 ? 's' : ''}
+                </span>
+              )}
+              {mediasCount > 0 && (
+                <span className="text-xs bg-amber-100 text-amber-700 font-bold px-2 py-0.5 rounded-full">
+                  ⚠️ {mediasCount} media{mediasCount > 1 ? 's' : ''}
+                </span>
+              )}
+              {perfil.ajustesAplicados.length > 0 && (
+                <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">
+                  ✅ {perfil.ajustesAplicados.length} ajuste{perfil.ajustesAplicados.length > 1 ? 's' : ''} aplicado{perfil.ajustesAplicados.length > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+        <span className={cn('text-[#6B7C93] transition-transform text-lg', open && 'rotate-180')}>▾</span>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 space-y-4">
+              {/* Ajustes aplicados */}
+              {perfil.ajustesAplicados.length > 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                  <p className="text-xs font-bold text-green-800 mb-2 uppercase tracking-wide">✅ Ajustes aplicados al plan</p>
+                  <div className="flex flex-wrap gap-2">
+                    {perfil.ajustesAplicados.map((a, i) => (
+                      <span key={i} className="text-xs bg-green-700 text-white font-semibold px-2.5 py-1 rounded-lg">{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Alertas profesional */}
+              {perfil.alertasProfesional.length > 0 && (
+                <div>
+                  <p className="text-xs font-bold text-[#0C3547] mb-2 uppercase tracking-wide">🔔 Alertas para el profesional</p>
+                  <div className="space-y-2">
+                    {perfil.alertasProfesional.map((alerta, i) => {
+                      const s = ALERT_STYLES[alerta.nivel]
+                      return (
+                        <div key={i} className={cn('flex gap-3 rounded-xl border p-3', s.bg, s.border)}>
+                          <span className="text-base flex-shrink-0">{s.icon}</span>
+                          <div>
+                            <span className={cn('text-xs font-bold uppercase tracking-wide', s.text)}>
+                              {alerta.origen === 'digestivo' ? '🧬 Digestivo' : '💊 Suplementación'}
+                              {' · '}{alerta.nivel.charAt(0).toUpperCase() + alerta.nivel.slice(1)}
+                            </span>
+                            <p className={cn('text-xs mt-0.5', s.text)}>{alerta.texto}</p>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Nota para el paciente */}
+              {perfil.notaPaciente && (
+                <div className="bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl p-4">
+                  <p className="text-xs font-bold text-[#0C3547] mb-1">📋 Nota para el paciente</p>
+                  <p className="text-xs text-[#0C3547]">{perfil.notaPaciente}</p>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Componente principal ─────────────────────────────────────────────────────
 export function PlanResult({ result, form, onReset }: Props) {
   const { kcal, macros, bmr, tdee, pal } = result
+
+  const weekPlan = useMemo(
+    () => generarPlan(form, Math.round(kcal)),
+    [form, kcal]
+  )
 
   return (
     <motion.div
@@ -51,7 +173,7 @@ export function PlanResult({ result, form, onReset }: Props) {
         </div>
       </div>
 
-      {/* Detalles técnicos */}
+      {/* Datos clínicos */}
       <div className="bg-white rounded-2xl border border-[#D6E3ED] p-5">
         <h3 className="text-sm font-bold text-[#0C3547] mb-3 uppercase tracking-wide">📊 Datos clínicos</h3>
         <div className="grid grid-cols-3 gap-4 text-center">
@@ -72,7 +194,10 @@ export function PlanResult({ result, form, onReset }: Props) {
         </div>
       </div>
 
-      {/* Distribución de macros visual */}
+      {/* Panel clínico — digestivo + suplementación */}
+      <ClinicalPanel form={form} />
+
+      {/* Distribución de macros */}
       <div className="bg-white rounded-2xl border border-[#D6E3ED] p-5">
         <h3 className="text-sm font-bold text-[#0C3547] mb-4 uppercase tracking-wide">🥗 Distribución de macros</h3>
         <div className="space-y-3">
@@ -103,15 +228,8 @@ export function PlanResult({ result, form, onReset }: Props) {
         </div>
       </div>
 
-      {/* Próximo: plan semanal */}
-      <div className="bg-[#EAF4FB] rounded-2xl border border-[#c4dff0] p-5 text-center">
-        <p className="text-[#0C3547] font-semibold text-sm">
-          🚧 Plan semanal detallado — próximamente en esta versión
-        </p>
-        <p className="text-[#6B7C93] text-xs mt-1">
-          Mientras tanto usa la app HTML para ver el plan completo con comidas
-        </p>
-      </div>
+      {/* Plan semanal detallado */}
+      <WeeklyPlan plan={weekPlan} />
     </motion.div>
   )
 }

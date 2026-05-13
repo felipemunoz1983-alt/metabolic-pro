@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -23,14 +23,18 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login') ||
-                     request.nextUrl.pathname.startsWith('/register')
+  const isLoginPage    = request.nextUrl.pathname.startsWith('/login')
+  const isRegisterPage = request.nextUrl.pathname.startsWith('/register')
+  const isAuthPage     = isLoginPage || isRegisterPage
 
+  // Unauthenticated users can only visit auth pages
   if (!user && !isAuthPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (user && isAuthPage) {
+  // Logged-in users are redirected away from /login
+  // But NOT from /register — they may be following an invite link (?pro=)
+  if (user && isLoginPage) {
     return NextResponse.redirect(new URL('/paciente', request.url))
   }
 

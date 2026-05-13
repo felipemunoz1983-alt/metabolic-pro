@@ -30,6 +30,21 @@ export interface FormData {
   sandwichQty: number
   sandwichQtyOnce: number
   semanas: number
+  ultraProcesados: string[]
+  ultraDias: number
+  // ── Salud digestiva ──
+  digHinchazon: 'nunca' | 'ocasional' | 'frecuente' | 'diaria'
+  digReflujo: 'nunca' | 'ocasional' | 'frecuente'
+  digRitmo: 'normal' | 'constipacion' | 'diarrea' | 'alternado'
+  digIntolerancias: string[]
+  digDiag: 'no' | 'si_sibo' | 'si_sii' | 'sospecha'
+  digHorario: string[]
+  // ── Suplementación segura ──
+  supEmbarazo: 'no' | 'embarazo' | 'lactancia' | 'planificando'
+  supCronicas: string[]
+  supMedic: 'no' | 'si'
+  supMedicDetalle: string
+  supActuales: string
 }
 
 export interface Macros {
