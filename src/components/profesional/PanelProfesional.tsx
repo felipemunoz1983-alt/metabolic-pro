@@ -16,9 +16,29 @@ import {
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
+interface DailyLog {
+  fecha: string
+  actualKcal: number
+  completed: number
+  total: number
+  peso?: number
+  hambre?: number
+  energia?: number
+  digestivo?: string
+  animo?: string
+  nota?: string
+}
+
 interface PatientRow extends Profile {
-  lastLog?: { fecha: string; actualKcal: number; completed: number; total: number; peso?: number }
+  lastLog?: DailyLog
   planCount?: number
+}
+
+const DIGESTIVO_EMOJI: Record<string, string> = {
+  sin_molestias: '✅', leve: '🟡', moderado: '🟠', severo: '🔴'
+}
+const ANIMO_EMOJI: Record<string, string> = {
+  excelente: '😄', bueno: '🙂', regular: '😐', malo: '😔'
 }
 
 // ─── Patient Card ─────────────────────────────────────────────────────────────
@@ -123,7 +143,7 @@ function PatientDetail({
   professionalName: string
 }) {
   const supabase = createClient()
-  const [logs, setLogs] = useState<PatientRow['lastLog'][]>([])
+  const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'overview' | 'plan'>('overview')
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
@@ -317,7 +337,71 @@ function PatientDetail({
         </div>
       </div>
 
-      {/* Registros últimos 30 días */}
+      {/* ── Alerta clínica si adherencia baja ── */}
+      {(() => {
+        const recientes = logs.slice(0, 7)
+        const bajos = recientes.filter(l => l.total > 0 && (l.completed / l.total) < 0.5).length
+        const severos = recientes.filter(l => l.digestivo === 'severo' || l.digestivo === 'moderado').length
+        if (bajos < 3 && severos < 2) return null
+        return (
+          <div className="bg-red-50 border border-red-200 rounded-2xl p-4 mb-5 flex gap-3">
+            <AlertCircle size={18} className="text-red-500 flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm font-bold text-red-700">Intervención recomendada</p>
+              <p className="text-xs text-red-600 mt-0.5">
+                {bajos >= 3 && `${bajos} de los últimos 7 días con adherencia menor al 50%. `}
+                {severos >= 2 && `${severos} días con molestias digestivas moderadas/severas. `}
+                Considera revisar el plan o agendar una consulta.
+              </p>
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* ── Evolución de peso ── */}
+      {logs.filter(l => l.peso).length >= 2 && (
+        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm mb-5">
+          <h3 className="text-sm font-bold text-[#0C1F2C] mb-4">Evolución de peso</h3>
+          <div className="flex items-end gap-1.5 h-16">
+            {logs.filter(l => l.peso).slice(0, 14).reverse().map((l, i, arr) => {
+              const min = Math.min(...arr.map(x => x.peso!))
+              const max = Math.max(...arr.map(x => x.peso!))
+              const range = max - min || 1
+              const pct = ((l.peso! - min) / range) * 70 + 15
+              const isLast = i === arr.length - 1
+              return (
+                <div key={l.fecha} className="flex-1 flex flex-col items-center gap-1">
+                  <span className="text-[8px] text-[#8BA5BE]">{l.peso}</span>
+                  <div className="w-full bg-[#F0F6FA] rounded-md relative" style={{ height: 44 }}>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${pct}%` }}
+                      transition={{ duration: 0.5, delay: i * 0.03 }}
+                      className={cn('absolute bottom-0 left-0 right-0 rounded-md', isLast ? 'bg-[#29ABE2]' : 'bg-[#29ABE2]/40')}
+                    />
+                  </div>
+                  <span className="text-[8px] text-[#C8D8E4]">
+                    {new Date(l.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }).replace(' ', '/')}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+          {(() => {
+            const withPeso = logs.filter(l => l.peso)
+            if (withPeso.length < 2) return null
+            const diff = (withPeso[0].peso! - withPeso[withPeso.length - 1].peso!).toFixed(1)
+            const neg = Number(diff) < 0
+            return (
+              <p className={cn('text-xs font-bold mt-3', neg ? 'text-red-500' : 'text-green-600')}>
+                {neg ? '▲' : '▼'} {Math.abs(Number(diff))} kg en {withPeso.length} registros
+              </p>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* ── Registros últimos 30 días ── */}
       <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-[#0C1F2C]">Registros — últimos 30 días</h3>
@@ -337,37 +421,72 @@ function PatientDetail({
               if (!log) return null
               const adh = log.total > 0 ? Math.round((log.completed / log.total) * 100) : 0
               const isGood = adh >= 80
+              const hasWellbeing = log.hambre || log.energia || log.digestivo || log.animo
               return (
                 <motion.div
                   key={log.fecha}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
-                  className="flex items-center justify-between px-4 py-2.5 rounded-xl bg-[#F8FBFD] border border-[#F0F6FA]"
+                  className="rounded-xl bg-[#F8FBFD] border border-[#F0F6FA] overflow-hidden"
                 >
-                  <div className="flex items-center gap-3">
-                    {isGood
-                      ? <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
-                      : <AlertCircle size={14} className="text-amber-400 flex-shrink-0" />
-                    }
-                    <span className="text-xs font-semibold text-[#0C1F2C]">
-                      {new Date(log.fecha + 'T12:00:00').toLocaleDateString('es-CL', {
-                        weekday: 'short', day: 'numeric', month: 'short'
-                      })}
-                    </span>
+                  {/* Main row */}
+                  <div className="flex items-center justify-between px-4 py-2.5">
+                    <div className="flex items-center gap-3">
+                      {isGood
+                        ? <CheckCircle size={14} className="text-green-500 flex-shrink-0" />
+                        : <AlertCircle size={14} className="text-amber-400 flex-shrink-0" />
+                      }
+                      <span className="text-xs font-semibold text-[#0C1F2C]">
+                        {new Date(log.fecha + 'T12:00:00').toLocaleDateString('es-CL', {
+                          weekday: 'short', day: 'numeric', month: 'short'
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs">
+                      <span className="text-[#6B7C93]">{log.actualKcal || 0} kcal</span>
+                      <span className={cn(
+                        'font-bold px-2 py-0.5 rounded-full',
+                        isGood ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
+                      )}>
+                        {adh}%
+                      </span>
+                      {log.peso && <span className="text-[#8BA5BE]">{log.peso} kg</span>}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4 text-xs">
-                    <span className="text-[#6B7C93]">{log.actualKcal || 0} kcal</span>
-                    <span className={cn(
-                      'font-bold px-2 py-0.5 rounded-full',
-                      isGood ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
-                    )}>
-                      {adh}%
-                    </span>
-                    {log.peso && (
-                      <span className="text-[#8BA5BE]">{log.peso} kg</span>
-                    )}
-                  </div>
+
+                  {/* Wellbeing row */}
+                  {hasWellbeing && (
+                    <div className="flex items-center gap-4 px-4 pb-2.5 border-t border-[#EDF2F7]">
+                      {log.hambre && (
+                        <span className="text-[10px] text-[#8BA5BE] flex items-center gap-1">
+                          🍽️ <span className="font-semibold text-[#0C1F2C]">{log.hambre}/5</span>
+                        </span>
+                      )}
+                      {log.energia && (
+                        <span className="text-[10px] text-[#8BA5BE] flex items-center gap-1">
+                          ⚡ <span className="font-semibold text-[#0C1F2C]">{log.energia}/5</span>
+                        </span>
+                      )}
+                      {log.digestivo && (
+                        <span className="text-[10px] flex items-center gap-1">
+                          {DIGESTIVO_EMOJI[log.digestivo] || '🫁'}
+                          <span className="text-[#6B7C93]">{log.digestivo.replace('_', ' ')}</span>
+                        </span>
+                      )}
+                      {log.animo && (
+                        <span className="text-[10px] flex items-center gap-1">
+                          {ANIMO_EMOJI[log.animo] || '😐'}
+                          <span className="text-[#6B7C93]">{log.animo}</span>
+                        </span>
+                      )}
+                      {log.nota && (
+                        <span className="text-[10px] text-[#8BA5BE] italic truncate max-w-[160px]" title={log.nota}>
+                          "{log.nota}"
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               )
             })}
