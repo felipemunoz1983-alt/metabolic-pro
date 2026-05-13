@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
-import { Sparkline, MiniBar, Ring } from '@/components/ui/Sparkline'
+import { Sparkline, Ring } from '@/components/ui/Sparkline'
 import type { Macros } from '@/lib/nutrition'
-import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface DayLog {
   fecha: string
@@ -17,6 +17,10 @@ interface DayLog {
   peso?: number
   completed: number
   total: number
+  hambre?: number
+  energia?: number
+  digestivo?: string
+  animo?: string
 }
 
 interface Props {
@@ -26,11 +30,28 @@ interface Props {
 }
 
 const MEALS = [
-  { id: 'desayuno',   label: 'Desayuno',        icon: '🌅', pct: 0.25 },
-  { id: 'col_manana', label: 'Colación mañana',  icon: '☕', pct: 0.10 },
-  { id: 'almuerzo',   label: 'Almuerzo',         icon: '🍽️', pct: 0.35 },
-  { id: 'once',       label: 'Once',             icon: '🫖', pct: 0.15 },
-  { id: 'cena',       label: 'Cena',             icon: '🌙', pct: 0.15 },
+  { id: 'desayuno',    label: 'Desayuno',        icon: '🌅', pct: 0.25 },
+  { id: 'col_manana',  label: 'Colación mañana',  icon: '☕', pct: 0.10 },
+  { id: 'almuerzo',    label: 'Almuerzo',         icon: '🍽️', pct: 0.35 },
+  { id: 'once',        label: 'Once',             icon: '🫖', pct: 0.15 },
+  { id: 'cena',        label: 'Cena',             icon: '🌙', pct: 0.15 },
+]
+
+const HUNGER_LABELS = ['', 'Sin hambre', 'Poca hambre', 'Hambre normal', 'Bastante hambre', 'Mucha hambre']
+const ENERGY_LABELS = ['', 'Sin energía', 'Poca energía', 'Energía normal', 'Buena energía', 'Excelente energía']
+
+const DIGESTIVO_OPTS = [
+  { value: 'sin_molestias', label: 'Sin molestias', emoji: '✅', color: 'border-green-300 bg-green-50 text-green-700' },
+  { value: 'leve',          label: 'Leve',           emoji: '🟡', color: 'border-amber-300 bg-amber-50 text-amber-700' },
+  { value: 'moderado',      label: 'Moderado',       emoji: '🟠', color: 'border-orange-300 bg-orange-50 text-orange-700' },
+  { value: 'severo',        label: 'Severo',         emoji: '🔴', color: 'border-red-300 bg-red-50 text-red-700' },
+]
+
+const ANIMO_OPTS = [
+  { value: 'excelente', label: 'Excelente', emoji: '😄', color: 'border-green-300 bg-green-50 text-green-700' },
+  { value: 'bueno',     label: 'Bueno',     emoji: '🙂', color: 'border-blue-300 bg-blue-50 text-blue-700' },
+  { value: 'regular',   label: 'Regular',   emoji: '😐', color: 'border-amber-300 bg-amber-50 text-amber-700' },
+  { value: 'malo',      label: 'Malo',      emoji: '😔', color: 'border-red-300 bg-red-50 text-red-700' },
 ]
 
 // ── Metric card ───────────────────────────────────────────────────────────────
@@ -66,6 +87,35 @@ function MetricCard({
   )
 }
 
+// ── Star / number scale ────────────────────────────────────────────────────────
+function ScaleSelector({
+  value, onChange, labels, colorFn
+}: {
+  value: number
+  onChange: (v: number) => void
+  labels: string[]
+  colorFn: (v: number) => string
+}) {
+  return (
+    <div className="flex gap-1.5">
+      {[1, 2, 3, 4, 5].map(v => (
+        <button
+          key={v}
+          onClick={() => onChange(v)}
+          className={cn(
+            'flex-1 h-9 rounded-xl border-2 text-sm font-black transition-all',
+            value === v
+              ? `${colorFn(v)} border-current`
+              : 'border-[#E2ECF4] text-[#C8D8E4] hover:border-[#29ABE2]/40'
+          )}
+        >
+          {v}
+        </button>
+      ))}
+    </div>
+  )
+}
+
 // ── Main component ────────────────────────────────────────────────────────────
 export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   const supabase = createClient()
@@ -76,6 +126,14 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [weekLogs, setWeekLogs] = useState<DayLog[]>([])
+  const [wellbeingOpen, setWellbeingOpen] = useState(false)
+
+  // Subjective fields
+  const [hambre, setHambre] = useState(0)
+  const [energia, setEnergia] = useState(0)
+  const [digestivo, setDigestivo] = useState('')
+  const [animo, setAnimo] = useState('')
+  const [nota, setNota] = useState('')
 
   useEffect(() => { loadToday(); loadWeek() }, [])
 
@@ -86,6 +144,11 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
     if (data) {
       setPeso(data.peso?.toString() || '')
       try { setCheckedMeals(JSON.parse(data.meals_json || '{}')) } catch { /* noop */ }
+      if (data.hambre)    setHambre(data.hambre)
+      if (data.energia)   setEnergia(data.energia)
+      if (data.digestivo) setDigestivo(data.digestivo)
+      if (data.animo)     setAnimo(data.animo)
+      if (data.nota)      setNota(data.nota)
     }
   }
 
@@ -114,15 +177,23 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
       actualKcal: kcalEstimada, completed: completedCount,
       total: MEALS.length, peso: peso ? Number(peso) : null,
       meals_json: JSON.stringify(checkedMeals),
+      hambre:    hambre    || null,
+      energia:   energia   || null,
+      digestivo: digestivo || null,
+      animo:     animo     || null,
+      nota:      nota      || null,
     }, { onConflict: 'user_id,fecha' })
     setSaving(false); setSaved(true); loadWeek()
-    setTimeout(() => setSaved(false), 2000)
+    setTimeout(() => setSaved(false), 2500)
   }
 
   // Chart data from week logs
   const kcalHistory = weekLogs.map(d => d.actualKcal || 0)
-  const pesoHistory = weekLogs.filter(d => d.peso).map(d => d.peso as number)
   const adherenciaHistory = weekLogs.map(d => d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0)
+
+  // Wellbeing completeness
+  const wellbeingFilled = [hambre > 0, energia > 0, digestivo !== '', animo !== ''].filter(Boolean).length
+  const wellbeingComplete = wellbeingFilled === 4
 
   return (
     <div className="space-y-5">
@@ -162,7 +233,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
         />
       </div>
 
-      {/* ── Main grid: progress + checklist + macros ── */}
+      {/* ── Main grid: checklist + ring + macros ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* ── Left: Checklist de comidas ── */}
@@ -240,12 +311,12 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                 saved ? 'bg-green-500' : 'bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] hover:opacity-90'
               )}
             >
-              {saved ? '✅ Guardado' : saving ? '...' : 'Guardar'}
+              {saved ? '✅ Guardado' : saving ? '...' : 'Guardar día'}
             </button>
           </div>
         </div>
 
-        {/* ── Right: Macros + adherencia ring ── */}
+        {/* ── Right: Adherencia ring + macros ── */}
         <div className="space-y-4">
           {/* Adherencia ring */}
           <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm flex flex-col items-center gap-3">
@@ -268,8 +339,8 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
               <div className="space-y-3">
                 {[
                   { name: 'Proteína', g: macros.p, kcalPer: 4, color: '#22c55e', bg: 'bg-green-50', text: 'text-green-700' },
-                  { name: 'Carboh.', g: macros.c, kcalPer: 4, color: '#3b82f6', bg: 'bg-blue-50', text: 'text-blue-700' },
-                  { name: 'Grasas', g: macros.g, kcalPer: 9, color: '#f59e0b', bg: 'bg-amber-50', text: 'text-amber-700' },
+                  { name: 'Carboh.',  g: macros.c, kcalPer: 4, color: '#3b82f6', bg: 'bg-blue-50',  text: 'text-blue-700' },
+                  { name: 'Grasas',   g: macros.g, kcalPer: 9, color: '#f59e0b', bg: 'bg-amber-50', text: 'text-amber-700' },
                 ].map(m => {
                   const kcalMacro = m.g * m.kcalPer
                   const totalKcal = (macros.p * 4) + (macros.c * 4) + (macros.g * 9)
@@ -297,6 +368,147 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
         </div>
       </div>
 
+      {/* ── Bienestar del día ── */}
+      <div className="bg-white rounded-2xl border border-[#E2ECF4] shadow-sm overflow-hidden">
+        <button
+          onClick={() => setWellbeingOpen(o => !o)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FBFD] transition"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-lg">💬</span>
+            <div className="text-left">
+              <p className="text-sm font-bold text-[#0C1F2C]">Bienestar del día</p>
+              <p className="text-[10px] text-[#8BA5BE]">
+                {wellbeingComplete
+                  ? 'Completado · gracias por tu registro'
+                  : `${wellbeingFilled}/4 campos completados`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {wellbeingComplete && (
+              <span className="text-xs font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">✓</span>
+            )}
+            {wellbeingOpen
+              ? <ChevronUp size={16} className="text-[#8BA5BE]" />
+              : <ChevronDown size={16} className="text-[#8BA5BE]" />}
+          </div>
+        </button>
+
+        {wellbeingOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="px-5 pb-5 space-y-5 border-t border-[#F0F6FA]"
+          >
+            {/* Hambre */}
+            <div className="pt-4">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xs font-bold text-[#0C1F2C]">🍽️ Nivel de hambre</p>
+                {hambre > 0 && (
+                  <span className="text-xs text-[#8BA5BE]">{HUNGER_LABELS[hambre]}</span>
+                )}
+              </div>
+              <ScaleSelector
+                value={hambre}
+                onChange={setHambre}
+                labels={HUNGER_LABELS}
+                colorFn={v => v <= 2 ? 'text-green-600 border-green-400 bg-green-50'
+                  : v === 3 ? 'text-blue-600 border-blue-400 bg-blue-50'
+                  : 'text-amber-600 border-amber-400 bg-amber-50'}
+              />
+              <div className="flex justify-between text-[9px] text-[#C8D8E4] mt-1 px-0.5">
+                <span>Sin hambre</span><span>Mucha hambre</span>
+              </div>
+            </div>
+
+            {/* Energía */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-xs font-bold text-[#0C1F2C]">⚡ Nivel de energía</p>
+                {energia > 0 && (
+                  <span className="text-xs text-[#8BA5BE]">{ENERGY_LABELS[energia]}</span>
+                )}
+              </div>
+              <ScaleSelector
+                value={energia}
+                onChange={setEnergia}
+                labels={ENERGY_LABELS}
+                colorFn={v => v <= 2 ? 'text-red-500 border-red-400 bg-red-50'
+                  : v === 3 ? 'text-amber-600 border-amber-400 bg-amber-50'
+                  : 'text-green-600 border-green-400 bg-green-50'}
+              />
+              <div className="flex justify-between text-[9px] text-[#C8D8E4] mt-1 px-0.5">
+                <span>Sin energía</span><span>Excelente</span>
+              </div>
+            </div>
+
+            {/* Digestivo */}
+            <div>
+              <p className="text-xs font-bold text-[#0C1F2C] mb-2">🫁 Molestias digestivas</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {DIGESTIVO_OPTS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setDigestivo(opt.value)}
+                    className={cn(
+                      'flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-semibold transition-all',
+                      digestivo === opt.value ? opt.color : 'border-[#E2ECF4] text-[#8BA5BE] hover:border-[#29ABE2]/40'
+                    )}
+                  >
+                    <span className="text-base">{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Ánimo */}
+            <div>
+              <p className="text-xs font-bold text-[#0C1F2C] mb-2">😊 Estado de ánimo</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {ANIMO_OPTS.map(opt => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setAnimo(opt.value)}
+                    className={cn(
+                      'flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 text-xs font-semibold transition-all',
+                      animo === opt.value ? opt.color : 'border-[#E2ECF4] text-[#8BA5BE] hover:border-[#29ABE2]/40'
+                    )}
+                  >
+                    <span className="text-base">{opt.emoji}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Nota libre */}
+            <div>
+              <p className="text-xs font-bold text-[#0C1F2C] mb-2">📝 Nota del día <span className="font-normal text-[#8BA5BE]">(opcional)</span></p>
+              <textarea
+                value={nota}
+                onChange={e => setNota(e.target.value)}
+                placeholder="Ej: hice doble entrenamiento, comí fuera, tuve mucho estrés..."
+                rows={2}
+                className="w-full text-sm text-[#0C1F2C] border border-[#E2ECF4] rounded-xl px-3 py-2.5 resize-none outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 placeholder:text-[#C8D8E4] transition"
+              />
+            </div>
+
+            <button
+              onClick={handleSave} disabled={saving}
+              className={cn(
+                'w-full py-2.5 rounded-xl font-bold text-sm text-white transition-all',
+                saved ? 'bg-green-500' : 'bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] hover:opacity-90'
+              )}
+            >
+              {saved ? '✅ Guardado' : saving ? 'Guardando...' : 'Guardar bienestar'}
+            </button>
+          </motion.div>
+        )}
+      </div>
+
       {/* ── Historial semana ── */}
       {weekLogs.length > 0 && (
         <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
@@ -311,9 +523,8 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           {/* Mini bar chart */}
           <div className="flex items-end gap-2 h-16">
             {weekLogs.map((d, i) => {
-              const adh = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
               const isToday = d.fecha === today
-              const kcalPct = Math.min((d.actualKcal / targetKcal) * 100, 100)
+              const kcalPct = Math.min(((d.actualKcal || 0) / targetKcal) * 100, 100)
               return (
                 <div key={d.fecha} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className="w-full bg-[#F0F6FA] rounded-lg relative" style={{ height: '52px' }}>
@@ -325,7 +536,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                     />
                   </div>
                   <span className="text-[9px] text-[#8BA5BE] font-medium">
-                    {isToday ? 'Hoy' : new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'short' }).slice(0,3)}
+                    {isToday ? 'Hoy' : new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'short' }).slice(0, 3)}
                   </span>
                 </div>
               )
@@ -345,11 +556,21 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                   <span className={cn('font-semibold', isToday ? 'text-[#0C3547]' : 'text-[#6B7C93]')}>
                     {isToday ? 'Hoy' : new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' })}
                   </span>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <span className="text-[#6B7C93]">{d.actualKcal || 0} kcal</span>
                     <span className={cn('font-bold px-2 py-0.5 rounded-full', adh >= 80 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
                       {adh}%
                     </span>
+                    {d.hambre && (
+                      <span title={`Hambre: ${d.hambre}/5`} className="text-[#8BA5BE]">
+                        🍽️{d.hambre}
+                      </span>
+                    )}
+                    {d.energia && (
+                      <span title={`Energía: ${d.energia}/5`} className="text-[#8BA5BE]">
+                        ⚡{d.energia}
+                      </span>
+                    )}
                     {d.peso && <span className="text-[#8BA5BE]">{d.peso} kg</span>}
                   </div>
                 </div>

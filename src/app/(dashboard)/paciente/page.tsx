@@ -152,6 +152,7 @@ export default function PacientePage() {
   const [activeTab, setActiveTab] = useState<Tab>('plan')
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
+  const [checking, setChecking] = useState(true)   // ← blocks render until auth verified
 
   // Notifications state
   const [notifications, setNotifications] = useState<AppNotification[]>([])
@@ -171,8 +172,6 @@ export default function PacientePage() {
         return
       }
 
-      setUserId(user.id)
-
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -186,6 +185,7 @@ export default function PacientePage() {
         return
       }
 
+      setUserId(user.id)
       setProfile(profileData)
 
       // Load read state from localStorage
@@ -204,6 +204,9 @@ export default function PacientePage() {
         setResult(latestPlan.plan_json.result)
         setFormData(latestPlan.plan_json.form)
       }
+
+      // All checks passed — allow render
+      setChecking(false)
     }
     load()
   }, [])
@@ -255,6 +258,18 @@ export default function PacientePage() {
         plan_json: { form: f, result: r },
       })
     }
+  }
+
+  // Block render while verifying session — prevents flash of content for invalid users
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-[#060F1A] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#29ABE2]/30 border-t-[#29ABE2] rounded-full animate-spin" />
+          <p className="text-[#4A7A94] text-xs font-medium">Verificando sesión...</p>
+        </div>
+      </div>
+    )
   }
 
   return (

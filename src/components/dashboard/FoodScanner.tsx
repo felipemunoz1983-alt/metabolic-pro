@@ -106,34 +106,35 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
     const supabase = createClient()
     const today = new Date().toISOString().split('T')[0]
 
-    // Upsert today's log, adding the scanned calories to any existing entry
+    // Add scanned calories to today's registros_diarios row (upsert)
     const { data: existing } = await supabase
-      .from('daily_logs')
-      .select('id, kcal, proteina, carbohidrato, grasa')
+      .from('registros_diarios')
+      .select('id, scan_kcal, scan_proteina, scan_carbohidrato, scan_grasa')
       .eq('user_id', userId)
       .eq('fecha', today)
       .maybeSingle()
 
     if (existing) {
       await supabase
-        .from('daily_logs')
+        .from('registros_diarios')
         .update({
-          kcal:         (existing.kcal ?? 0) + result.total.kcal,
-          proteina:     (existing.proteina ?? 0) + result.total.proteina,
-          carbohidrato: (existing.carbohidrato ?? 0) + result.total.carbohidratos,
-          grasa:        (existing.grasa ?? 0) + result.total.grasa,
+          scan_kcal:         (existing.scan_kcal ?? 0) + result.total.kcal,
+          scan_proteina:     (existing.scan_proteina ?? 0) + result.total.proteina,
+          scan_carbohidrato: (existing.scan_carbohidrato ?? 0) + result.total.carbohidratos,
+          scan_grasa:        (existing.scan_grasa ?? 0) + result.total.grasa,
         })
         .eq('id', existing.id)
     } else {
-      await supabase.from('daily_logs').insert({
-        user_id:      userId,
-        fecha:        today,
-        kcal:         result.total.kcal,
-        proteina:     result.total.proteina,
-        carbohidrato: result.total.carbohidratos,
-        grasa:        result.total.grasa,
-        adherencia:   false,
-      })
+      await supabase.from('registros_diarios').upsert({
+        user_id:           userId,
+        fecha:             today,
+        scan_kcal:         result.total.kcal,
+        scan_proteina:     result.total.proteina,
+        scan_carbohidrato: result.total.carbohidratos,
+        scan_grasa:        result.total.grasa,
+        completed:         0,
+        total:             5,
+      }, { onConflict: 'user_id,fecha' })
     }
 
     setLogged(true)
