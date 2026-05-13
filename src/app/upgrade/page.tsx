@@ -12,6 +12,7 @@ import {
   CreditCard, Loader2, User,
 } from 'lucide-react'
 import type { Profile, PlanType } from '@/types'
+import { isOnTrial, trialDaysLeft } from '@/types'
 
 interface PlanConfig {
   type: PlanType
@@ -130,6 +131,9 @@ export default function UpgradePage() {
   }
 
   const isActive = profile && profile.plan !== 'gratuito'
+  const onTrial = profile ? isOnTrial(profile) : false
+  const daysLeft = profile ? trialDaysLeft(profile) : 0
+  const trialExpired = profile?.trial_ends_at && !onTrial && profile.plan === 'gratuito'
   const planType = profile ? getPlanType(profile) : null
   const planConfig = planType ? PLAN_CONFIGS[planType] : null
   const PlanIcon = planConfig?.icon ?? Star
@@ -211,8 +215,24 @@ export default function UpgradePage() {
                   ))}
                 </div>
 
+                {/* Trial / expired notice */}
+                {onTrial && (
+                  <div className="mx-6 mb-0 bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs font-bold text-[#29ABE2]">
+                      ⏰ Te quedan <span className="text-base">{daysLeft}</span> día{daysLeft !== 1 ? 's' : ''} de prueba gratuita
+                    </p>
+                    <p className="text-[10px] text-[#4A7A94] mt-0.5">Activa tu plan antes de que expire para seguir sin interrupciones.</p>
+                  </div>
+                )}
+                {trialExpired && (
+                  <div className="mx-6 mb-0 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs font-bold text-red-600">Tu período de prueba ha finalizado</p>
+                    <p className="text-[10px] text-red-400 mt-0.5">Activa tu plan para seguir usando la app.</p>
+                  </div>
+                )}
+
                 {/* CTA */}
-                <div className="px-6 pb-6">
+                <div className="px-6 pb-6 pt-4">
                   {error && (
                     <div className="mb-3 bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3 font-medium">
                       {error}

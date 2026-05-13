@@ -16,7 +16,9 @@ import {
   Activity,
   Users,
   Star,
+  Clock,
 } from 'lucide-react'
+import { isOnTrial, trialDaysLeft } from '@/types'
 
 const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: string }[] = [
   { id: 'dashboard', label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
@@ -131,30 +133,67 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
         })}
       </nav>
 
-      {/* Upgrade CTA — only for gratuito users */}
-      {profile?.plan === 'gratuito' && !collapsed && (
-        <div className="mx-3 mb-3">
-          <a
-            href="/upgrade"
-            className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl px-3 py-2.5 hover:border-amber-400/60 transition group"
-          >
-            <Star size={13} className="text-amber-400 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black text-amber-400 leading-tight">Mejora a Premium</p>
-              <p className="text-[9px] text-amber-600/80">
-                {profile?.role === 'professional' ? '$14.990' : profile?.professional_id ? '$7.000' : '$12.990'}/mes
-              </p>
+      {/* Trial countdown or Upgrade CTA — only for gratuito users */}
+      {profile?.plan === 'gratuito' && (() => {
+        const onTrial = profile.trial_ends_at ? isOnTrial(profile) : false
+        const daysLeft = profile.trial_ends_at ? trialDaysLeft(profile) : 0
+        const price = profile?.role === 'professional' ? '$14.990' : profile?.professional_id ? '$7.000' : '$12.990'
+
+        if (onTrial && !collapsed) {
+          return (
+            <div className="mx-3 mb-3">
+              <a
+                href="/upgrade"
+                className="flex items-center gap-2 bg-gradient-to-r from-[#29ABE2]/10 to-[#1a6fa0]/10 border border-[#29ABE2]/30 rounded-xl px-3 py-2.5 hover:border-[#29ABE2]/60 transition group"
+              >
+                <Clock size={13} className="text-[#29ABE2] flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-[#29ABE2] leading-tight">
+                    {daysLeft === 0 ? 'Prueba finalizada hoy' : `${daysLeft} día${daysLeft !== 1 ? 's' : ''} de prueba`}
+                  </p>
+                  <p className="text-[9px] text-[#4A7A94]">Activar plan {price}/mes</p>
+                </div>
+              </a>
             </div>
-          </a>
-        </div>
-      )}
-      {profile?.plan === 'gratuito' && collapsed && (
-        <div className="flex justify-center mb-2">
-          <a href="/upgrade" title="Mejora a Premium" className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center hover:border-amber-400/60 transition">
-            <Star size={13} className="text-amber-400" />
-          </a>
-        </div>
-      )}
+          )
+        }
+
+        if (onTrial && collapsed) {
+          return (
+            <div className="flex justify-center mb-2">
+              <a href="/upgrade" title={`${daysLeft} días de prueba`} className="w-8 h-8 bg-[#29ABE2]/20 border border-[#29ABE2]/30 rounded-lg flex items-center justify-center hover:border-[#29ABE2]/60 transition">
+                <Clock size={13} className="text-[#29ABE2]" />
+              </a>
+            </div>
+          )
+        }
+
+        // No trial (or expired) — show upgrade CTA
+        if (!collapsed) {
+          return (
+            <div className="mx-3 mb-3">
+              <a
+                href="/upgrade"
+                className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-amber-600/10 border border-amber-500/30 rounded-xl px-3 py-2.5 hover:border-amber-400/60 transition group"
+              >
+                <Star size={13} className="text-amber-400 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[10px] font-black text-amber-400 leading-tight">Activar plan</p>
+                  <p className="text-[9px] text-amber-600/80">{price}/mes</p>
+                </div>
+              </a>
+            </div>
+          )
+        }
+
+        return (
+          <div className="flex justify-center mb-2">
+            <a href="/upgrade" title="Activar plan" className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center hover:border-amber-400/60 transition">
+              <Star size={13} className="text-amber-400" />
+            </a>
+          </div>
+        )
+      })()}
 
       {/* User + sign out */}
       <div className={cn('border-t border-white/5 p-3', collapsed && 'flex flex-col items-center gap-2')}>

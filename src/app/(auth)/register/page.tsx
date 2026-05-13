@@ -73,6 +73,11 @@ function RegisterForm() {
     if (!userId) { setError('Error al crear la cuenta. Intenta nuevamente.'); setLoading(false); return }
 
     // 2. Create profile
+    // Patients who arrive via a professional's invite link get 21 days free trial
+    const trialEndsAt = isLinked
+      ? new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString()
+      : null
+
     const profilePayload: Record<string, unknown> = {
       id:     userId,
       nombre: nombre.trim(),
@@ -80,6 +85,7 @@ function RegisterForm() {
       role:   isProfessionalRegister ? 'professional' : isLinked ? 'patient' : 'individual',
       plan:   'gratuito',
       ...(isLinked && { professional_id: professionalId }),
+      ...(trialEndsAt && { trial_ends_at: trialEndsAt }),
     }
 
     const { error: profileError } = await supabase.from('profiles').upsert(profilePayload)
