@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { tbkTx, PLAN_PRICE_CLP } from '@/lib/transbank'
+import { tbkTx, PLAN_PRICES } from '@/lib/transbank'
 import { createServiceClient } from '@/lib/supabase-server'
+import type { PlanType } from '@/types'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   let userId: string
@@ -12,18 +13,41 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
   }
 
+  const supabase = createServiceClient()
+
+  // Determine plan type from profile role + professional_id
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles')
+    .select('role, professional_id')
+    .eq('id', userId)
+    .single()
+
+  if (profileError || !profile) {
+    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  }
+
+  let planType: PlanType
+  if (profile.role === 'professional') {
+    planType = 'professional'
+  } else if (profile.role === 'patient' && profile.professional_id) {
+    planType = 'patient'
+  } else {
+    planType = 'individual'
+  }
+
+  const amount = PLAN_PRICES[planType]
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
   const buyOrder = `CM-${userId.slice(0, 8)}-${Date.now()}`
   const sessionId = `sess-${Date.now()}`
   const returnUrl = `${appUrl}/api/webpay/confirm`
 
   // Save pending payment to DB
-  const supabase = createServiceClient()
   const { error: dbError } = await supabase.from('payments').insert({
     user_id: userId,
     buy_order: buyOrder,
     session_id: sessionId,
-    amount: PLAN_PRICE_CLP,
+    amount,
+    plan_type: planType,
     status: 'pending',
   })
   if (dbError) {
@@ -34,7 +58,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Create Transbank transaction
   let response: { url: string; token: string }
   try {
-    response = await tbkTx.create(buyOrder, sessionId, PLAN_PRICE_CLP, returnUrl)
+    response = await tbkTx.create(buyOrder, sessionId, amount, returnUrl)
   } catch (err) {
     console.error('[webpay/create] Transbank error:', err)
     return NextResponse.json({ error: 'Transbank error' }, { status: 502 })

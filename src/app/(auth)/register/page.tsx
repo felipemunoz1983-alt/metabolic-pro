@@ -77,7 +77,7 @@ function RegisterForm() {
       id:     userId,
       nombre: nombre.trim(),
       email:  email.trim().toLowerCase(),
-      role:   isProfessionalRegister ? 'professional' : 'patient',
+      role:   isProfessionalRegister ? 'professional' : isLinked ? 'patient' : 'individual',
       plan:   'gratuito',
       ...(isLinked && { professional_id: professionalId }),
     }

@@ -8,21 +8,77 @@ import { createClient } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import {
   Activity, CheckCircle, ArrowLeft,
-  Star, Zap, Shield, Users, Bot, BarChart2,
-  CreditCard, Loader2,
+  Star, Shield, Users,
+  CreditCard, Loader2, User,
 } from 'lucide-react'
-import type { Profile } from '@/types'
+import type { Profile, PlanType } from '@/types'
 
-const PRICE_CLP = 14990
+interface PlanConfig {
+  type: PlanType
+  label: string
+  price: number
+  sublabel: string
+  icon: React.ElementType
+  accentColor: string
+  features: string[]
+}
 
-const FEATURES = [
-  { icon: BarChart2, text: 'Dashboard de registro diario de calorias y macros' },
-  { icon: Bot,       text: 'Asistente IA nutricional ilimitado 24/7' },
-  { icon: Star,      text: 'Historial completo de planes nutricionales' },
-  { icon: Users,     text: 'Panel profesional — gestion de pacientes' },
-  { icon: Zap,       text: 'Generador de plan clinico Harris-Benedict + PAL' },
-  { icon: Shield,    text: 'Datos protegidos y respaldados en la nube' },
-]
+const PLAN_CONFIGS: Record<PlanType, PlanConfig> = {
+  professional: {
+    type: 'professional',
+    label: 'Plan Profesional',
+    price: 14990,
+    sublabel: 'Para nutricionistas y profesionales de salud',
+    icon: Users,
+    accentColor: '#29ABE2',
+    features: [
+      'Panel de gestión de pacientes ilimitado',
+      'Generador de plan clínico Harris-Benedict + PAL',
+      'Asistente IA nutricional ilimitado 24/7',
+      'Historial completo de planes nutricionales',
+      'Dashboard de registro diario por paciente',
+      'Datos protegidos y respaldados en la nube',
+    ],
+  },
+  patient: {
+    type: 'patient',
+    label: 'Plan Paciente',
+    price: 7000,
+    sublabel: 'Seguimiento guiado por tu profesional de salud',
+    icon: Shield,
+    accentColor: '#10b981',
+    features: [
+      'Plan nutricional personalizado por tu profesional',
+      'Registro diario de calorías y macros',
+      'Asistente IA nutricional ilimitado 24/7',
+      'Historial completo de planes anteriores',
+      'Alertas y seguimiento de adherencia',
+      'Datos protegidos y respaldados en la nube',
+    ],
+  },
+  individual: {
+    type: 'individual',
+    label: 'Plan Individual',
+    price: 12990,
+    sublabel: 'Para mejorar tu alimentación por tu cuenta',
+    icon: User,
+    accentColor: '#8b5cf6',
+    features: [
+      'Generador de plan nutricional personalizado',
+      'Dashboard de registro diario de calorías y macros',
+      'Asistente IA nutricional ilimitado 24/7',
+      'Historial completo de planes nutricionales',
+      'Alertas clínicas inteligentes',
+      'Datos protegidos y respaldados en la nube',
+    ],
+  },
+}
+
+function getPlanType(profile: Profile): PlanType {
+  if (profile.role === 'professional') return 'professional'
+  if (profile.role === 'patient' && profile.professional_id) return 'patient'
+  return 'individual'
+}
 
 export default function UpgradePage() {
   const router = useRouter()
@@ -45,7 +101,6 @@ export default function UpgradePage() {
     })
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Auto-submit the hidden WebPay form once we have the payment data
   useEffect(() => {
     if (pendingPayment && formRef.current) {
       formRef.current.submit()
@@ -56,21 +111,17 @@ export default function UpgradePage() {
     if (!profile) return
     setLoading(true)
     setError('')
-
     try {
       const res = await fetch('/api/webpay/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: profile.id }),
       })
-
       if (!res.ok) {
         const e = await res.json()
         throw new Error(e.error ?? 'Error al iniciar el pago')
       }
-
       const data = await res.json()
-      // Trigger auto-submit via useEffect
       setPendingPayment(data)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar el pago')
@@ -78,7 +129,10 @@ export default function UpgradePage() {
     }
   }
 
-  const isPremium = profile?.plan === 'premium'
+  const isActive = profile && profile.plan !== 'gratuito'
+  const planType = profile ? getPlanType(profile) : null
+  const planConfig = planType ? PLAN_CONFIGS[planType] : null
+  const PlanIcon = planConfig?.icon ?? Star
 
   return (
     <div className="min-h-screen bg-[#F0F6FA] flex flex-col">
@@ -97,25 +151,27 @@ export default function UpgradePage() {
           </div>
           <span className="text-sm font-bold text-[#0C1F2C]">Centro Metabolico <span className="text-[#29ABE2]">Pro</span></span>
         </div>
-        <div className="w-24" /> {/* spacer */}
+        <div className="w-24" />
       </header>
 
-      {/* Content */}
       <main className="flex-1 flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="w-full max-w-md"
         >
-          {/* Already premium */}
-          {isPremium ? (
+          {!profile ? (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 size={24} className="animate-spin text-[#29ABE2]" />
+            </div>
+          ) : isActive ? (
             <div className="bg-white rounded-2xl border border-[#E2ECF4] p-8 text-center shadow-sm">
               <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Star size={28} className="text-amber-500" />
               </div>
-              <h1 className="text-xl font-black text-[#0C1F2C] mb-2">Ya tienes Premium</h1>
+              <h1 className="text-xl font-black text-[#0C1F2C] mb-2">Tu plan está activo</h1>
               <p className="text-sm text-[#8BA5BE] mb-6">
-                Tu plan esta activo. Disfruta de todas las funciones de Centro Metabolico Pro.
+                Tienes el <span className="font-bold text-[#0C1F2C]">{planConfig?.label}</span> activo. Disfruta de todas las funciones.
               </p>
               <button
                 onClick={() => router.push('/paciente')}
@@ -124,33 +180,35 @@ export default function UpgradePage() {
                 Ir a la app
               </button>
             </div>
-          ) : (
+          ) : planConfig ? (
             <div className="space-y-4">
-              {/* Pricing card */}
               <div className="bg-white rounded-2xl border border-[#E2ECF4] overflow-hidden shadow-sm">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-[#060F1A] via-[#0C1F2C] to-[#0C3547] p-6 text-center">
-                  <p className="text-[10px] font-bold text-[#29ABE2] uppercase tracking-widest mb-2">Plan Premium</p>
+                  <div className="flex items-center justify-center gap-2 mb-3">
+                    <PlanIcon size={16} style={{ color: planConfig.accentColor }} />
+                    <p className="text-[10px] font-bold uppercase tracking-widest" style={{ color: planConfig.accentColor }}>
+                      {planConfig.label}
+                    </p>
+                  </div>
                   <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-black text-white">${PRICE_CLP.toLocaleString('es-CL')}</span>
+                    <span className="text-4xl font-black text-white">${planConfig.price.toLocaleString('es-CL')}</span>
                     <span className="text-sm text-[#4A7A94] font-medium">/mes</span>
                   </div>
-                  <p className="text-xs text-[#4A7A94] mt-1">30 dias de acceso completo</p>
+                  <p className="text-xs text-[#4A7A94] mt-1">{planConfig.sublabel}</p>
+                  <p className="text-[10px] text-[#4A7A94] mt-1">30 días de acceso completo</p>
                 </div>
 
                 {/* Features */}
                 <div className="p-6 space-y-3">
-                  {FEATURES.map(f => {
-                    const Icon = f.icon
-                    return (
-                      <div key={f.text} className="flex items-start gap-3">
-                        <div className="w-5 h-5 rounded-full bg-[#EAF4FB] flex items-center justify-center flex-shrink-0 mt-0.5">
-                          <CheckCircle size={12} className="text-[#29ABE2]" />
-                        </div>
-                        <span className="text-xs text-[#4A6070] leading-relaxed">{f.text}</span>
+                  {planConfig.features.map(f => (
+                    <div key={f} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-[#EAF4FB] flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <CheckCircle size={12} className="text-[#29ABE2]" />
                       </div>
-                    )
-                  })}
+                      <span className="text-xs text-[#4A6070] leading-relaxed">{f}</span>
+                    </div>
+                  ))}
                 </div>
 
                 {/* CTA */}
@@ -162,13 +220,13 @@ export default function UpgradePage() {
                   )}
                   <button
                     onClick={handlePay}
-                    disabled={loading || !profile}
+                    disabled={loading}
                     className="w-full py-3.5 bg-[#29ABE2] text-white font-bold rounded-xl hover:bg-[#1a8fc2] transition disabled:opacity-50 flex items-center justify-center gap-2.5"
                   >
                     {loading ? (
                       <><Loader2 size={16} className="animate-spin" /> Conectando con WebPay...</>
                     ) : (
-                      <><CreditCard size={16} /> Pagar con WebPay</>
+                      <><CreditCard size={16} /> Pagar ${planConfig.price.toLocaleString('es-CL')} con WebPay</>
                     )}
                   </button>
                 </div>
@@ -193,21 +251,15 @@ export default function UpgradePage() {
               </div>
 
               <p className="text-center text-[10px] text-[#B0C4D4]">
-                Seras redirigido a la plataforma segura de Transbank para completar el pago.
+                Serás redirigido a la plataforma segura de Transbank para completar el pago.
               </p>
             </div>
-          )}
+          ) : null}
         </motion.div>
       </main>
 
-      {/* Hidden WebPay form — auto-submitted after create response */}
       {pendingPayment && (
-        <form
-          ref={formRef}
-          method="POST"
-          action={pendingPayment.url}
-          className="hidden"
-        >
+        <form ref={formRef} method="POST" action={pendingPayment.url} className="hidden">
           <input name="token_ws" value={pendingPayment.token} readOnly />
         </form>
       )}

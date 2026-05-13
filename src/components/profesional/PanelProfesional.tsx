@@ -56,11 +56,14 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
         </div>
         <span className={cn(
           'text-[9px] font-bold px-2 py-1 rounded-full',
-          patient.plan === 'premium'
+          patient.plan !== 'gratuito'
             ? 'bg-amber-50 text-amber-600 border border-amber-200'
             : 'bg-[#F0F6FA] text-[#8BA5BE] border border-[#E2ECF4]'
         )}>
-          {patient.plan === 'premium' ? '⭐ Premium' : 'Gratuito'}
+          {patient.plan === 'patient' ? '⭐ Paciente'
+            : patient.plan === 'individual' ? '⭐ Individual'
+            : patient.plan !== 'gratuito' ? '⭐ Premium'
+            : 'Gratuito'}
         </span>
       </div>
 
@@ -283,9 +286,12 @@ function PatientDetail({
           <div className="text-right">
             <span className={cn(
               'text-xs font-bold px-2.5 py-1 rounded-full',
-              patient.plan === 'premium' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-[#9EC8E0]'
+              patient.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-[#9EC8E0]'
             )}>
-              {patient.plan === 'premium' ? '⭐ Premium' : 'Gratuito'}
+              {patient.plan === 'patient' ? '⭐ Paciente'
+                : patient.plan === 'individual' ? '⭐ Individual'
+                : patient.plan !== 'gratuito' ? '⭐ Premium'
+                : 'Gratuito'}
             </span>
             <p className="text-[10px] text-[#4A7A94] mt-1.5">
               Desde {new Date(patient.created_at).toLocaleDateString('es-CL', { month: 'short', year: 'numeric' })}
@@ -732,7 +738,7 @@ export function PanelProfesional({
         p.email?.toLowerCase().includes(q)
       )
     }
-    if (filter === 'premium') list = list.filter(p => p.plan === 'premium')
+    if (filter === 'premium') list = list.filter(p => p.plan !== 'gratuito')
     if (filter === 'activos') list = list.filter(p => {
       if (!p.lastLog?.fecha) return false
       const dias = Math.floor((Date.now() - new Date(p.lastLog.fecha + 'T12:00:00').getTime()) / 86400000)
@@ -836,8 +842,8 @@ export function PanelProfesional({
               bg: 'bg-[#EAF4FB]',
             },
             {
-              label: 'Premium',
-              value: patients.filter(p => p.plan === 'premium').length,
+              label: 'Con plan activo',
+              value: patients.filter(p => p.plan !== 'gratuito').length,
               icon: Target,
               color: 'text-amber-500',
               bg: 'bg-amber-50',

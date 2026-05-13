@@ -132,7 +132,7 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
       </nav>
 
       {/* Upgrade CTA — only for gratuito users */}
-      {profile?.plan !== 'premium' && !collapsed && (
+      {profile?.plan === 'gratuito' && !collapsed && (
         <div className="mx-3 mb-3">
           <a
             href="/upgrade"
@@ -141,12 +141,14 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
             <Star size={13} className="text-amber-400 flex-shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black text-amber-400 leading-tight">Mejora a Premium</p>
-              <p className="text-[9px] text-amber-600/80">$14.990/mes</p>
+              <p className="text-[9px] text-amber-600/80">
+                {profile?.role === 'professional' ? '$14.990' : profile?.professional_id ? '$7.000' : '$12.990'}/mes
+              </p>
             </div>
           </a>
         </div>
       )}
-      {profile?.plan !== 'premium' && collapsed && (
+      {profile?.plan === 'gratuito' && collapsed && (
         <div className="flex justify-center mb-2">
           <a href="/upgrade" title="Mejora a Premium" className="w-8 h-8 bg-amber-500/20 border border-amber-500/30 rounded-lg flex items-center justify-center hover:border-amber-400/60 transition">
             <Star size={13} className="text-amber-400" />
@@ -167,11 +169,14 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
               <p className="text-[11px] font-semibold text-white truncate">{profile.nombre || 'Usuario'}</p>
               <span className={cn(
                 'text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mt-0.5',
-                profile.plan === 'premium'
+                profile.plan !== 'gratuito'
                   ? 'bg-amber-500/20 text-amber-400'
                   : 'bg-white/10 text-[#6B8FA8]'
               )}>
-                {profile.plan === 'premium' ? '⭐ Premium' : 'Gratuito'}
+                {profile.plan === 'professional' ? '⭐ Profesional'
+                  : profile.plan === 'patient' ? '⭐ Paciente'
+                  : profile.plan === 'individual' ? '⭐ Individual'
+                  : 'Gratuito'}
               </span>
             </div>
           </div>

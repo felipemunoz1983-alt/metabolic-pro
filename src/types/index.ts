@@ -1,5 +1,6 @@
-export type UserRole = 'patient' | 'professional'
-export type UserPlan = 'gratuito' | 'premium'
+export type UserRole = 'patient' | 'professional' | 'individual'
+export type UserPlan = 'gratuito' | 'professional' | 'patient' | 'individual'
+export type PlanType = 'professional' | 'patient' | 'individual'
 
 export interface Profile {
   id: string
@@ -10,6 +11,7 @@ export interface Profile {
   created_at: string
   professional_id?: string
   whatsapp?: string
+  premium_until?: string
 }
 
 export interface NutritionalPlan {
