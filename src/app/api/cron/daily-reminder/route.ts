@@ -88,23 +88,27 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const fechaHoy = today()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://centrometabolico.cl'
 
-  // 1. Fetch all patients with active (non-gratuito) plans who have email
+  // 1. Fetch all patients (paid OR on active trial) who have email
   const { data: activePacientes, error: pErr } = await supabase
     .from('profiles')
-    .select('id, email, nombre, premium_until')
-    .eq('role', 'patient')
-    .neq('plan', 'gratuito')
+    .select('id, email, nombre, plan, premium_until, trial_ends_at')
     .not('email', 'is', null)
+    .or("role.eq.patient,role.eq.individual")
 
   if (pErr || !activePacientes) {
     console.error('[cron/daily-reminder] fetch patients error:', pErr)
     return NextResponse.json({ error: 'Could not fetch patients' }, { status: 500 })
   }
 
-  // Filter to only patients whose premium_until is still in the future
-  const validPatients = activePacientes.filter(p =>
-    !p.premium_until || new Date(p.premium_until) > new Date()
-  )
+  const now = new Date()
+  // Keep users with active paid plan OR active trial
+  const validPatients = activePacientes.filter(p => {
+    if (p.plan !== 'gratuito') {
+      return !p.premium_until || new Date(p.premium_until) > now
+    }
+    // gratuito → must have active trial
+    return !!p.trial_ends_at && new Date(p.trial_ends_at) > now
+  })
 
   if (validPatients.length === 0) {
     return NextResponse.json({ ok: true, sent: 0, message: 'No active patients' })

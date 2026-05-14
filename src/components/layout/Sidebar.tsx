@@ -245,12 +245,14 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
                   'text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mt-0.5',
                   isPlanExpired(profile) ? 'bg-orange-500/20 text-orange-400'
                     : profile.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400'
+                    : isOnTrial(profile) ? 'bg-[#29ABE2]/20 text-[#29ABE2]'
                     : 'bg-white/10 text-[#6B8FA8]'
                 )}>
                   {isPlanExpired(profile) ? '⚠ Expirado'
                     : profile.plan === 'professional' ? '⭐ Profesional'
                     : profile.plan === 'patient' ? '⭐ Paciente'
                     : profile.plan === 'individual' ? '⭐ Individual'
+                    : isOnTrial(profile) ? '🔵 En prueba'
                     : 'Gratuito'}
                 </span>
               </div>
