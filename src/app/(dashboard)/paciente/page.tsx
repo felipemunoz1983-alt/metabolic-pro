@@ -455,6 +455,28 @@ export default function PacientePage() {
               {/* ── Dashboard ── */}
               {activeTab === 'dashboard' && userId && (
                 <div className="px-3 py-4 md:px-6 md:py-6">
+                  {/* "Crea tu plan" nudge — shown when no plan exists and user is individual */}
+                  {!result && profile?.role !== 'patient' && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mb-4 bg-gradient-to-r from-[#EAF4FB] to-[#F0F8FE] border border-[#C6E4F4] rounded-2xl p-4 flex items-center gap-4"
+                    >
+                      <div className="w-10 h-10 bg-[#29ABE2]/15 rounded-xl flex items-center justify-center flex-shrink-0 text-xl">
+                        🥗
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-black text-[#0C3547]">Crea tu plan nutricional</p>
+                        <p className="text-xs text-[#6B8FA8] mt-0.5">Tu dashboard se calibrará con tus calorías y macros exactos.</p>
+                      </div>
+                      <button
+                        onClick={() => setActiveTab('plan')}
+                        className="flex-shrink-0 bg-[#29ABE2] text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-[#1a8fc2] transition"
+                      >
+                        Empezar
+                      </button>
+                    </motion.div>
+                  )}
                   <CalorieDashboard
                     userId={userId}
                     targetKcal={result?.kcal ? Math.round(result.kcal) : 2000}
