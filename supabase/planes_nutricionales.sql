@@ -22,17 +22,30 @@ create policy "Users see own plans"
   on planes_nutricionales for select
   using (auth.uid() = user_id);
 
+-- Patients insert their own plans
 create policy "Users insert own plans"
   on planes_nutricionales for insert
   with check (auth.uid() = user_id);
 
+-- Professionals insert plans for their linked patients
+create policy "Professional inserts patient plans"
+  on planes_nutricionales for insert
+  with check (
+    exists (
+      select 1 from profiles p
+      where p.id = planes_nutricionales.user_id
+        and p.professional_id = auth.uid()
+    )
+  );
+
+-- Professionals see ALL plans for their linked patients
+-- (includes patient self-generated plans where professional_id = null)
 create policy "Professional sees patient plans"
   on planes_nutricionales for select
   using (
     exists (
-      select 1 from profiles
-      where id = auth.uid()
-        and role = 'professional'
-        and id = planes_nutricionales.professional_id
+      select 1 from profiles p
+      where p.id = planes_nutricionales.user_id
+        and p.professional_id = auth.uid()
     )
   );

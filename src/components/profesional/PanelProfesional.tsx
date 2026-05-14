@@ -172,7 +172,7 @@ function PatientDetail({
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
   const [planForm, setPlanForm] = useState<FormData | null>(null)
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'save_error'>('idle')
 
   useEffect(() => {
     async function loadData() {
@@ -225,7 +225,7 @@ function PatientDetail({
     setPlanForm(f)
 
     // Save plan to Supabase
-    const { data: saved } = await supabase
+    const { data: saved, error: saveErr } = await supabase
       .from('planes_nutricionales')
       .insert({
         user_id: patient.id,
@@ -239,6 +239,12 @@ function PatientDetail({
       })
       .select('id, objetivo, kcal, proteina, carbohidrato, grasa, plan_json, created_at')
       .maybeSingle()
+
+    if (saveErr) {
+      console.error('[PanelProfesional] plan save error — check RLS policies:', saveErr)
+      setEmailStatus('save_error')
+      return
+    }
 
     // Prepend to plan history immediately (no reload needed)
     if (saved) {
@@ -304,7 +310,15 @@ function PatientDetail({
             {emailStatus === 'error' && (
               <div className="mt-4 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
                 <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
-                <p className="text-xs text-amber-700 font-medium">Plan guardado. No se pudo enviar el email.</p>
+                <p className="text-xs text-amber-700 font-medium">Plan guardado. No se pudo enviar el email de notificación.</p>
+              </div>
+            )}
+            {emailStatus === 'save_error' && (
+              <div className="mt-4 flex items-center gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <AlertCircle size={14} className="text-red-500 flex-shrink-0" />
+                <p className="text-xs text-red-700 font-medium">
+                  Error al guardar el plan en la base de datos. Verifica que hayas aplicado el SQL de RLS en Supabase (<code className="font-mono">supabase/rls-fix.sql</code>).
+                </p>
               </div>
             )}
           </>
