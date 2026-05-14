@@ -366,7 +366,10 @@ export default function PacientePage() {
                       </div>
                     </motion.div>
                   ) : (
-                    <PlanGenerator onResult={handleResult} />
+                    <PlanGenerator
+                      onResult={handleResult}
+                      initialData={formData ?? undefined}
+                    />
                   )}
                 </div>
               )}

@@ -282,7 +282,10 @@ function PatientDetail({
                 Generando plan para <span className="font-bold">{patient.nombre}</span>
               </p>
             </div>
-            <PlanGenerator onResult={handlePlanResult} />
+            <PlanGenerator
+              onResult={handlePlanResult}
+              initialData={planForm ?? undefined}
+            />
           </>
         )}
       </div>

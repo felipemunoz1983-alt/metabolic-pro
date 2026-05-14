@@ -188,11 +188,12 @@ function MealChips({
 
 interface Props {
   onResult: (result: NutritionResult, form: FormData) => void
+  initialData?: Partial<FormData>
 }
 
-export function PlanGenerator({ onResult }: Props) {
+export function PlanGenerator({ onResult, initialData }: Props) {
   const [step, setStep] = useState(0)
-  const [form, setForm] = useState<Partial<FormData>>(defaultForm)
+  const [form, setForm] = useState<Partial<FormData>>({ ...defaultForm, ...initialData })
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
