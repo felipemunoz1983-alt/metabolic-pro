@@ -559,7 +559,7 @@ function ModalVincular({
       .from('profiles')
       .select('*')
       .eq('email', email.trim().toLowerCase())
-      .single()
+      .maybeSingle()
 
     if (!data) { setStatus('not_found'); return }
     if (data.professional_id === professionalId) { setStatus('already'); return }
@@ -570,12 +570,16 @@ function ModalVincular({
   async function handleLink() {
     if (!foundProfile) return
     setStatus('loading')
-    const { error } = await supabase
-      .from('profiles')
-      .update({ professional_id: professionalId, role: 'patient' })
-      .eq('id', foundProfile.id)
-
-    if (error) { setStatus('error'); return }
+    try {
+      const res = await fetch('/api/patients/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId: foundProfile.id, professionalId }),
+      })
+      if (!res.ok) { setStatus('error'); return }
+    } catch {
+      setStatus('error'); return
+    }
     setStatus('done')
     setTimeout(() => { onSuccess(); onClose() }, 1200)
   }
