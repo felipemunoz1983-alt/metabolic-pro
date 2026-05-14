@@ -54,7 +54,7 @@ function FailedContent() {
         </button>
 
         <a
-          href="https://wa.me/56900000000"
+          href={`https://wa.me/${process.env.NEXT_PUBLIC_SUPPORT_WHATSAPP ?? '56900000000'}`}
           target="_blank"
           rel="noopener noreferrer"
           className="w-full py-2.5 flex items-center justify-center gap-2 text-xs text-[#B0C4D4] hover:text-[#25D366] transition"
