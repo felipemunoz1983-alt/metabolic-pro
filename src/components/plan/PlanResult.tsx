@@ -144,13 +144,13 @@ export function PlanResult({ result, form, onReset }: Props) {
       className="space-y-6"
     >
       {/* Header resultado */}
-      <div className="bg-gradient-to-r from-[#081F2D] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-6 text-white">
+      <div className="bg-gradient-to-r from-[#081F2D] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-4 sm:p-6 text-white">
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-xl font-extrabold">{form.nombre}</h2>
-            <p className="text-[#9EC8E0] text-sm mt-0.5">{OBJETIVO_LABELS[form.objetivo]}</p>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg sm:text-xl font-extrabold truncate">{form.nombre}</h2>
+            <p className="text-[#9EC8E0] text-xs sm:text-sm mt-0.5">{OBJETIVO_LABELS[form.objetivo]}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-shrink-0">
             <button
               onClick={() => {
                 sessionStorage.setItem('plan_para_imprimir', JSON.stringify({ result, form }))
@@ -191,18 +191,18 @@ export function PlanResult({ result, form, onReset }: Props) {
         <h3 className="text-sm font-bold text-[#0C3547] mb-3 uppercase tracking-wide">📊 Datos clínicos</h3>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
-            <span className="text-xs text-[#6B7C93] block">TMB (Harris-Benedict)</span>
-            <span className="text-lg font-bold text-[#0C3547]">{bmr.toLocaleString()}</span>
-            <span className="text-xs text-[#6B7C93]"> kcal</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93] block leading-tight">TMB</span>
+            <span className="text-base sm:text-lg font-bold text-[#0C3547]">{bmr.toLocaleString()}</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93]"> kcal</span>
           </div>
           <div>
-            <span className="text-xs text-[#6B7C93] block">TDEE (GET)</span>
-            <span className="text-lg font-bold text-[#0C3547]">{tdee.toLocaleString()}</span>
-            <span className="text-xs text-[#6B7C93]"> kcal</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93] block leading-tight">TDEE (GET)</span>
+            <span className="text-base sm:text-lg font-bold text-[#0C3547]">{tdee.toLocaleString()}</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93]"> kcal</span>
           </div>
           <div>
-            <span className="text-xs text-[#6B7C93] block">Factor PAL</span>
-            <span className="text-lg font-bold text-[#0C3547]">{pal}</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93] block leading-tight">Factor PAL</span>
+            <span className="text-base sm:text-lg font-bold text-[#0C3547]">{pal}</span>
           </div>
         </div>
       </div>
@@ -223,9 +223,9 @@ export function PlanResult({ result, form, onReset }: Props) {
             const pct = Math.round((macroKcal / kcal) * 100)
             return (
               <div key={m.name}>
-                <div className="flex justify-between text-sm mb-1">
-                  <span className={`font-semibold ${m.textColor}`}>{m.name}</span>
-                  <span className="text-[#6B7C93]">{m.g}g · {macroKcal} kcal · {pct}%</span>
+                <div className="flex justify-between text-xs sm:text-sm mb-1 gap-2">
+                  <span className={`font-semibold ${m.textColor} flex-shrink-0`}>{m.name}</span>
+                  <span className="text-[#6B7C93] text-right">{m.g}g · {pct}%</span>
                 </div>
                 <div className="h-2.5 bg-[#EAF4FB] rounded-full overflow-hidden">
                   <motion.div

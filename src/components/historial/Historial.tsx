@@ -73,16 +73,16 @@ function PlanCard({ plan, index, onClick }: { plan: PlanRow; index: number; onCl
           <p className="text-base font-black text-[#0C1F2C] truncate">
             {plan.plan_json?.form?.nombre || 'Plan sin nombre'}
           </p>
-          <div className="flex items-center gap-1.5 mt-1 text-[#8BA5BE]">
-            <Calendar size={11} />
-            <span className="text-[11px]">{dateLabel} · {timeLabel}</span>
+          <div className="flex items-center gap-1.5 mt-1 text-[#8BA5BE] min-w-0">
+            <Calendar size={11} className="flex-shrink-0" />
+            <span className="text-[11px] truncate">{dateLabel} · {timeLabel}</span>
           </div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0 ml-2 sm:ml-3">
           <div className="text-right">
             <div className="flex items-center gap-1 justify-end">
               <Flame size={13} className="text-[#29ABE2]" />
-              <span className="text-xl font-black text-[#0C1F2C]">{plan.kcal.toLocaleString()}</span>
+              <span className="text-lg sm:text-xl font-black text-[#0C1F2C]">{plan.kcal.toLocaleString()}</span>
             </div>
             <span className="text-[10px] text-[#8BA5BE] font-medium">kcal/día</span>
           </div>
@@ -205,7 +205,7 @@ export function Historial({ userId }: { userId: string }) {
 
       {/* Stats summary */}
       {!loading && plans.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
           {[
             { label: 'Pérdida de grasa', key: 'perdida grasa', icon: '🔥', color: 'text-red-600', bg: 'bg-red-50 border-red-100' },
             { label: 'Mantenimiento',    key: 'mantenimiento', icon: '⚖️',  color: 'text-blue-600', bg: 'bg-blue-50 border-blue-100' },
@@ -217,16 +217,16 @@ export function Historial({ userId }: { userId: string }) {
                 key={s.key}
                 onClick={() => setFilter(filter === s.key ? 'todos' : s.key as typeof filter)}
                 className={cn(
-                  'flex items-center gap-3 bg-white rounded-2xl border p-4 transition-all hover:shadow-sm',
+                  'flex items-center gap-2 sm:gap-3 bg-white rounded-2xl border p-3 sm:p-4 transition-all hover:shadow-sm',
                   filter === s.key ? 'border-[#29ABE2] ring-2 ring-[#29ABE2]/20' : 'border-[#E2ECF4]'
                 )}
               >
-                <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 border', s.bg)}>
-                  <span className="text-lg">{s.icon}</span>
+                <div className={cn('w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 border', s.bg)}>
+                  <span className="text-base sm:text-lg">{s.icon}</span>
                 </div>
-                <div className="text-left">
-                  <p className={cn('text-xl font-black', s.color)}>{count}</p>
-                  <p className="text-[10px] text-[#8BA5BE] font-medium leading-tight">{s.label}</p>
+                <div className="text-left min-w-0">
+                  <p className={cn('text-base sm:text-xl font-black', s.color)}>{count}</p>
+                  <p className="text-[9px] sm:text-[10px] text-[#8BA5BE] font-medium leading-tight truncate">{s.label}</p>
                 </div>
               </button>
             )
