@@ -74,17 +74,28 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
             <p className="text-[10px] text-[#8BA5BE] font-medium">{patient.email}</p>
           </div>
         </div>
-        <span className={cn(
-          'text-[9px] font-bold px-2 py-1 rounded-full',
-          patient.plan !== 'gratuito'
-            ? 'bg-amber-50 text-amber-600 border border-amber-200'
-            : 'bg-[#F0F6FA] text-[#8BA5BE] border border-[#E2ECF4]'
-        )}>
-          {patient.plan === 'patient' ? '⭐ Paciente'
-            : patient.plan === 'individual' ? '⭐ Individual'
-            : patient.plan !== 'gratuito' ? '⭐ Premium'
-            : 'Gratuito'}
-        </span>
+        {(() => {
+          const onTrial = patient.plan === 'gratuito'
+            && patient.trial_ends_at
+            && new Date(patient.trial_ends_at) > new Date()
+          const isPaid = patient.plan !== 'gratuito'
+          return (
+            <span className={cn(
+              'text-[9px] font-bold px-2 py-1 rounded-full',
+              isPaid
+                ? 'bg-amber-50 text-amber-600 border border-amber-200'
+                : onTrial
+                ? 'bg-blue-50 text-blue-600 border border-blue-200'
+                : 'bg-[#F0F6FA] text-[#8BA5BE] border border-[#E2ECF4]'
+            )}>
+              {patient.plan === 'patient'     ? '⭐ Paciente'
+                : patient.plan === 'individual' ? '⭐ Individual'
+                : isPaid                        ? '⭐ Premium'
+                : onTrial                       ? '🔵 En prueba'
+                : 'Gratuito'}
+            </span>
+          )
+        })()}
       </div>
 
       {/* Stats row */}
@@ -336,15 +347,26 @@ function PatientDetail({
             )}
           </div>
           <div className="text-right">
-            <span className={cn(
-              'text-xs font-bold px-2.5 py-1 rounded-full',
-              patient.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-[#9EC8E0]'
-            )}>
-              {patient.plan === 'patient' ? '⭐ Paciente'
-                : patient.plan === 'individual' ? '⭐ Individual'
-                : patient.plan !== 'gratuito' ? '⭐ Premium'
-                : 'Gratuito'}
-            </span>
+            {(() => {
+              const onTrial = patient.plan === 'gratuito'
+                && patient.trial_ends_at
+                && new Date(patient.trial_ends_at) > new Date()
+              const isPaid = patient.plan !== 'gratuito'
+              return (
+                <span className={cn(
+                  'text-xs font-bold px-2.5 py-1 rounded-full',
+                  isPaid ? 'bg-amber-500/20 text-amber-400'
+                    : onTrial ? 'bg-blue-500/20 text-blue-300'
+                    : 'bg-white/10 text-[#9EC8E0]'
+                )}>
+                  {patient.plan === 'patient'     ? '⭐ Paciente'
+                    : patient.plan === 'individual' ? '⭐ Individual'
+                    : isPaid                        ? '⭐ Premium'
+                    : onTrial                       ? '🔵 En prueba'
+                    : 'Gratuito'}
+                </span>
+              )
+            })()}
             <p className="text-[10px] text-[#4A7A94] mt-1.5">
               Desde {new Date(patient.created_at).toLocaleDateString('es-CL', { month: 'short', year: 'numeric' })}
             </p>
