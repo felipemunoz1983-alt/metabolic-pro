@@ -148,11 +148,22 @@ function TopBar({
   )
 }
 
+// Valid tabs that can be deep-linked via ?tab=
+const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'pacientes', 'perfil']
+
+/** Read ?tab= from the URL without useSearchParams (avoids Suspense requirement). */
+function getTabFromUrl(): Tab {
+  if (typeof window === 'undefined') return 'dashboard'
+  const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
+  return p && VALID_TABS.includes(p) ? p : 'dashboard'
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function PacientePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard')
+  // Initialise from ?tab= query param so deep-links (/paciente?tab=plan) work
+  const [activeTab, setActiveTab] = useState<Tab>(getTabFromUrl)
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
   const [checking, setChecking] = useState(true)   // ← blocks render until auth verified
