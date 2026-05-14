@@ -12,7 +12,7 @@ import {
   Search, Plus, ArrowLeft, User, Users,
   Target, TrendingUp, Clock,
   CheckCircle, AlertCircle, RefreshCw,
-  Link2, Mail, Copy, X, UserPlus, Send,
+  Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -833,6 +833,7 @@ export function PanelProfesional({
   const [selected, setSelected] = useState<PatientRow | null>(null)
   const [filter, setFilter] = useState<'todos' | 'premium' | 'activos'>('todos')
   const [showModal, setShowModal] = useState(false)
+  const [digestStatus, setDigestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   useEffect(() => {
     loadPatients()
@@ -889,6 +890,27 @@ export function PanelProfesional({
     setLoading(false)
   }
 
+  async function sendWeeklyDigest() {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) return
+    setDigestStatus('sending')
+    try {
+      const res = await fetch('/api/email/weekly-digest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          professionalId: professionalId,
+          professionalEmail: user.email,
+          professionalName: professionalName ?? 'Profesional',
+        }),
+      })
+      setDigestStatus(res.ok ? 'sent' : 'error')
+      if (res.ok) setTimeout(() => setDigestStatus('idle'), 4000)
+    } catch {
+      setDigestStatus('error')
+    }
+  }
+
   const filtered = useMemo(() => {
     let list = patients
     if (search.trim()) {
@@ -940,13 +962,36 @@ export function PanelProfesional({
             {loading ? 'Cargando...' : `${patients.length} paciente${patients.length !== 1 ? 's' : ''} registrado${patients.length !== 1 ? 's' : ''}`}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap justify-end">
           <button
             onClick={loadPatients}
             className="flex items-center gap-2 text-xs text-[#8BA5BE] border border-[#E2ECF4] px-3 py-2 rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
           >
             <RefreshCw size={12} /> <span className="hidden sm:inline">Actualizar</span>
           </button>
+          {patients.length > 0 && (
+            <button
+              onClick={sendWeeklyDigest}
+              disabled={digestStatus === 'sending'}
+              className={cn(
+                'flex items-center gap-2 text-xs font-bold px-3 py-2 rounded-xl transition',
+                digestStatus === 'sent'
+                  ? 'bg-green-50 border border-green-200 text-green-700'
+                  : digestStatus === 'error'
+                    ? 'bg-red-50 border border-red-200 text-red-600'
+                    : 'border border-[#E2ECF4] text-[#8BA5BE] hover:border-[#29ABE2] hover:text-[#29ABE2]'
+              )}
+              title="Enviar resumen semanal de pacientes a tu email"
+            >
+              {digestStatus === 'sending'
+                ? <><RefreshCw size={12} className="animate-spin" /><span className="hidden sm:inline">Enviando...</span></>
+                : digestStatus === 'sent'
+                  ? <><CheckCircle size={12} /><span className="hidden sm:inline">Enviado</span></>
+                  : digestStatus === 'error'
+                    ? <><AlertCircle size={12} /><span className="hidden sm:inline">Error</span></>
+                    : <><BarChart2 size={12} /><span className="hidden sm:inline">Resumen semanal</span></>}
+            </button>
+          )}
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-xs font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
