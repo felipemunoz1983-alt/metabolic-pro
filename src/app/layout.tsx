@@ -35,6 +35,20 @@ export const metadata: Metadata = {
     description: "Seguimiento nutricional clínico personalizado",
     type: "website",
     locale: "es_CL",
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Centro Metabólico Pro — Nutrición clínica con IA',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Centro Metabólico Pro',
+    description: 'Planes nutricionales personalizados, adherencia diaria y asistente IA',
+    images: ['/opengraph-image'],
   },
 };
 
