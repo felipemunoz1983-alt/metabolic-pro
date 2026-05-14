@@ -44,9 +44,24 @@ function RegisterForm() {
     if (!professionalId) return
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
+      // Check current access so we don't overwrite an existing trial or paid plan
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('premium_until, trial_ends_at')
+        .eq('id', user.id)
+        .maybeSingle()
+      const hasActivePremium = profile?.premium_until && new Date(profile.premium_until) > new Date()
+      const hasActiveTrial   = profile?.trial_ends_at  && new Date(profile.trial_ends_at)  > new Date()
+      const trialEndsAt = (!hasActivePremium && !hasActiveTrial)
+        ? new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString()
+        : undefined
       await supabase
         .from('profiles')
-        .update({ professional_id: professionalId, role: 'patient' })
+        .update({
+          professional_id: professionalId,
+          role: 'patient',
+          ...(trialEndsAt && { trial_ends_at: trialEndsAt }),
+        })
         .eq('id', user.id)
       setAutoLinked(true)
       setTimeout(() => router.push('/paciente'), 2000)

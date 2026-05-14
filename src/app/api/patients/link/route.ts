@@ -34,15 +34,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
   }
 
-  // Link patient
+  // Fetch current patient state to decide whether to grant a trial
+  const { data: patient } = await supabase
+    .from('profiles')
+    .select('plan, premium_until, trial_ends_at')
+    .eq('id', patientId)
+    .maybeSingle()
+
+  // Grant 21-day trial to patients who have no active access
+  const hasActivePremium = patient?.premium_until && new Date(patient.premium_until) > new Date()
+  const hasActiveTrial   = patient?.trial_ends_at  && new Date(patient.trial_ends_at)  > new Date()
+  const grantTrial       = !hasActivePremium && !hasActiveTrial
+
+  const updatePayload: Record<string, unknown> = {
+    professional_id: professionalId,
+    role: 'patient',
+    ...(grantTrial && {
+      trial_ends_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+    }),
+  }
+
   const { error } = await supabase
     .from('profiles')
-    .update({ professional_id: professionalId, role: 'patient' })
+    .update(updatePayload)
     .eq('id', patientId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, grantedTrial: grantTrial })
 }
