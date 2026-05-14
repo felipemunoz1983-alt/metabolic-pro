@@ -106,8 +106,15 @@ function RegisterForm() {
       ...(trialEndsAt && { trial_ends_at: trialEndsAt }),
     }
 
-    const { error: profileError } = await supabase.from('profiles').upsert(profilePayload)
-    if (profileError) { setError('Error al guardar el perfil: ' + profileError.message); setLoading(false); return }
+    const { error: profileError } = await supabase.from('profiles').insert(profilePayload)
+    if (profileError) {
+      // 23505 = duplicate key → profile already exists, safe to continue
+      if (!profileError.code?.includes('23505') && !profileError.message.includes('duplicate')) {
+        setError('Error al guardar el perfil: ' + profileError.message)
+        setLoading(false)
+        return
+      }
+    }
 
     setDone(true)
     setTimeout(() => router.push('/paciente'), 2500)
