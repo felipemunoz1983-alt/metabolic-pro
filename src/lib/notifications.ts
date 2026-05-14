@@ -137,7 +137,7 @@ export async function getProfessionalNotifications(
   // 2. Load last 7 days logs for all patients in one query
   const { data: allLogs } = await supabase
     .from('registros_diarios')
-    .select('user_id, fecha, completed, total')
+    .select('user_id, fecha, comidas_completadas, comidas_total')
     .in('user_id', patients.map(p => p.id))
     .gte('fecha', since7.toISOString().split('T')[0])
     .order('fecha', { ascending: false })

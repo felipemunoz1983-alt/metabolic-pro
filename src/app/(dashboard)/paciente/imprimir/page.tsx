@@ -11,16 +11,6 @@ interface PlanData {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-const DIAS = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
-const MEAL_LABELS: Record<string, string> = {
-  desayuno: 'Desayuno',
-  col_manana: 'Colación mañana',
-  almuerzo: 'Almuerzo',
-  once: 'Once',
-  cena: 'Cena',
-  pre_entreno: 'Pre-entreno',
-  post_entreno: 'Post-entreno',
-}
 
 export default function ImprimirPlan() {
   const [data, setData] = useState<PlanData | null>(null)
@@ -136,7 +126,7 @@ export default function ImprimirPlan() {
           <span style={{ fontSize: 10, color: '#6B7C93' }}>TMB (Harris-Benedict): <strong style={{ color: '#0C3547' }}>{Math.round(bmr)} kcal</strong></span>
           <span style={{ fontSize: 10, color: '#6B7C93' }}>TDEE (GET): <strong style={{ color: '#0C3547' }}>{Math.round(tdee)} kcal</strong></span>
           <span style={{ fontSize: 10, color: '#6B7C93' }}>Factor PAL: <strong style={{ color: '#0C3547' }}>{pal}</strong></span>
-          <span style={{ fontSize: 10, color: '#6B7C93' }}>Comidas/día: <strong style={{ color: '#0C3547' }}>{form.nComidas}</strong></span>
+          <span style={{ fontSize: 10, color: '#6B7C93' }}>Comidas/día: <strong style={{ color: '#0C3547' }}>{(form as unknown as Record<string, unknown>).nComidas as number ?? '-'}</strong></span>
         </div>
 
         {/* ── Plan semanal ── */}
@@ -145,11 +135,11 @@ export default function ImprimirPlan() {
             📅 Plan Semanal Detallado
           </div>
 
-          {weekPlan.days.slice(0, 7).map((day, di) => (
+          {weekPlan.dias.slice(0, 7).map((day, di) => (
             <div key={di} style={{ marginBottom: 16, pageBreakInside: 'avoid' }}>
               {/* Día header */}
               <div style={{ background: '#0C3547', color: 'white', padding: '5px 12px', borderRadius: '8px 8px 0 0', fontSize: 11, fontWeight: 700 }}>
-                {DIAS[di]} — {day.totalKcal.toLocaleString()} kcal · P:{day.totalP}g · C:{day.totalC}g · G:{day.totalG}g
+                {day.nombre} — {day.totalKcal.toLocaleString()} kcal · P:{day.totalP}g · C:{day.totalC}g · G:{day.totalG}g
               </div>
               {/* Comidas */}
               <div style={{ border: '1px solid #E2ECF4', borderTop: 'none', borderRadius: '0 0 8px 8px', overflow: 'hidden' }}>
@@ -164,10 +154,10 @@ export default function ImprimirPlan() {
                     borderTop: mi > 0 ? '1px solid #F0F6FA' : 'none',
                   }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: '#29ABE2' }}>
-                      {MEAL_LABELS[meal.id] || meal.id}
+                      {meal.label}
                     </div>
                     <div style={{ fontSize: 10, color: '#0C1F2C' }}>
-                      {meal.foods.map(f => `${f.nombre} (${f.cantidad})`).join(' · ')}
+                      {meal.items.join(' · ')}
                     </div>
                     <div style={{ fontSize: 9, color: '#8BA5BE', textAlign: 'right', whiteSpace: 'nowrap' }}>
                       {meal.kcal} kcal
@@ -180,12 +170,16 @@ export default function ImprimirPlan() {
         </div>
 
         {/* ── Notas digestivas ── */}
-        {(form.sibo || form.hinchazón || form.intolerancias?.length > 0) && (
+        {(form.digDiag !== 'no' || form.digHinchazon !== 'nunca' || (form.digIntolerancias?.length ?? 0) > 0) && (
           <div style={{ background: '#FFF8ED', border: '1px solid #F59E0B50', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#B45309', marginBottom: 6 }}>⚠️ Consideraciones digestivas</div>
-            {form.sibo && <div style={{ fontSize: 10, color: '#92400E', marginBottom: 3 }}>• Protocolo SIBO: evitar FODMAPs altos, comidas pequeñas y frecuentes</div>}
-            {form.hinchazón && <div style={{ fontSize: 10, color: '#92400E', marginBottom: 3 }}>• Hinchazón frecuente: reducir legumbres crudas, lactosa, carbohidratos fermentables</div>}
-            {form.intolerancias?.map((i: string) => (
+            {(form.digDiag === 'si_sibo' || form.digDiag === 'sospecha') && (
+              <div style={{ fontSize: 10, color: '#92400E', marginBottom: 3 }}>• Protocolo SIBO/SII: evitar FODMAPs altos, comidas pequeñas y frecuentes</div>
+            )}
+            {(form.digHinchazon === 'frecuente' || form.digHinchazon === 'diaria') && (
+              <div style={{ fontSize: 10, color: '#92400E', marginBottom: 3 }}>• Hinchazón frecuente: reducir legumbres, lactosa y carbohidratos fermentables</div>
+            )}
+            {form.digIntolerancias?.map((i: string) => (
               <div key={i} style={{ fontSize: 10, color: '#92400E', marginBottom: 3 }}>• Intolerancia: {i}</div>
             ))}
           </div>
