@@ -9,37 +9,30 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const cookieStore = await cookies()
+  try {
+    const cookieStore = await cookies()
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
         },
-      },
+      }
+    )
+
+    // Only check session — profile creation is handled client-side
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      redirect('/login')
     }
-  )
 
-  // 1. No auth session → login
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) {
-    redirect('/login')
+    return <>{children}</>
+  } catch {
+    // If anything goes wrong server-side, let the client handle it
+    return <>{children}</>
   }
-
-  // 2. Auth user exists but no profile row → kick out
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('id')
-    .eq('id', user.id)
-    .maybeSingle()   // maybeSingle returns null (not error) when 0 rows
-
-  if (!profile) {
-    await supabase.auth.signOut()
-    redirect('/register?reason=no_profile')
-  }
-
-  return <>{children}</>
 }

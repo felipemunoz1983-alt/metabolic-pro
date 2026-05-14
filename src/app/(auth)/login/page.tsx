@@ -42,13 +42,21 @@ export default function LoginPage() {
           .single()
 
         if (!profile) {
-          // Auth exists but no profile → sign out and go to register
-          await supabase.auth.signOut()
-          setError('No encontramos una cuenta registrada con este email. Por favor regístrate.')
-          setLoading(false)
-        } else {
-          window.location.href = '/paciente'
+          // Auth exists but no profile → create one automatically so they're not locked out
+          const { error: createErr } = await supabase.from('profiles').upsert({
+            id:     authData.user!.id,
+            email:  authData.user!.email ?? email.trim().toLowerCase(),
+            nombre: authData.user!.user_metadata?.nombre || email.split('@')[0],
+            role:   'individual',
+            plan:   'gratuito',
+          })
+          if (createErr) {
+            setError('Error al configurar tu perfil: ' + createErr.message)
+            setLoading(false)
+            return
+          }
         }
+        window.location.href = '/paciente'
       }
     } catch (err: unknown) {
       clearTimeout(timer)

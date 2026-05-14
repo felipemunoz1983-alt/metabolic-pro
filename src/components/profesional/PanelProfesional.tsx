@@ -18,9 +18,9 @@ import {
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface DailyLog {
   fecha: string
-  actualKcal: number
-  completed: number
-  total: number
+  kcal_consumida: number
+  comidas_completadas: number
+  comidas_total: number
   peso?: number
   hambre?: number
   energia?: number
@@ -43,8 +43,8 @@ const ANIMO_EMOJI: Record<string, string> = {
 
 // ─── Patient Card ─────────────────────────────────────────────────────────────
 function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () => void }) {
-  const adherencia = patient.lastLog?.total
-    ? Math.round((patient.lastLog.completed / patient.lastLog.total) * 100)
+  const adherencia = patient.lastLog?.comidas_total
+    ? Math.round((patient.lastLog.comidas_completadas / patient.lastLog.comidas_total) * 100)
     : null
 
   const diasDesde = patient.lastLog?.fecha
@@ -122,7 +122,7 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
             {new Date(patient.lastLog.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
           </span>
           <span className="text-[10px] font-semibold text-[#6B7C93]">
-            {patient.lastLog.actualKcal} kcal · {patient.lastLog.peso ? `${patient.lastLog.peso} kg` : 'sin peso'}
+            {patient.lastLog.kcal_consumida} kcal · {patient.lastLog.peso ? `${patient.lastLog.peso} kg` : 'sin peso'}
           </span>
         </div>
       )}
@@ -167,11 +167,11 @@ function PatientDetail({
   }, [patient.id])
 
   const adherenciaMedia = logs.length > 0
-    ? Math.round(logs.reduce((s, l) => s + (l!.total > 0 ? (l!.completed / l!.total) * 100 : 0), 0) / logs.length)
+    ? Math.round(logs.reduce((s, l) => s + (l!.comidas_total > 0 ? (l!.comidas_completadas / l!.comidas_total) * 100 : 0), 0) / logs.length)
     : null
 
   const kcalMedia = logs.length > 0
-    ? Math.round(logs.reduce((s, l) => s + (l!.actualKcal || 0), 0) / logs.length)
+    ? Math.round(logs.reduce((s, l) => s + (l!.kcal_consumida || 0), 0) / logs.length)
     : null
 
   const ultimoPeso = logs.find(l => l?.peso)?.peso
@@ -340,7 +340,7 @@ function PatientDetail({
       {/* ── Alerta clínica si adherencia baja ── */}
       {(() => {
         const recientes = logs.slice(0, 7)
-        const bajos = recientes.filter(l => l.total > 0 && (l.completed / l.total) < 0.5).length
+        const bajos = recientes.filter(l => l.comidas_total > 0 && (l.comidas_completadas / l.comidas_total) < 0.5).length
         const severos = recientes.filter(l => l.digestivo === 'severo' || l.digestivo === 'moderado').length
         if (bajos < 3 && severos < 2) return null
         return (
@@ -419,7 +419,7 @@ function PatientDetail({
           <div className="space-y-2">
             {logs.map((log, i) => {
               if (!log) return null
-              const adh = log.total > 0 ? Math.round((log.completed / log.total) * 100) : 0
+              const adh = log.comidas_total > 0 ? Math.round((log.comidas_completadas / log.comidas_total) * 100) : 0
               const isGood = adh >= 80
               const hasWellbeing = log.hambre || log.energia || log.digestivo || log.animo
               return (
@@ -444,7 +444,7 @@ function PatientDetail({
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-xs">
-                      <span className="text-[#6B7C93]">{log.actualKcal || 0} kcal</span>
+                      <span className="text-[#6B7C93]">{log.kcal_consumida || 0} kcal</span>
                       <span className={cn(
                         'font-bold px-2 py-0.5 rounded-full',
                         isGood ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'
@@ -831,7 +831,7 @@ export function PanelProfesional({
     const enriched = await Promise.all(profiles.map(async (p) => {
       const { data: lastLog } = await supabase
         .from('registros_diarios')
-        .select('fecha,actualKcal,completed,total,peso')
+        .select('fecha,kcal_consumida,comidas_completadas,comidas_total,peso')
         .eq('user_id', p.id)
         .order('fecha', { ascending: false })
         .limit(1)

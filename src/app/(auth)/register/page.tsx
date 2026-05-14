@@ -68,10 +68,27 @@ function RegisterForm() {
       email: email.trim().toLowerCase(),
       password,
     })
-    if (authError) { setError(authError.message); setLoading(false); return }
+
+    // Handle "email already registered"
+    if (authError) {
+      if (authError.message.toLowerCase().includes('already registered') || authError.message.toLowerCase().includes('already been registered')) {
+        setError('Este email ya tiene una cuenta. Intenta iniciar sesión.')
+      } else {
+        setError(authError.message)
+      }
+      setLoading(false)
+      return
+    }
 
     const userId = authData.user?.id
     if (!userId) { setError('Error al crear la cuenta. Intenta nuevamente.'); setLoading(false); return }
+
+    // If session is null, Supabase requires email confirmation
+    if (!authData.session) {
+      setDone(true)
+      // Don't redirect — user needs to confirm email first
+      return
+    }
 
     // 2. Create profile
     // Patients who arrive via a professional's invite link get 21 days free trial
@@ -125,14 +142,17 @@ function RegisterForm() {
         </div>
         <h3 className="text-lg font-black text-[#0C1F2C] mb-1">¡Cuenta creada!</h3>
         <p className="text-sm text-[#8BA5BE]">
-          {isLinked ? 'Vinculada a tu profesional. Redirigiendo...' : 'Tu cuenta está lista. Redirigiendo...'}
+          {isLinked
+            ? 'Vinculada a tu profesional. Redirigiendo...'
+            : 'Revisa tu email para confirmar tu cuenta y luego inicia sesión.'}
         </p>
-        <div className="mt-4 h-1 bg-[#E2ECF4] rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }} animate={{ width: '100%' }}
-            transition={{ duration: 2.4, ease: 'linear' }}
-            className="h-full bg-green-500 rounded-full"
-          />
+        <div className="mt-6">
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-6 py-2.5 rounded-xl hover:opacity-90 transition"
+          >
+            Ir al inicio de sesión →
+          </a>
         </div>
       </motion.div>
     )

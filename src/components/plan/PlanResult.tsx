@@ -150,12 +150,23 @@ export function PlanResult({ result, form, onReset }: Props) {
             <h2 className="text-xl font-extrabold">{form.nombre}</h2>
             <p className="text-[#9EC8E0] text-sm mt-0.5">{OBJETIVO_LABELS[form.objetivo]}</p>
           </div>
-          <button
-            onClick={onReset}
-            className="text-xs text-[#9EC8E0] border border-[#9EC8E0]/30 px-3 py-1.5 rounded-lg hover:bg-white/10 transition"
-          >
-            ← Nuevo plan
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => {
+                sessionStorage.setItem('plan_para_imprimir', JSON.stringify({ result, form }))
+                window.open('/paciente/imprimir', '_blank')
+              }}
+              className="text-xs text-white bg-[#29ABE2] px-3 py-1.5 rounded-lg hover:bg-[#1a8fc0] transition font-semibold"
+            >
+              🖨️ PDF
+            </button>
+            <button
+              onClick={onReset}
+              className="text-xs text-[#9EC8E0] border border-[#9EC8E0]/30 px-3 py-1.5 rounded-lg hover:bg-white/10 transition"
+            >
+              ← Nuevo plan
+            </button>
+          </div>
         </div>
 
         {/* Métricas principales */}

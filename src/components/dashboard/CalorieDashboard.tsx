@@ -10,13 +10,13 @@ import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDo
 
 interface DayLog {
   fecha: string
-  actualKcal: number
+  kcal_consumida: number
   macroP: number
   macroC: number
   macroG: number
   peso?: number
-  completed: number
-  total: number
+  comidas_completadas: number
+  comidas_total: number
   hambre?: number
   energia?: number
   digestivo?: string
@@ -174,8 +174,10 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
     setSaving(true)
     await supabase.from('registros_diarios').upsert({
       user_id: userId, fecha: today,
-      actualKcal: kcalEstimada, completed: completedCount,
-      total: MEALS.length, peso: peso ? Number(peso) : null,
+      kcal_consumida: kcalEstimada,
+      comidas_completadas: completedCount,
+      comidas_total: MEALS.length,
+      peso: peso ? Number(peso) : null,
       meals_json: JSON.stringify(checkedMeals),
       hambre:    hambre    || null,
       energia:   energia   || null,
@@ -188,8 +190,8 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   }
 
   // Chart data from week logs
-  const kcalHistory = weekLogs.map(d => d.actualKcal || 0)
-  const adherenciaHistory = weekLogs.map(d => d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0)
+  const kcalHistory = weekLogs.map(d => d.kcal_consumida || 0)
+  const adherenciaHistory = weekLogs.map(d => d.comidas_total > 0 ? Math.round((d.comidas_completadas / d.comidas_total) * 100) : 0)
 
   // Wellbeing completeness
   const wellbeingFilled = [hambre > 0, energia > 0, digestivo !== '', animo !== ''].filter(Boolean).length
@@ -524,7 +526,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           <div className="flex items-end gap-2 h-16">
             {weekLogs.map((d, i) => {
               const isToday = d.fecha === today
-              const kcalPct = Math.min(((d.actualKcal || 0) / targetKcal) * 100, 100)
+              const kcalPct = Math.min(((d.kcal_consumida || 0) / targetKcal) * 100, 100)
               return (
                 <div key={d.fecha} className="flex-1 flex flex-col items-center gap-1.5">
                   <div className="w-full bg-[#F0F6FA] rounded-lg relative" style={{ height: '52px' }}>
@@ -546,7 +548,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           {/* Table */}
           <div className="mt-4 space-y-1.5">
             {weekLogs.slice(-4).reverse().map(d => {
-              const adh = d.total > 0 ? Math.round((d.completed / d.total) * 100) : 0
+              const adh = d.comidas_total > 0 ? Math.round((d.comidas_completadas / d.comidas_total) * 100) : 0
               const isToday = d.fecha === today
               return (
                 <div key={d.fecha} className={cn(
@@ -557,7 +559,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                     {isToday ? 'Hoy' : new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' })}
                   </span>
                   <div className="flex items-center gap-3">
-                    <span className="text-[#6B7C93]">{d.actualKcal || 0} kcal</span>
+                    <span className="text-[#6B7C93]">{d.kcal_consumida || 0} kcal</span>
                     <span className={cn('font-bold px-2 py-0.5 rounded-full', adh >= 80 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
                       {adh}%
                     </span>

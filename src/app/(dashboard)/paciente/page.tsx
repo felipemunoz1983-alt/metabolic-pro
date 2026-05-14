@@ -163,50 +163,75 @@ export default function PacientePage() {
   const supabase = createClient()
 
   useEffect(() => {
+    // Hard timeout — if auth check takes more than 8s, redirect to login
+    const timeout = setTimeout(() => {
+      window.location.href = '/login?error=timeout'
+    }, 8000)
+
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
 
-      // No auth session → login
-      if (!user) {
-        window.location.href = '/login'
-        return
+        // No auth session → login
+        if (!user) {
+          clearTimeout(timeout)
+          window.location.href = '/login'
+          return
+        }
+
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        // Auth user exists but no profile → create it automatically
+        if (profileError || !profileData) {
+          const { data: created } = await supabase.from('profiles').upsert({
+            id:     user.id,
+            email:  user.email ?? '',
+            nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
+            role:   'individual',
+            plan:   'gratuito',
+          }).select('*').single()
+
+          if (!created) {
+            clearTimeout(timeout)
+            await supabase.auth.signOut()
+            window.location.href = '/login?error=profile'
+            return
+          }
+          setUserId(user.id)
+          setProfile(created)
+        } else {
+          setUserId(user.id)
+          setProfile(profileData)
+        }
+
+        // Load read state from localStorage
+        setReadIds(getReadIds(user.id))
+
+        // Auto-load most recent plan so patient sees it on first login
+        const { data: latestPlan } = await supabase
+          .from('planes_nutricionales')
+          .select('plan_json')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (latestPlan?.plan_json?.result && latestPlan?.plan_json?.form) {
+          setResult(latestPlan.plan_json.result)
+          setFormData(latestPlan.plan_json.form)
+        }
+
+        // All checks passed — allow render
+        clearTimeout(timeout)
+        setChecking(false)
+      } catch {
+        clearTimeout(timeout)
+        window.location.href = '/login?error=unknown'
       }
-
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-
-      // Auth user exists but no profile → sign out and send to register
-      if (profileError || !profileData) {
-        await supabase.auth.signOut()
-        window.location.href = '/register?reason=no_profile'
-        return
-      }
-
-      setUserId(user.id)
-      setProfile(profileData)
-
-      // Load read state from localStorage
-      setReadIds(getReadIds(user.id))
-
-      // Auto-load most recent plan so patient sees it on first login
-      const { data: latestPlan } = await supabase
-        .from('planes_nutricionales')
-        .select('plan_json')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-      if (latestPlan?.plan_json?.result && latestPlan?.plan_json?.form) {
-        setResult(latestPlan.plan_json.result)
-        setFormData(latestPlan.plan_json.form)
-      }
-
-      // All checks passed — allow render
-      setChecking(false)
     }
     load()
   }, [])

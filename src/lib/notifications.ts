@@ -25,7 +25,7 @@ export async function getPatientNotifications(
   // ── 1. Has today's log? ──────────────────────────────────────────────────
   const { data: todayLog } = await supabase
     .from('registros_diarios')
-    .select('completed, total, actualKcal')
+    .select('comidas_completadas, comidas_total, kcal_consumida')
     .eq('user_id', userId)
     .eq('fecha', today)
     .single()
@@ -40,15 +40,15 @@ export async function getPatientNotifications(
       read: false,
     })
   } else if (todayLog) {
-    const adh = todayLog.total > 0
-      ? Math.round((todayLog.completed / todayLog.total) * 100)
+    const adh = todayLog.comidas_total > 0
+      ? Math.round((todayLog.comidas_completadas / todayLog.comidas_total) * 100)
       : 0
     if (adh === 100) {
       notifs.push({
         id: `adh-perfect-${today}`,
         level: 'ok',
         title: '¡Adherencia perfecta hoy! 🎉',
-        body: `Completaste todas tus comidas del día (${todayLog.actualKcal} kcal). ¡Excelente trabajo!`,
+        body: `Completaste todas tus comidas del día (${todayLog.kcal_consumida} kcal). ¡Excelente trabajo!`,
         time: new Date().toISOString(),
         read: false,
       })
@@ -60,14 +60,14 @@ export async function getPatientNotifications(
   since.setDate(since.getDate() - 6)
   const { data: weekLogs } = await supabase
     .from('registros_diarios')
-    .select('fecha, completed, total')
+    .select('fecha, comidas_completadas, comidas_total')
     .eq('user_id', userId)
     .gte('fecha', since.toISOString().split('T')[0])
 
   if (weekLogs && weekLogs.length >= 3) {
     const avgAdh = Math.round(
       weekLogs.reduce((s, l) =>
-        s + (l.total > 0 ? (l.completed / l.total) * 100 : 0), 0
+        s + (l.comidas_total > 0 ? (l.comidas_completadas / l.comidas_total) * 100 : 0), 0
       ) / weekLogs.length
     )
 
@@ -170,7 +170,7 @@ export async function getProfessionalNotifications(
     // Low adherence (<60%) with enough data
     if (logs.length >= 3) {
       const avg = Math.round(
-        logs.reduce((s, l) => s + (l.total > 0 ? (l.completed / l.total) * 100 : 0), 0) / logs.length
+        logs.reduce((s, l) => s + (l.comidas_total > 0 ? (l.comidas_completadas / l.comidas_total) * 100 : 0), 0) / logs.length
       )
       if (avg < 60) lowAdh.push({ name: patient.nombre, pct: avg })
     }
