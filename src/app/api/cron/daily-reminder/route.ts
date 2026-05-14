@@ -51,7 +51,7 @@ function buildReminderHtml(nombre: string, appUrl: string): string {
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center">
-            <a href="${appUrl}/paciente"
+            <a href="${appUrl}/paciente?tab=dashboard"
                style="display:inline-block;background:#29abe2;color:#fff;font-size:14px;font-weight:800;text-decoration:none;padding:14px 36px;border-radius:10px;">
               Registrar mi día →
             </a>
@@ -145,7 +145,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     await sendPushToUser(supabase, patient.id, {
       title: '📋 Registra tu día',
       body:  `Hola ${patient.nombre || ''}! Aún no has registrado tus comidas de hoy.`,
-      url:   '/paciente',
+      url:   '/paciente?tab=dashboard',
       tag:   'daily-reminder',
     }).catch(() => { /* push failure is non-fatal */ })
   }

@@ -62,7 +62,7 @@ export async function sendPush(
     await webpush.sendNotification(pushSub, JSON.stringify({
       title: payload.title,
       body:  payload.body,
-      url:   payload.url  || '/paciente',
+      url:   payload.url  || '/paciente?tab=dashboard',
       tag:   payload.tag  || 'cmp',
       icon:  payload.icon || '/icon-192.svg',
     }))

@@ -93,11 +93,11 @@ function buildWelcomeHtml(nombre: string, trialDays: number, appUrl: string): st
       <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:28px;">
         <tr>
           <td align="center">
-            <a href="${appUrl}/paciente"
+            <a href="${appUrl}/paciente?tab=plan"
                style="display:inline-block;background:linear-gradient(135deg,#0c3547,#1a6fa0);color:#fff;
                       font-size:15px;font-weight:900;text-decoration:none;padding:16px 40px;
                       border-radius:12px;letter-spacing:0.3px;">
-              Ir a mi dashboard →
+              Crear mi plan ahora →
             </a>
           </td>
         </tr>

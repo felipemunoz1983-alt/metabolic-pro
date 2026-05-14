@@ -56,7 +56,7 @@ function buildMessageHtml(
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center">
-            <a href="${appUrl}/paciente"
+            <a href="${appUrl}/paciente?tab=dashboard"
                style="display:inline-block;background:#29abe2;color:#fff;font-size:14px;font-weight:800;text-decoration:none;padding:14px 36px;border-radius:10px;">
               Ir a mi panel →
             </a>

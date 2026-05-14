@@ -164,9 +164,9 @@ function buildHtml(body: PaymentConfirmEmailBody): string {
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr>
                 <td align="center">
-                  <a href="${appUrl}/paciente"
+                  <a href="${appUrl}/paciente?tab=plan"
                      style="display:inline-block;background-color:#29ABE2;color:#ffffff;font-size:14px;font-weight:800;text-decoration:none;padding:14px 40px;border-radius:10px;letter-spacing:0.5px;">
-                    Ingresar a la app
+                    Generar mi plan →
                   </a>
                 </td>
               </tr>
