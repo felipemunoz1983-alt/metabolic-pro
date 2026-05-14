@@ -69,7 +69,7 @@ export function PerfilPanel({ profile, userId }: Props) {
 
   // Edit WhatsApp state
   const [editingWa, setEditingWa] = useState(false)
-  const [whatsapp, setWhatsapp] = useState((profile as Record<string, unknown>).whatsapp as string || '')
+  const [whatsapp, setWhatsapp] = useState(profile.whatsapp || '')
   const [savingWa, setSavingWa] = useState(false)
   const [waError, setWaError] = useState('')
   const [waSaved, setWaSaved] = useState(false)
@@ -263,7 +263,7 @@ export function PerfilPanel({ profile, userId }: Props) {
             </button>
           ) : (
             <button
-              onClick={() => { setEditingWa(false); setWhatsapp((profile as Record<string, unknown>).whatsapp as string || ''); setWaError('') }}
+              onClick={() => { setEditingWa(false); setWhatsapp(profile.whatsapp || ''); setWaError('') }}
               className="text-[#8BA5BE] hover:text-red-400 transition"
             >
               <X size={14} />
