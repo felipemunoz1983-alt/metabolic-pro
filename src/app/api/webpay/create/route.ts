@@ -20,7 +20,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .from('profiles')
     .select('role, professional_id')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
 
   if (profileError || !profile) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
@@ -36,10 +36,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const amount = PLAN_PRICES[planType]
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
   const buyOrder = `CM-${userId.slice(0, 8)}-${Date.now()}`
   const sessionId = `sess-${Date.now()}`
   const returnUrl = `${appUrl}/api/webpay/confirm`
+  console.log('[webpay/create] appUrl:', appUrl, '| returnUrl:', returnUrl, '| amount:', amount, '| planType:', planType)
 
   // Save pending payment to DB
   const { error: dbError } = await supabase.from('payments').insert({
@@ -59,6 +60,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   let response: { url: string; token: string }
   try {
     response = await tbkTx.create(buyOrder, sessionId, amount, returnUrl)
+    console.log('[webpay/create] Transbank response url:', response.url, '| token prefix:', response.token?.slice(0, 8))
   } catch (err) {
     console.error('[webpay/create] Transbank error:', err)
     return NextResponse.json({ error: 'Transbank error' }, { status: 502 })
