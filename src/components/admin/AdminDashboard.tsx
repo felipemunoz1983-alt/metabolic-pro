@@ -9,11 +9,17 @@ import {
 import {
   Users, TrendingUp, DollarSign, Activity,
   UserCheck, RefreshCw, ArrowUpRight, Zap,
-  ShieldCheck, Clock, CreditCard,
+  ShieldCheck, Clock, CreditCard, AlertTriangle,
+  TrendingDown, ChevronRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
+
+interface ChurnUser {
+  id: string; nombre: string; email: string
+  plan: string; lastLog: string | null; daysAgo: number | null
+}
 
 interface StatsData {
   total: number
@@ -29,10 +35,14 @@ interface StatsData {
   revenueMonth: number
   paymentsMonth: number
   activeUsers7d: number
+  activeUsers14d: number
+  activeUsers30d: number
   planBreakdown: { professional: number; patient: number; individual: number }
   signupsChart:  { date: string; count: number }[]
   revenueChart:  { date: string; amount: number }[]
   recentPayments: { id: string; amount: number; plan_type: string; created_at: string }[]
+  churnRiskUsers:  ChurnUser[]
+  engagementFunnel: { registered: number; generatedPlan: number; loggedThisWeek: number }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -270,6 +280,124 @@ export function AdminDashboard() {
                 <Bar dataKey="amount" fill="#29ABE2" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* ══════════════════ RETENCIÓN ══════════════════ */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <TrendingDown size={14} className="text-[#29ABE2]" />
+            <p className="text-sm font-black text-[#0C1F2C]">Retención</p>
+          </div>
+
+          {/* Active users 7 / 14 / 30d */}
+          <div className="grid grid-cols-3 gap-3 mb-4">
+            {[
+              { label: 'Activos 7 días',  value: s.activeUsers7d,  pct: s.total > 0 ? Math.round((s.activeUsers7d  / s.total) * 100) : 0, color: 'text-green-500',  bar: 'bg-green-500' },
+              { label: 'Activos 14 días', value: s.activeUsers14d, pct: s.total > 0 ? Math.round((s.activeUsers14d / s.total) * 100) : 0, color: 'text-[#29ABE2]',  bar: 'bg-[#29ABE2]' },
+              { label: 'Activos 30 días', value: s.activeUsers30d, pct: s.total > 0 ? Math.round((s.activeUsers30d / s.total) * 100) : 0, color: 'text-purple-500', bar: 'bg-purple-500' },
+            ].map(item => (
+              <div key={item.label} className="bg-white rounded-2xl border border-[#E2ECF4] p-4">
+                <p className="text-[10px] font-bold text-[#8BA5BE] uppercase tracking-wide mb-1">{item.label}</p>
+                <p className={cn('text-2xl font-black', item.color)}>{item.value}</p>
+                <div className="mt-2 h-1.5 bg-[#F0F6FA] rounded-full">
+                  <div className={cn('h-full rounded-full transition-all', item.bar)} style={{ width: `${item.pct}%` }} />
+                </div>
+                <p className="text-[10px] text-[#8BA5BE] mt-1">{item.pct}% del total</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Engagement funnel + Churn risk */}
+          <div className="grid md:grid-cols-5 gap-4">
+
+            {/* Engagement funnel */}
+            <div className="md:col-span-2 bg-white rounded-2xl border border-[#E2ECF4] p-5">
+              <p className="text-sm font-black text-[#0C1F2C] mb-1">Funnel de engagement</p>
+              <p className="text-[10px] text-[#8BA5BE] mb-4">Pacientes e individuales</p>
+              <div className="space-y-3">
+                {[
+                  { label: 'Registrados',        value: s.engagementFunnel.registered,     color: 'bg-[#29ABE2]',  step: 1 },
+                  { label: 'Generaron un plan',  value: s.engagementFunnel.generatedPlan,  color: 'bg-purple-500', step: 2 },
+                  { label: 'Log esta semana',    value: s.engagementFunnel.loggedThisWeek, color: 'bg-green-500',  step: 3 },
+                ].map((row, i, arr) => {
+                  const base = arr[0].value || 1
+                  const pct  = Math.round((row.value / base) * 100)
+                  return (
+                    <div key={row.label}>
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-4 h-4 rounded-full bg-[#F0F6FA] flex items-center justify-center text-[9px] font-black text-[#8BA5BE]">{row.step}</span>
+                          <span className="text-xs text-[#4A6070]">{row.label}</span>
+                        </div>
+                        <span className="text-xs font-black text-[#0C1F2C]">{row.value} <span className="font-normal text-[#8BA5BE]">({pct}%)</span></span>
+                      </div>
+                      <div className="h-2 bg-[#F0F6FA] rounded-full">
+                        <div className={cn('h-full rounded-full transition-all', row.color)} style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* Churn risk table */}
+            <div className="md:col-span-3 bg-white rounded-2xl border border-[#E2ECF4] p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm font-black text-[#0C1F2C]">Riesgo de churn</p>
+                  <p className="text-[10px] text-[#8BA5BE]">Activos sin log en 7+ días</p>
+                </div>
+                {s.churnRiskUsers.length > 0 && (
+                  <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 rounded-xl px-2.5 py-1">
+                    <AlertTriangle size={11} className="text-red-500" />
+                    <span className="text-[11px] font-black text-red-600">{s.churnRiskUsers.length}</span>
+                  </div>
+                )}
+              </div>
+              {s.churnRiskUsers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center mb-2">
+                    <Activity size={18} className="text-green-500" />
+                  </div>
+                  <p className="text-xs font-bold text-green-600">¡Sin riesgo de churn!</p>
+                  <p className="text-[10px] text-[#8BA5BE] mt-0.5">Todos los usuarios activos registraron esta semana</p>
+                </div>
+              ) : (
+                <div className="space-y-0 overflow-y-auto max-h-48">
+                  {s.churnRiskUsers.map(u => {
+                    const risk = u.daysAgo === null ? 'alto' : u.daysAgo >= 14 ? 'alto' : 'medio'
+                    return (
+                      <div key={u.id} className="flex items-center justify-between py-2 border-b border-[#F8FBFD] last:border-0">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={cn(
+                            'w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0',
+                            risk === 'alto' ? 'bg-red-50' : 'bg-amber-50'
+                          )}>
+                            <AlertTriangle size={11} className={risk === 'alto' ? 'text-red-500' : 'text-amber-500'} />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-[#0C1F2C] truncate">{u.nombre}</p>
+                            <p className="text-[10px] text-[#8BA5BE] truncate">{u.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                          <span className={cn(
+                            'text-[10px] font-black px-2 py-0.5 rounded-full',
+                            risk === 'alto'
+                              ? 'bg-red-50 text-red-600'
+                              : 'bg-amber-50 text-amber-600'
+                          )}>
+                            {u.daysAgo === null ? 'Sin logs' : `${u.daysAgo}d`}
+                          </span>
+                          <span className="text-[10px] text-[#8BA5BE] capitalize hidden sm:block">{u.plan}</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
