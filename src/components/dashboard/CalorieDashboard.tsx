@@ -140,7 +140,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   async function loadToday() {
     const { data } = await supabase
       .from('registros_diarios').select('*')
-      .eq('user_id', userId).eq('fecha', today).single()
+      .eq('user_id', userId).eq('fecha', today).maybeSingle()
     if (data) {
       setPeso(data.peso?.toString() || '')
       try { setCheckedMeals(JSON.parse(data.meals_json || '{}')) } catch { /* noop */ }
