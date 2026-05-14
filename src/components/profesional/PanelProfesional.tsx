@@ -151,19 +151,38 @@ function PatientDetail({
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   useEffect(() => {
-    async function loadLogs() {
+    async function loadData() {
       const desde = new Date()
       desde.setDate(desde.getDate() - 29)
-      const { data } = await supabase
-        .from('registros_diarios')
-        .select('*')
-        .eq('user_id', patient.id)
-        .gte('fecha', desde.toISOString().split('T')[0])
-        .order('fecha', { ascending: false })
-      setLogs(data || [])
+
+      // Load logs and latest plan in parallel
+      const [logsRes, planRes] = await Promise.all([
+        supabase
+          .from('registros_diarios')
+          .select('*')
+          .eq('user_id', patient.id)
+          .gte('fecha', desde.toISOString().split('T')[0])
+          .order('fecha', { ascending: false }),
+        supabase
+          .from('planes_nutricionales')
+          .select('plan_json, created_at')
+          .eq('user_id', patient.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ])
+
+      setLogs(logsRes.data || [])
+
+      // Pre-load existing plan so professional can view it without regenerating
+      if (planRes.data?.plan_json?.result && planRes.data?.plan_json?.form) {
+        setPlanResult(planRes.data.plan_json.result)
+        setPlanForm(planRes.data.plan_json.form)
+      }
+
       setLoading(false)
     }
-    loadLogs()
+    loadData()
   }, [patient.id])
 
   const adherenciaMedia = logs.length > 0
@@ -234,7 +253,7 @@ function PatientDetail({
             <PlanResult
               result={planResult}
               form={planForm}
-              onReset={() => { setPlanResult(null); setPlanForm(null); setEmailStatus('idle') }}
+              onReset={() => { setView('overview'); setEmailStatus('idle') }}
             />
             {emailStatus === 'sending' && (
               <div className="mt-4 flex items-center gap-2 bg-[#F0F6FA] border border-[#E2ECF4] rounded-xl px-4 py-3">
@@ -280,12 +299,22 @@ function PatientDetail({
         >
           <ArrowLeft size={14} /> Todos los pacientes
         </button>
-        <button
-          onClick={() => setView('plan')}
-          className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
-        >
-          <Plus size={14} /> Generar plan
-        </button>
+        <div className="flex items-center gap-2">
+          {planResult && planForm && (
+            <button
+              onClick={() => setView('plan')}
+              className="flex items-center gap-2 bg-white border border-[#29ABE2] text-[#29ABE2] text-sm font-bold px-4 py-2 rounded-xl hover:bg-[#F0F9FF] transition"
+            >
+              <Target size={14} /> Ver plan
+            </button>
+          )}
+          <button
+            onClick={() => { setPlanResult(null); setPlanForm(null); setView('plan') }}
+            className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
+          >
+            <Plus size={14} /> {planResult ? 'Nuevo plan' : 'Generar plan'}
+          </button>
+        </div>
       </div>
 
       {/* Patient header card */}
