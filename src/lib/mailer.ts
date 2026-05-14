@@ -1,13 +1,17 @@
 /**
- * Shared mailer helper — Gmail SMTP via nodemailer.
+ * Shared mailer helper — Resend API (primary) with Gmail SMTP fallback.
  *
- * Required env vars:
- *   GMAIL_USER         — tu correo Gmail (ej. tucuenta@gmail.com)
+ * Required env vars (Resend):
+ *   RESEND_API_KEY      — API key from resend.com
+ *   RESEND_FROM_EMAIL   — verified sender address (e.g. no-reply@centrometabolico.cl)
+ *
+ * Optional fallback (Gmail SMTP — only used if Resend vars are absent):
+ *   GMAIL_USER         — tu correo Gmail
  *   GMAIL_APP_PASSWORD — contraseña de aplicacion generada en Google Account
  *
- * Si no estan configurados, sendMail() retorna { skipped: true } sin lanzar error.
+ * Si ninguno está configurado, sendMail() retorna { skipped: true } sin error.
  */
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 
 export interface MailOptions {
   to: string
@@ -21,44 +25,59 @@ export interface MailResult {
   error?: string
 }
 
-let _transporter: nodemailer.Transporter | null = null
-
-function getTransporter(): nodemailer.Transporter | null {
-  const user = process.env.GMAIL_USER
-  const pass = process.env.GMAIL_APP_PASSWORD
-
-  if (!user || !pass) return null
-
-  if (!_transporter) {
-    _transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user, pass },
-    })
-  }
-  return _transporter
-}
-
 export async function sendMail(opts: MailOptions): Promise<MailResult> {
-  const transporter = getTransporter()
-  if (!transporter) {
-    console.warn('[mailer] GMAIL_USER or GMAIL_APP_PASSWORD not set — skipping email')
-    return { ok: true, skipped: true }
+  const resendKey  = process.env.RESEND_API_KEY
+  const resendFrom = process.env.RESEND_FROM_EMAIL
+
+  // ── Resend (primary) ────────────────────────────────────────────────────────
+  if (resendKey && resendFrom) {
+    try {
+      const resend = new Resend(resendKey)
+      const { error } = await resend.emails.send({
+        from:    resendFrom,
+        to:      opts.to,
+        subject: opts.subject,
+        html:    opts.html,
+      })
+      if (error) {
+        console.error('[mailer] Resend error:', error)
+        return { ok: false, error: error.message }
+      }
+      return { ok: true }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('[mailer] Resend exception:', message)
+      return { ok: false, error: message }
+    }
   }
 
-  const fromName = process.env.MAIL_FROM_NAME ?? 'Centro Metabolico Pro'
-  const fromUser = process.env.GMAIL_USER!
+  // ── Gmail SMTP fallback (nodemailer) ────────────────────────────────────────
+  const gmailUser = process.env.GMAIL_USER
+  const gmailPass = process.env.GMAIL_APP_PASSWORD
 
-  try {
-    await transporter.sendMail({
-      from: `"${fromName}" <${fromUser}>`,
-      to: opts.to,
-      subject: opts.subject,
-      html: opts.html,
-    })
-    return { ok: true }
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
-    console.error('[mailer] sendMail error:', message)
-    return { ok: false, error: message }
+  if (gmailUser && gmailPass) {
+    try {
+      const nodemailer = await import('nodemailer')
+      const transporter = nodemailer.default.createTransport({
+        service: 'gmail',
+        auth: { user: gmailUser, pass: gmailPass },
+      })
+      const fromName = process.env.MAIL_FROM_NAME ?? 'Centro Metabolico Pro'
+      await transporter.sendMail({
+        from:    `"${fromName}" <${gmailUser}>`,
+        to:      opts.to,
+        subject: opts.subject,
+        html:    opts.html,
+      })
+      return { ok: true }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err)
+      console.error('[mailer] Gmail error:', message)
+      return { ok: false, error: message }
+    }
   }
+
+  // ── No credentials configured ───────────────────────────────────────────────
+  console.warn('[mailer] No email credentials configured — skipping email send')
+  return { ok: true, skipped: true }
 }
