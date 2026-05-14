@@ -14,7 +14,11 @@ import {
   CheckCircle, AlertCircle, RefreshCw,
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
   FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
+  MessageSquare,
 } from 'lucide-react'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 interface DailyLog {
@@ -33,6 +37,7 @@ interface DailyLog {
 interface PatientRow extends Profile {
   lastLog?: DailyLog
   planCount?: number
+  adherencia7d?: number | null   // avg adherence last 7 days (null = no logs)
 }
 
 interface PlanRow {
@@ -138,18 +143,143 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
         </div>
       </div>
 
-      {/* Last activity */}
-      {patient.lastLog && (
-        <div className="mt-3 pt-3 border-t border-[#F0F6FA] flex items-center justify-between">
+      {/* Alert badge + last activity */}
+      <div className="mt-3 pt-3 border-t border-[#F0F6FA] flex items-center justify-between gap-2">
+        {/* Low-adherence alert */}
+        {patient.adherencia7d !== null && patient.adherencia7d !== undefined && patient.adherencia7d < 50 ? (
+          <span className="flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+            <AlertCircle size={9} /> Baja adherencia 7d
+          </span>
+        ) : patient.lastLog ? (
           <span className="text-[10px] text-[#8BA5BE]">
             {new Date(patient.lastLog.fecha + 'T12:00:00').toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })}
           </span>
+        ) : <span />}
+        {patient.lastLog && (
           <span className="text-[10px] font-semibold text-[#6B7C93]">
             {patient.lastLog.kcal_consumida} kcal · {patient.lastLog.peso ? `${patient.lastLog.peso} kg` : 'sin peso'}
           </span>
-        </div>
-      )}
+        )}
+      </div>
     </motion.button>
+  )
+}
+
+// ─── Modal Mensaje al paciente ────────────────────────────────────────────────
+const TIPOS_MENSAJE = [
+  { id: 'motivacional', label: '💪 Motivacional' },
+  { id: 'ajuste',       label: '🔧 Ajuste de plan' },
+  { id: 'recordatorio', label: '📋 Recordatorio' },
+  { id: 'general',      label: '📩 General' },
+] as const
+
+function ModalMensaje({
+  patient,
+  onClose,
+}: {
+  patient: PatientRow
+  onClose: () => void
+}) {
+  const [tipo, setTipo]       = useState<string>('motivacional')
+  const [mensaje, setMensaje] = useState('')
+  const [status, setStatus]   = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+
+  async function handleSend() {
+    if (!mensaje.trim()) return
+    setStatus('sending')
+    try {
+      const res = await fetch('/api/email/message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId: patient.id, tipo, mensaje }),
+      })
+      setStatus(res.ok ? 'sent' : 'error')
+      if (res.ok) setTimeout(onClose, 1800)
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden z-10"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2ECF4]">
+          <div className="flex items-center gap-2.5">
+            <MessageSquare size={16} className="text-[#29ABE2]" />
+            <h3 className="text-sm font-bold text-[#0C1F2C]">
+              Enviar mensaje a {patient.nombre}
+            </h3>
+          </div>
+          <button onClick={onClose} className="text-[#8BA5BE] hover:text-[#0C1F2C] transition">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 space-y-4">
+          {/* Tipo */}
+          <div>
+            <p className="text-[10px] font-bold text-[#0C1F2C] uppercase tracking-wide mb-2">Tipo de mensaje</p>
+            <div className="grid grid-cols-2 gap-2">
+              {TIPOS_MENSAJE.map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setTipo(t.id)}
+                  className={cn(
+                    'px-3 py-2 rounded-xl text-xs font-semibold text-left transition-all border',
+                    tipo === t.id
+                      ? 'bg-[#0C3547] text-white border-[#0C3547]'
+                      : 'bg-[#F8FBFD] text-[#6B7C93] border-[#E2ECF4] hover:border-[#29ABE2]'
+                  )}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Mensaje */}
+          <div>
+            <p className="text-[10px] font-bold text-[#0C1F2C] uppercase tracking-wide mb-2">Mensaje</p>
+            <textarea
+              value={mensaje}
+              onChange={e => setMensaje(e.target.value)}
+              rows={5}
+              placeholder="Escribe tu mensaje aquí..."
+              className="w-full px-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/10 transition resize-none"
+            />
+            <p className="text-[10px] text-[#8BA5BE] mt-1 text-right">{mensaje.length} caracteres</p>
+          </div>
+
+          {/* Send */}
+          {status === 'sent' ? (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 text-xs text-green-700 font-bold text-center flex items-center justify-center gap-2">
+              <CheckCircle size={14} /> Mensaje enviado a {patient.email}
+            </div>
+          ) : status === 'error' ? (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 font-medium text-center">
+              Error al enviar. Intenta nuevamente.
+            </div>
+          ) : (
+            <button
+              onClick={handleSend}
+              disabled={!mensaje.trim() || status === 'sending'}
+              className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-4 py-3 rounded-xl hover:opacity-90 transition disabled:opacity-40"
+            >
+              {status === 'sending'
+                ? <><RefreshCw size={14} className="animate-spin" /> Enviando...</>
+                : <><Send size={14} /> Enviar mensaje</>}
+            </button>
+          )}
+        </div>
+      </motion.div>
+    </div>
   )
 }
 
@@ -173,6 +303,7 @@ function PatientDetail({
   const [planForm, setPlanForm] = useState<FormData | null>(null)
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'save_error'>('idle')
+  const [showMensaje, setShowMensaje] = useState(false)
 
   useEffect(() => {
     async function loadData() {
@@ -342,6 +473,13 @@ function PatientDetail({
 
   return (
     <div className="px-4 py-4 md:px-8 md:py-6 max-w-4xl mx-auto">
+      {/* Mensaje modal */}
+      <AnimatePresence>
+        {showMensaje && (
+          <ModalMensaje patient={patient} onClose={() => setShowMensaje(false)} />
+        )}
+      </AnimatePresence>
+
       {/* Back + header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -350,7 +488,15 @@ function PatientDetail({
         >
           <ArrowLeft size={14} /> Todos los pacientes
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Enviar mensaje */}
+          <button
+            onClick={() => setShowMensaje(true)}
+            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
+            title="Enviar mensaje al paciente"
+          >
+            <MessageSquare size={14} /> <span className="hidden sm:inline">Mensaje</span>
+          </button>
           {allPlans.length > 0 && planResult && planForm && view === 'overview' && (
             <button
               onClick={() => setView('plan')}
@@ -584,6 +730,89 @@ function PatientDetail({
           </div>
         )}
       </div>
+
+      {/* ── Gráfico de adherencia 30d ── */}
+      {!loading && logs.length >= 3 && (() => {
+        // Build 30-day series
+        const today = new Date()
+        const series = Array.from({ length: 30 }, (_, i) => {
+          const d = new Date(today.getTime() - (29 - i) * 86_400_000)
+          const key = d.toISOString().split('T')[0]
+          const log = logs.find(l => l.fecha === key)
+          const adh = log && log.comidas_total > 0
+            ? Math.round((log.comidas_completadas / log.comidas_total) * 100)
+            : null
+          return { date: key, adh, label: d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }) }
+        })
+        return (
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm mb-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-[#0C1F2C]">Adherencia — últimos 30 días</h3>
+              {adherenciaMedia !== null && (
+                <span className={cn(
+                  'text-xs font-bold px-2.5 py-1 rounded-full',
+                  adherenciaMedia >= 80 ? 'bg-green-100 text-green-700' :
+                  adherenciaMedia >= 50 ? 'bg-amber-100 text-amber-700' :
+                  'bg-red-100 text-red-700'
+                )}>
+                  Media: {adherenciaMedia}%
+                </span>
+              )}
+            </div>
+            <ResponsiveContainer width="100%" height={80}>
+              <BarChart data={series} barSize={6} margin={{ top: 0, right: 0, left: -28, bottom: 0 }}>
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 8, fill: '#8BA5BE' }}
+                  interval={6}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis domain={[0, 100]} hide />
+                <Tooltip
+                  content={({ active, payload }) => {
+                    if (!active || !payload?.length) return null
+                    const v = payload[0].payload as { date: string; adh: number | null; label: string }
+                    return (
+                      <div className="bg-[#0C1F2C] text-white text-[10px] px-2 py-1 rounded-lg shadow-lg">
+                        <p className="font-semibold">{v.label}</p>
+                        <p>{v.adh !== null ? `${v.adh}% adherencia` : 'Sin registro'}</p>
+                      </div>
+                    )
+                  }}
+                />
+                <Bar dataKey="adh" radius={[3, 3, 0, 0]}>
+                  {series.map((entry, i) => (
+                    <Cell
+                      key={i}
+                      fill={entry.adh === null ? '#F0F6FA' :
+                            entry.adh >= 80 ? '#22c55e' :
+                            entry.adh >= 50 ? '#f59e0b' : '#ef4444'}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            {/* Legend */}
+            <div className="flex items-center gap-4 mt-2">
+              {[
+                { color: '#22c55e', label: '≥80% Buena' },
+                { color: '#f59e0b', label: '50–79% Regular' },
+                { color: '#ef4444', label: '<50% Baja' },
+                { color: '#F0F6FA', label: 'Sin registro', border: '#E2ECF4' },
+              ].map(l => (
+                <div key={l.label} className="flex items-center gap-1">
+                  <div
+                    className="w-2.5 h-2.5 rounded-sm flex-shrink-0"
+                    style={{ background: l.color, border: l.border ? `1px solid ${l.border}` : 'none' }}
+                  />
+                  <span className="text-[9px] text-[#8BA5BE]">{l.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      })()}
 
       {/* ── Registros últimos 30 días ── */}
       <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
@@ -983,7 +1212,7 @@ export function PanelProfesional({
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<PatientRow | null>(null)
-  const [filter, setFilter] = useState<'todos' | 'premium' | 'activos'>('todos')
+  const [filter, setFilter] = useState<'todos' | 'premium' | 'activos' | 'alerta'>('todos')
   const [showModal, setShowModal] = useState(false)
   const [digestStatus, setDigestStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
@@ -1032,10 +1261,26 @@ export function PanelProfesional({
       if (!lastLogMap[log.user_id]) lastLogMap[log.user_id] = log as unknown as DailyLog
     })
 
+    // Compute 7-day adherence average per patient
+    const sevenDaysAgo = new Date()
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+    const iso7d = sevenDaysAgo.toISOString().split('T')[0]
+    const adherencia7dMap: Record<string, number | null> = {}
+    patientIds.forEach(id => {
+      const recentLogs = allLogs?.filter(l => l.user_id === id && l.fecha >= iso7d) ?? []
+      if (recentLogs.length === 0) { adherencia7dMap[id] = null; return }
+      const avg = recentLogs.reduce((s, l) => {
+        const typed = l as unknown as DailyLog
+        return s + (typed.comidas_total > 0 ? (typed.comidas_completadas / typed.comidas_total) * 100 : 0)
+      }, 0) / recentLogs.length
+      adherencia7dMap[id] = Math.round(avg)
+    })
+
     const enriched = profiles.map(p => ({
       ...p,
       lastLog: lastLogMap[p.id] || undefined,
       planCount: planCountMap[p.id] || 0,
+      adherencia7d: adherencia7dMap[p.id] ?? null,
     } as PatientRow))
 
     setPatients(enriched)
@@ -1078,6 +1323,9 @@ export function PanelProfesional({
       const dias = Math.floor((Date.now() - new Date(p.lastLog.fecha + 'T12:00:00').getTime()) / 86400000)
       return dias <= 7
     })
+    if (filter === 'alerta') list = list.filter(p =>
+      p.adherencia7d !== null && p.adherencia7d !== undefined && p.adherencia7d < 50
+    )
     return list
   }, [patients, search, filter])
 
@@ -1170,6 +1418,7 @@ export function PanelProfesional({
             { id: 'todos', label: 'Todos' },
             { id: 'premium', label: '⭐ Premium' },
             { id: 'activos', label: '🟢 Activos' },
+            { id: 'alerta', label: '🔴 Alerta' },
           ] as const).map(f => (
             <button
               key={f.id}
