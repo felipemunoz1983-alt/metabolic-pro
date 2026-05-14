@@ -224,9 +224,9 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-6">
+    <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-4 sm:p-6 pb-6">
       {/* Progress */}
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6">
         {/* Circles row */}
         <div className="flex items-center">
           {STEPS.map((s, i) => (
@@ -235,7 +235,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 onClick={() => i < step && setStep(i)}
                 title={s}
                 className={cn(
-                  'w-7 h-7 rounded-full text-xs font-bold flex items-center justify-center transition-all flex-shrink-0',
+                  'w-5 h-5 sm:w-7 sm:h-7 rounded-full text-[10px] sm:text-xs font-bold flex items-center justify-center transition-all flex-shrink-0',
                   i === step
                     ? 'bg-[#0C3547] text-white ring-2 ring-[#0C3547]/20 scale-110'
                     : i < step
@@ -246,7 +246,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 {i < step ? '✓' : i + 1}
               </button>
               {i < STEPS.length - 1 && (
-                <div className={cn('flex-1 h-0.5 mx-1.5', i < step ? 'bg-[#29ABE2]' : 'bg-[#D6E3ED]')} />
+                <div className={cn('flex-1 h-0.5 mx-1 sm:mx-1.5', i < step ? 'bg-[#29ABE2]' : 'bg-[#D6E3ED]')} />
               )}
             </div>
           ))}
@@ -257,6 +257,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
             Paso {step + 1} de {STEPS.length}:
           </span>
           <span className="text-xs font-semibold text-[#29ABE2]">{STEPS[step]}</span>
+        </div>
+        {/* Mobile compact progress bar */}
+        <div className="mt-2 h-1 bg-[#EAF4FB] rounded-full sm:hidden">
+          <div
+            className="h-1 bg-gradient-to-r from-[#29ABE2] to-[#0C3547] rounded-full transition-all duration-300"
+            style={{ width: `${((step + 1) / STEPS.length) * 100}%` }}
+          />
         </div>
       </div>
 
@@ -271,7 +278,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 0: Datos personales */}
           {step === 0 && (
             <div className="space-y-4">
-              <h3 className="text-lg font-bold text-[#0C3547]">👤 Datos del paciente</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">👤 Datos del paciente</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-[#0C3547] mb-1">Nombre completo</label>
@@ -339,7 +346,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 1: Ejercicio */}
           {step === 1 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">🏋️ Actividad física</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🏋️ Actividad física</h3>
               <div>
                 <label className="block text-sm font-semibold text-[#0C3547] mb-2">
                   Días de ejercicio por semana: <span className="text-[#29ABE2]">{form.diasEjercicio}</span>
@@ -393,7 +400,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 2: Objetivo */}
           {step === 2 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">🎯 Objetivo nutricional</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🎯 Objetivo nutricional</h3>
               <div className="grid grid-cols-1 gap-3">
                 {(['perdida grasa', 'mantenimiento', 'hipertrofia'] as Objetivo[]).map(o => (
                   <button
@@ -431,7 +438,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 5: Alimentación */}
           {step === 5 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
               <p className="text-xs text-[#6B7C93]">Selecciona una o más opciones por tiempo de comida. El plan rotará entre tus elecciones.</p>
 
               {/* Desayunos */}
@@ -526,7 +533,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 3: Salud digestiva */}
           {step === 3 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">🧬 Salud digestiva</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🧬 Salud digestiva</h3>
               <div className="flex gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
                 <span className="text-lg flex-shrink-0">💡</span>
                 <p className="text-xs text-blue-800">Estas preguntas ajustan automáticamente las preparaciones del plan. Un mismo objetivo puede llevar a planes distintos según la tolerancia digestiva del paciente.</p>
@@ -613,7 +620,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 4: Suplementación segura */}
           {step === 4 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">💊 Suplementación segura</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">💊 Suplementación segura</h3>
               <div className="flex gap-3 bg-blue-50 border border-blue-200 rounded-xl p-3">
                 <span className="text-lg flex-shrink-0">🩺</span>
                 <p className="text-xs text-blue-800">Estas preguntas evitan sugerir suplementos contraindicados (whey con disfunción renal, termogénicos en embarazo, etc.). El profesional siempre tiene la última palabra; la app solo aplica filtros precautorios.</p>
@@ -686,15 +693,15 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           {/* Step 6: Antojos ultra procesados */}
           {step === 6 && (
             <div className="space-y-5">
-              <h3 className="text-lg font-bold text-[#0C3547]">🚨 Antojos y control consciente</h3>
+              <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🚨 Antojos y control consciente</h3>
 
               {/* Disclaimer */}
-              <div className="flex gap-3 bg-red-50 border border-red-300 rounded-xl p-4">
-                <span className="text-2xl flex-shrink-0">⚠️</span>
-                <div className="text-sm text-red-800">
+              <div className="flex gap-3 bg-red-50 border border-red-300 rounded-xl p-3 sm:p-4">
+                <span className="text-xl sm:text-2xl flex-shrink-0">⚠️</span>
+                <div className="text-xs sm:text-sm text-red-800">
                   <p className="font-bold mb-1">Advertencia nutricional</p>
-                  <p>Los alimentos ultra procesados contienen altos niveles de sodio, azúcares añadidos, grasas saturadas y aditivos artificiales. Su consumo debe ser <strong>medido y ajustado a la porción indicada.</strong></p>
-                  <p className="mt-1 font-semibold">Lo ideal es no consumirlos a diario. Incluirlos en el plan tiene como objetivo el <strong>control consciente</strong>, no la promoción de su consumo.</p>
+                  <p>Los alimentos ultra procesados contienen altos niveles de sodio, azúcares añadidos y grasas saturadas. Su consumo debe ser <strong>medido y ajustado a la porción indicada.</strong></p>
+                  <p className="mt-1 font-semibold">Incluirlos tiene como objetivo el <strong>control consciente</strong>, no su promoción.</p>
                 </div>
               </div>
 
@@ -764,7 +771,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
         {step > 0 && (
           <button
             onClick={() => setStep(s => s - 1)}
-            className="flex-1 py-3 border-2 border-[#D6E3ED] text-[#6B7C93] font-bold rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
+            className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-[#D6E3ED] text-[#6B7C93] font-bold rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
           >
             ← Atrás
           </button>
@@ -772,16 +779,16 @@ export function PlanGenerator({ onResult, initialData }: Props) {
         {step < STEPS.length - 1 ? (
           <button
             onClick={handleNext}
-            className="flex-1 py-3 bg-gradient-to-r from-[#0C3547] to-[#145272] text-white font-bold rounded-xl hover:opacity-90 transition"
+            className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-[#0C3547] to-[#145272] text-white font-bold rounded-xl hover:opacity-90 transition"
           >
             Siguiente →
           </button>
         ) : (
           <button
             onClick={handleGenerate}
-            className="flex-1 py-3 bg-gradient-to-r from-[#29ABE2] to-[#1a7fad] text-white font-bold rounded-xl hover:opacity-90 transition"
+            className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-[#29ABE2] to-[#1a7fad] text-white font-bold rounded-xl hover:opacity-90 transition"
           >
-            ⚡ Generar Plan Nutricional
+            ⚡ Generar plan
           </button>
         )}
       </div>
