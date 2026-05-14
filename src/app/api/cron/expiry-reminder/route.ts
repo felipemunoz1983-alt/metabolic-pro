@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
+import { sendPushToUser } from '@/lib/push'
 
 /** ISO date string N days from now */
 function dateInNDays(n: number): string {
@@ -173,6 +174,18 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     if (result.ok && !result.skipped) sent++
     else if (!result.ok) failed++
+
+    // Push notification (non-fatal)
+    const pushTitle = daysLeft <= 1 ? '⚠️ Tu plan vence mañana' : `🔄 Tu plan vence en ${daysLeft} días`
+    const pushBody  = daysLeft <= 1
+      ? 'Renueva hoy para no perder tu historial y tu plan nutricional.'
+      : `Quedan ${daysLeft} días de acceso. Renueva sin interrupciones.`
+    await sendPushToUser(supabase, patient.id, {
+      title: pushTitle,
+      body:  pushBody,
+      url:   '/upgrade',
+      tag:   'expiry-reminder',
+    }).catch(() => { /* push failure is non-fatal */ })
   }
 
   console.log(`[cron/expiry-reminder] candidates=${candidates.length} sent=${sent} failed=${failed}`)
