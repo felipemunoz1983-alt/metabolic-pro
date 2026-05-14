@@ -5,8 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { getNutrievoAIContext } from '@/lib/nutrevo'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SUPABASE_ANON = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
 interface Message {
   role: 'user' | 'assistant'
@@ -63,17 +61,10 @@ ${getNutrievoAIContext()}`
     setLoading(true)
 
     try {
-      const res = await fetch(`${SUPABASE_URL}/functions/v1/claude-chat`, {
+      const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_ANON}`,
-          'apikey': SUPABASE_ANON,
-        },
-        body: JSON.stringify({
-          messages: newMessages,
-          system: systemPrompt,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: newMessages, system: systemPrompt }),
       })
 
       const data = await res.json()
