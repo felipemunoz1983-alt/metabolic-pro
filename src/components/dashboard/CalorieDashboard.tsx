@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { Sparkline, Ring } from '@/components/ui/Sparkline'
 import type { Macros } from '@/lib/nutrition'
-import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Trophy } from 'lucide-react'
 
 interface DayLog {
   fecha: string
@@ -53,6 +53,112 @@ const ANIMO_OPTS = [
   { value: 'regular',   label: 'Regular',   emoji: '😐', color: 'border-amber-300 bg-amber-50 text-amber-700' },
   { value: 'malo',      label: 'Malo',      emoji: '😔', color: 'border-red-300 bg-red-50 text-red-700' },
 ]
+
+// ── Streak helpers ────────────────────────────────────────────────────────────
+function computeStreak(logs: DayLog[], today: string): { current: number; best: number } {
+  const loggedDates = new Set(
+    logs.filter(l => l.comidas_completadas > 0).map(l => l.fecha)
+  )
+  // Current streak: walk back from today
+  let current = 0
+  const d = new Date(today + 'T12:00:00')
+  while (loggedDates.has(d.toISOString().split('T')[0])) {
+    current++
+    d.setDate(d.getDate() - 1)
+  }
+  // Best streak over loaded period
+  const sorted = [...loggedDates].sort()
+  let best = 0, run = 0, prev: string | null = null
+  for (const date of sorted) {
+    if (prev === null) { run = 1 } else {
+      const diff = Math.round(
+        (new Date(date + 'T12:00:00').getTime() - new Date(prev + 'T12:00:00').getTime()) / 86_400_000
+      )
+      run = diff === 1 ? run + 1 : 1
+    }
+    best = Math.max(best, run)
+    prev = date
+  }
+  return { current, best }
+}
+
+function getMilestone(streak: number): string | null {
+  if (streak === 3)  return '¡Llevas 3 días seguidos! Estás construyendo un hábito 💪'
+  if (streak === 7)  return '¡Una semana completa! La consistencia es la clave 🌟'
+  if (streak === 14) return '¡Dos semanas sin parar! Tu cuerpo te lo agradece 🏆'
+  if (streak === 21) return '¡21 días — el hábito ya está formado! Increíble disciplina 🎯'
+  if (streak === 30) return '¡Un mes completo! Eres imparable 🚀'
+  if (streak > 30)   return `¡${streak} días seguidos! Rendimiento de élite 🔥`
+  return null
+}
+
+// ── Streak banner ─────────────────────────────────────────────────────────────
+function StreakBanner({ current, best }: { current: number; best: number }) {
+  const milestone = getMilestone(current)
+  if (current === 0 && best === 0) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gradient-to-r from-[#0C1F2C] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-4 text-white flex items-center gap-4"
+    >
+      {/* Current streak */}
+      <div className="flex items-center gap-2 flex-shrink-0">
+        <div className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center',
+          current >= 7 ? 'bg-amber-500/20' : current >= 3 ? 'bg-orange-500/20' : 'bg-white/10'
+        )}>
+          <Flame size={20} className={cn(
+            current >= 7 ? 'text-amber-400' : current >= 3 ? 'text-orange-400' : 'text-[#9EC8E0]'
+          )} />
+        </div>
+        <div>
+          <p className="text-2xl font-black leading-none">
+            {current}
+            <span className="text-sm font-semibold text-[#9EC8E0] ml-1">días</span>
+          </p>
+          <p className="text-[10px] text-[#4A7A94] font-medium">Racha actual</p>
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div className="w-px h-10 bg-white/10 flex-shrink-0" />
+
+      {/* Milestone or motivation */}
+      <div className="flex-1 min-w-0">
+        {milestone ? (
+          <p className="text-xs font-semibold text-[#29ABE2] leading-snug">{milestone}</p>
+        ) : current > 0 ? (
+          <p className="text-xs text-[#9EC8E0] leading-snug">
+            {current >= 7
+              ? `¡Racha increíble! Sigue así para llegar a ${current < 14 ? 14 : current < 21 ? 21 : 30} días.`
+              : `¡Vas bien! Llega a 3 días seguidos para tu primer hito.`}
+          </p>
+        ) : (
+          <p className="text-xs text-[#9EC8E0]">Registra hoy para empezar tu racha 🔥</p>
+        )}
+      </div>
+
+      {/* Best streak */}
+      {best > 0 && (
+        <>
+          <div className="w-px h-10 bg-white/10 flex-shrink-0" />
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Trophy size={16} className="text-[#29ABE2]" />
+            <div>
+              <p className="text-lg font-black leading-none">
+                {best}
+                <span className="text-xs font-semibold text-[#9EC8E0] ml-1">días</span>
+              </p>
+              <p className="text-[10px] text-[#4A7A94] font-medium">Mejor racha</p>
+            </div>
+          </div>
+        </>
+      )}
+    </motion.div>
+  )
+}
 
 // ── Metric card ───────────────────────────────────────────────────────────────
 function MetricCard({
@@ -126,8 +232,9 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
-  const [weekLogs, setWeekLogs] = useState<DayLog[]>([])
+  const [monthLogs, setMonthLogs] = useState<DayLog[]>([])   // last 30 days
   const [wellbeingOpen, setWellbeingOpen] = useState(false)
+  const [streak, setStreak] = useState({ current: 0, best: 0 })
 
   // Subjective fields
   const [hambre, setHambre] = useState(0)
@@ -138,7 +245,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
 
   useEffect(() => {
     loadToday().catch(console.error)
-    loadWeek().catch(console.error)
+    loadMonth().catch(console.error)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadToday() {
@@ -157,16 +264,19 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
     }
   }
 
-  async function loadWeek() {
+  async function loadMonth() {
     const desde = new Date()
-    desde.setDate(desde.getDate() - 6)
+    desde.setDate(desde.getDate() - 29)
     const { data, error } = await supabase
       .from('registros_diarios').select('*')
       .eq('user_id', userId)
       .gte('fecha', desde.toISOString().split('T')[0])
       .order('fecha', { ascending: true })
-    if (error) { console.error('[CalorieDashboard] loadWeek:', error); return }
-    if (data) setWeekLogs(data)
+    if (error) { console.error('[CalorieDashboard] loadMonth:', error); return }
+    if (data) {
+      setMonthLogs(data)
+      setStreak(computeStreak(data, today))
+    }
   }
 
   const completedCount = Object.values(checkedMeals).filter(Boolean).length
@@ -199,13 +309,22 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
       return
     }
     setSaved(true)
-    loadWeek().catch(console.error)
+    loadMonth().catch(console.error)
     setTimeout(() => setSaved(false), 2500)
   }
 
-  // Chart data from week logs
+  // Last 7 days for weekly chart (slice from monthLogs)
+  const weekLogs = monthLogs.slice(-7)
+
+  // Chart data
   const kcalHistory = weekLogs.map(d => d.kcal_consumida || 0)
   const adherenciaHistory = weekLogs.map(d => d.comidas_total > 0 ? Math.round((d.comidas_completadas / d.comidas_total) * 100) : 0)
+
+  // Weight evolution last 30d
+  const weightEntries = monthLogs.filter(d => d.peso).map(d => ({ fecha: d.fecha, peso: d.peso! }))
+  const weightDiff = weightEntries.length >= 2
+    ? +(weightEntries[weightEntries.length - 1].peso - weightEntries[0].peso).toFixed(1)
+    : null
 
   // Wellbeing completeness
   const wellbeingFilled = [hambre > 0, energia > 0, digestivo !== '', animo !== ''].filter(Boolean).length
@@ -213,6 +332,9 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
 
   return (
     <div className="space-y-5">
+      {/* ── Streak banner ── */}
+      <StreakBanner current={streak.current} best={streak.best} />
+
       {/* ── Metric cards row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <MetricCard
@@ -527,6 +649,72 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           </motion.div>
         )}
       </div>
+
+      {/* ── Evolución de peso 30d ── */}
+      {weightEntries.length >= 2 && (
+        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-bold text-[#0C1F2C]">Evolución de peso · 30 días</h3>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-black text-[#0C3547]">
+                {weightEntries[weightEntries.length - 1].peso} kg
+              </span>
+              {weightDiff !== null && weightDiff !== 0 && (
+                <span className={cn(
+                  'text-xs font-bold px-2 py-0.5 rounded-full',
+                  weightDiff < 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
+                )}>
+                  {weightDiff > 0 ? '+' : ''}{weightDiff} kg
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Bar chart */}
+          <div className="flex items-end gap-1 h-16">
+            {weightEntries.slice(-20).map((e, i, arr) => {
+              const min = Math.min(...arr.map(x => x.peso))
+              const max = Math.max(...arr.map(x => x.peso))
+              const range = max - min || 1
+              const pct = ((e.peso - min) / range) * 65 + 20
+              const isLast = i === arr.length - 1
+              return (
+                <div key={e.fecha} className="flex-1 flex flex-col items-center gap-1">
+                  {isLast && (
+                    <span className="text-[8px] font-bold text-[#29ABE2]">{e.peso}</span>
+                  )}
+                  {!isLast && i % Math.max(1, Math.floor(arr.length / 5)) === 0 && (
+                    <span className="text-[8px] text-[#C8D8E4]">{e.peso}</span>
+                  )}
+                  {!isLast && i % Math.max(1, Math.floor(arr.length / 5)) !== 0 && (
+                    <span className="text-[8px] text-transparent">0</span>
+                  )}
+                  <div className="w-full bg-[#F0F6FA] rounded-sm relative" style={{ height: 44 }}>
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${pct}%` }}
+                      transition={{ duration: 0.5, delay: i * 0.02 }}
+                      className={cn(
+                        'absolute bottom-0 left-0 right-0 rounded-sm',
+                        isLast ? 'bg-[#29ABE2]' : 'bg-[#29ABE2]/35'
+                      )}
+                    />
+                  </div>
+                  {isLast && (
+                    <span className="text-[8px] text-[#29ABE2] font-bold">Hoy</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <p className="text-[10px] text-[#8BA5BE] mt-3">
+            {weightEntries.length} registro{weightEntries.length !== 1 ? 's' : ''} de peso en los últimos 30 días
+            {weightDiff !== null && weightDiff < 0 && ` · ${Math.abs(weightDiff)} kg menos desde el inicio 🎯`}
+            {weightDiff !== null && weightDiff > 0 && ` · ${weightDiff} kg más desde el inicio`}
+          </p>
+        </div>
+      )}
 
       {/* ── Historial semana ── */}
       {weekLogs.length > 0 && (
