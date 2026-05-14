@@ -28,6 +28,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Bell, Lock, Star } from 'lucide-react'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/OnboardingModal'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -154,6 +155,8 @@ export default function PacientePage() {
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
   const [checking, setChecking] = useState(true)   // ← blocks render until auth verified
+  const [showOnboarding, setShowOnboarding] = useState(false)
+  const [onboardingInitial, setOnboardingInitial] = useState<Partial<FormData> | null>(null)
 
   // Notifications state
   const [notifications, setNotifications] = useState<AppNotification[]>([])
@@ -185,6 +188,9 @@ export default function PacientePage() {
           .select('*')
           .eq('id', user.id)
           .maybeSingle()
+
+        // currentProfile is resolved after both branches — used for onboarding check below
+        let currentProfile: Profile | null = null
 
         // Auth user exists but no profile → create minimal profile (INSERT only, never overwrite)
         if (!profileData) {
@@ -245,9 +251,11 @@ export default function PacientePage() {
 
           setUserId(user.id)
           setProfile(finalProfile)
+          currentProfile = finalProfile
         } else {
           setUserId(user.id)
           setProfile(profileData)
+          currentProfile = profileData
         }
 
         // Load read state from localStorage
@@ -262,15 +270,31 @@ export default function PacientePage() {
           .limit(1)
           .maybeSingle()
 
-        if (latestPlan?.plan_json?.result && latestPlan?.plan_json?.form) {
-          setResult(latestPlan.plan_json.result)
-          setFormData(latestPlan.plan_json.form)
+        const hasPlan = !!(latestPlan?.plan_json?.result && latestPlan?.plan_json?.form)
+
+        if (hasPlan) {
+          setResult(latestPlan!.plan_json.result)
+          setFormData(latestPlan!.plan_json.form)
           setActiveTab('plan') // auto-navigate to plan when one exists
         }
 
         // All checks passed — allow render
         clearTimeout(timeout)
         setChecking(false)
+
+        // Show onboarding for new individual users who haven't completed it yet.
+        // Skip for: patients (waiting for pro to assign plan), professionals (own panel),
+        // and anyone who's already seen it (localStorage flag).
+        const alreadyOnboarded = (() => {
+          try { return !!localStorage.getItem(ONBOARDING_KEY(user.id)) } catch { return false }
+        })()
+        if (
+          !hasPlan &&
+          !alreadyOnboarded &&
+          currentProfile?.role === 'individual'
+        ) {
+          setShowOnboarding(true)
+        }
       } catch {
         clearTimeout(timeout)
         window.location.href = '/login?error=unknown'
@@ -311,6 +335,12 @@ export default function PacientePage() {
     setReadIds(new Set(ids))
   }, [userId, notifications])
 
+  function handleOnboardingComplete(partial: Partial<FormData>) {
+    setShowOnboarding(false)
+    setOnboardingInitial(partial)
+    setActiveTab('plan')
+  }
+
   async function handleResult(r: NutritionResult, f: FormData) {
     setResult(r)
     setFormData(f)
@@ -341,6 +371,15 @@ export default function PacientePage() {
   }
 
   return (
+    <>
+    {/* ── Onboarding modal — shown once to new individual users ── */}
+    {showOnboarding && profile && userId && (
+      <OnboardingModal
+        profile={profile}
+        userId={userId}
+        onComplete={handleOnboardingComplete}
+      />
+    )}
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', backgroundColor: '#E8EEF4' }}>
       {/* ── Sidebar — desktop only ── */}
       <div className="hidden md:block">
@@ -407,7 +446,7 @@ export default function PacientePage() {
                   ) : (
                     <PlanGenerator
                       onResult={handleResult}
-                      initialData={formData ?? undefined}
+                      initialData={formData ?? onboardingInitial ?? undefined}
                     />
                   )}
                 </div>
@@ -473,5 +512,6 @@ export default function PacientePage() {
         <FoodScanner userId={userId} />
       )}
     </div>
+    </>
   )
 }
