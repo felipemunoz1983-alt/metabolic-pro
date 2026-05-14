@@ -39,18 +39,19 @@ export default function LoginPage() {
           .from('profiles')
           .select('id')
           .eq('id', authData.user!.id)
-          .single()
+          .maybeSingle()
 
         if (!profile) {
-          // Auth exists but no profile → create one automatically so they're not locked out
-          const { error: createErr } = await supabase.from('profiles').upsert({
+          // Auth exists but no profile → INSERT only, never overwrite existing role
+          const { error: createErr } = await supabase.from('profiles').insert({
             id:     authData.user!.id,
             email:  authData.user!.email ?? email.trim().toLowerCase(),
             nombre: authData.user!.user_metadata?.nombre || email.split('@')[0],
             role:   'individual',
             plan:   'gratuito',
           })
-          if (createErr) {
+          // Ignore duplicate-key error (23505) — profile already exists, that's fine
+          if (createErr && !createErr.message.includes('duplicate') && !createErr.code?.includes('23505')) {
             setError('Error al configurar tu perfil: ' + createErr.message)
             setLoading(false)
             return
