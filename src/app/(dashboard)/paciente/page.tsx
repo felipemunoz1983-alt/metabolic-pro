@@ -185,17 +185,21 @@ export default function PacientePage() {
           .eq('id', user.id)
           .maybeSingle()
 
-        // Auth user exists but no profile → create it automatically
-        if (profileError || !profileData) {
-          const { data: created } = await supabase.from('profiles').upsert({
-            id:     user.id,
-            email:  user.email ?? '',
-            nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
-            role:   'individual',
-            plan:   'gratuito',
-          }).select('*').single()
+        // Auth user exists but no profile → create minimal profile (INSERT only, never overwrite)
+        if (!profileData) {
+          const { data: created, error: createErr } = await supabase
+            .from('profiles')
+            .insert({
+              id:     user.id,
+              email:  user.email ?? '',
+              nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
+              role:   'individual',
+              plan:   'gratuito',
+            })
+            .select('*')
+            .single()
 
-          if (!created) {
+          if (createErr || !created) {
             clearTimeout(timeout)
             await supabase.auth.signOut()
             window.location.href = '/login?error=profile'
