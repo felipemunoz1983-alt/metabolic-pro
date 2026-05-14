@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { motion } from 'framer-motion'
-import { Activity, Mail, Lock, ArrowRight } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Activity, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -15,6 +15,13 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // ── Forgot-password state ──────────────────────────────────────────────────
+  const [mode, setMode] = useState<'login' | 'forgot'>('login')
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetDone, setResetDone] = useState(false)
+  const [resetError, setResetError] = useState('')
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -42,20 +49,23 @@ export default function LoginPage() {
           .maybeSingle()
 
         if (!profile) {
-          // Check for pending invite from email-confirmation flow
+          // Check for pending invite — prefer localStorage (cross-tab safe), fall back to sessionStorage
           let pendingPro: string | null = null
           let pendingRole: string = 'individual'
           let pendingNombre: string = ''
           try {
-            pendingPro    = sessionStorage.getItem('pendingProfessionalId')
-            pendingRole   = sessionStorage.getItem('pendingRole') ?? 'individual'
-            pendingNombre = sessionStorage.getItem('pendingNombre') ?? ''
+            pendingPro    = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
+            pendingRole   = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
+            pendingNombre = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
             if (pendingPro) {
+              localStorage.removeItem('pendingProfessionalId')
+              localStorage.removeItem('pendingRole')
+              localStorage.removeItem('pendingNombre')
               sessionStorage.removeItem('pendingProfessionalId')
               sessionStorage.removeItem('pendingRole')
               sessionStorage.removeItem('pendingNombre')
             }
-          } catch { /* sessionStorage unavailable */ }
+          } catch { /* storage unavailable */ }
 
           // Auth exists but no profile → INSERT only, never overwrite existing role
           const { error: createErr } = await supabase.from('profiles').insert({
@@ -83,6 +93,27 @@ export default function LoginPage() {
       const msg = err instanceof Error ? err.message : 'Error de conexión. Intenta de nuevo.'
       setError(msg)
       setLoading(false)
+    }
+  }
+
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setResetLoading(true)
+    setResetError('')
+    try {
+      const appUrl = typeof window !== 'undefined' ? window.location.origin : ''
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim().toLowerCase(), {
+        redirectTo: `${appUrl}/reset-password`,
+      })
+      if (error) {
+        setResetError(error.message)
+      } else {
+        setResetDone(true)
+      }
+    } catch (err) {
+      setResetError(err instanceof Error ? err.message : 'Error al enviar el email.')
+    } finally {
+      setResetLoading(false)
     }
   }
 
@@ -133,13 +164,9 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── Right panel — login form ── */}
+      {/* ── Right panel — form ── */}
       <div className="flex-1 flex items-center justify-center p-6 bg-white">
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-sm"
-        >
+        <div className="w-full max-w-sm">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <div className="w-10 h-10 bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] rounded-xl flex items-center justify-center">
@@ -151,67 +178,167 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Bienvenido</h1>
-          <p className="text-sm text-[#8BA5BE] mb-8">Ingresa tus credenciales para continuar</p>
+          <AnimatePresence mode="wait">
 
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">
-                Correo electrónico
-              </label>
-              <div className="relative">
-                <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
-                <input
-                  type="email" value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
-                  placeholder="tu@correo.com"
-                  required
-                />
-              </div>
-            </div>
+            {/* ── LOGIN FORM ── */}
+            {mode === 'login' && (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Bienvenido</h1>
+                <p className="text-sm text-[#8BA5BE] mb-8">Ingresa tus credenciales para continuar</p>
 
-            <div>
-              <label className="block text-xs font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">
-                Contraseña
-              </label>
-              <div className="relative">
-                <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
-                <input
-                  type="password" value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-            </div>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">
+                      Correo electrónico
+                    </label>
+                    <div className="relative">
+                      <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
+                      <input
+                        type="email" value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
+                        placeholder="tu@correo.com"
+                        required
+                      />
+                    </div>
+                  </div>
 
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3 font-medium">
-                ⚠️ {error}
-              </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold text-[#0C1F2C] uppercase tracking-wide">
+                        Contraseña
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => { setMode('forgot'); setResetEmail(email); setResetDone(false); setResetError('') }}
+                        className="text-[11px] text-[#29ABE2] font-semibold hover:underline"
+                      >
+                        ¿Olvidaste tu contraseña?
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
+                      <input
+                        type="password" value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
+                        placeholder="••••••••"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {error && (
+                    <div className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3 font-medium">
+                      ⚠️ {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit" disabled={loading}
+                    className="w-full py-3 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                  >
+                    {loading ? 'Ingresando...' : (
+                      <><span>Ingresar</span><ArrowRight size={16} /></>
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-6 pt-6 border-t border-[#F0F4F8] text-center">
+                  <p className="text-xs text-[#8BA5BE]">
+                    ¿No tienes cuenta?{' '}
+                    <a href="/register" className="text-[#29ABE2] font-bold hover:underline">
+                      Regístrate gratis
+                    </a>
+                  </p>
+                </div>
+              </motion.div>
             )}
 
-            <button
-              type="submit" disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
-            >
-              {loading ? 'Ingresando...' : (
-                <><span>Ingresar</span><ArrowRight size={16} /></>
-              )}
-            </button>
-          </form>
+            {/* ── FORGOT PASSWORD FORM ── */}
+            {mode === 'forgot' && (
+              <motion.div
+                key="forgot"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setMode('login')}
+                  className="flex items-center gap-1.5 text-xs text-[#8BA5BE] hover:text-[#0C1F2C] mb-6 transition-colors"
+                >
+                  <ArrowLeft size={13} /> Volver al inicio de sesión
+                </button>
 
-          <div className="mt-6 pt-6 border-t border-[#F0F4F8] text-center">
-            <p className="text-xs text-[#8BA5BE]">
-              ¿No tienes cuenta?{' '}
-              <a href="/register" className="text-[#29ABE2] font-bold hover:underline">
-                Regístrate gratis
-              </a>
-            </p>
-          </div>
-        </motion.div>
+                <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Recuperar contraseña</h1>
+                <p className="text-sm text-[#8BA5BE] mb-8">
+                  Te enviaremos un enlace para crear una nueva contraseña.
+                </p>
+
+                {resetDone ? (
+                  <div className="flex flex-col items-center text-center gap-4 py-4">
+                    <div className="w-14 h-14 bg-green-50 border border-green-200 rounded-2xl flex items-center justify-center">
+                      <CheckCircle size={28} className="text-green-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-bold text-[#0C1F2C] mb-1">Email enviado</p>
+                      <p className="text-xs text-[#8BA5BE] leading-relaxed">
+                        Revisa tu bandeja de entrada en <strong>{resetEmail}</strong> y haz clic en el enlace para crear tu nueva contraseña.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setMode('login')}
+                      className="text-xs text-[#29ABE2] font-semibold hover:underline mt-2"
+                    >
+                      Volver al inicio de sesión
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">
+                        Correo electrónico
+                      </label>
+                      <div className="relative">
+                        <Mail size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
+                        <input
+                          type="email" value={resetEmail}
+                          onChange={e => setResetEmail(e.target.value)}
+                          className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
+                          placeholder="tu@correo.com"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    {resetError && (
+                      <div className="bg-red-50 border border-red-200 text-red-600 text-xs rounded-xl px-4 py-3 font-medium">
+                        ⚠️ {resetError}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit" disabled={resetLoading}
+                      className="w-full py-3 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 mt-2"
+                    >
+                      {resetLoading ? 'Enviando...' : (
+                        <><span>Enviar enlace de recuperación</span><ArrowRight size={16} /></>
+                      )}
+                    </button>
+                  </form>
+                )}
+              </motion.div>
+            )}
+
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   )

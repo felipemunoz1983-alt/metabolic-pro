@@ -27,12 +27,21 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { data, error } = await supabase.auth.verifyOtp({ type: type as 'email', token_hash })
+    // OTP types: 'email' (signup confirm), 'recovery' (password reset), 'magiclink', etc.
+    const { data, error } = await supabase.auth.verifyOtp({
+      type: type as 'email' | 'recovery',
+      token_hash,
+    })
 
     if (!error && data.user) {
-      // Do NOT create profile here — sessionStorage-based invite data lives in the
-      // browser and is only accessible client-side. Profile creation happens in
-      // paciente/page.tsx (or login/page.tsx) where sessionStorage can be read.
+      // Password recovery → send to the set-new-password page
+      if (type === 'recovery') {
+        return NextResponse.redirect(new URL('/reset-password', request.url))
+      }
+      // Email confirmation → send to paciente (or the next param)
+      // Do NOT create profile here — localStorage invite data lives in the browser
+      // and is only accessible client-side. Profile creation happens in
+      // paciente/page.tsx (or login/page.tsx) where localStorage can be read.
       return NextResponse.redirect(new URL(next, request.url))
     }
   }
