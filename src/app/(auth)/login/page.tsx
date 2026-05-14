@@ -42,13 +42,32 @@ export default function LoginPage() {
           .maybeSingle()
 
         if (!profile) {
+          // Check for pending invite from email-confirmation flow
+          let pendingPro: string | null = null
+          let pendingRole: string = 'individual'
+          let pendingNombre: string = ''
+          try {
+            pendingPro    = sessionStorage.getItem('pendingProfessionalId')
+            pendingRole   = sessionStorage.getItem('pendingRole') ?? 'individual'
+            pendingNombre = sessionStorage.getItem('pendingNombre') ?? ''
+            if (pendingPro) {
+              sessionStorage.removeItem('pendingProfessionalId')
+              sessionStorage.removeItem('pendingRole')
+              sessionStorage.removeItem('pendingNombre')
+            }
+          } catch { /* sessionStorage unavailable */ }
+
           // Auth exists but no profile → INSERT only, never overwrite existing role
           const { error: createErr } = await supabase.from('profiles').insert({
             id:     authData.user!.id,
             email:  authData.user!.email ?? email.trim().toLowerCase(),
-            nombre: authData.user!.user_metadata?.nombre || email.split('@')[0],
-            role:   'individual',
+            nombre: pendingNombre || authData.user!.user_metadata?.nombre || email.split('@')[0],
+            role:   pendingPro ? pendingRole : 'individual',
             plan:   'gratuito',
+            ...(pendingPro && { professional_id: pendingPro }),
+            ...(pendingPro && {
+              trial_ends_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+            }),
           })
           // Ignore duplicate-key error (23505) — profile already exists, that's fine
           if (createErr && !createErr.message.includes('duplicate') && !createErr.code?.includes('23505')) {

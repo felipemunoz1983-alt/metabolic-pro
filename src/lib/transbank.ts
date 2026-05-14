@@ -12,10 +12,10 @@ const isProduction = process.env.TRANSBANK_ENV === 'production'
 export const tbkTx = new WebpayPlus.Transaction(
   new Options(
     isProduction
-      ? (process.env.TRANSBANK_COMMERCE_CODE ?? '')
+      ? (process.env.TRANSBANK_COMMERCE_CODE || '')
       : IntegrationCommerceCodes.WEBPAY_PLUS,
     isProduction
-      ? (process.env.TRANSBANK_API_KEY ?? '')
+      ? (process.env.TRANSBANK_API_KEY || '')
       : IntegrationApiKeys.WEBPAY,
     isProduction ? Environment.Production : Environment.Integration,
   ),
@@ -23,9 +23,9 @@ export const tbkTx = new WebpayPlus.Transaction(
 
 /** Price in CLP per plan type */
 export const PLAN_PRICES: Record<PlanType, number> = {
-  professional: parseInt(process.env.PRICE_PROFESSIONAL ?? '14990', 10),
-  patient:      parseInt(process.env.PRICE_PATIENT      ?? '7000',  10),
-  individual:   parseInt(process.env.PRICE_INDIVIDUAL   ?? '12990', 10),
+  professional: parseInt(process.env.PRICE_PROFESSIONAL || '14990', 10),
+  patient:      parseInt(process.env.PRICE_PATIENT      || '7000',  10),
+  individual:   parseInt(process.env.PRICE_INDIVIDUAL   || '12990', 10),
 }
 
 /** Days of access granted per payment */

@@ -125,6 +125,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   const [peso, setPeso] = useState('')
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const [weekLogs, setWeekLogs] = useState<DayLog[]>([])
   const [wellbeingOpen, setWellbeingOpen] = useState(false)
 
@@ -135,12 +136,16 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   const [animo, setAnimo] = useState('')
   const [nota, setNota] = useState('')
 
-  useEffect(() => { loadToday(); loadWeek() }, [])
+  useEffect(() => {
+    loadToday().catch(console.error)
+    loadWeek().catch(console.error)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadToday() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('registros_diarios').select('*')
       .eq('user_id', userId).eq('fecha', today).maybeSingle()
+    if (error) { console.error('[CalorieDashboard] loadToday:', error); return }
     if (data) {
       setPeso(data.peso?.toString() || '')
       try { setCheckedMeals(JSON.parse(data.meals_json || '{}')) } catch { /* noop */ }
@@ -155,11 +160,12 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
   async function loadWeek() {
     const desde = new Date()
     desde.setDate(desde.getDate() - 6)
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('registros_diarios').select('*')
       .eq('user_id', userId)
       .gte('fecha', desde.toISOString().split('T')[0])
       .order('fecha', { ascending: true })
+    if (error) { console.error('[CalorieDashboard] loadWeek:', error); return }
     if (data) setWeekLogs(data)
   }
 
@@ -172,7 +178,8 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
 
   async function handleSave() {
     setSaving(true)
-    await supabase.from('registros_diarios').upsert({
+    setSaveError('')
+    const { error } = await supabase.from('registros_diarios').upsert({
       user_id: userId, fecha: today,
       kcal_consumida: kcalEstimada,
       comidas_completadas: completedCount,
@@ -185,7 +192,14 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
       animo:     animo     || null,
       nota:      nota      || null,
     }, { onConflict: 'user_id,fecha' })
-    setSaving(false); setSaved(true); loadWeek()
+    setSaving(false)
+    if (error) {
+      console.error('[CalorieDashboard] save error:', error)
+      setSaveError('Error al guardar. Intenta de nuevo.')
+      return
+    }
+    setSaved(true)
+    loadWeek().catch(console.error)
     setTimeout(() => setSaved(false), 2500)
   }
 
@@ -498,6 +512,9 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
               />
             </div>
 
+            {saveError && (
+              <p className="text-xs text-red-500 font-medium mb-1">{saveError}</p>
+            )}
             <button
               onClick={handleSave} disabled={saving}
               className={cn(

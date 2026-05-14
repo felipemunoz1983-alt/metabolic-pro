@@ -871,7 +871,7 @@ export function PanelProfesional({
         .eq('user_id', p.id)
         .order('fecha', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
       return {
         ...p,

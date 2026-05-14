@@ -83,8 +83,16 @@ function RegisterForm() {
     const userId = authData.user?.id
     if (!userId) { setError('Error al crear la cuenta. Intenta nuevamente.'); setLoading(false); return }
 
-    // If session is null, Supabase requires email confirmation
+    // If session is null, Supabase requires email confirmation.
+    // Persist the invite so login page can link the user after they confirm.
     if (!authData.session) {
+      if (isLinked && professionalId) {
+        try {
+          sessionStorage.setItem('pendingProfessionalId', professionalId)
+          sessionStorage.setItem('pendingRole', 'patient')
+          sessionStorage.setItem('pendingNombre', nombre.trim())
+        } catch { /* sessionStorage unavailable — non-fatal */ }
+      }
       setDone(true)
       // Don't redirect — user needs to confirm email first
       return

@@ -102,44 +102,53 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
   async function addToLog() {
     if (!result || !userId) return
     setLogging(true)
+    setError('')
 
-    const supabase = createClient()
-    const today = new Date().toISOString().split('T')[0]
+    try {
+      const supabase = createClient()
+      const today = new Date().toISOString().split('T')[0]
 
-    // Add scanned calories to today's registros_diarios row (upsert)
-    const { data: existing } = await supabase
-      .from('registros_diarios')
-      .select('id, scan_kcal, scan_proteina, scan_carbohidrato, scan_grasa')
-      .eq('user_id', userId)
-      .eq('fecha', today)
-      .maybeSingle()
-
-    if (existing) {
-      await supabase
+      // Add scanned calories to today's registros_diarios row (upsert)
+      const { data: existing } = await supabase
         .from('registros_diarios')
-        .update({
-          scan_kcal:         (existing.scan_kcal ?? 0) + result.total.kcal,
-          scan_proteina:     (existing.scan_proteina ?? 0) + result.total.proteina,
-          scan_carbohidrato: (existing.scan_carbohidrato ?? 0) + result.total.carbohidratos,
-          scan_grasa:        (existing.scan_grasa ?? 0) + result.total.grasa,
-        })
-        .eq('id', existing.id)
-    } else {
-      await supabase.from('registros_diarios').upsert({
-        user_id:           userId,
-        fecha:             today,
-        scan_kcal:         result.total.kcal,
-        scan_proteina:     result.total.proteina,
-        scan_carbohidrato: result.total.carbohidratos,
-        scan_grasa:        result.total.grasa,
-        completed:         0,
-        total:             5,
-      }, { onConflict: 'user_id,fecha' })
-    }
+        .select('id, scan_kcal, scan_proteina, scan_carbohidrato, scan_grasa')
+        .eq('user_id', userId)
+        .eq('fecha', today)
+        .maybeSingle()
 
-    setLogged(true)
-    setLogging(false)
-    onLogAdded?.()
+      if (existing) {
+        const { error: updateErr } = await supabase
+          .from('registros_diarios')
+          .update({
+            scan_kcal:         (existing.scan_kcal ?? 0) + result.total.kcal,
+            scan_proteina:     (existing.scan_proteina ?? 0) + result.total.proteina,
+            scan_carbohidrato: (existing.scan_carbohidrato ?? 0) + result.total.carbohidratos,
+            scan_grasa:        (existing.scan_grasa ?? 0) + result.total.grasa,
+          })
+          .eq('id', existing.id)
+        if (updateErr) throw updateErr
+      } else {
+        const { error: insertErr } = await supabase.from('registros_diarios').upsert({
+          user_id:           userId,
+          fecha:             today,
+          scan_kcal:         result.total.kcal,
+          scan_proteina:     result.total.proteina,
+          scan_carbohidrato: result.total.carbohidratos,
+          scan_grasa:        result.total.grasa,
+          completed:         0,
+          total:             5,
+        }, { onConflict: 'user_id,fecha' })
+        if (insertErr) throw insertErr
+      }
+
+      setLogged(true)
+      onLogAdded?.()
+    } catch (err) {
+      console.error('[FoodScanner] addToLog error:', err)
+      setError('No se pudo guardar el registro. Intenta de nuevo.')
+    } finally {
+      setLogging(false)
+    }
   }
 
   return (

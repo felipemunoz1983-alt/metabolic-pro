@@ -72,7 +72,7 @@ export async function sendMail(opts: MailOptions): Promise<MailResult> {
         service: 'gmail',
         auth: { user: gmailUser, pass: gmailPass },
       })
-      const fromName = process.env.MAIL_FROM_NAME ?? 'Centro Metabolico Pro'
+      const fromName = process.env.MAIL_FROM_NAME || 'Centro Metabolico Pro'
       await transporter.sendMail({
         from:    `"${fromName}" <${gmailUser}>`,
         to:      opts.to,

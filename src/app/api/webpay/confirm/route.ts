@@ -4,18 +4,24 @@ import { createServiceClient } from '@/lib/supabase-server'
 import type { PlanType } from '@/types'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
 
   let token: string | null = null
+  let rawBody = ''
   try {
-    const text = await req.text()
-    const params = new URLSearchParams(text)
+    rawBody = await req.text()
+    const params = new URLSearchParams(rawBody)
     token = params.get('token_ws') ?? params.get('TBK_TOKEN')
+    console.log('[webpay/confirm POST] rawBody:', rawBody)
+    console.log('[webpay/confirm POST] token_ws:', params.get('token_ws'), '| TBK_TOKEN:', params.get('TBK_TOKEN'))
+    console.log('[webpay/confirm POST] appUrl:', appUrl)
   } catch {
+    console.error('[webpay/confirm POST] body parse error, rawBody:', rawBody)
     return NextResponse.redirect(`${appUrl}/payment/failed`)
   }
 
   if (!token) {
+    console.warn('[webpay/confirm POST] no token found — redirecting to cancelled')
     return NextResponse.redirect(`${appUrl}/payment/failed?reason=cancelled`)
   }
 
@@ -28,7 +34,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       .from('payments')
       .select('*')
       .eq('buy_order', result.buy_order)
-      .single()
+      .maybeSingle()
 
     if (findError || !payment) {
       console.error('[webpay/confirm] payment not found for buy_order:', result.buy_order)
@@ -58,7 +64,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           .from('profiles')
           .select('email, nombre')
           .eq('id', payment.user_id)
-          .single()
+          .maybeSingle()
 
         if (profile?.email) {
           await fetch(`${appUrl}/api/email/payment-confirm`, {
@@ -93,6 +99,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || req.nextUrl.origin
+  const url = req.nextUrl.toString()
+  console.log('[webpay/confirm GET] CANCEL received. Full URL:', url)
+  console.log('[webpay/confirm GET] TBK_TOKEN:', req.nextUrl.searchParams.get('TBK_TOKEN'))
+  console.log('[webpay/confirm GET] TBK_ORDER_ID:', req.nextUrl.searchParams.get('TBK_ORDER_ID'))
+  console.log('[webpay/confirm GET] appUrl:', appUrl)
   return NextResponse.redirect(`${appUrl}/payment/failed?reason=cancelled`)
 }

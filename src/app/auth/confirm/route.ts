@@ -30,23 +30,9 @@ export async function GET(request: NextRequest) {
     const { data, error } = await supabase.auth.verifyOtp({ type: type as 'email', token_hash })
 
     if (!error && data.user) {
-      // Create profile if it doesn't exist yet
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', data.user.id)
-        .maybeSingle()
-
-      if (!existing) {
-        await supabase.from('profiles').upsert({
-          id:     data.user.id,
-          email:  data.user.email,
-          nombre: data.user.user_metadata?.nombre || data.user.email?.split('@')[0] || 'Usuario',
-          role:   'individual',
-          plan:   'gratuito',
-        })
-      }
-
+      // Do NOT create profile here — sessionStorage-based invite data lives in the
+      // browser and is only accessible client-side. Profile creation happens in
+      // paciente/page.tsx (or login/page.tsx) where sessionStorage can be read.
       return NextResponse.redirect(new URL(next, request.url))
     }
   }

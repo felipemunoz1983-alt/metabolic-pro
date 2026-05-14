@@ -28,7 +28,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .from('profiles')
     .select('role')
     .eq('id', professionalId)
-    .single()
+    .maybeSingle()
 
   if (!pro || pro.role !== 'professional') {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 })

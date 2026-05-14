@@ -28,7 +28,7 @@ export async function getPatientNotifications(
     .select('comidas_completadas, comidas_total, kcal_consumida')
     .eq('user_id', userId)
     .eq('fecha', today)
-    .single()
+    .maybeSingle()
 
   if (!todayLog && nowHour >= 13) {
     notifs.push({

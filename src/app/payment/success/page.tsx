@@ -1,18 +1,37 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { CheckCircle, Star, ArrowRight } from 'lucide-react'
 
 export default function PaymentSuccessPage() {
   const router = useRouter()
+  const supabase = createClient()
+  const [destination, setDestination] = useState('/paciente')
 
-  // Auto-redirect after 5 seconds
   useEffect(() => {
-    const t = setTimeout(() => router.push('/paciente'), 5000)
-    return () => clearTimeout(t)
-  }, [router])
+    // Detect role so professionals land on their panel
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.replace('/login'); return }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .maybeSingle()
+      // All roles use /paciente — the page detects role internally
+      // but we store it for the button in case role is needed later
+      setDestination('/paciente')
+
+      // Auto-redirect after 5 seconds
+      const t = setTimeout(() => router.push('/paciente'), 5000)
+      return () => clearTimeout(t)
+    }).catch(() => {
+      const t = setTimeout(() => router.push('/paciente'), 5000)
+      return () => clearTimeout(t)
+    })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="min-h-screen bg-[#F0F6FA] flex items-center justify-center p-6">
@@ -32,9 +51,9 @@ export default function PaymentSuccessPage() {
           <CheckCircle size={36} className="text-green-500" />
         </motion.div>
 
-        <h1 className="text-2xl font-black text-[#0C1F2C] mb-2">Pago exitoso</h1>
+        <h1 className="text-2xl font-black text-[#0C1F2C] mb-2">¡Pago exitoso!</h1>
         <p className="text-sm text-[#8BA5BE] mb-5">
-          Tu plan Premium esta activo por los proximos 30 dias. Disfruta de todas las funciones.
+          Tu plan está activo por los próximos 30 días. Disfruta de todas las funciones.
         </p>
 
         {/* Premium badge */}
@@ -44,13 +63,13 @@ export default function PaymentSuccessPage() {
         </div>
 
         <button
-          onClick={() => router.push('/paciente')}
+          onClick={() => router.push(destination)}
           className="w-full py-3 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2"
         >
           Ir a la app <ArrowRight size={15} />
         </button>
 
-        <p className="text-[10px] text-[#B0C4D4] mt-4">Redirigiendo automaticamente en 5 segundos...</p>
+        <p className="text-[10px] text-[#B0C4D4] mt-4">Redirigiendo automáticamente en 5 segundos...</p>
 
         {/* Progress bar */}
         <div className="mt-3 h-1 bg-[#E2ECF4] rounded-full overflow-hidden">

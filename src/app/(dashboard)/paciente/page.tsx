@@ -27,6 +27,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Bell, Lock, Star } from 'lucide-react'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -187,26 +188,59 @@ export default function PacientePage() {
 
         // Auth user exists but no profile → create minimal profile (INSERT only, never overwrite)
         if (!profileData) {
+          // Check for pending invite from email-confirmation flow (set by register/page.tsx)
+          let pendingPro: string | null = null
+          let pendingRole = 'individual'
+          let pendingNombre = ''
+          try {
+            pendingPro    = sessionStorage.getItem('pendingProfessionalId')
+            pendingRole   = sessionStorage.getItem('pendingRole') ?? 'individual'
+            pendingNombre = sessionStorage.getItem('pendingNombre') ?? ''
+            if (pendingPro) {
+              sessionStorage.removeItem('pendingProfessionalId')
+              sessionStorage.removeItem('pendingRole')
+              sessionStorage.removeItem('pendingNombre')
+            }
+          } catch { /* sessionStorage unavailable */ }
+
           const { data: created, error: createErr } = await supabase
             .from('profiles')
             .insert({
               id:     user.id,
               email:  user.email ?? '',
-              nombre: user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
-              role:   'individual',
+              nombre: pendingNombre || user.user_metadata?.nombre || user.email?.split('@')[0] || 'Usuario',
+              role:   pendingPro ? pendingRole : 'individual',
               plan:   'gratuito',
+              ...(pendingPro && { professional_id: pendingPro }),
+              ...(pendingPro && {
+                trial_ends_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+              }),
             })
             .select('*')
-            .single()
+            .maybeSingle()
 
-          if (createErr || !created) {
+          // Ignore duplicate-key (23505) — profile created by another handler, just re-fetch
+          if (createErr && !createErr.message?.includes('duplicate') && !createErr.code?.includes('23505')) {
             clearTimeout(timeout)
             await supabase.auth.signOut()
             window.location.href = '/login?error=profile'
             return
           }
+
+          // If insert was skipped (duplicate), fetch the existing profile
+          const finalProfile = created ?? (await supabase
+            .from('profiles').select('*').eq('id', user.id).maybeSingle()
+          ).data
+
+          if (!finalProfile) {
+            clearTimeout(timeout)
+            await supabase.auth.signOut()
+            window.location.href = '/login?error=profile'
+            return
+          }
+
           setUserId(user.id)
-          setProfile(created)
+          setProfile(finalProfile)
         } else {
           setUserId(user.id)
           setProfile(profileData)
@@ -334,6 +368,7 @@ export default function PacientePage() {
               transition={{ duration: 0.18 }}
               className="min-h-full"
             >
+            <ErrorBoundary>
               {/* ── Plan / Nutrición ── */}
               {activeTab === 'plan' && (
                 <div className="px-4 py-4 md:px-8 md:py-8 max-w-3xl mx-auto">
@@ -420,6 +455,7 @@ export default function PacientePage() {
               {activeTab === 'perfil' && profile && userId && (
                 <PerfilPanel profile={profile} userId={userId} />
               )}
+            </ErrorBoundary>
             </motion.div>
           </AnimatePresence>
         </main>

@@ -137,20 +137,26 @@ export function Historial({ userId }: { userId: string }) {
   const supabase = createClient()
   const [plans, setPlans] = useState<PlanRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
   const [selected, setSelected] = useState<PlanRow | null>(null)
   const [filter, setFilter] = useState<'todos' | 'perdida grasa' | 'mantenimiento' | 'hipertrofia'>('todos')
 
   useEffect(() => {
-    loadPlans()
-  }, [userId])
+    loadPlans().catch(console.error)
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function loadPlans() {
     setLoading(true)
-    const { data } = await supabase
+    setLoadError('')
+    const { data, error } = await supabase
       .from('planes_nutricionales')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
+    if (error) {
+      console.error('[Historial] loadPlans:', error)
+      setLoadError('No se pudo cargar el historial. Intenta de nuevo.')
+    }
     setPlans((data as PlanRow[]) || [])
     setLoading(false)
   }
@@ -238,6 +244,16 @@ export function Historial({ userId }: { userId: string }) {
           >
             <ObjetivoBadge objetivo={filter} />
             <span className="ml-1">✕</span>
+          </button>
+        </div>
+      )}
+
+      {/* Error state */}
+      {loadError && !loading && (
+        <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-2xl px-5 py-4 mb-4 flex items-center gap-3">
+          <span>{loadError}</span>
+          <button onClick={() => loadPlans().catch(console.error)} className="ml-auto text-xs font-bold underline hover:no-underline">
+            Reintentar
           </button>
         </div>
       )}
