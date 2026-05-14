@@ -193,15 +193,19 @@ export default function PacientePage() {
           let pendingRole = 'individual'
           let pendingNombre = ''
           try {
-            pendingPro    = sessionStorage.getItem('pendingProfessionalId')
-            pendingRole   = sessionStorage.getItem('pendingRole') ?? 'individual'
-            pendingNombre = sessionStorage.getItem('pendingNombre') ?? ''
+            // Check localStorage first (cross-tab safe), fall back to sessionStorage (legacy)
+            pendingPro    = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
+            pendingRole   = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
+            pendingNombre = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
             if (pendingPro) {
+              localStorage.removeItem('pendingProfessionalId')
+              localStorage.removeItem('pendingRole')
+              localStorage.removeItem('pendingNombre')
               sessionStorage.removeItem('pendingProfessionalId')
               sessionStorage.removeItem('pendingRole')
               sessionStorage.removeItem('pendingNombre')
             }
-          } catch { /* sessionStorage unavailable */ }
+          } catch { /* storage unavailable */ }
 
           const { data: created, error: createErr } = await supabase
             .from('profiles')

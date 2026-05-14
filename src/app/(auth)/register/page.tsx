@@ -88,10 +88,11 @@ function RegisterForm() {
     if (!authData.session) {
       if (isLinked && professionalId) {
         try {
-          sessionStorage.setItem('pendingProfessionalId', professionalId)
-          sessionStorage.setItem('pendingRole', 'patient')
-          sessionStorage.setItem('pendingNombre', nombre.trim())
-        } catch { /* sessionStorage unavailable — non-fatal */ }
+          // Use localStorage so the invite survives across tabs (email client opens new tab)
+          localStorage.setItem('pendingProfessionalId', professionalId)
+          localStorage.setItem('pendingRole', 'patient')
+          localStorage.setItem('pendingNombre', nombre.trim())
+        } catch { /* storage unavailable — non-fatal */ }
       }
       setDone(true)
       // Don't redirect — user needs to confirm email first
