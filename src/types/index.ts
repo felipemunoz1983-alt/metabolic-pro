@@ -30,9 +30,20 @@ export function trialDaysLeft(profile: Profile): number {
   return Math.max(0, Math.ceil(ms / 86_400_000))
 }
 
-/** True if the user can access the app (paid OR on active trial) */
+/** True if the user can access the app (paid and not expired, OR on active trial) */
 export function hasAccess(profile: Profile): boolean {
-  return profile.plan !== 'gratuito' || isOnTrial(profile)
+  if (profile.plan === 'gratuito') return isOnTrial(profile)
+  // Paid plan — check premium_until if present
+  if (profile.premium_until) return new Date(profile.premium_until) > new Date()
+  // Legacy: paid plan but no premium_until date → grant access
+  return true
+}
+
+/** True if the user's paid plan has expired (had a plan, now past premium_until) */
+export function isPlanExpired(profile: Profile): boolean {
+  if (profile.plan === 'gratuito') return false
+  if (!profile.premium_until) return false
+  return new Date(profile.premium_until) <= new Date()
 }
 
 export interface NutritionalPlan {

@@ -14,7 +14,7 @@ import {
 
 const IS_INTEGRATION = process.env.NEXT_PUBLIC_TRANSBANK_MODE !== 'production'
 import type { Profile, PlanType } from '@/types'
-import { isOnTrial, trialDaysLeft } from '@/types'
+import { isOnTrial, trialDaysLeft, hasAccess, isPlanExpired } from '@/types'
 
 interface PlanConfig {
   type: PlanType
@@ -135,7 +135,8 @@ export default function UpgradePage() {
     }
   }
 
-  const isActive = profile && profile.plan !== 'gratuito'
+  const isActive = profile ? (hasAccess(profile) && !isPlanExpired(profile) && profile.plan !== 'gratuito') : false
+  const planExpired = profile ? isPlanExpired(profile) : false
   const onTrial = profile ? isOnTrial(profile) : false
   const daysLeft = profile ? trialDaysLeft(profile) : 0
   const trialExpired = profile?.trial_ends_at && !onTrial && profile.plan === 'gratuito'
@@ -233,6 +234,12 @@ export default function UpgradePage() {
                   <div className="mx-6 mb-0 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-center">
                     <p className="text-xs font-bold text-red-600">Tu período de prueba ha finalizado</p>
                     <p className="text-[10px] text-red-400 mt-0.5">Activa tu plan para seguir usando la app.</p>
+                  </div>
+                )}
+                {planExpired && (
+                  <div className="mx-6 mb-0 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3 text-center">
+                    <p className="text-xs font-bold text-orange-600">Tu plan ha expirado</p>
+                    <p className="text-[10px] text-orange-500 mt-0.5">Renueva ahora para seguir accediendo a todas las funciones.</p>
                   </div>
                 )}
 

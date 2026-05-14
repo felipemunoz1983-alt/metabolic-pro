@@ -18,7 +18,7 @@ import {
   Lock,
   UserCircle,
 } from 'lucide-react'
-import { isOnTrial, trialDaysLeft, hasAccess } from '@/types'
+import { isOnTrial, trialDaysLeft, hasAccess, isPlanExpired } from '@/types'
 
 const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: string }[] = [
   { id: 'dashboard', label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
@@ -143,6 +143,27 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
         })}
       </nav>
 
+      {/* Renewal CTA — for users with expired paid plans */}
+      {profile && isPlanExpired(profile) && (
+        collapsed ? (
+          <div className="flex justify-center mb-2">
+            <a href="/upgrade" title="Renovar plan" className="w-8 h-8 bg-orange-500/20 border border-orange-500/30 rounded-lg flex items-center justify-center hover:border-orange-400/60 transition">
+              <Star size={13} className="text-orange-400" />
+            </a>
+          </div>
+        ) : (
+          <div className="mx-3 mb-3">
+            <a href="/upgrade" className="flex items-center gap-2 bg-gradient-to-r from-orange-500/20 to-orange-600/10 border border-orange-500/30 rounded-xl px-3 py-2.5 hover:border-orange-400/60 transition">
+              <Star size={13} className="text-orange-400 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] font-black text-orange-400 leading-tight">Plan expirado</p>
+                <p className="text-[9px] text-orange-600/80">Renovar para seguir</p>
+              </div>
+            </a>
+          </div>
+        )
+      )}
+
       {/* Trial countdown or Upgrade CTA — only for gratuito users */}
       {profile?.plan === 'gratuito' && (() => {
         const onTrial = profile.trial_ends_at ? isOnTrial(profile) : false
@@ -222,9 +243,12 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
                 <p className="text-[11px] font-semibold text-white truncate">{profile.nombre || 'Usuario'}</p>
                 <span className={cn(
                   'text-[9px] font-bold px-1.5 py-0.5 rounded-full inline-block mt-0.5',
-                  profile.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400' : 'bg-white/10 text-[#6B8FA8]'
+                  isPlanExpired(profile) ? 'bg-orange-500/20 text-orange-400'
+                    : profile.plan !== 'gratuito' ? 'bg-amber-500/20 text-amber-400'
+                    : 'bg-white/10 text-[#6B8FA8]'
                 )}>
-                  {profile.plan === 'professional' ? '⭐ Profesional'
+                  {isPlanExpired(profile) ? '⚠ Expirado'
+                    : profile.plan === 'professional' ? '⭐ Profesional'
                     : profile.plan === 'patient' ? '⭐ Paciente'
                     : profile.plan === 'individual' ? '⭐ Individual'
                     : 'Gratuito'}
