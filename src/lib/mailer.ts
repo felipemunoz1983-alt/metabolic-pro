@@ -30,20 +30,30 @@ export async function sendMail(opts: MailOptions): Promise<MailResult> {
   const resendFrom = process.env.RESEND_FROM_EMAIL
 
   // ── Resend (primary) ────────────────────────────────────────────────────────
-  if (resendKey && resendFrom) {
+  if (resendKey) {
     try {
       const resend = new Resend(resendKey)
-      const { error } = await resend.emails.send({
-        from:    resendFrom,
-        to:      opts.to,
-        subject: opts.subject,
-        html:    opts.html,
-      })
-      if (error) {
-        console.error('[mailer] Resend error:', error)
-        return { ok: false, error: error.message }
+
+      // Try configured from address first; fall back to Resend's verified test sender
+      const fromAddresses = resendFrom
+        ? [resendFrom, 'Centro Metabólico Pro <onboarding@resend.dev>']
+        : ['Centro Metabólico Pro <onboarding@resend.dev>']
+
+      let lastError: string | undefined
+      for (const from of fromAddresses) {
+        const { error } = await resend.emails.send({
+          from,
+          to:      opts.to,
+          subject: opts.subject,
+          html:    opts.html,
+        })
+        if (!error) return { ok: true }
+        lastError = error.message
+        console.warn(`[mailer] Resend failed with from=${from}:`, error.message)
       }
-      return { ok: true }
+
+      console.error('[mailer] All Resend senders failed:', lastError)
+      return { ok: false, error: lastError }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
       console.error('[mailer] Resend exception:', message)

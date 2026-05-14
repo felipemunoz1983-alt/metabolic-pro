@@ -108,7 +108,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   })
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 500 })
+    console.error('[/api/email/invite] send failed:', result.error)
+    return NextResponse.json({ error: result.error, detail: 'Email send failed — check RESEND_FROM_EMAIL domain verification' }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, skipped: result.skipped })
