@@ -6,9 +6,10 @@ import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
 import { isOnTrial, trialDaysLeft, hasAccess } from '@/types'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import {
   User, Mail, Shield, Calendar, Star, Clock, LogOut,
-  CheckCircle, AlertCircle, ChevronRight, Edit2, Save, X, Phone,
+  CheckCircle, AlertCircle, ChevronRight, Edit2, Save, X, Phone, Bell, BellOff,
 } from 'lucide-react'
 
 interface Props {
@@ -60,6 +61,9 @@ export function PerfilPanel({ profile, userId }: Props) {
   const daysLeft  = trialDaysLeft(profile)
   const active    = hasAccess(profile)
   const planCfg   = PLAN_CONFIG[profile.plan] ?? PLAN_CONFIG.gratuito
+
+  // Push notifications
+  const push = usePushNotifications(userId)
 
   // Edit name state
   const [editingName, setEditingName] = useState(false)
@@ -311,6 +315,50 @@ export function PerfilPanel({ profile, userId }: Props) {
             : 'Usado para compartir links de invitación con pacientes.'}
         </p>
       </div>
+
+      {/* ── Push notifications ── */}
+      {push.supported && push.permission !== 'unsupported' && (
+        <div className="bg-white border border-[#E2ECF4] rounded-2xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Bell size={14} className="text-[#29ABE2]" />
+              <p className="text-sm font-bold text-[#0C3547]">Notificaciones push</p>
+            </div>
+            {/* Toggle */}
+            <button
+              onClick={push.subscribed ? push.unsubscribe : push.subscribe}
+              disabled={push.requesting || push.permission === 'denied'}
+              className={cn(
+                'relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none disabled:opacity-50',
+                push.subscribed ? 'bg-[#29ABE2]' : 'bg-[#D6E3ED]'
+              )}
+            >
+              <span className={cn(
+                'absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200',
+                push.subscribed ? 'translate-x-5' : 'translate-x-0'
+              )} />
+            </button>
+          </div>
+
+          {push.permission === 'denied' ? (
+            <p className="text-xs text-amber-600 leading-relaxed">
+              Permiso denegado. Actívalo en Configuración → Notificaciones de tu navegador.
+            </p>
+          ) : push.subscribed ? (
+            <p className="text-xs text-[#8BA5BE]">
+              Recibirás recordatorios diarios y alertas de tu plan directamente en este dispositivo.
+            </p>
+          ) : (
+            <p className="text-xs text-[#8BA5BE]">
+              Activa para recibir recordatorios diarios sin necesidad de email.
+            </p>
+          )}
+
+          {push.error && (
+            <p className="text-xs text-red-500 mt-2">{push.error}</p>
+          )}
+        </div>
+      )}
 
       {/* ── Sign out ── */}
       <button

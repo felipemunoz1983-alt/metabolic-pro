@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
+import { sendPushToUser } from '@/lib/push'
 
 const today = () => new Date().toISOString().split('T')[0]
 
@@ -131,13 +132,22 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   let failed = 0
 
   for (const patient of toRemind) {
-    const result = await sendMail({
+    // Send email
+    const mailResult = await sendMail({
       to: patient.email,
       subject: '📋 Registra tu día — Centro Metabólico Pro',
       html: buildReminderHtml(patient.nombre || 'Hola', appUrl),
     })
-    if (result.ok && !result.skipped) sent++
-    else if (!result.ok) failed++
+    if (mailResult.ok && !mailResult.skipped) sent++
+    else if (!mailResult.ok) failed++
+
+    // Also send push notification if the patient has subscriptions
+    await sendPushToUser(supabase, patient.id, {
+      title: '📋 Registra tu día',
+      body:  `Hola ${patient.nombre || ''}! Aún no has registrado tus comidas de hoy.`,
+      url:   '/paciente',
+      tag:   'daily-reminder',
+    }).catch(() => { /* push failure is non-fatal */ })
   }
 
   console.log(`[cron/daily-reminder] sent=${sent} failed=${failed} skipped=${toRemind.length - sent - failed}`)
