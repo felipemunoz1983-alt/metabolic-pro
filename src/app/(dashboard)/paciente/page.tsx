@@ -149,7 +149,7 @@ function TopBar({
 export default function PacientePage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [userId, setUserId] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<Tab>('plan')
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
   const [checking, setChecking] = useState(true)   // ← blocks render until auth verified
@@ -223,6 +223,7 @@ export default function PacientePage() {
         if (latestPlan?.plan_json?.result && latestPlan?.plan_json?.form) {
           setResult(latestPlan.plan_json.result)
           setFormData(latestPlan.plan_json.form)
+          setActiveTab('plan') // auto-navigate to plan when one exists
         }
 
         // All checks passed — allow render
@@ -338,6 +339,28 @@ export default function PacientePage() {
                       form={formData}
                       onReset={() => { setResult(null); setFormData(null) }}
                     />
+                  ) : profile?.role === 'patient' ? (
+                    /* Paciente vinculado sin plan aún */
+                    <motion.div
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="flex flex-col items-center justify-center text-center py-20 px-6"
+                    >
+                      <div className="w-20 h-20 bg-[#EAF4FB] rounded-3xl flex items-center justify-center mb-5 text-4xl">
+                        🥗
+                      </div>
+                      <h2 className="text-xl font-black text-[#0C3547] mb-2">Tu plan está en camino</h2>
+                      <p className="text-sm text-[#8BA5BE] max-w-xs leading-relaxed mb-6">
+                        Tu nutricionista está preparando tu plan alimentario personalizado. Aparecerá aquí en cuanto esté listo.
+                      </p>
+                      <div className="bg-white border border-[#E2ECF4] rounded-2xl p-4 text-left max-w-xs w-full space-y-2">
+                        {['Plan semanal detallado', 'Lista de compras automática', 'Seguimiento de adherencia'].map(f => (
+                          <div key={f} className="flex items-center gap-2.5 text-xs text-[#6B7C93]">
+                            <span className="text-[#29ABE2]">✓</span> {f}
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
                   ) : (
                     <PlanGenerator onResult={handleResult} />
                   )}
