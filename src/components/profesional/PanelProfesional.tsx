@@ -13,6 +13,7 @@ import {
   Target, TrendingUp, Clock,
   CheckCircle, AlertCircle, RefreshCw,
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
+  FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
 } from 'lucide-react'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -32,6 +33,17 @@ interface DailyLog {
 interface PatientRow extends Profile {
   lastLog?: DailyLog
   planCount?: number
+}
+
+interface PlanRow {
+  id: string
+  objetivo: string
+  kcal: number
+  proteina: number
+  carbohidrato: number
+  grasa: number
+  plan_json: { form: FormData; result: NutritionResult }
+  created_at: string
 }
 
 const DIGESTIVO_EMOJI: Record<string, string> = {
@@ -159,6 +171,7 @@ function PatientDetail({
   const [view, setView] = useState<'overview' | 'plan'>('overview')
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
   const [planForm, setPlanForm] = useState<FormData | null>(null)
+  const [allPlans, setAllPlans] = useState<PlanRow[]>([])
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
   useEffect(() => {
@@ -166,8 +179,8 @@ function PatientDetail({
       const desde = new Date()
       desde.setDate(desde.getDate() - 29)
 
-      // Load logs and latest plan in parallel
-      const [logsRes, planRes] = await Promise.all([
+      // Load logs and ALL plans in parallel
+      const [logsRes, plansRes] = await Promise.all([
         supabase
           .from('registros_diarios')
           .select('*')
@@ -176,19 +189,20 @@ function PatientDetail({
           .order('fecha', { ascending: false }),
         supabase
           .from('planes_nutricionales')
-          .select('plan_json, created_at')
+          .select('id, objetivo, kcal, proteina, carbohidrato, grasa, plan_json, created_at')
           .eq('user_id', patient.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle(),
+          .order('created_at', { ascending: false }),
       ])
 
       setLogs(logsRes.data || [])
 
-      // Pre-load existing plan so professional can view it without regenerating
-      if (planRes.data?.plan_json?.result && planRes.data?.plan_json?.form) {
-        setPlanResult(planRes.data.plan_json.result)
-        setPlanForm(planRes.data.plan_json.form)
+      const plans = (plansRes.data as PlanRow[]) || []
+      setAllPlans(plans)
+
+      // Pre-load most recent plan so professional can view/edit without regenerating
+      if (plans[0]?.plan_json?.result && plans[0]?.plan_json?.form) {
+        setPlanResult(plans[0].plan_json.result)
+        setPlanForm(plans[0].plan_json.form)
       }
 
       setLoading(false)
@@ -211,16 +225,25 @@ function PatientDetail({
     setPlanForm(f)
 
     // Save plan to Supabase
-    await supabase.from('planes_nutricionales').insert({
-      user_id: patient.id,
-      professional_id: professionalId,
-      objetivo: f.objetivo,
-      kcal: Math.round(r.kcal),
-      proteina: r.macros.p,
-      carbohidrato: r.macros.c,
-      grasa: r.macros.g,
-      plan_json: { form: f, result: r },
-    })
+    const { data: saved } = await supabase
+      .from('planes_nutricionales')
+      .insert({
+        user_id: patient.id,
+        professional_id: professionalId,
+        objetivo: f.objetivo,
+        kcal: Math.round(r.kcal),
+        proteina: r.macros.p,
+        carbohidrato: r.macros.c,
+        grasa: r.macros.g,
+        plan_json: { form: f, result: r },
+      })
+      .select('id, objetivo, kcal, proteina, carbohidrato, grasa, plan_json, created_at')
+      .maybeSingle()
+
+    // Prepend to plan history immediately (no reload needed)
+    if (saved) {
+      setAllPlans(prev => [saved as PlanRow, ...prev])
+    }
 
     // Send email notification
     setEmailStatus('sending')
@@ -253,7 +276,7 @@ function PatientDetail({
       <div className="px-4 py-4 md:px-8 md:py-6 max-w-3xl mx-auto">
         {/* Back */}
         <button
-          onClick={() => { setView('overview'); setPlanResult(null); setPlanForm(null) }}
+          onClick={() => { setView('overview') }}
           className="flex items-center gap-2 text-sm text-[#8BA5BE] hover:text-[#0C1F2C] mb-6 transition-colors"
         >
           <ArrowLeft size={14} /> Volver a {patient.nombre}
@@ -264,7 +287,7 @@ function PatientDetail({
             <PlanResult
               result={planResult}
               form={planForm}
-              onReset={() => { setView('overview'); setEmailStatus('idle') }}
+              onReset={() => { setView('overview') }}
             />
             {emailStatus === 'sending' && (
               <div className="mt-4 flex items-center gap-2 bg-[#F0F6FA] border border-[#E2ECF4] rounded-xl px-4 py-3">
@@ -314,19 +337,19 @@ function PatientDetail({
           <ArrowLeft size={14} /> Todos los pacientes
         </button>
         <div className="flex items-center gap-2">
-          {planResult && planForm && (
+          {allPlans.length > 0 && planResult && planForm && view === 'overview' && (
             <button
               onClick={() => setView('plan')}
               className="flex items-center gap-2 bg-white border border-[#29ABE2] text-[#29ABE2] text-sm font-bold px-4 py-2 rounded-xl hover:bg-[#F0F9FF] transition"
             >
-              <Target size={14} /> Ver plan
+              <Target size={14} /> <span className="hidden sm:inline">Ver último plan</span><span className="sm:hidden">Ver plan</span>
             </button>
           )}
           <button
-            onClick={() => { setPlanResult(null); setPlanForm(null); setView('plan') }}
+            onClick={() => { setPlanResult(null); setPlanForm(null); setEmailStatus('idle'); setView('plan') }}
             className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
           >
-            <Plus size={14} /> {planResult ? 'Nuevo plan' : 'Generar plan'}
+            <Plus size={14} /> {allPlans.length > 0 ? 'Nuevo plan' : 'Generar plan'}
           </button>
         </div>
       </div>
@@ -454,6 +477,99 @@ function PatientDetail({
           })()}
         </div>
       )}
+
+      {/* ── Planes del paciente ── */}
+      <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm mb-5">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-sm font-bold text-[#0C1F2C]">Planes generados</h3>
+          <span className="text-[10px] text-[#8BA5BE] font-medium bg-[#F0F6FA] px-2 py-1 rounded-full">
+            {allPlans.length} plan{allPlans.length !== 1 ? 'es' : ''}
+          </span>
+        </div>
+
+        {allPlans.length === 0 ? (
+          <div className="text-center py-6">
+            <FileText size={24} className="text-[#D6E3ED] mx-auto mb-2" />
+            <p className="text-xs text-[#8BA5BE]">Sin planes generados aún</p>
+            <button
+              onClick={() => { setPlanResult(null); setPlanForm(null); setView('plan') }}
+              className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#29ABE2] hover:underline mx-auto"
+            >
+              <Plus size={12} /> Generar primer plan
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {allPlans.map((plan, idx) => {
+              const isLatest = idx === 0
+              const dateLabel = new Date(plan.created_at).toLocaleDateString('es-CL', {
+                day: 'numeric', month: 'short', year: 'numeric',
+              })
+              const objLabel: Record<string, string> = {
+                'perdida grasa': '🔥 Pérdida de grasa',
+                'mantenimiento': '⚖️ Mantenimiento',
+                'hipertrofia': '💪 Hipertrofia',
+              }
+              return (
+                <motion.button
+                  key={plan.id || plan.created_at}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.04 }}
+                  onClick={() => {
+                    if (plan.plan_json?.result && plan.plan_json?.form) {
+                      setPlanResult(plan.plan_json.result)
+                      setPlanForm(plan.plan_json.form)
+                      setEmailStatus('idle')
+                      setView('plan')
+                    }
+                  }}
+                  className="w-full text-left bg-[#F8FBFD] hover:bg-[#EAF4FB] border border-[#F0F6FA] hover:border-[#29ABE2]/30 rounded-xl px-4 py-3 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#EAF4FB] border border-[#29ABE2]/20 flex items-center justify-center flex-shrink-0">
+                        <FileText size={13} className="text-[#29ABE2]" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-xs font-bold text-[#0C1F2C]">
+                            {objLabel[plan.objetivo] ?? plan.objetivo}
+                          </p>
+                          {isLatest && (
+                            <span className="text-[9px] font-bold bg-[#29ABE2]/15 text-[#29ABE2] px-1.5 py-0.5 rounded-full">
+                              Actual
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-[#8BA5BE] mt-0.5">{dateLabel}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      {/* Macro chips */}
+                      <div className="hidden sm:flex items-center gap-1.5">
+                        <span className="flex items-center gap-0.5 text-[10px] text-[#8BA5BE]">
+                          <Flame size={9} className="text-orange-400" />{plan.kcal}
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-[#8BA5BE]">
+                          <Beef size={9} className="text-green-500" />{plan.proteina}g
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-[#8BA5BE]">
+                          <Wheat size={9} className="text-blue-400" />{plan.carbohidrato}g
+                        </span>
+                        <span className="flex items-center gap-0.5 text-[10px] text-[#8BA5BE]">
+                          <Droplets size={9} className="text-amber-400" />{plan.grasa}g
+                        </span>
+                      </div>
+                      <ChevronRight size={13} className="text-[#C8D8E4] group-hover:text-[#29ABE2] transition-colors" />
+                    </div>
+                  </div>
+                </motion.button>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* ── Registros últimos 30 días ── */}
       <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
