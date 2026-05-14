@@ -29,6 +29,7 @@ import { Calendar, Bell, Lock, Star } from 'lucide-react'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/OnboardingModal'
+import { TrialBanner } from '@/components/dashboard/TrialBanner'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -402,6 +403,10 @@ export default function PacientePage() {
 
         {/* pb-20 on mobile to clear the bottom nav */}
         <main className="flex-1 overflow-y-auto pb-20 md:pb-0">
+          {/* Trial / expiry banner — shown for non-premium users with a trial */}
+          {profile && profile.role !== 'professional' && (
+            <TrialBanner profile={profile} />
+          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

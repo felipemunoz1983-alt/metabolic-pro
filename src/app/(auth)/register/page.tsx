@@ -115,9 +115,12 @@ function RegisterForm() {
     }
 
     // 2. Create profile
-    // Patients who arrive via a professional's invite link get 21 days free trial
-    const trialEndsAt = isLinked
-      ? new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString()
+    // - Patients from a professional invite link → 21-day trial
+    // - Regular individual users                 → 7-day trial
+    // - Professional accounts                    → no trial (they manage plans for others)
+    const trialDaysCount = isLinked ? 21 : isProfessionalRegister ? 0 : 7
+    const trialEndsAt = trialDaysCount > 0
+      ? new Date(Date.now() + trialDaysCount * 24 * 60 * 60 * 1000).toISOString()
       : null
 
     const profilePayload: Record<string, unknown> = {
@@ -139,6 +142,17 @@ function RegisterForm() {
         return
       }
     }
+
+    // 3. Send welcome email (non-fatal)
+    fetch('/api/email/welcome', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre: nombre.trim(),
+        email:  email.trim().toLowerCase(),
+        trialDays: trialDaysCount,
+      }),
+    }).catch(() => { /* ignore — welcome email is non-fatal */ })
 
     setDone(true)
     setTimeout(() => router.push('/paciente'), 2500)
@@ -297,8 +311,25 @@ function RegisterForm() {
           type="submit" disabled={loading}
           className="w-full py-3 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center gap-2 mt-1"
         >
-          {loading ? 'Creando cuenta...' : <><span>Crear cuenta</span><ArrowRight size={15} /></>}
+          {loading ? 'Creando cuenta...' : <><span>Crear cuenta gratis</span><ArrowRight size={15} /></>}
         </button>
+
+        {/* Trust strip */}
+        {!isLinked && !isProfessionalRegister && (
+          <div className="flex items-center justify-center gap-4 pt-1">
+            <span className="flex items-center gap-1 text-[11px] text-[#8BA5BE]">
+              <span className="text-green-500">✓</span> 7 días gratis
+            </span>
+            <span className="text-[#D6E3ED]">·</span>
+            <span className="flex items-center gap-1 text-[11px] text-[#8BA5BE]">
+              <span className="text-green-500">✓</span> Sin tarjeta de crédito
+            </span>
+            <span className="text-[#D6E3ED]">·</span>
+            <span className="flex items-center gap-1 text-[11px] text-[#8BA5BE]">
+              <span className="text-green-500">✓</span> Cancela cuando quieras
+            </span>
+          </div>
+        )}
       </form>
 
       <div className="mt-6 pt-6 border-t border-[#F0F4F8] text-center">
@@ -382,8 +413,13 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Crear cuenta</h1>
-          <p className="text-sm text-[#8BA5BE] mb-8">Comienza tu seguimiento metabólico hoy</p>
+          <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Empieza gratis hoy</h1>
+          <p className="text-sm text-[#8BA5BE] mb-2">7 días de prueba · Sin tarjeta de crédito</p>
+          {/* Trial pill */}
+          <div className="inline-flex items-center gap-1.5 bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-full px-3 py-1 mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#29ABE2] animate-pulse" />
+            <span className="text-[11px] font-bold text-[#0C3547]">Trial activo al registrarte</span>
+          </div>
 
           <Suspense fallback={
             <div className="space-y-4 animate-pulse">
