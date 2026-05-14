@@ -516,8 +516,8 @@ function PatientDetail({
 
       {/* Patient header card */}
       <div className="bg-gradient-to-r from-[#060F1A] via-[#0C1F2C] to-[#0C3547] rounded-2xl p-6 text-white mb-5">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl bg-[#29ABE2]/20 border border-[#29ABE2]/30 flex items-center justify-center flex-shrink-0">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#29ABE2]/20 border border-[#29ABE2]/30 flex items-center justify-center flex-shrink-0">
             <span className="text-xl font-black text-[#29ABE2]">
               {patient.nombre?.charAt(0).toUpperCase()}
             </span>
@@ -529,7 +529,7 @@ function PatientDetail({
               <p className="text-[#9EC8E0] text-xs">📱 {patient.whatsapp}</p>
             )}
           </div>
-          <div className="text-right">
+          <div className="text-right ml-auto flex-shrink-0">
             {(() => {
               const onTrial = patient.plan === 'gratuito'
                 && patient.trial_ends_at
@@ -870,7 +870,7 @@ function PatientDetail({
 
                   {/* Wellbeing row */}
                   {hasWellbeing && (
-                    <div className="flex items-center gap-4 px-4 pb-2.5 border-t border-[#EDF2F7]">
+                    <div className="flex items-center flex-wrap gap-x-3 gap-y-1 px-4 pb-2 pt-1.5 border-t border-[#EDF2F7]">
                       {log.hambre && (
                         <span className="text-[10px] text-[#8BA5BE] flex items-center gap-1">
                           🍽️ <span className="font-semibold text-[#0C1F2C]">{log.hambre}/5</span>
@@ -1424,7 +1424,7 @@ export function PanelProfesional({
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={cn(
-                'px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
+                'px-2 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition-all',
                 filter === f.id
                   ? 'bg-[#0C3547] text-white'
                   : 'text-[#8BA5BE] hover:text-[#0C1F2C]'

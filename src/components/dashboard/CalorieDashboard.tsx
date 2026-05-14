@@ -101,32 +101,49 @@ function StreakBanner({ current, best }: { current: number; best: number }) {
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-[#0C1F2C] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-4 text-white flex items-center gap-4"
+      className="bg-gradient-to-r from-[#0C1F2C] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-4 text-white flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
     >
-      {/* Current streak */}
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <div className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center',
-          current >= 7 ? 'bg-amber-500/20' : current >= 3 ? 'bg-orange-500/20' : 'bg-white/10'
-        )}>
-          <Flame size={20} className={cn(
-            current >= 7 ? 'text-amber-400' : current >= 3 ? 'text-orange-400' : 'text-[#9EC8E0]'
-          )} />
+      {/* Row: current streak + divider + best streak (horizontal even on mobile) */}
+      <div className="flex items-center gap-4">
+        {/* Current streak */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className={cn(
+            'w-10 h-10 rounded-xl flex items-center justify-center',
+            current >= 7 ? 'bg-amber-500/20' : current >= 3 ? 'bg-orange-500/20' : 'bg-white/10'
+          )}>
+            <Flame size={20} className={cn(
+              current >= 7 ? 'text-amber-400' : current >= 3 ? 'text-orange-400' : 'text-[#9EC8E0]'
+            )} />
+          </div>
+          <div>
+            <p className="text-2xl font-black leading-none">
+              {current}
+              <span className="text-sm font-semibold text-[#9EC8E0] ml-1">días</span>
+            </p>
+            <p className="text-[10px] text-[#4A7A94] font-medium">Racha actual</p>
+          </div>
         </div>
-        <div>
-          <p className="text-2xl font-black leading-none">
-            {current}
-            <span className="text-sm font-semibold text-[#9EC8E0] ml-1">días</span>
-          </p>
-          <p className="text-[10px] text-[#4A7A94] font-medium">Racha actual</p>
-        </div>
+
+        {/* Divider */}
+        <div className="w-px h-10 bg-white/10 flex-shrink-0" />
+
+        {/* Best streak */}
+        {best > 0 && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Trophy size={16} className="text-[#29ABE2]" />
+            <div>
+              <p className="text-lg font-black leading-none">
+                {best}
+                <span className="text-xs font-semibold text-[#9EC8E0] ml-1">días</span>
+              </p>
+              <p className="text-[10px] text-[#4A7A94] font-medium">Mejor racha</p>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Divider */}
-      <div className="w-px h-10 bg-white/10 flex-shrink-0" />
-
-      {/* Milestone or motivation */}
-      <div className="flex-1 min-w-0">
+      {/* Motivation/milestone — full width below on mobile, inline on sm+ */}
+      <div className="flex-1 min-w-0 sm:border-l sm:border-white/10 sm:pl-4">
         {milestone ? (
           <p className="text-xs font-semibold text-[#29ABE2] leading-snug">{milestone}</p>
         ) : current > 0 ? (
@@ -139,23 +156,6 @@ function StreakBanner({ current, best }: { current: number; best: number }) {
           <p className="text-xs text-[#9EC8E0]">Registra hoy para empezar tu racha 🔥</p>
         )}
       </div>
-
-      {/* Best streak */}
-      {best > 0 && (
-        <>
-          <div className="w-px h-10 bg-white/10 flex-shrink-0" />
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Trophy size={16} className="text-[#29ABE2]" />
-            <div>
-              <p className="text-lg font-black leading-none">
-                {best}
-                <span className="text-xs font-semibold text-[#9EC8E0] ml-1">días</span>
-              </p>
-              <p className="text-[10px] text-[#4A7A94] font-medium">Mejor racha</p>
-            </div>
-          </div>
-        </>
-      )}
     </motion.div>
   )
 }
@@ -763,7 +763,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                   <span className={cn('font-semibold', isToday ? 'text-[#0C3547]' : 'text-[#6B7C93]')}>
                     {isToday ? 'Hoy' : new Date(d.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric' })}
                   </span>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1">
                     <span className="text-[#6B7C93]">{d.kcal_consumida || 0} kcal</span>
                     <span className={cn('font-bold px-2 py-0.5 rounded-full', adh >= 80 ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700')}>
                       {adh}%
