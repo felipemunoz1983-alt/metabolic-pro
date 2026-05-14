@@ -1,0 +1,28 @@
+{
+  "name": "Centro Metabólico Pro",
+  "short_name": "CMetabólico",
+  "description": "Seguimiento nutricional clínico personalizado",
+  "start_url": "/paciente",
+  "display": "standalone",
+  "background_color": "#060F1A",
+  "theme_color": "#0C1F2C",
+  "orientation": "portrait-primary",
+  "categories": ["health", "fitness", "medical"],
+  "lang": "es-CL",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "url": "/paciente",
+      "description": "Ver registro calórico del día"
+    }
+  ]
+}

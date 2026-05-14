@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#0C1F2C"/>
+  <circle cx="256" cy="256" r="180" fill="none" stroke="#29ABE2" stroke-width="28"/>
+  <!-- Activity/pulse line -->
+  <polyline points="100,256 170,256 200,180 230,320 265,200 295,290 320,256 412,256"
+    fill="none" stroke="#29ABE2" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
