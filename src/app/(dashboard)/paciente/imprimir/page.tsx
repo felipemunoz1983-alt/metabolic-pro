@@ -188,7 +188,7 @@ export default function ImprimirPlan() {
         {/* ── Pie de página ── */}
         <div style={{ borderTop: '1px solid #E2ECF4', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 9, color: '#C8D8E4' }}>
-            Centro Metabólico Pro · centroetabolico.cl · Plan generado con motor Harris-Benedict + PAL
+            Centro Metabólico Pro · centrometabolico.cl · Plan generado con motor Harris-Benedict + PAL
           </div>
           <div style={{ fontSize: 9, color: '#C8D8E4' }}>
             Este plan es una guía nutricional. No reemplaza la evaluación clínica profesional.

@@ -8,7 +8,7 @@ import type { Profile } from '@/types'
 import { isOnTrial, trialDaysLeft, hasAccess } from '@/types'
 import {
   User, Mail, Shield, Calendar, Star, Clock, LogOut,
-  CheckCircle, AlertCircle, ChevronRight, Edit2, Save, X,
+  CheckCircle, AlertCircle, ChevronRight, Edit2, Save, X, Phone,
 } from 'lucide-react'
 
 interface Props {
@@ -67,6 +67,13 @@ export function PerfilPanel({ profile, userId }: Props) {
   const [savingName, setSavingName] = useState(false)
   const [nameError, setNameError] = useState('')
 
+  // Edit WhatsApp state
+  const [editingWa, setEditingWa] = useState(false)
+  const [whatsapp, setWhatsapp] = useState((profile as Record<string, unknown>).whatsapp as string || '')
+  const [savingWa, setSavingWa] = useState(false)
+  const [waError, setWaError] = useState('')
+  const [waSaved, setWaSaved] = useState(false)
+
   async function handleSaveName() {
     if (!nombre.trim()) { setNameError('El nombre no puede estar vacío'); return }
     setSavingName(true)
@@ -77,6 +84,20 @@ export function PerfilPanel({ profile, userId }: Props) {
     setEditingName(false)
     // Reload to reflect change in sidebar
     window.location.reload()
+  }
+
+  async function handleSaveWhatsapp() {
+    // Accept empty (to clear) or phone starting with digits
+    const clean = whatsapp.trim().replace(/\D/g, '')
+    setSavingWa(true)
+    setWaError('')
+    const { error } = await supabase.from('profiles').update({ whatsapp: clean || null }).eq('id', userId)
+    setSavingWa(false)
+    if (error) { setWaError('Error al guardar. Intenta de nuevo.'); return }
+    setWhatsapp(clean)
+    setEditingWa(false)
+    setWaSaved(true)
+    setTimeout(() => setWaSaved(false), 2500)
   }
 
   function handleSignOut() {
@@ -224,6 +245,71 @@ export function PerfilPanel({ profile, userId }: Props) {
             </button>
           </div>
         )}
+      </div>
+
+      {/* ── WhatsApp ── */}
+      <div className="bg-white border border-[#E2ECF4] rounded-2xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Phone size={14} className="text-[#25D366]" />
+            <p className="text-sm font-bold text-[#0C3547]">WhatsApp</p>
+          </div>
+          {!editingWa ? (
+            <button
+              onClick={() => setEditingWa(true)}
+              className="flex items-center gap-1.5 text-[11px] font-bold text-[#29ABE2] hover:underline"
+            >
+              <Edit2 size={11} /> {whatsapp ? 'Editar' : 'Agregar'}
+            </button>
+          ) : (
+            <button
+              onClick={() => { setEditingWa(false); setWhatsapp((profile as Record<string, unknown>).whatsapp as string || ''); setWaError('') }}
+              className="text-[#8BA5BE] hover:text-red-400 transition"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        {!editingWa ? (
+          <div className="flex items-center gap-2">
+            <p className="text-sm text-[#1E2D3D]">
+              {whatsapp ? `+${whatsapp}` : 'Sin número configurado'}
+            </p>
+            {waSaved && <span className="text-xs text-green-600 font-bold">✓ Guardado</span>}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 border border-[#D6E3ED] rounded-xl px-3 py-2.5 focus-within:border-[#29ABE2] focus-within:ring-2 focus-within:ring-[#29ABE2]/20 transition">
+              <span className="text-sm text-[#8BA5BE] flex-shrink-0">+</span>
+              <input
+                type="tel"
+                value={whatsapp}
+                onChange={e => setWhatsapp(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSaveWhatsapp()}
+                placeholder="56912345678"
+                className="flex-1 text-sm text-[#1E2D3D] bg-transparent outline-none placeholder:text-[#C8D8E4]"
+                autoFocus
+              />
+            </div>
+            <p className="text-[10px] text-[#8BA5BE]">Ingresa con código de país. Ej: 56912345678 (Chile)</p>
+            {waError && <p className="text-xs text-red-500">{waError}</p>}
+            <button
+              onClick={handleSaveWhatsapp}
+              disabled={savingWa}
+              className="flex items-center gap-1.5 text-xs font-bold bg-[#25D366] text-white px-4 py-2 rounded-xl hover:bg-[#1aad55] transition disabled:opacity-50"
+            >
+              <Save size={12} />
+              {savingWa ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        )}
+
+        <p className="text-[10px] text-[#B0C4D4] mt-2">
+          {profile.role === 'patient'
+            ? 'Tu profesional podrá contactarte por WhatsApp para seguimiento.'
+            : 'Usado para compartir links de invitación con pacientes.'}
+        </p>
       </div>
 
       {/* ── Sign out ── */}

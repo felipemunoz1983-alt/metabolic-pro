@@ -863,22 +863,27 @@ export function PanelProfesional({
       planCountMap[r.user_id] = (planCountMap[r.user_id] || 0) + 1
     })
 
-    // 3. Enrich with last log + plan count
-    const enriched = await Promise.all(profiles.map(async (p) => {
-      const { data: lastLog } = await supabase
-        .from('registros_diarios')
-        .select('fecha,kcal_consumida,comidas_completadas,comidas_total,peso')
-        .eq('user_id', p.id)
-        .order('fecha', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+    // 3. Batch-fetch last log for all patients in one query (avoids N+1)
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const { data: allLogs } = await supabase
+      .from('registros_diarios')
+      .select('user_id,fecha,kcal_consumida,comidas_completadas,comidas_total,peso')
+      .in('user_id', patientIds)
+      .gte('fecha', thirtyDaysAgo.toISOString().split('T')[0])
+      .order('fecha', { ascending: false })
 
-      return {
-        ...p,
-        lastLog: lastLog || undefined,
-        planCount: planCountMap[p.id] || 0,
-      } as PatientRow
-    }))
+    // Take the most recent log per patient
+    const lastLogMap: Record<string, DailyLog> = {}
+    allLogs?.forEach(log => {
+      if (!lastLogMap[log.user_id]) lastLogMap[log.user_id] = log as unknown as DailyLog
+    })
+
+    const enriched = profiles.map(p => ({
+      ...p,
+      lastLog: lastLogMap[p.id] || undefined,
+      planCount: planCountMap[p.id] || 0,
+    } as PatientRow))
 
     setPatients(enriched)
     setLoading(false)
