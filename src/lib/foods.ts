@@ -18,6 +18,8 @@ export interface MealOption {
   tendencia?: ('omnivoro' | 'vegetariano' | 'vegano')[]
   /** Sellos chilenos de advertencia nutricional (p.ej. "Alto en Grasas Saturadas") */
   sellos?: string[]
+  tieneHuevo?: boolean      // muestra selector de cantidad de huevos en PlanGenerator
+  eggsDefault?: number      // cantidad de huevos por defecto de la receta
 }
 
 export interface UltraOption {
@@ -51,7 +53,7 @@ export const desayunosOpts: Record<string, MealOption> = {
   huevos_tostadas: {
     label: 'Omelette proteico + pan integral',
     items: ['3 huevos enteros', '2 claras adicionales', 'Espinaca y champiñones', '1 rebanada pan integral', '1 cdta aceite de oliva'],
-    baseKcal: 420, p: 28, c: 35, g: 18,
+    baseKcal: 420, p: 28, c: 35, g: 18, tieneHuevo: true, eggsDefault: 3,
     foto: IMG + 'omelette_pan_integral.jfif',
     tiempo: '12 min',
     pasos: [
@@ -65,7 +67,7 @@ export const desayunosOpts: Record<string, MealOption> = {
   tostadas_palta: {
     label: 'Pan integral + palta + huevo pochado',
     items: ['2 tostadas pan integral', '½ palta madura', '2 huevos pochados', 'Café o té sin azúcar'],
-    baseKcal: 460, p: 22, c: 40, g: 22,
+    baseKcal: 460, p: 22, c: 40, g: 22, tieneHuevo: true, eggsDefault: 2,
     foto: IMG + 'Pan_palta_huevo_pochado.jfif',
     tiempo: '15 min',
     pasos: [
@@ -320,7 +322,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
   ensalada_proteica_alm: {
     label: 'Ensalada proteica de pollo + huevo + palta',
     items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria'],
-    baseKcal: 540, p: 44, c: 24, g: 22,
+    baseKcal: 540, p: 44, c: 24, g: 22, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     tiempo: '20 min',
@@ -335,7 +337,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
   arroz_huevo_saltado: {
     label: 'Arroz saltado con huevo y verduras',
     items: ['160g arroz cocido (idealmente frío del día anterior)', '2-3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón', '1 cdta aceite + salsa de soya opcional'],
-    baseKcal: 550, p: 32, c: 70, g: 14,
+    baseKcal: 550, p: 32, c: 70, g: 14, tieneHuevo: true, eggsDefault: 2,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['vegetariano'],
     tiempo: '15 min',
@@ -476,7 +478,7 @@ export const cenasOpts: Record<string, MealOption> = {
   huevos_ensalada: {
     label: 'Omelette de huevos + ensalada verde',
     items: ['3 huevos enteros', 'Espinacas, champiñones y tomate', 'Ensalada de hojas verdes', '1 cdta aceite de oliva'],
-    baseKcal: 310, p: 28, c: 10, g: 18,
+    baseKcal: 310, p: 28, c: 10, g: 18, tieneHuevo: true, eggsDefault: 3,
     foto: IMG + 'omelette_pan_integral.jfif',
     tendencia: ['vegetariano'],
     tiempo: '12 min',
@@ -491,7 +493,7 @@ export const cenasOpts: Record<string, MealOption> = {
   atun_ensalada: {
     label: 'Ensalada proteica de atún + huevo + palta',
     items: ['150g atún en agua escurrido', '1 huevo duro', '¼ palta', 'Lechuga, tomate cherry, pepino, zanahoria rallada'],
-    baseKcal: 330, p: 36, c: 12, g: 14,
+    baseKcal: 330, p: 36, c: 12, g: 14, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     tiempo: '15 min',

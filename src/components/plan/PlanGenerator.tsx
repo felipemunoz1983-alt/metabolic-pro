@@ -21,7 +21,9 @@ const defaultForm: Partial<FormData> = {
   rechazos: '',
   protGramos: 200,
   protGramosCena: 200,
+  eggsQtyDesayuno: 2,
   eggsQty: 2,
+  eggsQtyCena: 3,
   eggsQtyOnce: 2,
   sandwichQty: 1,
   sandwichQtyOnce: 1,
@@ -195,6 +197,37 @@ function MealChips({
             </button>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Selector de cantidad de huevos ──────────────────────────────────────────
+function EggsQtyPicker({
+  value,
+  onChange,
+}: {
+  value: number
+  onChange: (n: number) => void
+}) {
+  return (
+    <div className="flex items-center gap-2 mt-2 pl-1">
+      <span className="text-xs text-[#6B7C93] font-semibold">🥚 Cantidad de huevos:</span>
+      <div className="flex gap-1.5">
+        {[1, 2, 3, 4].map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className={cn(
+              'w-8 h-8 rounded-full text-xs font-bold border-2 transition-all',
+              value === n
+                ? 'bg-amber-400 border-amber-400 text-white'
+                : 'border-[#D6E3ED] text-[#6B7C93] hover:border-amber-400 hover:text-amber-600'
+            )}
+          >
+            {n}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -573,12 +606,20 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               </div>
 
               {/* Desayunos */}
-              <MealChips
-                label="🌅 Desayunos"
-                pool={desayunosOpts}
-                selected={form.desayunos ?? []}
-                onChange={v => set('desayunos', v)}
-              />
+              <div>
+                <MealChips
+                  label="🌅 Desayunos"
+                  pool={desayunosOpts}
+                  selected={form.desayunos ?? []}
+                  onChange={v => set('desayunos', v)}
+                />
+                {(form.desayunos ?? []).some(k => desayunosOpts[k]?.tieneHuevo) && (
+                  <EggsQtyPicker
+                    value={form.eggsQtyDesayuno ?? 2}
+                    onChange={n => set('eggsQtyDesayuno', n)}
+                  />
+                )}
+              </div>
 
               {/* Colación mañana */}
               <MealChips
@@ -589,12 +630,20 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               />
 
               {/* Almuerzos */}
-              <MealChips
-                label="🍽️ Almuerzos"
-                pool={filteredAlmuerzos}
-                selected={form.almuerzos ?? []}
-                onChange={v => set('almuerzos', v)}
-              />
+              <div>
+                <MealChips
+                  label="🍽️ Almuerzos"
+                  pool={filteredAlmuerzos}
+                  selected={form.almuerzos ?? []}
+                  onChange={v => set('almuerzos', v)}
+                />
+                {(form.almuerzos ?? []).some(k => almuerzosOpts[k]?.tieneHuevo) && (
+                  <EggsQtyPicker
+                    value={form.eggsQty ?? 2}
+                    onChange={n => set('eggsQty', n)}
+                  />
+                )}
+              </div>
 
               {/* Once */}
               <MealChips
@@ -605,12 +654,20 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               />
 
               {/* Cenas */}
-              <MealChips
-                label="🌙 Cenas"
-                pool={filteredCenas}
-                selected={form.cenas ?? []}
-                onChange={v => set('cenas', v)}
-              />
+              <div>
+                <MealChips
+                  label="🌙 Cenas"
+                  pool={filteredCenas}
+                  selected={form.cenas ?? []}
+                  onChange={v => set('cenas', v)}
+                />
+                {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneHuevo) && (
+                  <EggsQtyPicker
+                    value={form.eggsQtyCena ?? 3}
+                    onChange={n => set('eggsQtyCena', n)}
+                  />
+                )}
+              </div>
 
               {/* Disclaimer Vegetal Burger Abuelo */}
               {(form.almuerzos ?? []).includes('vegetal_burger_abuelo') && (

@@ -28,8 +28,10 @@ export interface FormData {
   once: string[]
   protGramos: number
   protGramosCena: number
-  eggsQty: number
-  eggsQtyOnce: number
+  eggsQtyDesayuno: number   // huevos en desayuno
+  eggsQty: number           // huevos en almuerzo
+  eggsQtyCena: number       // huevos en cena
+  eggsQtyOnce: number       // huevos en once/colación
   sandwichQty: number
   sandwichQtyOnce: number
   semanas: number

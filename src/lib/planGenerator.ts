@@ -106,7 +106,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Desayuno
     const desayuno = getMealOption(desayunosOpts, form.desayunos, d)
-    meals.push(buildMeal('desayuno', desayuno, targetKcal))
+    meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno))
 
     // Colación mañana
     const colManana = getMealOption(colacionesOpts, form.colacionManana, d)
@@ -114,15 +114,15 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Almuerzo
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-    meals.push(buildMeal('almuerzo', almuerzo, targetKcal))
+    meals.push(buildMeal('almuerzo', almuerzo, targetKcal, form.eggsQty))
 
     // Once
     const once = getMealOption(colacionesOpts, form.once, d + 1) // offset for variety
-    meals.push(buildMeal('once', once, targetKcal))
+    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce))
 
     // Cena
     const cena = getMealOption(cenasPool, form.cenas, d)
-    meals.push(buildMeal('cena', cena, targetKcal))
+    meals.push(buildMeal('cena', cena, targetKcal, form.eggsQtyCena))
 
     // Ultra procesado (solo en los N primeros días de cada semana)
     const diaEnSemana = diaSemana + 1  // 1–7
@@ -173,7 +173,7 @@ function buildUltraMeal(opt: UltraOption): DayMeal {
   }
 }
 
-function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number): DayMeal {
+function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number, eggsQty?: number): DayMeal {
   const pct = PCT[tipo]
   const kcal = Math.round(targetKcal * pct)
 
@@ -183,11 +183,20 @@ function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number
   const c = Math.round(option.c * scale)
   const g = Math.round(option.g * scale)
 
+  // Sustituir cantidad de huevos si el usuario eligió una cantidad distinta
+  let items = option.items
+  if (eggsQty !== undefined && option.tieneHuevo) {
+    const huevoSingular = eggsQty === 1 ? 'huevo' : 'huevos'
+    items = items.map(item =>
+      item.replace(/^\d+(-\d+)?\s+(huevo(s)?)/i, `${eggsQty} ${huevoSingular}`)
+    )
+  }
+
   return {
     tipo,
     label: option.label,
     icon: MEAL_ICONS[tipo],
-    items: option.items,
+    items,
     kcal,
     p,
     c,
