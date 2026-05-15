@@ -515,7 +515,7 @@ function PatientDetail({
       </div>
 
       {/* Patient header card */}
-      <div className="bg-gradient-to-r from-[#060F1A] via-[#0C1F2C] to-[#0C3547] rounded-2xl p-6 text-white mb-5">
+      <div className="bg-gradient-to-r from-[#060F1A] via-[#0C1F2C] to-[#0C3547] rounded-2xl p-4 sm:p-6 text-white mb-5">
         <div className="flex items-start gap-3 sm:gap-4">
           <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#29ABE2]/20 border border-[#29ABE2]/30 flex items-center justify-center flex-shrink-0">
             <span className="text-xl font-black text-[#29ABE2]">

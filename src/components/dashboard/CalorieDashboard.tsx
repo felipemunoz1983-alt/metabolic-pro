@@ -385,7 +385,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
 
           {/* Progress bar */}
           <div className="mb-4">
-            <div className="flex justify-between text-xs text-[#8BA5BE] mb-1.5">
+            <div className="flex justify-between text-[10px] sm:text-xs text-[#8BA5BE] mb-1.5">
               <span>{kcalEstimada} kcal consumidas</span>
               <span>Meta: {targetKcal.toLocaleString()} kcal</span>
             </div>
