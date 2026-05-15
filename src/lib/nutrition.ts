@@ -48,6 +48,9 @@ export interface FormData {
   supMedic: 'no' | 'si'
   supMedicDetalle: string
   supActuales: string
+  // ── Composición corporal (BIA/ISAK) — activa Cunningham en deportistas ──
+  /** % grasa medido profesionalmente (BIA o ISAK). Opcional. Activa Cunningham si cumple criterios. */
+  porcentajeGrasa?: number
 }
 
 export interface Macros {
@@ -119,6 +122,37 @@ export function formulaLabel(formula?: FormulaUsada): string {
   return 'Mifflin-St Jeor'   // default: fórmula activa
 }
 
+// ─── Selección automática de fórmula ─────────────────────────────────────────
+// Cunningham 1991 se activa cuando:
+//   • diasEjercicio >= 5 (actividad "alto" o "muy_alto")
+//   • porcentajeGrasa fue medido (BIA / ISAK)
+//   • % grasa ≤ 15% varones | ≤ 22% mujeres (deportista de bajo % grasa)
+// En cualquier otro caso → Mifflin-St Jeor.
+export function seleccionarFormula(
+  sexo: Sexo,
+  diasEjercicio: number,
+  porcentajeGrasa?: number
+): FormulaUsada {
+  if (
+    porcentajeGrasa != null      &&
+    diasEjercicio >= 5           &&
+    ((sexo === 'masculino' && porcentajeGrasa <= 15) ||
+     (sexo === 'femenino'  && porcentajeGrasa <= 22))
+  ) {
+    return 'cunningham'
+  }
+  return 'mifflin_st_jeor'
+}
+
+/** Helper: devuelve true si los datos actuales del form activarán Cunningham */
+export function usaraCunningham(
+  sexo: Sexo,
+  diasEjercicio: number,
+  porcentajeGrasa?: number
+): boolean {
+  return seleccionarFormula(sexo, diasEjercicio, porcentajeGrasa) === 'cunningham'
+}
+
 // ─── Factor actividad PAL (FAO/WHO-OMS) ──────────────────────────────────────
 export function factorActividad(dias: number, duracion: number, tipo: TipoEjercicio): number {
   let pal: number
@@ -167,23 +201,31 @@ export function calcMacros(kcal: number, peso: number, obj: Objetivo): Macros {
 }
 
 // ─── Cálculo completo ─────────────────────────────────────────────────────────
-// Usa Mifflin-St Jeor por defecto.
-// Cunningham: se activará en Fase 2 cuando FormData incluya porcentajeGrasa (BIA).
+// Selección de fórmula automática:
+//   • Cunningham 1991  → deportista (>=5 días) + BIA medido + bajo % grasa
+//   • Mifflin-St Jeor  → todos los demás casos (default)
 export function calcularNutricion(form: Pick<FormData,
-  'peso' | 'talla' | 'edad' | 'sexo' | 'objetivo' | 'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio'
+  'peso' | 'talla' | 'edad' | 'sexo' | 'objetivo' |
+  'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa'
 >): NutritionResult {
-  const bmr     = bmrMifflinStJeor(form.peso, form.talla, form.edad, form.sexo)
-  const pal     = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
-  const tdee    = bmr * pal
-  const kcal    = kcalObjetivo(tdee, form.objetivo)
-  const macros  = calcMacros(kcal, form.peso, form.objetivo)
+  const formula = seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
+
+  const bmr = formula === 'cunningham' && form.porcentajeGrasa != null
+    ? bmrCunningham(form.peso, form.porcentajeGrasa)
+    : bmrMifflinStJeor(form.peso, form.talla, form.edad, form.sexo)
+
+  const pal    = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
+  const tdee   = bmr * pal
+  const kcal   = kcalObjetivo(tdee, form.objetivo)
+  const macros = calcMacros(kcal, form.peso, form.objetivo)
+
   return {
     bmr:          Math.round(bmr),
     tdee:         Math.round(tdee),
     kcal:         Math.round(kcal),
     macros,
     pal,
-    formulaUsada: 'mifflin_st_jeor',
+    formulaUsada: formula,
   }
 }
 
