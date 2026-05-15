@@ -341,51 +341,6 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               </div>
 
-              {/* % Grasa corporal — activa Cunningham en deportistas */}
-              <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <label className="block text-sm font-semibold text-[#0C3547]">
-                      % Grasa corporal
-                      <span className="ml-2 text-xs font-normal text-[#6B7C93]">opcional · BIA / ISAK</span>
-                    </label>
-                    <p className="text-xs text-[#6B7C93] mt-0.5">
-                      Si tienes medición reciente, activa la fórmula Cunningham (más precisa para deportistas).
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <input
-                    type="number"
-                    min={3}
-                    max={50}
-                    step={0.1}
-                    value={form.porcentajeGrasa ?? ''}
-                    onChange={e => {
-                      const v = e.target.value === '' ? undefined : Number(e.target.value)
-                      set('porcentajeGrasa', v as number)
-                    }}
-                    className="w-28 px-4 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
-                    placeholder="Ej: 14.5"
-                  />
-                  <span className="text-sm text-[#6B7C93]">%</span>
-                  {/* Badge live — se muestra cuando Cunningham se activa */}
-                  {usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Cunningham activado
-                    </span>
-                  )}
-                </div>
-                {/* Criterios para activar Cunningham */}
-                {form.porcentajeGrasa != null && !usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
-                  <p className="text-xs text-[#6B7C93]">
-                    Cunningham requiere ≥5 días de ejercicio y
-                    {form.sexo === 'femenino' ? ' ≤22%' : ' ≤15%'} de grasa.
-                    Se usará Mifflin-St Jeor.
-                  </p>
-                )}
-              </div>
             </div>
           )}
 
@@ -439,6 +394,50 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* % Grasa corporal — aquí vive junto a diasEjercicio para badge live correcto */}
+              <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-3">
+                <div>
+                  <label className="block text-sm font-semibold text-[#0C3547]">
+                    % Grasa corporal
+                    <span className="ml-2 text-xs font-normal text-[#6B7C93]">opcional · BIA / ISAK</span>
+                  </label>
+                  <p className="text-xs text-[#6B7C93] mt-0.5">
+                    Medición profesional reciente activa la fórmula Cunningham (más precisa para deportistas con bajo % grasa).
+                  </p>
+                </div>
+                <div className="flex items-center gap-3 flex-wrap">
+                  <input
+                    type="number"
+                    min={3}
+                    max={50}
+                    step={0.1}
+                    value={form.porcentajeGrasa ?? ''}
+                    onChange={e => {
+                      const v = e.target.value === '' ? undefined : Number(e.target.value)
+                      set('porcentajeGrasa', v as number)
+                    }}
+                    className="w-28 px-4 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
+                    placeholder="Ej: 14.5"
+                  />
+                  <span className="text-sm text-[#6B7C93]">%</span>
+                  {/* Badge live — se activa cuando diasEjercicio + % grasa cumplen criterios */}
+                  {usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      Cunningham activado
+                    </span>
+                  )}
+                </div>
+                {/* Hint cuando hay % grasa pero no se cumplen los criterios */}
+                {form.porcentajeGrasa != null && !usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
+                  <p className="text-xs text-[#6B7C93]">
+                    Cunningham requiere ≥5 días de ejercicio y
+                    {form.sexo === 'femenino' ? ' ≤22%' : ' ≤15%'} de grasa corporal.
+                    Se usará Mifflin-St Jeor.
+                  </p>
+                )}
               </div>
             </div>
           )}
