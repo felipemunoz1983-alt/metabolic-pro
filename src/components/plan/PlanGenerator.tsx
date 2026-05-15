@@ -223,6 +223,38 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     onResult(result, f)
   }
 
+  // ── Filtrado por tendencia ──
+  const tendenciaActual = form.tendencia ?? 'omnivoro'
+  const filteredAlmuerzos = tendenciaActual === 'vegetariano'
+    ? Object.fromEntries(Object.entries(almuerzosOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano')))
+    : almuerzosOpts
+  const filteredCenas = tendenciaActual === 'vegetariano'
+    ? Object.fromEntries(Object.entries(cenasOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano')))
+    : cenasOpts
+
+  function handleTendenciaChange(t: string) {
+    if (t === 'vegetariano') {
+      const vegAlmKeys = Object.keys(almuerzosOpts).filter(k => {
+        const opt = almuerzosOpts[k]
+        return !opt.tendencia || opt.tendencia.includes('vegetariano')
+      })
+      const vegCenKeys = Object.keys(cenasOpts).filter(k => {
+        const opt = cenasOpts[k]
+        return !opt.tendencia || opt.tendencia.includes('vegetariano')
+      })
+      const validAlm = (form.almuerzos ?? []).filter(k => vegAlmKeys.includes(k))
+      const validCen = (form.cenas ?? []).filter(k => vegCenKeys.includes(k))
+      setForm(prev => ({
+        ...prev,
+        tendencia: t,
+        almuerzos: validAlm.length > 0 ? validAlm : [vegAlmKeys[0]],
+        cenas: validCen.length > 0 ? validCen : [vegCenKeys[0]],
+      }))
+    } else {
+      set('tendencia', t)
+    }
+  }
+
   return (
     <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-4 sm:p-6 pb-6">
       {/* Progress */}
@@ -486,6 +518,34 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
               <p className="text-xs text-[#6B7C93]">Selecciona una o más opciones por tiempo de comida. El plan rotará entre tus elecciones.</p>
 
+              {/* Tendencia alimentaria */}
+              <div className="border border-[#D6E3ED] rounded-xl p-4">
+                <label className="block text-sm font-semibold text-[#0C3547] mb-1">🌿 Tendencia alimentaria</label>
+                <p className="text-xs text-[#6B7C93] mb-3">
+                  Selecciona <strong>Vegetariano</strong> para adaptar las fuentes proteicas a opciones de origen vegetal (legumbres, tofu, huevo).
+                </p>
+                <div className="flex gap-2">
+                  {([
+                    { value: 'omnivoro',    label: '🥩 Omnívoro', desc: 'Incluye carnes, pescado y pollo' },
+                    { value: 'vegetariano', label: '🌿 Vegetariano', desc: 'Legumbres, tofu, huevo y lácteos' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => handleTendenciaChange(opt.value)}
+                      className={cn(
+                        'flex-1 py-3 px-4 rounded-xl border-2 text-left transition-all',
+                        tendenciaActual === opt.value
+                          ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                          : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                      )}
+                    >
+                      <div className="text-sm font-bold">{opt.label}</div>
+                      <div className="text-xs font-normal mt-0.5">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Desayunos */}
               <MealChips
                 label="🌅 Desayunos"
@@ -505,7 +565,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               {/* Almuerzos */}
               <MealChips
                 label="🍽️ Almuerzos"
-                pool={almuerzosOpts}
+                pool={filteredAlmuerzos}
                 selected={form.almuerzos ?? []}
                 onChange={v => set('almuerzos', v)}
               />
@@ -521,7 +581,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               {/* Cenas */}
               <MealChips
                 label="🌙 Cenas"
-                pool={cenasOpts}
+                pool={filteredCenas}
                 selected={form.cenas ?? []}
                 onChange={v => set('cenas', v)}
               />

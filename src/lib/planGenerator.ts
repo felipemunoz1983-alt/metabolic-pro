@@ -69,11 +69,28 @@ const MEAL_ICONS: Record<DayMeal['tipo'], string> = {
   ultra:           '🚨',
 }
 
+// ─── Filtrar pool por tendencia alimentaria ───────────────────────────────────
+function filtrarPorTendencia<T extends { tendencia?: string[] }>(
+  pool: Record<string, T>,
+  tendencia: string
+): Record<string, T> {
+  if (tendencia !== 'vegetariano') return pool
+  const filtered = Object.fromEntries(
+    Object.entries(pool).filter(([, opt]) =>
+      !opt.tendencia || opt.tendencia.includes('vegetariano')
+    )
+  )
+  return Object.keys(filtered).length > 0 ? filtered : pool // fallback si no hay opciones
+}
+
 // ─── Función principal ────────────────────────────────────────────────────────
 export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const semanas = form.semanas ?? 1
   const totalDias = semanas * 7
   const ultraDias = form.ultraDias ?? 2
+  const tendencia = form.tendencia ?? 'omnivoro'
+  const almuerzosPool = filtrarPorTendencia(almuerzosOpts, tendencia)
+  const cenasPool     = filtrarPorTendencia(cenasOpts,     tendencia)
   const dias: DayPlan[] = []
 
   for (let d = 0; d < totalDias; d++) {
@@ -92,7 +109,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     meals.push(buildMeal('colacion_manana', colManana, targetKcal))
 
     // Almuerzo
-    const almuerzo = getMealOption(almuerzosOpts, form.almuerzos, d)
+    const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
     meals.push(buildMeal('almuerzo', almuerzo, targetKcal))
 
     // Once
@@ -100,7 +117,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     meals.push(buildMeal('once', once, targetKcal))
 
     // Cena
-    const cena = getMealOption(cenasOpts, form.cenas, d)
+    const cena = getMealOption(cenasPool, form.cenas, d)
     meals.push(buildMeal('cena', cena, targetKcal))
 
     // Ultra procesado (solo en los N primeros días de cada semana)

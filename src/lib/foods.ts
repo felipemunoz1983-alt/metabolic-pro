@@ -14,6 +14,8 @@ export interface MealOption {
   tiempo?: string
   pasos?: string[]
   alergenosNota?: string  // aviso alérgenos (barras proteicas)
+  /** Tendencia alimentaria. undefined = compatible con ambas. */
+  tendencia?: ('omnivoro' | 'vegetariano')[]
 }
 
 export interface UltraOption {
@@ -273,6 +275,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['200g pechuga pollo a la plancha', '150g arroz integral cocido', 'Ensalada de tomate, pepino y lechuga', '1 cda aceite de oliva'],
     baseKcal: 580, p: 52, c: 58, g: 12,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
+    tendencia: ['omnivoro'],
     tiempo: '30 min',
     pasos: [
       'Pollo: sazonar la pechuga con sal, pimienta, ajo en polvo y gotas de limón. Cocinar 6-7 min por lado en plancha caliente con spray de aceite. El sellado a fuego alto retiene los jugos.',
@@ -287,6 +290,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['150g carne magra (posta, lomo o filete)', '1 papa mediana cocida con cáscara', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 590, p: 46, c: 54, g: 16,
     foto: IMG + 'carne_con_papas..webp',
+    tendencia: ['omnivoro'],
     tiempo: '30 min',
     pasos: [
       'Papa: lavar y cocinar entera con cáscara en agua hirviendo con sal 20-25 min. La cáscara conserva nutrientes y reduce el índice glicémico.',
@@ -301,6 +305,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['200g salmón fresco', '100g quinoa cocida', '150g verduras salteadas (zapallo, pimentón, espinaca)', '1 cdta aceite de oliva'],
     baseKcal: 600, p: 48, c: 42, g: 20,
     foto: IMG + 'salmon_quinoa.webp',
+    tendencia: ['omnivoro'],
     tiempo: '30 min',
     pasos: [
       'Quinoa: lavar en colador fino bajo agua fría. Cocinar en 2 tazas de agua con sal a fuego medio-bajo 15 min tapado. La quinoa es proteína completa con índice glicémico bajo.',
@@ -315,6 +320,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria'],
     baseKcal: 540, p: 44, c: 24, g: 22,
     foto: IMG + 'ensalada_proteica.webp',
+    tendencia: ['omnivoro'],
     tiempo: '20 min',
     pasos: [
       'Pollo: sazonar con sal, pimienta y limón. Cocinar en plancha 5-6 min por lado. Dejar reposar 2 min y cortar en tiras.',
@@ -329,6 +335,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['160g arroz cocido (idealmente frío del día anterior)', '2-3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón', '1 cdta aceite + salsa de soya opcional'],
     baseKcal: 550, p: 32, c: 70, g: 14,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
+    tendencia: ['vegetariano'],
     tiempo: '15 min',
     pasos: [
       'Arroz: usar arroz frío del día anterior. El almidón retrogradado del arroz frío tiene menor índice glicémico y saltea mejor.',
@@ -343,6 +350,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo', 'Ensalada mixta'],
     baseKcal: 550, p: 30, c: 80, g: 8,
     foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
+    tendencia: ['vegetariano'],
     tiempo: '25 min',
     pasos: [
       'Sofrito: saltear cebolla y ajo picados en aceite hasta transparentar. Agregar tomate y cocinar 5 min.',
@@ -356,6 +364,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['200g pechuga pavo a la plancha', '150g papas cocidas con perejil', 'Ensalada de pepino y tomate', '1 cdta aceite de oliva'],
     baseKcal: 560, p: 48, c: 52, g: 11,
     foto: IMG + 'carne_con_papas..webp',
+    tendencia: ['omnivoro'],
     tiempo: '25 min',
     pasos: [
       'Papas: cocer con cáscara en agua hirviendo con sal 20 min. Escurrir y espolvorear perejil fresco.',
@@ -363,6 +372,36 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Reposo: dejar reposar el pavo 2 min antes de cortar.',
       'Ensalada: cortar pepino y tomate. Aliñar con aceite, sal y limón.',
       'Armado: servir el pavo con las papas y la ensalada al costado.',
+    ],
+  },
+  tofu_quinoa: {
+    label: 'Tofu salteado + quinoa + verduras',
+    items: ['180g tofu firme', '100g quinoa cocida', '150g verduras salteadas (pimentón, zapallo, champiñones)', '1 cdta aceite de oliva + salsa de soya reducida en sodio'],
+    baseKcal: 540, p: 34, c: 46, g: 18,
+    foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
+    tiempo: '25 min',
+    tendencia: ['vegetariano'],
+    pasos: [
+      'Quinoa: lavar bajo agua fría en colador fino. Cocinar en 2 tazas de agua con sal a fuego bajo 15 min tapado. Reposar 5 min antes de esponjar con tenedor.',
+      'Tofu: cortar en cubos de 2cm. Secar con papel absorbente para eliminar el exceso de agua — así queda crocante al saltear.',
+      'Saltear el tofu en aceite caliente a fuego alto 4-5 min por lado hasta dorar. Agregar 1 cdta salsa de soya al final.',
+      'Verduras: en la misma sartén, saltear pimentón, zapallo y champiñones 3-4 min. El champiñón aporta umami natural.',
+      'Armado: servir la quinoa como base, el tofu encima y las verduras al costado. El tofu aporta proteína completa de origen vegetal.',
+    ],
+  },
+  bowl_garbanzos: {
+    label: 'Bowl de garbanzos + vegetales asados',
+    items: ['200g garbanzos cocidos', '150g vegetales asados (zanahoria, berenjena, zapallo)', '1 cda tahini o aceite de oliva', '80g arroz integral o pan pita integral'],
+    baseKcal: 560, p: 28, c: 72, g: 12,
+    foto: USP('1512621776951-a52572ce91c9'),
+    tiempo: '30 min',
+    tendencia: ['vegetariano'],
+    pasos: [
+      'Vegetales: cortar en trozos medianos, mezclar con aceite, sal y comino. Asar a 200°C por 20-25 min hasta caramelizar.',
+      'Garbanzos: si son de lata, enjuagar bien. Si son secos, remojar 12h y hervir 45 min. Los garbanzos aportan 15g de proteína por 100g.',
+      'Arroz: cocinar en agua con sal a fuego bajo 18-20 min tapado.',
+      'Salsa: mezclar tahini con limón, ajo y agua hasta lograr consistencia cremosa.',
+      'Armado: colocar el arroz como base, los garbanzos y vegetales asados encima. Bañar con la salsa de tahini.',
     ],
   },
 }
@@ -374,6 +413,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['150g pechuga pollo a la plancha', '200g mix verduras al vapor (brócoli, zanahorias, zapallito)', '1 cdta aceite de oliva', 'Limón y ajo'],
     baseKcal: 320, p: 40, c: 16, g: 9,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
+    tendencia: ['omnivoro'],
     tiempo: '20 min',
     pasos: [
       'Pollo: sazonar con sal, pimienta, ajo y limón. Cocinar en plancha 6-7 min por lado.',
@@ -388,6 +428,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['3 huevos enteros', 'Espinacas, champiñones y tomate', 'Ensalada de hojas verdes', '1 cdta aceite de oliva'],
     baseKcal: 310, p: 28, c: 10, g: 18,
     foto: IMG + 'omelette_pan_integral.jfif',
+    tendencia: ['vegetariano'],
     tiempo: '12 min',
     pasos: [
       'Batido: mezclar los 3 huevos con sal y pimienta hasta homogeneizar.',
@@ -402,6 +443,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['150g atún en agua escurrido', '1 huevo duro', '¼ palta', 'Lechuga, tomate cherry, pepino, zanahoria rallada'],
     baseKcal: 330, p: 36, c: 12, g: 14,
     foto: IMG + 'ensalada_proteica.webp',
+    tendencia: ['omnivoro'],
     tiempo: '15 min',
     pasos: [
       'Atún: escurrir bien la lata. El atún en agua aporta 26g de proteína por 100g con solo 1g de grasa.',
@@ -416,6 +458,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['150g salmón al horno', '200g brócoli al vapor', '1 cdta aceite de oliva', 'Ajo y limón al gusto'],
     baseKcal: 340, p: 38, c: 8, g: 16,
     foto: IMG + 'salmon_quinoa.webp',
+    tendencia: ['omnivoro'],
     tiempo: '20 min',
     pasos: [
       'Salmón: sazonar con sal, pimienta, ajo y limón. Cocinar en sartén 3-4 min por lado hasta que el centro esté opaco pero jugoso.',
@@ -430,6 +473,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['150g bistec magro a la plancha', '200g zapallo italiano salteado', 'Ensalada de hojas verdes', 'Sal, pimienta y ajo al gusto'],
     baseKcal: 310, p: 35, c: 14, g: 11,
     foto: IMG + 'carne_con_papas..webp',
+    tendencia: ['omnivoro'],
     tiempo: '20 min',
     pasos: [
       'Carne: sazonar con sal, pimienta y ajo. Cocinar en plancha bien caliente 4-5 min por lado.',
@@ -444,6 +488,7 @@ export const cenasOpts: Record<string, MealOption> = {
     items: ['150g pollo desmenuzado', 'Zanahoria, apio, puerro y papas', 'Caldo natural bajo en sodio', 'Perejil fresco al gusto'],
     baseKcal: 290, p: 30, c: 22, g: 6,
     foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
+    tendencia: ['omnivoro'],
     tiempo: '35 min',
     pasos: [
       'Caldo: calentar 1 litro de caldo de pollo en una olla grande a fuego medio.',
@@ -451,6 +496,36 @@ export const cenasOpts: Record<string, MealOption> = {
       'Cocinar 20-25 min hasta que las verduras estén tiernas.',
       'Pollo: agregar el pollo desmenuzado (puede ser cocido o crudo: si crudo, agregar desde el inicio).',
       'Rectificar sal. Servir caliente con perejil fresco picado.',
+    ],
+  },
+  sopa_lentejas: {
+    label: 'Sopa de lentejas + verduras',
+    items: ['200g lentejas cocidas', 'Zanahoria, apio, tomate y espinaca', 'Caldo vegetal bajo en sodio', '1 rebanada pan integral'],
+    baseKcal: 310, p: 22, c: 38, g: 5,
+    foto: USP('1547592166-9a59b8dddb7f'),
+    tiempo: '30 min',
+    tendencia: ['vegetariano'],
+    pasos: [
+      'Sofrito: saltear cebolla, ajo y zanahoria en una olla con pizca de aceite 3-4 min.',
+      'Tomate: agregar tomate picado, cocinar 5 min hasta ablandar.',
+      'Lentejas: agregar las lentejas ya cocidas y el caldo vegetal. Llevar a hervor y cocinar 10-15 min a fuego bajo.',
+      'Espinaca: agregar al final, cocinar 2 min más. La espinaca aporta hierro no hemo que se absorbe mejor con el limón.',
+      'Servir caliente con 1 rebanada de pan integral. Exprimir limón antes de consumir para mejorar absorción del hierro.',
+    ],
+  },
+  ensalada_garbanzos: {
+    label: 'Ensalada de garbanzos + palta + huevo',
+    items: ['150g garbanzos cocidos', '½ palta en láminas', '2 huevos duros', 'Lechuga, tomate cherry, pepino y zanahoria rallada', '1 cdta aceite de oliva + limón'],
+    baseKcal: 390, p: 26, c: 32, g: 18,
+    foto: USP('1512621776951-a52572ce91c9'),
+    tiempo: '15 min',
+    tendencia: ['vegetariano'],
+    pasos: [
+      'Huevos: cocinar duros 10 min en agua hirviendo. Pelar y cortar en mitades.',
+      'Garbanzos: si son de lata, enjuagar y escurrir. Secar levemente para que absorban el aliño.',
+      'Palta: cortar en láminas justo antes de servir para evitar oxidación.',
+      'Verduras: lavar y cortar tomate cherry, pepino y zanahoria. Disponer en bowl grande.',
+      'Armado: agregar garbanzos, huevo y palta sobre las verduras. Aliñar con aceite de oliva, limón y sal.',
     ],
   },
 }

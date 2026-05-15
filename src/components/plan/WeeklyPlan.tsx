@@ -98,6 +98,23 @@ function UltraBanner({ meal }: { meal: DayMeal }) {
   )
 }
 
+// ─── Item renderer — resalta gramos al inicio del texto ──────────────────────
+function renderItem(item: string) {
+  // Detect gram/ml amounts at the start: "200g", "80-100g", "150ml", "1.5kg"
+  const match = item.match(/^(\d+(?:[.,]\d+)?(?:-\d+)?(?:g|ml|kg))\s+(.+)/i)
+  if (match) {
+    return (
+      <>
+        <span className="inline-flex items-center bg-[#EAF4FB] border border-[#29ABE2]/30 text-[#0C3547] text-[10px] font-black px-1.5 py-0.5 rounded mr-1.5 leading-none align-middle flex-shrink-0">
+          {match[1]}
+        </span>
+        <span>{match[2]}</span>
+      </>
+    )
+  }
+  return <>{item}</>
+}
+
 // ─── Single meal row ──────────────────────────────────────────────────────────
 function MealRow({ meal }: { meal: DayMeal }) {
   const c = MEAL_COLORS[meal.tipo]
@@ -142,11 +159,11 @@ function MealRow({ meal }: { meal: DayMeal }) {
           <p className="text-xs text-[#6B7C93]">P:{meal.p}g · C:{meal.c}g · G:{meal.g}g</p>
         </div>
       </div>
-      <ul className="space-y-1">
+      <ul className="space-y-1.5">
         {meal.items.map((item, i) => (
-          <li key={i} className="flex items-start gap-2 text-sm text-[#1E2D3D]">
-            <span className={cn('w-1.5 h-1.5 rounded-full mt-1.5 flex-shrink-0', c.dot)} />
-            {item}
+          <li key={i} className="flex items-start gap-2 text-sm text-[#1E2D3D] leading-relaxed">
+            <span className={cn('w-1.5 h-1.5 rounded-full mt-2 flex-shrink-0', c.dot)} />
+            <span className="flex-1">{renderItem(item)}</span>
           </li>
         ))}
       </ul>
