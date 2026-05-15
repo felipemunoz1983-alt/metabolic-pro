@@ -74,13 +74,16 @@ function filtrarPorTendencia<T extends { tendencia?: string[] }>(
   pool: Record<string, T>,
   tendencia: string
 ): Record<string, T> {
-  if (tendencia !== 'vegetariano') return pool
+  if (tendencia !== 'vegetariano' && tendencia !== 'vegano') return pool
   const filtered = Object.fromEntries(
-    Object.entries(pool).filter(([, opt]) =>
-      !opt.tendencia || opt.tendencia.includes('vegetariano')
-    )
+    Object.entries(pool).filter(([, opt]) => {
+      if (!opt.tendencia) return true           // sin etiqueta = universal
+      if (tendencia === 'vegano')
+        return opt.tendencia.includes('vegano') // vegano solo acepta opciones marcadas 'vegano'
+      return opt.tendencia.includes('vegetariano') // vegetariano acepta vegetariano o vegano
+    })
   )
-  return Object.keys(filtered).length > 0 ? filtered : pool // fallback si no hay opciones
+  return Object.keys(filtered).length > 0 ? filtered : pool
 }
 
 // ─── Función principal ────────────────────────────────────────────────────────

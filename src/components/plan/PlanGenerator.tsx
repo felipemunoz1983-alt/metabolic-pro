@@ -225,22 +225,33 @@ export function PlanGenerator({ onResult, initialData }: Props) {
 
   // ── Filtrado por tendencia ──
   const tendenciaActual = form.tendencia ?? 'omnivoro'
-  const filteredAlmuerzos = tendenciaActual === 'vegetariano'
-    ? Object.fromEntries(Object.entries(almuerzosOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano')))
-    : almuerzosOpts
-  const filteredCenas = tendenciaActual === 'vegetariano'
-    ? Object.fromEntries(Object.entries(cenasOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano')))
-    : cenasOpts
+  const filteredAlmuerzos = (() => {
+    if (tendenciaActual === 'vegano')
+      return Object.fromEntries(Object.entries(almuerzosOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegano')))
+    if (tendenciaActual === 'vegetariano')
+      return Object.fromEntries(Object.entries(almuerzosOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano') || opt.tendencia.includes('vegano')))
+    return almuerzosOpts
+  })()
+  const filteredCenas = (() => {
+    if (tendenciaActual === 'vegano')
+      return Object.fromEntries(Object.entries(cenasOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegano')))
+    if (tendenciaActual === 'vegetariano')
+      return Object.fromEntries(Object.entries(cenasOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano') || opt.tendencia.includes('vegano')))
+    return cenasOpts
+  })()
 
   function handleTendenciaChange(t: string) {
-    if (t === 'vegetariano') {
+    if (t === 'vegetariano' || t === 'vegano') {
+      const isVegano = t === 'vegano'
       const vegAlmKeys = Object.keys(almuerzosOpts).filter(k => {
         const opt = almuerzosOpts[k]
-        return !opt.tendencia || opt.tendencia.includes('vegetariano')
+        if (!opt.tendencia) return true
+        return isVegano ? opt.tendencia.includes('vegano') : (opt.tendencia.includes('vegetariano') || opt.tendencia.includes('vegano'))
       })
       const vegCenKeys = Object.keys(cenasOpts).filter(k => {
         const opt = cenasOpts[k]
-        return !opt.tendencia || opt.tendencia.includes('vegetariano')
+        if (!opt.tendencia) return true
+        return isVegano ? opt.tendencia.includes('vegano') : (opt.tendencia.includes('vegetariano') || opt.tendencia.includes('vegano'))
       })
       const validAlm = (form.almuerzos ?? []).filter(k => vegAlmKeys.includes(k))
       const validCen = (form.cenas ?? []).filter(k => vegCenKeys.includes(k))
@@ -526,8 +537,9 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </p>
                 <div className="flex gap-2">
                   {([
-                    { value: 'omnivoro',    label: '🥩 Omnívoro', desc: 'Incluye carnes, pescado y pollo' },
+                    { value: 'omnivoro',    label: '🥩 Omnívoro',    desc: 'Incluye carnes, pescado y pollo' },
                     { value: 'vegetariano', label: '🌿 Vegetariano', desc: 'Legumbres, tofu, huevo y lácteos' },
+                    { value: 'vegano',      label: '🌱 Vegano',      desc: 'Solo origen vegetal, sin huevo ni lácteos' },
                   ] as const).map(opt => (
                     <button
                       key={opt.value}

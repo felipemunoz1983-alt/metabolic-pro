@@ -15,7 +15,7 @@ export interface MealOption {
   pasos?: string[]
   alergenosNota?: string  // aviso alérgenos (barras proteicas)
   /** Tendencia alimentaria. undefined = compatible con ambas. */
-  tendencia?: ('omnivoro' | 'vegetariano')[]
+  tendencia?: ('omnivoro' | 'vegetariano' | 'vegano')[]
 }
 
 export interface UltraOption {
@@ -350,7 +350,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo', 'Ensalada mixta'],
     baseKcal: 550, p: 30, c: 80, g: 8,
     foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
-    tendencia: ['vegetariano'],
+    tendencia: ['vegetariano', 'vegano'],
     tiempo: '25 min',
     pasos: [
       'Sofrito: saltear cebolla y ajo picados en aceite hasta transparentar. Agregar tomate y cocinar 5 min.',
@@ -380,7 +380,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 540, p: 34, c: 46, g: 18,
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '25 min',
-    tendencia: ['vegetariano'],
+    tendencia: ['vegetariano', 'vegano'],
     pasos: [
       'Quinoa: lavar bajo agua fría en colador fino. Cocinar en 2 tazas de agua con sal a fuego bajo 15 min tapado. Reposar 5 min antes de esponjar con tenedor.',
       'Tofu: cortar en cubos de 2cm. Secar con papel absorbente para eliminar el exceso de agua — así queda crocante al saltear.',
@@ -395,13 +395,28 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 560, p: 28, c: 72, g: 12,
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '30 min',
-    tendencia: ['vegetariano'],
+    tendencia: ['vegetariano', 'vegano'],
     pasos: [
       'Vegetales: cortar en trozos medianos, mezclar con aceite, sal y comino. Asar a 200°C por 20-25 min hasta caramelizar.',
       'Garbanzos: si son de lata, enjuagar bien. Si son secos, remojar 12h y hervir 45 min. Los garbanzos aportan 15g de proteína por 100g.',
       'Arroz: cocinar en agua con sal a fuego bajo 18-20 min tapado.',
       'Salsa: mezclar tahini con limón, ajo y agua hasta lograr consistencia cremosa.',
       'Armado: colocar el arroz como base, los garbanzos y vegetales asados encima. Bañar con la salsa de tahini.',
+    ],
+  },
+  curry_garbanzos: {
+    label: 'Curry de garbanzos + arroz integral',
+    items: ['200g garbanzos cocidos', '150g arroz integral cocido', 'Leche de coco 100ml + curry en polvo', '150g espinaca y tomate cherry', '1 cdta aceite de coco o de oliva'],
+    baseKcal: 560, p: 26, c: 74, g: 14,
+    foto: USP('1565557981-d9a55e1b9e6c'),
+    tiempo: '25 min',
+    tendencia: ['vegetariano', 'vegano'],
+    pasos: [
+      'Sofrito: calentar aceite en sartén profunda. Saltear cebolla y ajo 3 min hasta transparentar.',
+      'Especias: agregar 1 cdta curry, cúrcuma y comino. Tostar 1 min sin quemar — libera aromas y activa los polifenoles.',
+      'Garbanzos: incorporar los garbanzos cocidos y el tomate cherry. Revolver bien.',
+      'Leche de coco: agregar los 100ml y llevar a fuego suave 8-10 min hasta que la salsa espese.',
+      'Espinaca: añadir al final, cocinar 2 min. Servir sobre el arroz integral. La cúrcuma tiene efecto antiinflamatorio documentado.',
     ],
   },
 }
@@ -504,7 +519,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 310, p: 22, c: 38, g: 5,
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '30 min',
-    tendencia: ['vegetariano'],
+    tendencia: ['vegetariano', 'vegano'],
     pasos: [
       'Sofrito: saltear cebolla, ajo y zanahoria en una olla con pizca de aceite 3-4 min.',
       'Tomate: agregar tomate picado, cocinar 5 min hasta ablandar.',
@@ -526,6 +541,36 @@ export const cenasOpts: Record<string, MealOption> = {
       'Palta: cortar en láminas justo antes de servir para evitar oxidación.',
       'Verduras: lavar y cortar tomate cherry, pepino y zanahoria. Disponer en bowl grande.',
       'Armado: agregar garbanzos, huevo y palta sobre las verduras. Aliñar con aceite de oliva, limón y sal.',
+    ],
+  },
+  wok_tofu_vegano: {
+    label: 'Wok de tofu + verduras + fideos integrales',
+    items: ['180g tofu firme en cubos', '100g fideos integrales o de arroz cocidos', '150g verduras (brócoli, pimentón, zanahoria, champiñones)', '1 cdta aceite de sésamo + salsa de soya'],
+    baseKcal: 320, p: 24, c: 34, g: 10,
+    foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
+    tiempo: '20 min',
+    tendencia: ['vegetariano', 'vegano'],
+    pasos: [
+      'Tofu: cortar en cubos de 2cm, secar con papel absorbente. Saltear en wok caliente con aceite 4-5 min por lado hasta dorar y crocante.',
+      'Verduras: retirar el tofu, saltear brócoli, pimentón y zanahoria a fuego alto 3-4 min. Agregar champiñones los últimos 2 min.',
+      'Fideos: incorporar los fideos ya cocidos. Mezclar continuamente 2 min.',
+      'Salsa: agregar salsa de soya y aceite de sésamo. El sésamo aporta calcio biodisponible importante en dietas veganas.',
+      'Reincorporar el tofu, mezclar y servir de inmediato.',
+    ],
+  },
+  bowl_lentejas_aguacate: {
+    label: 'Bowl de lentejas + aguacate + tomate',
+    items: ['200g lentejas cocidas', '½ aguacate en láminas', 'Tomate cherry, pepino y rúcula', '1 cdta aceite de oliva + limón + cúrcuma'],
+    baseKcal: 360, p: 22, c: 34, g: 14,
+    foto: USP('1547592166-9a59b8dddb7f'),
+    tiempo: '10 min',
+    tendencia: ['vegetariano', 'vegano'],
+    pasos: [
+      'Lentejas: usar cocidas (lata o cocción previa). Escurrir y sazonar con sal, comino y limón.',
+      'Verduras: cortar tomate cherry por la mitad, rodajas de pepino y lavar la rúcula.',
+      'Aguacate: cortar en láminas justo antes de servir. Aporta grasas monoinsaturadas y potasio.',
+      'Armado: disponer las verduras y rúcula como base, las lentejas al centro y el aguacate encima.',
+      'Aliño: mezclar aceite de oliva, limón y pizca de cúrcuma. Verter sobre el bowl. Sin cocción — listo en 10 minutos.',
     ],
   },
 }
