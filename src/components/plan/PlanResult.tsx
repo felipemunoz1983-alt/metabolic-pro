@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
-import { OBJETIVO_LABELS } from '@/lib/nutrition'
+import { OBJETIVO_LABELS, formulaLabel } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
 import { WeeklyPlan } from './WeeklyPlan'
@@ -191,7 +191,9 @@ export function PlanResult({ result, form, onReset }: Props) {
         <h3 className="text-sm font-bold text-[#0C3547] mb-3 uppercase tracking-wide">📊 Datos clínicos</h3>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div>
-            <span className="text-[10px] sm:text-xs text-[#6B7C93] block leading-tight">TMB</span>
+            <span className="text-[10px] sm:text-xs text-[#6B7C93] block leading-tight">
+              TMB · {formulaLabel(result.formulaUsada)}
+            </span>
             <span className="text-base sm:text-lg font-bold text-[#0C3547]">{bmr.toLocaleString()}</span>
             <span className="text-[10px] sm:text-xs text-[#6B7C93]"> kcal</span>
           </div>

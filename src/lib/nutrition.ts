@@ -1,9 +1,12 @@
 // ── Motor de Cálculo Nutricional · Centro Metabólico Pro ──
+// Fórmula activa: Mifflin-St Jeor (1990) — estándar actual (Frankenfield et al. 2005)
+// Harris-Benedict conservado solo como referencia comparativa (@deprecated)
 
 export type Objetivo = 'perdida grasa' | 'mantenimiento' | 'hipertrofia'
 export type Sexo = 'masculino' | 'femenino'
 export type TipoEjercicio = 'fuerza' | 'cardio' | 'mixto' | 'ninguno'
 export type Crono = 'matutino' | 'vespertino' | 'neutro'
+export type FormulaUsada = 'mifflin_st_jeor' | 'cunningham' | 'harris_benedict_legacy'
 
 export interface FormData {
   nombre: string
@@ -60,16 +63,63 @@ export interface NutritionResult {
   kcal: number
   macros: Macros
   pal: number
+  /** Fórmula utilizada para BMR. Opcional para compatibilidad con planes guardados anteriores. */
+  formulaUsada?: FormulaUsada
 }
 
-// Harris-Benedict
-export function bmrHB(peso: number, talla: number, edad: number, sexo: Sexo): number {
+// ─── Mifflin-St Jeor 1990 (fórmula activa) ───────────────────────────────────
+// Estándar actual: Frankenfield DC et al. J Am Diet Assoc. 2005;105(5):775-89.
+// Error típico: ±10% (mejor que Harris-Benedict ±15% en no-obesos)
+export function bmrMifflinStJeor(peso: number, talla: number, edad: number, sexo: Sexo): number {
+  return sexo === 'masculino'
+    ? (10 * peso) + (6.25 * talla) - (5 * edad) + 5
+    : (10 * peso) + (6.25 * talla) - (5 * edad) - 161
+}
+
+// ─── Cunningham 1991 (fase futura — requiere % grasa medido por BIA/ISAK) ────
+// Selección automática cuando: deportista de alto rendimiento + % grasa medido
+// Fórmula: BMR = 500 + (22 × MLG)   donde MLG = peso × (1 - %grasa/100)
+export function bmrCunningham(pesoKg: number, porcentajeGrasa: number): number {
+  const mlg = pesoKg * (1 - porcentajeGrasa / 100)
+  return 500 + (22 * mlg)
+}
+
+// ─── Harris-Benedict 1919 (@deprecated — solo referencia comparativa) ─────────
+// NO usar en cálculo activo. Sobreestima ~5-15% (Frankenfield et al. 2005).
+// Conservado para comparar con planes históricos y para auditoría clínica.
+/** @deprecated Usar bmrMifflinStJeor(). Conservado solo para referencia histórica. */
+export function bmrHarrisBenedictLegacy(peso: number, talla: number, edad: number, sexo: Sexo): number {
   return sexo === 'masculino'
     ? 66.5 + (13.75 * peso) + (5.003 * talla) - (6.75 * edad)
     : 655.1 + (9.563 * peso) + (1.85 * talla) - (4.676 * edad)
 }
 
-// Factor actividad PAL (FAO/WHO-OMS)
+/** @deprecated Alias para compatibilidad — llama a bmrHarrisBenedictLegacy */
+export const bmrHB = bmrHarrisBenedictLegacy
+
+// ─── Comparativa HB vs Mifflin (útil para CSV de migración) ──────────────────
+export function compararFormulas(
+  peso: number, talla: number, edad: number, sexo: Sexo
+): { bmrHB: number; bmrMSJ: number; deltaKcal: number; deltaPct: number } {
+  const hb  = bmrHarrisBenedictLegacy(peso, talla, edad, sexo)
+  const msj = bmrMifflinStJeor(peso, talla, edad, sexo)
+  const delta = msj - hb
+  return {
+    bmrHB:     Math.round(hb),
+    bmrMSJ:    Math.round(msj),
+    deltaKcal: Math.round(delta),
+    deltaPct:  Math.round((delta / hb) * 100 * 10) / 10,
+  }
+}
+
+// ─── Etiqueta legible de la fórmula ──────────────────────────────────────────
+export function formulaLabel(formula?: FormulaUsada): string {
+  if (formula === 'cunningham')             return 'Cunningham'
+  if (formula === 'harris_benedict_legacy') return 'Harris-Benedict'
+  return 'Mifflin-St Jeor'   // default: fórmula activa
+}
+
+// ─── Factor actividad PAL (FAO/WHO-OMS) ──────────────────────────────────────
 export function factorActividad(dias: number, duracion: number, tipo: TipoEjercicio): number {
   let pal: number
   if (dias === 0)     pal = 1.200
@@ -87,19 +137,19 @@ export function factorActividad(dias: number, duracion: number, tipo: TipoEjerci
   return Math.min(Math.round(pal * 1000) / 1000, 2.50)
 }
 
-// Ajuste por objetivo
+// ─── Ajuste por objetivo ──────────────────────────────────────────────────────
 export function kcalObjetivo(tdee: number, obj: Objetivo): number {
   if (obj === 'perdida grasa') return tdee * 0.80
   if (obj === 'hipertrofia')   return tdee * 1.10
   return tdee
 }
 
-// Distribución de macros
+// ─── Distribución de macros ───────────────────────────────────────────────────
 export function calcMacros(kcal: number, peso: number, obj: Objetivo): Macros {
   let p: number, g: number
-  if (obj === 'hipertrofia')    { p = peso * 2;   g = peso * 0.9 }
+  if (obj === 'hipertrofia')       { p = peso * 2;   g = peso * 0.9 }
   else if (obj === 'perdida grasa') { p = peso * 2.1; g = peso * 0.8 }
-  else                          { p = peso * 1.9; g = peso * 0.85 }
+  else                              { p = peso * 1.9; g = peso * 0.85 }
 
   let c = (kcal - (p * 4 + g * 9)) / 4
   if (c < 80) {
@@ -116,19 +166,28 @@ export function calcMacros(kcal: number, peso: number, obj: Objetivo): Macros {
   return { p: Math.round(p), c: Math.round(c), g: Math.round(g), nota: '' }
 }
 
-// Cálculo completo
+// ─── Cálculo completo ─────────────────────────────────────────────────────────
+// Usa Mifflin-St Jeor por defecto.
+// Cunningham: se activará en Fase 2 cuando FormData incluya porcentajeGrasa (BIA).
 export function calcularNutricion(form: Pick<FormData,
   'peso' | 'talla' | 'edad' | 'sexo' | 'objetivo' | 'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio'
 >): NutritionResult {
-  const bmr  = bmrHB(form.peso, form.talla, form.edad, form.sexo)
-  const pal  = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
-  const tdee = bmr * pal
-  const kcal = kcalObjetivo(tdee, form.objetivo)
-  const macros = calcMacros(kcal, form.peso, form.objetivo)
-  return { bmr: Math.round(bmr), tdee: Math.round(tdee), kcal: Math.round(kcal), macros, pal }
+  const bmr     = bmrMifflinStJeor(form.peso, form.talla, form.edad, form.sexo)
+  const pal     = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
+  const tdee    = bmr * pal
+  const kcal    = kcalObjetivo(tdee, form.objetivo)
+  const macros  = calcMacros(kcal, form.peso, form.objetivo)
+  return {
+    bmr:          Math.round(bmr),
+    tdee:         Math.round(tdee),
+    kcal:         Math.round(kcal),
+    macros,
+    pal,
+    formulaUsada: 'mifflin_st_jeor',
+  }
 }
 
-// Etiquetas
+// ─── Etiquetas ───────────────────────────────────────────────────────────────
 export const OBJETIVO_LABELS: Record<Objetivo, string> = {
   'perdida grasa': '🔥 Pérdida de grasa',
   'mantenimiento': '⚖️ Mantenimiento',

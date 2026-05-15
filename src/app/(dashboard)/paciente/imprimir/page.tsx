@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
-import { OBJETIVO_LABELS } from '@/lib/nutrition'
+import { OBJETIVO_LABELS, formulaLabel } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 
 interface PlanData {
@@ -123,7 +123,7 @@ export default function ImprimirPlan() {
 
         {/* ── Datos clínicos ── */}
         <div style={{ background: '#F0F6FA', borderRadius: 10, padding: '10px 16px', marginBottom: 20, display: 'flex', gap: 24 }}>
-          <span style={{ fontSize: 10, color: '#6B7C93' }}>TMB (Harris-Benedict): <strong style={{ color: '#0C3547' }}>{Math.round(bmr)} kcal</strong></span>
+          <span style={{ fontSize: 10, color: '#6B7C93' }}>TMB ({formulaLabel(result.formulaUsada)}): <strong style={{ color: '#0C3547' }}>{Math.round(bmr)} kcal</strong></span>
           <span style={{ fontSize: 10, color: '#6B7C93' }}>TDEE (GET): <strong style={{ color: '#0C3547' }}>{Math.round(tdee)} kcal</strong></span>
           <span style={{ fontSize: 10, color: '#6B7C93' }}>Factor PAL: <strong style={{ color: '#0C3547' }}>{pal}</strong></span>
           <span style={{ fontSize: 10, color: '#6B7C93' }}>Comidas/día: <strong style={{ color: '#0C3547' }}>{(form as unknown as Record<string, unknown>).nComidas as number ?? '-'}</strong></span>
@@ -188,7 +188,7 @@ export default function ImprimirPlan() {
         {/* ── Pie de página ── */}
         <div style={{ borderTop: '1px solid #E2ECF4', paddingTop: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: 9, color: '#C8D8E4' }}>
-            Centro Metabólico Pro · centrometabolico.cl · Plan generado con motor Harris-Benedict + PAL
+            Centro Metabólico Pro · centrometabolico.cl · Plan generado con motor {formulaLabel(result.formulaUsada)} + PAL
           </div>
           <div style={{ fontSize: 9, color: '#C8D8E4' }}>
             Este plan es una guía nutricional. No reemplaza la evaluación clínica profesional.
