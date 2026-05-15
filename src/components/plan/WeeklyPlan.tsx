@@ -171,6 +171,36 @@ function MealRow({ meal }: { meal: DayMeal }) {
       {/* Disclaimer ultra procesado */}
       {meal.esUltra && <UltraBanner meal={meal} />}
 
+      {/* Sellos nutricionales (comidas regulares con advertencia, p.ej. Beyond Burger) */}
+      {!meal.esUltra && meal.sellos && meal.sellos.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap gap-1.5">
+            {meal.sellos.map((s, i) => (
+              <span key={i} className="text-xs bg-[#7B2020] text-white font-bold px-2.5 py-1 rounded-lg flex items-center gap-1">
+                🚫 {s}
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
+            <span className="text-base flex-shrink-0">⚠️</span>
+            <p className="text-xs text-amber-800">
+              <strong>Sello de advertencia nutricional (Ley 20.606).</strong>{' '}
+              Consumir con moderación y ajustado a la porción indicada. Este alimento puede incluirse en el plan dentro del contexto de una dieta equilibrada.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Ingredientes / alérgenos (solo si el sello está presente o hay nota) */}
+      {!meal.esUltra && meal.alergenosNota && (
+        <div className="mt-2 flex items-start gap-2 bg-[#F7FBFE] border border-[#D6E3ED] rounded-xl p-3">
+          <span className="text-base flex-shrink-0">🧾</span>
+          <p className="text-xs text-[#4A6174] leading-relaxed">
+            <strong>Ingredientes / alérgenos:</strong> {meal.alergenosNota}
+          </p>
+        </div>
+      )}
+
       {/* Pasos de preparación (solo comidas regulares) */}
       {!meal.esUltra && meal.pasos && meal.pasos.length > 0 && (
         <div className="mt-3 pt-3 border-t border-current/20">

@@ -16,6 +16,8 @@ export interface MealOption {
   alergenosNota?: string  // aviso alérgenos (barras proteicas)
   /** Tendencia alimentaria. undefined = compatible con ambas. */
   tendencia?: ('omnivoro' | 'vegetariano' | 'vegano')[]
+  /** Sellos chilenos de advertencia nutricional (p.ej. "Alto en Grasas Saturadas") */
+  sellos?: string[]
 }
 
 export interface UltraOption {
@@ -417,6 +419,39 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Garbanzos: incorporar los garbanzos cocidos y el tomate cherry. Revolver bien.',
       'Leche de coco: agregar los 100ml y llevar a fuego suave 8-10 min hasta que la salsa espese.',
       'Espinaca: añadir al final, cocinar 2 min. Servir sobre el arroz integral. La cúrcuma tiene efecto antiinflamatorio documentado.',
+    ],
+  },
+  vegetal_burger_abuelo: {
+    label: 'Vegetal Burger Porotos Negros + papas',
+    items: ['100g medallón vegetal (porotos negros + zapallo italiano)', '200g papas cocidas con cáscara', '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón)', '1 cdta aceite de oliva + mostaza sin azúcar'],
+    baseKcal: 350, p: 13, c: 55, g: 10,
+    foto: IMG + 'vegetal_burguer_abuelo.jpg',
+    tiempo: '25 min',
+    tendencia: ['vegetariano', 'vegano'],
+    alergenosNota: 'Ingredientes: Porotos negros, Agua, Cebolla, Aceite de soya, Zapallo italiano (5%), Champiñones, Pimentón rojo, Harina de trigo (gluten), Metilcelulosa, Sal, Extracto de levadura, Maltodextrina, Aceite de maravilla, Aceite de canola, Saborizante idéntico a natural, Dióxido de silicio amorfo. Puede contener trazas de huevo, leche y alimentos cárnicos. Contiene gluten (harina de trigo) — no apto para celíacos.',
+    pasos: [
+      'Sartén o plancha: cocinar el medallón congelado directo a fuego medio-alto, 4-5 min por lado sin presionar. No descongelar antes — cocinar directo da mejor textura.',
+      'Papas: cocer con cáscara en agua hirviendo 20-22 min o al microondas 8 min. Sazonar con sal y hierbas al gusto.',
+      'Ensalada: lavar y secar las verduras. Trozar tomate, pepino y pimentón. Aliñar con aceite, sal y limón justo antes de servir.',
+      'Armado: servir el medallón con las papas y la ensalada. Aporta 7.7 g de proteína vegetal (porotos negros) por medallón.',
+      'Nota: el medallón puede presentar color morado/rosado natural por los porotos negros — es normal y no indica carne cruda.',
+    ],
+  },
+  beyond_burger: {
+    label: 'Beyond Burger + ensalada + papas',
+    items: ['85g Beyond Burger (1 medallón vegetal)', '2 tazas ensalada mixta (lechuga, tomate, pepino)', '150g papas cocidas o asadas', '1 cdta aceite de oliva + mostaza o ketchup sin azúcar'],
+    baseKcal: 560, p: 30, c: 54, g: 20,
+    foto: IMG + 'beyond_burguer.jpg',
+    tiempo: '20 min',
+    tendencia: ['vegetariano', 'vegano'],
+    sellos: ['Alto en Grasas Saturadas (5,1 g/porción)'],
+    alergenosNota: 'Ingredientes: Agua, Aislado de proteína de arveja, Aceite de canola, Aceite de coco refinado, Proteína de arroz, Almidón de papa, Saborizantes naturales vegetales, Levadura seca, Proteína de frijol mungo, Metilcelulosa, Extracto de manzana, Extracto de granada, Extracto de levadura, Cloruro de potasio, Sal, Extracto de betarraga, Concentrado de jugo de limón, Lecitina de maravilla, Extracto licopeno de tomate, Aceite de maravilla, Glicerina vegetal, Maltodextrina, Ácido ascórbico, Vinagre. Sin gluten · Sin soya · Sin mariscos · Sin lácteos · Sin huevo. Elaborado en planta que también procesa soya y gluten.',
+    pasos: [
+      'Sartén o plancha: calentar a fuego alto sin aceite. Cocinar el medallón 3 min por lado hasta dorar. No presionar para que retenga los jugos.',
+      'Papas: cocer con cáscara en agua hirviendo 20 min o en microondas 8 min. Sazonar con sal y hierbas.',
+      'Ensalada: lavar y secar las verduras. Aliñar con aceite de oliva, sal y limón justo antes de servir.',
+      'Armado: servir el Beyond Burger junto a las papas y la ensalada. Aporta 15,3 g de proteína vegetal completa (arveja + arroz) por porción.',
+      'Nota: el color rosado al centro es normal — se debe al extracto de betarraga, no indica carne cruda.',
     ],
   },
 }

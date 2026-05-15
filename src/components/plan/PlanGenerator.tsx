@@ -167,20 +167,34 @@ function MealChips({
     <div>
       <label className="block text-sm font-semibold text-[#0C3547] mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {Object.entries(pool).map(([key, opt]) => (
-          <button
-            key={key}
-            onClick={() => toggle(key)}
-            className={cn(
-              'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
-              selected.includes(key)
-                ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
-                : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2] hover:text-[#0C3547]'
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
+        {Object.entries(pool).map(([key, opt]) => {
+          const active = selected.includes(key)
+          return (
+            <button
+              key={key}
+              onClick={() => toggle(key)}
+              className={cn(
+                'flex items-center gap-1.5 pr-3 rounded-full border-2 text-xs font-semibold transition-all overflow-hidden',
+                opt.foto ? 'pl-0 py-0' : 'px-3 py-1.5',
+                active
+                  ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
+                  : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2] hover:text-[#0C3547]'
+              )}
+            >
+              {opt.foto && (
+                <span className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+                  <img
+                    src={opt.foto}
+                    alt=""
+                    className="w-full h-full object-cover object-center"
+                    loading="lazy"
+                  />
+                </span>
+              )}
+              <span className={opt.foto ? '' : ''}>{opt.label}</span>
+            </button>
+          )
+        })}
       </div>
     </div>
   )
@@ -597,6 +611,34 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 selected={form.cenas ?? []}
                 onChange={v => set('cenas', v)}
               />
+
+              {/* Disclaimer Vegetal Burger Abuelo */}
+              {(form.almuerzos ?? []).includes('vegetal_burger_abuelo') && (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-start bg-green-50 border border-green-300 rounded-xl p-3">
+                    <span className="text-lg flex-shrink-0">🌿</span>
+                    <div className="text-xs text-green-900 space-y-1">
+                      <p className="font-bold">Vegetal Burger Porotos Negros — sin sellos de advertencia</p>
+                      <p>Proteína vegetal de porotos negros · Sin colesterol · Bajo en grasas saturadas (1,3 g/porción). Buena opción para dietas plant-based de bajo presupuesto.</p>
+                      <p className="text-[#4A6174]"><strong>Contiene gluten</strong> (harina de trigo) — no apto para celíacos ni intolerancia al gluten. Trazas de huevo, leche y alimentos cárnicos por línea compartida.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Disclaimer Beyond Burger */}
+              {(form.almuerzos ?? []).includes('beyond_burger') && (
+                <div className="space-y-2">
+                  <div className="flex gap-2 items-start bg-[#FFF8F0] border border-orange-300 rounded-xl p-3">
+                    <span className="text-lg flex-shrink-0">🌱</span>
+                    <div className="text-xs text-orange-900 space-y-1">
+                      <p className="font-bold">Beyond Burger — proteína vegetal de origen industrial</p>
+                      <p>Sello <strong>Alto en Grasas Saturadas</strong> (5,1 g/porción, principalmente aceite de coco). Para pacientes con triglicéridos elevados o riesgo cardiovascular, consultar con el profesional antes de incluirlo.</p>
+                      <p className="text-[#4A6174]">100% vegetal · Sin gluten declarado · Sin lactosa · Sin huevo · Sin carnes. Puede contener trazas de soya y gluten por línea de producción compartida.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Disclaimer barras proteicas */}
               {(

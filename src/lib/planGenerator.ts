@@ -24,8 +24,9 @@ export interface DayMeal {
   foto?: string
   tiempo?: string
   pasos?: string[]
+  alergenosNota?: string     // nota completa de ingredientes/alérgenos (comidas regulares)
   porcion?: string           // solo ultra
-  sellos?: string[]          // solo ultra
+  sellos?: string[]          // sellos chilenos (ultra y comidas regulares con advertencia)
   alergenos?: string[]       // solo ultra
   esUltra?: boolean
 }
@@ -194,5 +195,7 @@ function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number
     foto: option.foto,
     tiempo: option.tiempo,
     pasos: option.pasos,
+    sellos: option.sellos,
+    alergenosNota: option.alergenosNota,
   }
 }
