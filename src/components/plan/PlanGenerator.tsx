@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
@@ -249,6 +249,18 @@ export function PlanGenerator({ onResult, initialData }: Props) {
 
   const [errors, setErrors] = useState<string[]>([])
 
+  // ── Sincronizar pasos con historial del navegador ──
+  // Cada vez que el usuario avanza un paso, se hace pushState.
+  // El botón "atrás" del navegador/móvil dispara popstate y retrocede un paso
+  // en lugar de salir de la página.
+  useEffect(() => {
+    function onPopState() {
+      setStep(s => (s > 0 ? s - 1 : s))
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   function validateStep0() {
     const errs: string[] = []
     if (!form.nombre?.trim())          errs.push('Ingresa el nombre')
@@ -262,6 +274,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   function handleNext() {
     if (step === 0 && !validateStep0()) return
     setErrors([])
+    // Empujar entrada al historial para que el "back" del navegador retroceda un paso
+    window.history.pushState({ planStep: step + 1 }, '')
     setStep(s => s + 1)
   }
 
@@ -1040,7 +1054,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
       <div className="flex gap-3 mt-4">
         {step > 0 && (
           <button
-            onClick={() => setStep(s => s - 1)}
+            type="button"
+            onClick={() => window.history.back()}
             className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-[#D6E3ED] text-[#6B7C93] font-bold rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
           >
             ← Atrás
@@ -1048,6 +1063,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
         )}
         {step < STEPS.length - 1 ? (
           <button
+            type="button"
             onClick={handleNext}
             className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-[#0C3547] to-[#145272] text-white font-bold rounded-xl hover:opacity-90 transition"
           >
@@ -1055,6 +1071,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
           </button>
         ) : (
           <button
+            type="button"
             onClick={handleGenerate}
             className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base bg-gradient-to-r from-[#29ABE2] to-[#1a7fad] text-white font-bold rounded-xl hover:opacity-90 transition"
           >
