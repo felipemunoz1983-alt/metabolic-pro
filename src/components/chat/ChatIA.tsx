@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { getNutrievoAIContext } from '@/lib/nutrevo'
 
-
 interface Message {
   role: 'user' | 'assistant'
   content: string
@@ -17,14 +16,54 @@ interface Props {
   objetivo?: string
 }
 
+// Chips de preguntas rápidas según objetivo del paciente
+const QUICK_PROMPTS: Record<string, { icon: string; text: string }[]> = {
+  'perdida grasa': [
+    { icon: '🫖', text: '¿Qué como en la once sin salirme del plan?' },
+    { icon: '😤', text: 'Tengo hambre entre comidas, ¿qué hago?' },
+    { icon: '🍳', text: 'Dame una receta rápida de almuerzo' },
+    { icon: '😬', text: '¿Qué hago si comí de más hoy?' },
+    { icon: '💊', text: '¿Me conviene tomar creatina?' },
+    { icon: '🏋️', text: '¿Qué como antes de entrenar?' },
+  ],
+  hipertrofia: [
+    { icon: '🏋️', text: '¿Qué como antes de entrenar?' },
+    { icon: '💪', text: '¿Qué como después de entrenar?' },
+    { icon: '🥩', text: '¿Cuánta proteína necesito por comida?' },
+    { icon: '🍳', text: 'Receta alta en proteína para la cena' },
+    { icon: '💊', text: '¿Me conviene tomar creatina?' },
+    { icon: '😴', text: '¿Cómo afecta el sueño al músculo?' },
+  ],
+  mantenimiento: [
+    { icon: '🫖', text: '¿Qué como en la once?' },
+    { icon: '🍳', text: 'Dame una receta rápida de almuerzo' },
+    { icon: '⚡', text: '¿Qué hago si no tengo tiempo de cocinar?' },
+    { icon: '💊', text: '¿Qué suplementos me recomiendas?' },
+    { icon: '🌅', text: 'Ideas para el desayuno' },
+    { icon: '🏃', text: '¿Qué como antes de entrenar?' },
+  ],
+  _default: [
+    { icon: '🫖', text: '¿Qué como en la once?' },
+    { icon: '🍳', text: 'Dame una receta rápida de almuerzo' },
+    { icon: '😤', text: 'Tengo hambre entre comidas, ¿qué hago?' },
+    { icon: '😬', text: '¿Qué hago si comí mal hoy?' },
+    { icon: '💊', text: '¿Me conviene tomar creatina?' },
+    { icon: '🏋️', text: '¿Qué como antes de entrenar?' },
+  ],
+}
+
 export function ChatIA({ userName, targetKcal, objetivo }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showChips, setShowChips] = useState(true)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
   const firstName = userName.split(' ')[0]
+
+  // Chips según objetivo del paciente
+  const chips = QUICK_PROMPTS[objetivo ?? ''] ?? QUICK_PROMPTS._default
 
   const systemPrompt = `Eres un nutricionista deportivo virtual del Centro Metabólico Pro, especializado en nutrición clínica y rendimiento deportivo.
 
@@ -51,10 +90,12 @@ ${getNutrievoAIContext()}`
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  async function sendMessage() {
-    if (!input.trim() || loading) return
+  async function sendMessage(text?: string) {
+    const content = (text ?? input).trim()
+    if (!content || loading) return
 
-    const userMsg: Message = { role: 'user', content: input.trim() }
+    setShowChips(false)
+    const userMsg: Message = { role: 'user', content }
     const newMessages = [...messages, userMsg]
     setMessages(newMessages)
     setInput('')
@@ -122,6 +163,39 @@ ${getNutrievoAIContext()}`
               </div>
             </motion.div>
           ))}
+        </AnimatePresence>
+
+        {/* Chips de preguntas rápidas — solo antes del primer mensaje del usuario */}
+        <AnimatePresence>
+          {showChips && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8, transition: { duration: 0.15 } }}
+              transition={{ delay: 0.3, duration: 0.3 }}
+              className="pl-9"
+            >
+              <p className="text-[10px] text-[#8BA5BE] font-semibold uppercase tracking-wide mb-2">
+                Preguntas frecuentes
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {chips.map((chip, i) => (
+                  <motion.button
+                    key={chip.text}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.35 + i * 0.05 }}
+                    onClick={() => sendMessage(chip.text)}
+                    disabled={loading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-[#C6DFF0] rounded-full text-xs text-[#0C3547] font-medium hover:bg-[#EAF4FB] hover:border-[#29ABE2] transition-all disabled:opacity-40 shadow-sm"
+                  >
+                    <span>{chip.icon}</span>
+                    <span>{chip.text}</span>
+                  </motion.button>
+                ))}
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {loading && (
