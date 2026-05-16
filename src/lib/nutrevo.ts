@@ -2,6 +2,8 @@
 // Fuente: nutrevo.cl  |  Actualizado: 2026-05
 // Integrado en: Asistente IA, Panel de Suplementos, Food Scanner
 
+const NV_IMG = 'https://raw.githubusercontent.com/felipemunoz1983-alt/metabolic-pro/main/img/'
+
 export type NutrievoCategory =
   | 'snack_proteico'
   | 'snack_keto'
@@ -29,6 +31,7 @@ export interface NutrievoProduct {
   grasa?: number           // g
   fibra?: number           // g
   descripcion: string
+  claimPorObjetivo?: Partial<Record<NutrievoGoal, string>> // claim personalizado según objetivo
   ingredientes: string[]
   beneficios: string[]
   objetivos: NutrievoGoal[]
@@ -38,9 +41,117 @@ export interface NutrievoProduct {
   sinAzucarAnadida: boolean
   disponible: boolean
   url: string
+  foto?: string            // URL de imagen del producto
+  esDestacado?: boolean    // true = aparece en el panel Marketplace
 }
 
 export const NUTREVO_PRODUCTS: NutrievoProduct[] = [
+
+  // ── PRODUCTOS DESTACADOS — Marketplace Centro Metabólico ─────────────────
+  {
+    id: 'alfajor-activa2',
+    nombre: 'Alfajor Activa2',
+    categoria: 'snack_proteico',
+    precio: 3200,
+    proteina: 15,
+    kcal: 265,
+    carbohidratos: 27,
+    grasa: 9,
+    descripcion: 'Alfajor proteico Activa2 de Nutrevo. Sin azúcar añadida, cobertura de chocolate y relleno cremoso. La colación que cuida tu progreso sin renunciar al sabor.',
+    claimPorObjetivo: {
+      perdida_grasa: 'Tu colación de media tarde sin culpa: 15g de proteína que frenan el hambre y cuidan el déficit.',
+      masa_muscular: 'Post-entreno o colación: 15g de proteína para sostener la síntesis muscular durante el día.',
+      rendimiento: 'Energía sostenida entre sesiones: carbohidratos de calidad y proteína para no llegar vacío al entreno.',
+      bienestar_general: 'Disfruta un alfajor real sin azúcar añadida ni culpa — proteína incluida.',
+    },
+    ingredientes: ['Whey protein', 'Harina de avena', 'Alulosa', 'Cobertura de chocolate', 'Relleno cremoso'],
+    beneficios: [
+      'Sin azúcar añadida (alulosa)',
+      '15g de proteína por unidad',
+      'Sin preservantes artificiales',
+      'Saciedad prolongada',
+      'Alternativa saludable a snacks convencionales',
+    ],
+    objetivos: ['masa_muscular', 'perdida_grasa', 'rendimiento', 'bienestar_general'],
+    sinGluten: false,
+    sinLactosa: false,
+    vegano: false,
+    sinAzucarAnadida: true,
+    disponible: true,
+    url: 'https://nutrevo.cl/producto/alfajores-activa2/',
+    foto: NV_IMG + 'nutrevo_activa2.jpg',
+    esDestacado: true,
+  },
+  {
+    id: 'moroketo-destacado',
+    nombre: 'Moroketo de Proteínas',
+    categoria: 'snack_keto',
+    precio: 3700,
+    proteina: 14,
+    kcal: 210,
+    carbohidratos: 4,
+    grasa: 13,
+    descripcion: 'Snack keto 100% vegetal. Proteína de arveja y arroz, almendra, coco, maní y chocolate 85%. Pack de 6 unidades. Bajo en carbos, alto en saciedad.',
+    claimPorObjetivo: {
+      perdida_grasa: 'El snack del déficit: keto, vegano y con 14g de proteína vegetal para cortar el hambre sin salirte del plan.',
+      keto: 'Tu aliado keto diario: solo 4g de carbos, grasas saludables y proteína vegetal de calidad.',
+      bienestar_general: 'Snack limpio, vegano y sin azúcar: proteína real con ingredientes que reconoces.',
+      salud_digestiva: 'Sin gluten ni lactosa — snack fácil para digestiones sensibles.',
+    },
+    ingredientes: ['Aislado de proteína de arveja', 'Proteína de arroz', 'Harina de almendra', 'Harina de coco', 'Cacao', 'Maní', 'Chocolate 85%', 'Alulosa'],
+    beneficios: [
+      'Keto y 100% vegano',
+      'Sin azúcar añadida',
+      'Sin gluten y sin lactosa',
+      '6 unidades por pack',
+      'Proteína vegetal de alta calidad',
+      'Solo 4g de carbohidratos',
+    ],
+    objetivos: ['perdida_grasa', 'keto', 'bienestar_general', 'salud_digestiva'],
+    sinGluten: true,
+    sinLactosa: true,
+    vegano: true,
+    sinAzucarAnadida: true,
+    disponible: true,
+    url: 'https://nutrevo.cl/producto/moroketo-de-proteinas/',
+    foto: NV_IMG + 'nutrevo_moroketo.jpg',
+    esDestacado: true,
+  },
+  {
+    id: 'volki-manjar',
+    nombre: 'Volki de Manjar',
+    categoria: 'snack_proteico',
+    precio: 3500,
+    proteina: 16,
+    kcal: 245,
+    carbohidratos: 22,
+    grasa: 10,
+    descripcion: 'Snack proteico de manjar chileno auténtico. El sabor de siempre con la proteína que necesitas — sin azúcar añadida. Hecho para disfrutar sin remordimiento.',
+    claimPorObjetivo: {
+      masa_muscular: '16g de proteína con el sabor de manjar que más te gusta — colación de ganancia sin culpa.',
+      perdida_grasa: 'Satisface el antojo de dulce con 16g de proteína y sin azúcar añadida — el aliado del déficit.',
+      rendimiento: 'Pre o post-entreno con sabor de verdad: proteína + carbohidratos para el músculo activo.',
+      bienestar_general: 'Manjar sin azúcar añadida y con proteína real — snack chileno que cuida tu salud.',
+    },
+    ingredientes: ['Whey protein', 'Manjar sin azúcar', 'Harina de avena', 'Alulosa', 'Cobertura de chocolate'],
+    beneficios: [
+      '16g de proteína por unidad',
+      'Sabor manjar auténtico',
+      'Sin azúcar añadida (alulosa)',
+      'Sin preservantes',
+      'Alta saciedad',
+    ],
+    objetivos: ['masa_muscular', 'perdida_grasa', 'rendimiento', 'bienestar_general'],
+    sinGluten: false,
+    sinLactosa: false,
+    vegano: false,
+    sinAzucarAnadida: true,
+    disponible: true,
+    url: 'https://nutrevo.cl/producto/volki-de-manjar/',
+    foto: NV_IMG + 'nutrevo_volki_manjar.jpg',
+    esDestacado: true,
+  },
+
   // ── SNACKS PROTEICOS ──────────────────────────────────────────────────────
   {
     id: 'alfajor-proteico',
@@ -460,6 +571,10 @@ export const NUTREVO_PRODUCTS: NutrievoProduct[] = [
 ]
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+export function getProductosDestacados(): NutrievoProduct[] {
+  return NUTREVO_PRODUCTS.filter(p => p.esDestacado && p.disponible)
+}
 
 export function getProductsByGoal(goal: NutrievoGoal): NutrievoProduct[] {
   return NUTREVO_PRODUCTS.filter(p => p.objetivos.includes(goal) && p.disponible)
