@@ -70,6 +70,18 @@ const MEAL_ICONS: Record<DayMeal['tipo'], string> = {
   ultra:           '🚨',
 }
 
+// ─── Filtrar pool por indicación profesional de whey ─────────────────────────
+function filtrarPorWhey<T extends { requiereWhey?: boolean }>(
+  pool: Record<string, T>,
+  wheyIndicado?: boolean
+): Record<string, T> {
+  if (wheyIndicado) return pool
+  const filtered = Object.fromEntries(
+    Object.entries(pool).filter(([, opt]) => !opt.requiereWhey)
+  )
+  return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
 // ─── Filtrar pool por tendencia alimentaria ───────────────────────────────────
 function filtrarPorTendencia<T extends { tendencia?: string[] }>(
   pool: Record<string, T>,
@@ -93,6 +105,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const totalDias = semanas * 7
   const ultraDias = form.ultraDias ?? 2
   const tendencia = form.tendencia ?? 'omnivoro'
+  const desayunosPool = filtrarPorWhey(desayunosOpts, form.wheyIndicado)
   const almuerzosPool = filtrarPorTendencia(almuerzosOpts, tendencia)
   const cenasPool     = filtrarPorTendencia(cenasOpts,     tendencia)
   const dias: DayPlan[] = []
@@ -105,7 +118,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     const meals: DayMeal[] = []
 
     // Desayuno
-    const desayuno = getMealOption(desayunosOpts, form.desayunos, d)
+    const desayuno = getMealOption(desayunosPool, form.desayunos, d)
     meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno))
 
     // Colación mañana

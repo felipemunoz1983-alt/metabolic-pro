@@ -28,7 +28,8 @@ const defaultForm: Partial<FormData> = {
   sandwichQty: 1,
   sandwichQtyOnce: 1,
   semanas: 1,
-  desayunos: ['avena_proteica'],
+  desayunos: ['avena_platano'],
+  wheyIndicado: false,
   colacionManana: ['yogur_frutossecos_am'],
   almuerzos: ['pollo_arroz'],
   cenas: ['pollo_verduras'],
@@ -270,6 +271,12 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     onResult(result, f)
   }
 
+  // ── Filtrado por whey ──
+  const wheyActivo = form.wheyIndicado ?? false
+  const filteredDesayunos = wheyActivo
+    ? desayunosOpts
+    : Object.fromEntries(Object.entries(desayunosOpts).filter(([, opt]) => !opt.requiereWhey))
+
   // ── Filtrado por tendencia ──
   const tendenciaActual = form.tendencia ?? 'omnivoro'
   const filteredAlmuerzos = (() => {
@@ -286,6 +293,20 @@ export function PlanGenerator({ onResult, initialData }: Props) {
       return Object.fromEntries(Object.entries(cenasOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegetariano') || opt.tendencia.includes('vegano')))
     return cenasOpts
   })()
+
+  function handleWheyChange(enabled: boolean) {
+    if (!enabled) {
+      // Remover del desayuno las opciones que requieren whey
+      const validDes = (form.desayunos ?? []).filter(k => !desayunosOpts[k]?.requiereWhey)
+      setForm(prev => ({
+        ...prev,
+        wheyIndicado: false,
+        desayunos: validDes.length > 0 ? validDes : ['avena_platano'],
+      }))
+    } else {
+      set('wheyIndicado', true)
+    }
+  }
 
   function handleTendenciaChange(t: string) {
     if (t === 'vegetariano' || t === 'vegano') {
@@ -605,11 +626,44 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               </div>
 
+              {/* Proteína en polvo */}
+              <div className="border border-[#D6E3ED] rounded-xl p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold text-[#0C3547]">💊 Proteína en polvo (Whey)</p>
+                    <p className="text-xs text-[#6B7C93] mt-0.5">
+                      Activa solo si el profesional la ha indicado. Habilita opciones de desayuno con scoop de proteína.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleWheyChange(!wheyActivo)}
+                    className={cn(
+                      'relative flex-shrink-0 w-12 h-6 rounded-full transition-colors duration-200',
+                      wheyActivo ? 'bg-[#29ABE2]' : 'bg-[#D6E3ED]'
+                    )}
+                    aria-label="Activar proteína en polvo"
+                  >
+                    <span className={cn(
+                      'absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all duration-200',
+                      wheyActivo ? 'left-7' : 'left-1'
+                    )} />
+                  </button>
+                </div>
+                {wheyActivo && (
+                  <div className="mt-3 flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                    <span className="text-sm flex-shrink-0">ℹ️</span>
+                    <p className="text-xs text-blue-800">
+                      Opciones con proteína en polvo activadas. Asegúrate de tener el producto disponible antes de incluirlas en el plan.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               {/* Desayunos */}
               <div>
                 <MealChips
                   label="🌅 Desayunos"
-                  pool={desayunosOpts}
+                  pool={filteredDesayunos}
                   selected={form.desayunos ?? []}
                   onChange={v => set('desayunos', v)}
                 />

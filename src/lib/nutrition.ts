@@ -53,6 +53,9 @@ export interface FormData {
   // ── Composición corporal (BIA/ISAK) — activa Cunningham en deportistas ──
   /** % grasa medido profesionalmente (BIA o ISAK). Opcional. Activa Cunningham si cumple criterios. */
   porcentajeGrasa?: number
+  // ── Suplementación indicada ──
+  /** true = el profesional indicó proteína en polvo (whey u otra). Habilita opciones con scoop en el plan. */
+  wheyIndicado?: boolean
 }
 
 export interface Macros {

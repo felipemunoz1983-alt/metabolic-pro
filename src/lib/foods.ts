@@ -20,6 +20,7 @@ export interface MealOption {
   sellos?: string[]
   tieneHuevo?: boolean      // muestra selector de cantidad de huevos en PlanGenerator
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
+  requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
 }
 
 export interface UltraOption {
@@ -36,10 +37,24 @@ export interface UltraOption {
 
 // ─── DESAYUNOS ────────────────────────────────────────────────────────────────
 export const desayunosOpts: Record<string, MealOption> = {
+  avena_platano: {
+    label: 'Avena natural + plátano',
+    items: ['80g avena en hojuelas', '1 plátano mediano', '200ml leche descremada', '1 cdta canela o miel'],
+    baseKcal: 360, p: 14, c: 62, g: 7,
+    foto: USP('1638813133218-4367bd8123f6'),
+    tiempo: '10 min',
+    pasos: [
+      'Calentar 200ml de leche en una olla a fuego medio.',
+      'Agregar 80g de avena y revolver continuamente 3-4 minutos hasta espesar.',
+      'Servir en un tazón y decorar con el plátano cortado en rodajas.',
+      'Opcional: agregar canela molida, miel o stevia al gusto.',
+    ],
+  },
   avena_proteica: {
     label: 'Avena proteica + plátano',
     items: ['80g avena en hojuelas', '1 scoop proteína en polvo', '1 plátano mediano', '200ml leche descremada'],
     baseKcal: 480, p: 38, c: 62, g: 7,
+    requiereWhey: true,
     foto: USP('1638813133218-4367bd8123f6'), // tazón de avena con frutas encima, foto real
     tiempo: '10 min',
     pasos: [
@@ -96,6 +111,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Batido proteico + frutos secos',
     items: ['1 scoop proteína en polvo', '1 plátano congelado', '200ml leche', '30g nueces o almendras', '1 cdta mantequilla de maní'],
     baseKcal: 490, p: 35, c: 42, g: 18,
+    requiereWhey: true,
     foto: USP('1622597468620-656aa1f981ea'), // batido proteico de frutilla en vaso transparente
     tiempo: '5 min',
     pasos: [
