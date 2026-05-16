@@ -522,48 +522,139 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               </div>
 
-              {/* % Grasa corporal — aquí vive junto a diasEjercicio para badge live correcto */}
-              <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-3">
+              {/* 📊 Composición corporal — BIA / InBody / ISAK */}
+              <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-[#0C3547]">
-                    % Grasa corporal
-                    <span className="ml-2 text-xs font-normal text-[#6B7C93]">opcional · BIA / ISAK</span>
+                    📊 Composición corporal
+                    <span className="ml-2 text-xs font-normal text-[#6B7C93]">opcional · BIA / InBody / ISAK</span>
                   </label>
                   <p className="text-xs text-[#6B7C93] mt-0.5">
-                    Medición profesional reciente activa la fórmula Cunningham (más precisa para deportistas con bajo % grasa).
+                    Con estos datos el sistema personaliza las noticias y alertas clínicas según tu estado nutricional real.
+                    El % de grasa activa la fórmula Cunningham si cumple los criterios.
                   </p>
                 </div>
-                <div className="flex items-center gap-3 flex-wrap">
-                  <input
-                    type="number"
-                    min={3}
-                    max={50}
-                    step={0.1}
-                    value={form.porcentajeGrasa ?? ''}
-                    onChange={e => {
-                      const v = e.target.value === '' ? undefined : Number(e.target.value)
-                      set('porcentajeGrasa', v as number)
-                    }}
-                    className="w-28 px-4 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
-                    placeholder="Ej: 14.5"
-                  />
-                  <span className="text-sm text-[#6B7C93]">%</span>
-                  {/* Badge live — se activa cuando diasEjercicio + % grasa cumplen criterios */}
-                  {usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                      Cunningham activado
-                    </span>
+
+                {/* Fila: % grasa + badge Cunningham */}
+                <div>
+                  <p className="text-xs font-semibold text-[#4A6070] mb-1.5">% Grasa corporal</p>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <input
+                      type="number"
+                      min={3}
+                      max={60}
+                      step={0.1}
+                      value={form.porcentajeGrasa ?? ''}
+                      onChange={e => {
+                        const v = e.target.value === '' ? undefined : Number(e.target.value)
+                        set('porcentajeGrasa', v as number)
+                      }}
+                      className="w-28 px-4 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
+                      placeholder="Ej: 22.5"
+                    />
+                    <span className="text-sm text-[#6B7C93]">%</span>
+                    {usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
+                      <span className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-700 text-xs font-bold px-3 py-1.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        Cunningham activado
+                      </span>
+                    )}
+                  </div>
+                  {form.porcentajeGrasa != null && !usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
+                    <p className="text-xs text-[#6B7C93] mt-1">
+                      Cunningham requiere ≥5 días de ejercicio y
+                      {form.sexo === 'femenino' ? ' ≤22%' : ' ≤15%'} de grasa.
+                      Se usará Mifflin-St Jeor.
+                    </p>
                   )}
                 </div>
-                {/* Hint cuando hay % grasa pero no se cumplen los criterios */}
-                {form.porcentajeGrasa != null && !usaraCunningham(form.sexo ?? 'masculino', form.diasEjercicio ?? 0, form.porcentajeGrasa) && (
-                  <p className="text-xs text-[#6B7C93]">
-                    Cunningham requiere ≥5 días de ejercicio y
-                    {form.sexo === 'femenino' ? ' ≤22%' : ' ≤15%'} de grasa corporal.
-                    Se usará Mifflin-St Jeor.
-                  </p>
-                )}
+
+                {/* Fila: masa muscular + grasa kg */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <p className="text-xs font-semibold text-[#4A6070] mb-1.5">💪 Masa muscular</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={5}
+                        max={80}
+                        step={0.1}
+                        value={form.masaMuscularKg ?? ''}
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : Number(e.target.value)
+                          set('masaMuscularKg', v as number)
+                        }}
+                        className="w-full px-3 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] text-sm focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
+                        placeholder="Ej: 28.4"
+                      />
+                      <span className="text-xs text-[#6B7C93] flex-shrink-0">kg</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-[#4A6070] mb-1.5">🔥 Grasa corporal</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        max={80}
+                        step={0.1}
+                        value={form.grasaCorporalKg ?? ''}
+                        onChange={e => {
+                          const v = e.target.value === '' ? undefined : Number(e.target.value)
+                          set('grasaCorporalKg', v as number)
+                        }}
+                        className="w-full px-3 py-2.5 border border-[#D6E3ED] rounded-xl text-[#1E2D3D] text-sm focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20"
+                        placeholder="Ej: 18.2"
+                      />
+                      <span className="text-xs text-[#6B7C93] flex-shrink-0">kg</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Alert clínica en tiempo real según valores ingresados */}
+                {(() => {
+                  const isMale = form.sexo === 'masculino'
+                  const masa = form.masaMuscularKg
+                  const cutoffMasa = isMale ? 28 : 20
+                  const grasaKg = form.grasaCorporalKg
+                    ?? (form.porcentajeGrasa && form.peso ? form.peso * form.porcentajeGrasa / 100 : undefined)
+                  const pctGrasa = grasaKg && form.peso ? grasaKg / form.peso : undefined
+                  const cutoffGrasa = isMale ? 0.25 : 0.32
+                  const masaBaja = masa !== undefined && masa < cutoffMasa
+                  const grasaAlta = pctGrasa !== undefined && pctGrasa > cutoffGrasa
+                  if (!masaBaja && !grasaAlta) return null
+                  return (
+                    <div className="space-y-2">
+                      {masaBaja && (
+                        <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                          <span className="text-sm flex-shrink-0">⚠️</span>
+                          <p className="text-xs text-amber-800">
+                            <strong>Masa muscular bajo el umbral de referencia</strong> (EWGSOP2: {isMale ? '28' : '20'} kg).
+                            Se priorizarán noticias sobre sarcopenia, síntesis proteica y entrenamiento de fuerza.
+                          </p>
+                        </div>
+                      )}
+                      {grasaAlta && (
+                        <div className="flex gap-2 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2">
+                          <span className="text-sm flex-shrink-0">📊</span>
+                          <p className="text-xs text-rose-800">
+                            <strong>Grasa corporal elevada</strong> (&gt;{isMale ? '25' : '32'}%).
+                            Se priorizarán noticias sobre déficit calórico, grasa visceral y adherencia.
+                          </p>
+                        </div>
+                      )}
+                      {masaBaja && grasaAlta && (
+                        <div className="flex gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                          <span className="text-sm flex-shrink-0">🎯</span>
+                          <p className="text-xs text-blue-800">
+                            <strong>Perfil de recomposición corporal:</strong> alta grasa + baja masa muscular.
+                            Plan enfocado en déficit moderado con alta proteína y entrenamiento de fuerza.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
               </div>
             </div>
           )}

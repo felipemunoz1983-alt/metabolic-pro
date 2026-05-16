@@ -15,6 +15,12 @@ export type TagPaciente =
   | 'dig_hinchazon' | 'dig_sii' | 'dig_sibo'
   | 'tend_vegano' | 'tend_vegetariano'
   | 'est_verano' | 'est_otono' | 'est_invierno' | 'est_primavera'
+  // ── Composición corporal (InBody / ISAK) ──
+  | 'masa_baja'          // masa muscular < umbral EWGSOP2 → sarcopenia, leucina, fuerza
+  | 'masa_alta'          // masa muscular elevada → rendimiento, periodización
+  | 'grasa_elevada'      // % grasa > umbral → visceral, déficit, adherencia
+  | 'recomp_candidato'   // masa_baja + grasa_elevada → perfil recomposición corporal
+  | 'sarcopenia_riesgo'  // masa < umbral + edad ≥ 40 → EWGSOP2 riesgo real
 
 export interface Noticia {
   id: string
@@ -93,8 +99,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 9,
-    tagsRelevantes: ['edad_40plus', 'sexo_f', 'activo_bajo', 'obj_grasa'],
-    tagsSecundarios: ['edad_50plus', 'activo_moderado'],
+    tagsRelevantes: ['masa_baja', 'sarcopenia_riesgo', 'edad_40plus', 'sexo_f', 'activo_bajo', 'obj_grasa'],
+    tagsSecundarios: ['edad_50plus', 'activo_moderado', 'recomp_candidato'],
   },
   {
     id: 'creatina_2024',
@@ -114,8 +120,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 8,
-    tagsRelevantes: ['ej_fuerza', 'obj_musculo', 'activo_alto', 'activo_moderado'],
-    tagsSecundarios: ['ej_mixto', 'edad_40plus'],
+    tagsRelevantes: ['masa_baja', 'sarcopenia_riesgo', 'ej_fuerza', 'obj_musculo', 'activo_alto', 'activo_moderado'],
+    tagsSecundarios: ['recomp_candidato', 'ej_mixto', 'edad_40plus'],
   },
   {
     id: 'sueno_composicion',
@@ -156,7 +162,7 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 7,
-    tagsRelevantes: ['obj_grasa', 'activo_bajo', 'edad_40plus'],
+    tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo', 'edad_40plus'],
     tagsSecundarios: ['obj_mantenimiento', 'sexo_m'],
   },
   {
@@ -177,8 +183,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 7,
-    tagsRelevantes: ['obj_musculo', 'ej_fuerza', 'edad_40plus'],
-    tagsSecundarios: ['activo_alto', 'obj_mantenimiento'],
+    tagsRelevantes: ['masa_baja', 'recomp_candidato', 'obj_musculo', 'ej_fuerza', 'edad_40plus'],
+    tagsSecundarios: ['sarcopenia_riesgo', 'activo_alto', 'obj_mantenimiento'],
   },
   {
     id: 'mujeres_40',
@@ -198,8 +204,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 9,
-    tagsRelevantes: ['sexo_f', 'edad_40plus', 'obj_grasa', 'obj_mantenimiento'],
-    tagsSecundarios: ['edad_50plus', 'activo_bajo'],
+    tagsRelevantes: ['sarcopenia_riesgo', 'sexo_f', 'edad_40plus', 'obj_grasa', 'obj_mantenimiento'],
+    tagsSecundarios: ['masa_baja', 'edad_50plus', 'activo_bajo'],
   },
   {
     id: 'microbiota_rendimiento',
@@ -261,7 +267,7 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 8,
-    tagsRelevantes: ['obj_grasa', 'activo_bajo'],
+    tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo'],
     tagsSecundarios: ['activo_moderado', 'sexo_f'],
   },
   {
@@ -282,7 +288,7 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'moderada',
     esEvergreen: true,
     pesoBase: 8,
-    tagsRelevantes: ['obj_grasa', 'activo_bajo'],
+    tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo'],
     tagsSecundarios: ['obj_musculo', 'sexo_f'],
   },
   {
@@ -436,33 +442,87 @@ export const NOTICIAS: Noticia[] = [
 
 export function getTagsPaciente(form: Partial<FormData>): Set<TagPaciente> {
   const tags = new Set<TagPaciente>()
+  const isMale = form.sexo === 'masculino'
+  const edad = form.edad ?? 0
+
+  // ── Objetivo ──
   if (form.objetivo === 'perdida grasa')  tags.add('obj_grasa')
   if (form.objetivo === 'hipertrofia')    tags.add('obj_musculo')
   if (form.objetivo === 'mantenimiento')  tags.add('obj_mantenimiento')
-  if (form.sexo === 'femenino')           tags.add('sexo_f')
-  if (form.sexo === 'masculino')          tags.add('sexo_m')
-  const edad = form.edad ?? 0
+
+  // ── Sexo ──
+  if (form.sexo === 'femenino')  tags.add('sexo_f')
+  if (form.sexo === 'masculino') tags.add('sexo_m')
+
+  // ── Edad ──
   if (edad >= 40) tags.add('edad_40plus')
   if (edad >= 50) tags.add('edad_50plus')
-  if (form.tipoEjercicio === 'fuerza')    tags.add('ej_fuerza')
-  if (form.tipoEjercicio === 'cardio')    tags.add('ej_cardio')
-  if (form.tipoEjercicio === 'mixto')     tags.add('ej_mixto')
-  if (form.tipoEjercicio === 'ninguno')   tags.add('ej_ninguno')
+
+  // ── Tipo de ejercicio ──
+  if (form.tipoEjercicio === 'fuerza')  tags.add('ej_fuerza')
+  if (form.tipoEjercicio === 'cardio')  tags.add('ej_cardio')
+  if (form.tipoEjercicio === 'mixto')   tags.add('ej_mixto')
+  if (form.tipoEjercicio === 'ninguno') tags.add('ej_ninguno')
+
+  // ── Nivel de actividad ──
   const dias = form.diasEjercicio ?? 0
-  if (dias >= 5)       tags.add('activo_alto')
-  else if (dias >= 3)  tags.add('activo_moderado')
-  else                 tags.add('activo_bajo')
+  if (dias >= 5)      tags.add('activo_alto')
+  else if (dias >= 3) tags.add('activo_moderado')
+  else                tags.add('activo_bajo')
+
+  // ── Digestivo ──
   if (['frecuente','diaria'].includes(form.digHinchazon ?? '')) tags.add('dig_hinchazon')
   if (form.digDiag === 'si_sii' || form.digDiag === 'sospecha') tags.add('dig_sii')
   if (form.digDiag === 'si_sibo') tags.add('dig_sibo')
-  if (form.tendencia === 'vegano')        tags.add('tend_vegano')
-  if (form.tendencia === 'vegetariano')   tags.add('tend_vegetariano')
-  // Estacional — hemisferio sur (Chile)
-  const mes = new Date().getMonth()
+
+  // ── Tendencia alimentaria ──
+  if (form.tendencia === 'vegano')       tags.add('tend_vegano')
+  if (form.tendencia === 'vegetariano')  tags.add('tend_vegetariano')
+
+  // ── Estacional — hemisferio sur (Chile) ──
+  const mes = new Date().getMonth() // 0 = enero
   if ([5,6,7].includes(mes))        tags.add('est_verano')
   else if ([8,9,10].includes(mes))  tags.add('est_otono')
   else if ([11,0,1].includes(mes))  tags.add('est_invierno')
   else                              tags.add('est_primavera')
+
+  // ── Composición corporal (InBody / ISAK) ──────────────────────────────────
+  // Umbrales basados en EWGSOP2 (masa muscular esquelética) y referencia clínica de grasa
+  // Hombre: masa_baja < 28 kg | masa_alta > 38 kg | grasa_elevada > 25%
+  // Mujer:  masa_baja < 20 kg | masa_alta > 27 kg | grasa_elevada > 32%
+  const cutoffMasaBaja = isMale ? 28 : 20
+  const cutoffMasaAlta = isMale ? 38 : 27
+  const cutoffGrasa    = isMale ? 0.25 : 0.32
+
+  // Masa muscular en kg (directa desde InBody)
+  const masa = form.masaMuscularKg
+  let masaBaja = false
+  let masaAlta = false
+  if (masa !== undefined) {
+    if (masa < cutoffMasaBaja) { tags.add('masa_baja'); masaBaja = true }
+    else if (masa > cutoffMasaAlta) { tags.add('masa_alta'); masaAlta = true }
+  }
+
+  // Grasa corporal en kg (directa) — si no se ingresó, se estima desde % grasa × peso
+  const grasaKg =
+    form.grasaCorporalKg ??
+    (form.porcentajeGrasa != null && form.peso ? form.peso * form.porcentajeGrasa / 100 : undefined)
+
+  let grasaAlta = false
+  if (grasaKg !== undefined && form.peso && form.peso > 0) {
+    const pctGrasa = grasaKg / form.peso
+    if (pctGrasa > cutoffGrasa) { tags.add('grasa_elevada'); grasaAlta = true }
+  } else if (form.porcentajeGrasa !== undefined) {
+    // Fallback si no hay peso pero sí % grasa
+    if (form.porcentajeGrasa > (isMale ? 25 : 32)) { tags.add('grasa_elevada'); grasaAlta = true }
+  }
+
+  // Recomposición: baja masa + grasa elevada
+  if (masaBaja && grasaAlta) tags.add('recomp_candidato')
+
+  // Sarcopenia riesgo: baja masa + edad ≥ 40 (EWGSOP2 criterio clínico)
+  if (masaBaja && edad >= 40) tags.add('sarcopenia_riesgo')
+
   return tags
 }
 
