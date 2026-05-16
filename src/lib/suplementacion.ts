@@ -49,6 +49,19 @@ export const PREGUNTAS_SUP: PreguntaSup[] = [
       'La fatiga pre-entrenamiento puede deberse a bajo descanso, déficit calórico, baja ingesta de carbohidratos o baja estimulación del SNC. La cafeína actúa bloqueando receptores de adenosina y mejora la percepción del esfuerzo. La creatina apoya la resíntesis de ATP cuando hay fatiga acumulada.',
   },
   {
+    id: 'q_proteina_adherencia',
+    area: 'Adherencia proteica',
+    icono: '🥛',
+    pregunta: '¿Te cuesta llegar a tus proteínas diarias por falta de tiempo o apetito?',
+    opciones: [
+      { value: 'si',      label: 'Sí, casi todos los días' },
+      { value: 'a_veces', label: 'Algunas veces' },
+      { value: 'no',      label: 'No, logro cubrirlas bien' },
+    ],
+    fisioExplicacion:
+      'La baja ingesta proteica suele aparecer por horarios laborales extensos, poca organización o baja saciedad. Sin cubrir 1.6–2.2 g/kg/día, la síntesis proteica muscular queda limitada aunque el entrenamiento sea adecuado. La proteína en polvo reduce la brecha entre requerimiento y consumo real sin aumentar el tiempo de preparación.',
+  },
+  {
     id: 'q_recuperacion',
     area: 'Recuperación muscular',
     icono: '💪',
@@ -113,6 +126,19 @@ export const PREGUNTAS_SUP: PreguntaSup[] = [
     fisioExplicacion:
       'La creatina es el suplemento deportivo con mayor evidencia para hipertrofia y fuerza: aumenta la reserva de fosfocreatina muscular, permite mayor volumen de trabajo y mejora la señalización de mTOR. La proteína en polvo complementa la ingesta dietaria cuando los requerimientos son altos (1.6-2.2 g/kg).',
   },
+  {
+    id: 'q_hambre',
+    area: 'Hambre y Antojos',
+    icono: '🍎',
+    pregunta: '¿Tienes hambre constante o muchos antojos durante el día?',
+    opciones: [
+      { value: 'si',      label: 'Sí, me cuesta controlarlo' },
+      { value: 'a_veces', label: 'Solo en algunos horarios' },
+      { value: 'no',      label: 'No, manejo bien mi apetito' },
+    ],
+    fisioExplicacion:
+      'Los antojos frecuentes pueden relacionarse con baja ingesta de proteínas, poca fibra dietaria, déficit energético excesivo o mala distribución de comidas. La fibra soluble (psyllium, inulina) forma un gel en el intestino que enlentece el vaciamiento gástrico y estabiliza la glucosa postprandial. La caseína, de digestión lenta, es especialmente útil cuando el hambre aparece en la noche.',
+  },
 ]
 
 // ─── Definición de suplementos ────────────────────────────────────────────────
@@ -174,8 +200,9 @@ export const SUPLEMENTOS: Record<string, DefinicionSuplemento> = {
       supCronicas: ['renal', 'hepatica'],
     },
     recomendadoPor: {
-      q_recuperacion: ['mucho', 'algo'],
-      q_masa:         ['si', 'a_veces'],
+      q_proteina_adherencia: ['si', 'a_veces'],
+      q_recuperacion:        ['mucho', 'algo'],
+      q_masa:                ['si', 'a_veces'],
     },
   },
 
@@ -250,6 +277,42 @@ export const SUPLEMENTOS: Record<string, DefinicionSuplemento> = {
     contraIndicaValores: {},
     recomendadoPor: {
       q_articulaciones: ['si'],
+    },
+  },
+
+  fibra_soluble: {
+    id: 'fibra_soluble',
+    nombre: 'Fibra soluble (Psyllium / Inulina)',
+    icono: '🌾',
+    dosis: '5–10 g/día · antes de comidas principales · con abundante agua',
+    descripcionCorta: 'Aumenta la saciedad y estabiliza la glucosa postprandial.',
+    fisiologia:
+      'La fibra soluble forma un gel viscoso en el intestino que enlentece el vaciamiento gástrico y la absorción de glucosa, reduciendo los picos de insulina y prolongando la saciedad. El psyllium mejora además el perfil lipídico y la regularidad intestinal. Útil en pacientes con hambre frecuente o déficit de fibra en la dieta.',
+    evidencia: 'B',
+    color: 'bg-lime-50 border-lime-300 text-lime-900',
+    contraIndicaEn: [],
+    contraIndicaValores: {},
+    recomendadoPor: {
+      q_hambre: ['si', 'a_veces'],
+    },
+  },
+
+  caseina: {
+    id: 'caseina',
+    nombre: 'Caseína (proteína de digestión lenta)',
+    icono: '🌙',
+    dosis: '20–30 g · 30 min antes de dormir',
+    descripcionCorta: 'Libera aminoácidos de forma sostenida durante la noche, reduciendo el hambre nocturna.',
+    fisiologia:
+      'La caseína forma micelas que se coagulan en el estómago, liberando aminoácidos durante 6–8 horas. Esto mantiene el balance de nitrógeno durante el ayuno nocturno, reduce el catabolismo muscular y puede disminuir el hambre al despertar. Es especialmente útil en pacientes con hambre intensa en la noche o al amanecer.',
+    evidencia: 'B',
+    color: 'bg-violet-50 border-violet-300 text-violet-900',
+    contraIndicaEn: ['supCronicas'],
+    contraIndicaValores: {
+      supCronicas: ['renal', 'hepatica'],
+    },
+    recomendadoPor: {
+      q_hambre: ['si'],
     },
   },
 
