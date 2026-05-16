@@ -232,7 +232,7 @@ ${getNutrievoAIContext()}`
             disabled={loading}
           />
           <button
-            onClick={sendMessage}
+            onClick={() => sendMessage()}
             disabled={loading || !input.trim()}
             className="px-4 py-2.5 bg-gradient-to-r from-[#29ABE2] to-[#1a7fad] text-white rounded-xl font-bold text-sm hover:opacity-90 transition disabled:opacity-40"
           >
