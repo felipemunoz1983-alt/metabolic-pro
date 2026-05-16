@@ -933,7 +933,13 @@ function ModalVincular({
   // Código corto visual + link completo con ID decodificable
   const inviteCode = btoa(professionalId).slice(0, 12).toUpperCase()
   const encodedPro = typeof window !== 'undefined' ? encodeURIComponent(btoa(professionalId)) : ''
-  const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/register?pro=${encodedPro}`
+  const origin = typeof window !== 'undefined' ? window.location.origin : ''
+  // Link genérico (sin email) — para la pestaña "Link de invitación"
+  const inviteLink = `${origin}/register?pro=${encodedPro}`
+  // Link personalizado con email pre-llenado — se usa solo al enviar por correo
+  const personalizedLink = email.trim()
+    ? `${origin}/register?pro=${encodedPro}&email=${encodeURIComponent(email.trim().toLowerCase())}`
+    : inviteLink
 
   async function handleSearch() {
     if (!email.trim()) return
@@ -984,8 +990,8 @@ function ModalVincular({
         body: JSON.stringify({
           patientEmail: email.trim().toLowerCase(),
           professionalName,
-          inviteLink,
-          appUrl: typeof window !== 'undefined' ? window.location.origin : '',
+          inviteLink: personalizedLink,   // ← link con email pre-llenado
+          appUrl: origin,
         }),
       })
       setInviteEmailStatus(res.ok ? 'sent' : 'error')
@@ -995,6 +1001,7 @@ function ModalVincular({
   }
 
   function shareWhatsApp() {
+    // WhatsApp usa el link genérico (sin email) — el paciente escribe el suyo al registrarse
     const text = `Hola! Te invito a registrarte en Centro Metabolico Pro para hacer seguimiento de tu alimentacion conmigo. Usa este link: ${inviteLink}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }

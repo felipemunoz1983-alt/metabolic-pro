@@ -29,9 +29,11 @@ function RegisterForm() {
   const isLinked      = !!professionalId
   const isProfessionalRegister = searchParams.get('type') === 'pro' && !isLinked
   const noProfile     = searchParams.get('reason') === 'no_profile'
+  // Email pre-llenado desde el link de invitación personalizado
+  const emailParam    = searchParams.get('email') ?? ''
 
   const [nombre,  setNombre]  = useState('')
-  const [email,   setEmail]   = useState('')
+  const [email,   setEmail]   = useState(emailParam)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error,   setError]   = useState(noProfile ? 'Tu sesión anterior no tiene cuenta registrada. Crea una nueva cuenta para continuar.' : '')
