@@ -462,7 +462,11 @@ export default function PacientePage() {
                   ) : (
                     <PlanGenerator
                       onResult={handleResult}
-                      initialData={formData ?? onboardingInitial ?? undefined}
+                      initialData={{
+                        nombre: profile?.nombre ?? '',
+                        ...(onboardingInitial ?? {}),
+                        ...(formData ?? {}),
+                      }}
                     />
                   )}
                 </div>
