@@ -288,7 +288,8 @@ export default function PacientePage() {
         if (hasPlan) {
           setResult(latestPlan!.plan_json.result)
           setFormData(latestPlan!.plan_json.form)
-          setActiveTab('plan') // auto-navigate to plan when one exists
+          // Aterrizar en dashboard (noticias + calorías) — el plan queda en tab Nutrición
+          // No forzar tab específico: el URL param o default 'dashboard' rige
         }
 
         // All checks passed — allow render
@@ -433,11 +434,17 @@ export default function PacientePage() {
               {activeTab === 'plan' && (
                 <div className="px-4 py-4 md:px-8 md:py-8 max-w-3xl mx-auto">
                   {result && formData ? (
-                    <PlanResult
-                      result={result}
-                      form={formData}
-                      onReset={() => { setResult(null); setFormData(null) }}
-                    />
+                    <>
+                      {/* Noticias personalizadas — ANTES del plan para visibilidad inmediata */}
+                      <div className="mb-6">
+                        <NoticiasHub form={formData} />
+                      </div>
+                      <PlanResult
+                        result={result}
+                        form={formData}
+                        onReset={() => { setResult(null); setFormData(null) }}
+                      />
+                    </>
                   ) : profile?.role === 'patient' ? (
                     /* Paciente vinculado sin plan aún */
                     <motion.div
@@ -458,6 +465,10 @@ export default function PacientePage() {
                             <span className="text-[#29ABE2]">✓</span> {f}
                           </div>
                         ))}
+                      </div>
+                      {/* Noticias mientras esperan el plan */}
+                      <div className="mt-8 w-full max-w-xl text-left">
+                        <NoticiasHub form={{}} />
                       </div>
                     </motion.div>
                   ) : (
@@ -503,12 +514,6 @@ export default function PacientePage() {
                     targetKcal={result?.kcal ? Math.round(result.kcal) : 2000}
                     macros={result?.macros}
                   />
-                  <div className="mt-4">
-                    <NutrievoPanel objetivo={formData?.objetivo} />
-                  </div>
-                  <div className="mt-2 px-0">
-                    <NoticiasHub form={formData ?? {}} />
-                  </div>
                 </div>
               )}
 

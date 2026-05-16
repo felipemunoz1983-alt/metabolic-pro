@@ -67,19 +67,28 @@ function ProductCard({
       )}
     >
       {/* Foto del producto */}
-      <div className="relative aspect-[4/3] bg-[#F8FBFD] overflow-hidden">
+      <div className="relative h-52 bg-[#F0F7FC] overflow-hidden">
         {product.foto ? (
           <img
             src={product.foto}
             alt={product.nombre}
-            className="w-full h-full object-cover object-center"
+            className="w-full h-full object-contain object-center p-3 drop-shadow-sm"
             loading="lazy"
+            referrerPolicy="no-referrer"
+            onError={(e) => {
+              const target = e.currentTarget
+              target.style.display = 'none'
+              const fallback = target.nextElementSibling as HTMLElement | null
+              if (fallback) fallback.style.display = 'flex'
+            }}
           />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <ShoppingBag size={40} className="text-[#C8D8E4]" />
-          </div>
-        )}
+        ) : null}
+        <div
+          className="w-full h-full items-center justify-center"
+          style={{ display: product.foto ? 'none' : 'flex' }}
+        >
+          <ShoppingBag size={40} className="text-[#C8D8E4]" />
+        </div>
 
         {/* Badge "Para tu objetivo" */}
         {isMatch && (

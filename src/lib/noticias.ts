@@ -79,7 +79,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 8,
     tagsRelevantes: ['obj_musculo', 'ej_fuerza', 'activo_alto'],
-    tagsSecundarios: ['ej_mixto', 'activo_moderado'],
+    tagsSecundarios: ['ej_mixto', 'activo_moderado', 'sexo_m'],
   },
   {
     id: 'sarcopenia',
@@ -99,8 +99,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 9,
-    tagsRelevantes: ['masa_baja', 'sarcopenia_riesgo', 'edad_40plus', 'sexo_f', 'activo_bajo', 'obj_grasa'],
-    tagsSecundarios: ['edad_50plus', 'activo_moderado', 'recomp_candidato'],
+    tagsRelevantes: ['masa_baja', 'sarcopenia_riesgo', 'edad_40plus', 'activo_bajo', 'obj_grasa'],
+    tagsSecundarios: ['edad_50plus', 'activo_moderado', 'recomp_candidato', 'sexo_m'],
   },
   {
     id: 'creatina_2024',
@@ -121,7 +121,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 8,
     tagsRelevantes: ['masa_baja', 'sarcopenia_riesgo', 'ej_fuerza', 'obj_musculo', 'activo_alto', 'activo_moderado'],
-    tagsSecundarios: ['recomp_candidato', 'ej_mixto', 'edad_40plus'],
+    tagsSecundarios: ['recomp_candidato', 'ej_mixto', 'edad_40plus', 'sexo_m'],
   },
   {
     id: 'sueno_composicion',
@@ -162,8 +162,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'alta',
     esEvergreen: true,
     pesoBase: 7,
-    tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo', 'edad_40plus'],
-    tagsSecundarios: ['obj_mantenimiento', 'sexo_m'],
+    tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo', 'edad_40plus', 'sexo_m'],
+    tagsSecundarios: ['obj_mantenimiento'],
   },
   {
     id: 'leucina_mtor',
@@ -268,7 +268,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 8,
     tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo'],
-    tagsSecundarios: ['activo_moderado', 'sexo_f'],
+    tagsSecundarios: ['activo_moderado'],
   },
   {
     id: 'todo_o_nada',
@@ -289,7 +289,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 8,
     tagsRelevantes: ['grasa_elevada', 'recomp_candidato', 'obj_grasa', 'activo_bajo'],
-    tagsSecundarios: ['obj_musculo', 'sexo_f'],
+    tagsSecundarios: ['obj_musculo'],
   },
   {
     id: 'hidratacion',
@@ -331,7 +331,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 7,
     tagsRelevantes: ['activo_alto', 'ej_fuerza', 'edad_40plus'],
-    tagsSecundarios: ['ej_cardio', 'sexo_f'],
+    tagsSecundarios: ['ej_cardio', 'sexo_m'],
   },
   {
     id: 'vitamina_d',
@@ -351,8 +351,8 @@ export const NOTICIAS: Noticia[] = [
     evidencia: 'moderada',
     esEvergreen: false,
     pesoBase: 6,
-    tagsRelevantes: ['est_invierno', 'activo_alto', 'sexo_f'],
-    tagsSecundarios: ['edad_40plus', 'activo_moderado'],
+    tagsRelevantes: ['est_invierno', 'activo_alto', 'activo_moderado'],
+    tagsSecundarios: ['edad_40plus'],
   },
   {
     id: 'proteina_vegetal',
@@ -415,7 +415,7 @@ export const NOTICIAS: Noticia[] = [
     esEvergreen: true,
     pesoBase: 6,
     tagsRelevantes: ['activo_alto', 'est_invierno', 'activo_moderado'],
-    tagsSecundarios: ['sexo_f', 'edad_40plus'],
+    tagsSecundarios: ['edad_40plus'],
   },
   {
     id: 'invierno_inmunidad',
@@ -437,6 +437,71 @@ export const NOTICIAS: Noticia[] = [
     pesoBase: 5,
     tagsRelevantes: ['est_invierno', 'activo_moderado', 'activo_alto'],
     tagsSecundarios: ['edad_40plus', 'obj_mantenimiento'],
+  },
+
+  // ── Artículos específicos para pacientes masculinos ───────────────────────
+  {
+    id: 'testosterona_composicion',
+    titulo: 'Testosterona y músculo: lo que realmente pasa en el hombre adulto',
+    subtitulo: 'La testosterona no es solo libido. Es el eje hormonal central de tu composición corporal.',
+    categoria: 'composicion_corporal',
+    imagen: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?auto=format&fit=crop&w=900&q=80',
+    tiempoLectura: 4,
+    resumen: 'La testosterona total en hombres cae un 1-2% anual a partir de los 30. Este declive tiene consecuencias directas sobre la masa muscular, la grasa visceral y la energía. Y el estilo de vida lo acelera o lo frena.',
+    cuerpo: [
+      'La testosterona es el principal andrógeno anabólico masculino. Su función va mucho más allá de la libido: regula la síntesis proteica muscular, la densidad ósea, el perfil lipídico, la distribución de grasa corporal y el estado de ánimo. Travison et al. (JCEM, 2007) documentaron que los niveles medios de testosterona total en hombres estadounidenses cayeron un 17% entre 1987 y 2004, un declive que excede lo explicable solo por envejecimiento y sugiere factores ambientales y de estilo de vida relevantes.',
+      'A nivel de composición corporal, la testosterona actúa directamente sobre el músculo esquelético estimulando la síntesis proteica miofibrilar y la proliferación de células satélite musculares. Cuando los niveles caen por debajo del rango óptimo (típicamente <400 ng/dL para hombres activos), se produce un estado de resistencia anabólica: el músculo responde menos al entrenamiento de fuerza y la proteína dietética, y la grasa corporal —especialmente la visceral— aumenta progresivamente. El resultado es la "recomposición inversa": más grasa, menos músculo, con el mismo peso en la balanza.',
+      'Los factores que más aceleran el declive de testosterona son: exceso de grasa corporal (el tejido adiposo convierte testosterona en estradiol mediante aromatización), sedentarismo, déficit de sueño crónico, déficit calórico excesivo y prolongado, y deficiencia de zinc y vitamina D. Por el contrario, los factores que la preservan o elevan moderadamente dentro del rango fisiológico son: entrenamiento de fuerza con grandes grupos musculares, sueño adecuado (>7 horas), ingesta proteica suficiente, grasas saludables (el colesterol es precursor de testosterona) y reducción del estrés crónico.',
+    ],
+    recomendacionPractica: 'Si tienes más de 35 años y ves que pierdes músculo con facilidad o ganas grasa a pesar de entrenar, solicita una analítica con testosterona total, libre, SHBG y LH. Mientras tanto: prioriza sueño de 7-9 horas, entrenamiento de fuerza 3x/semana, proteína ≥1.6 g/kg y reduce el déficit calórico si es agresivo.',
+    fuente: 'Travison et al. JCEM 2007 · Bhasin et al. NEJM 2001 · Grossmann & Matsumoto Eur J Endocrinol 2017',
+    evidencia: 'alta',
+    esEvergreen: true,
+    pesoBase: 9,
+    tagsRelevantes: ['sexo_m', 'edad_40plus', 'masa_baja', 'obj_musculo', 'recomp_candidato'],
+    tagsSecundarios: ['grasa_elevada', 'activo_bajo', 'edad_50plus'],
+  },
+  {
+    id: 'grasa_visceral_hombre',
+    titulo: 'Grasa abdominal masculina: el riesgo metabólico que el espejo no muestra',
+    subtitulo: 'Los hombres acumulan grasa visceral más rápido y con consecuencias más graves. Aquí está la ciencia.',
+    categoria: 'metabolismo',
+    imagen: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?auto=format&fit=crop&w=900&q=80',
+    tiempoLectura: 4,
+    resumen: 'El patrón de distribución androide (cintura, abdomen) que predomina en hombres es el más asociado a resistencia a la insulina, dislipidemia y riesgo cardiovascular. La buena noticia: es el más sensible a las intervenciones.',
+    cuerpo: [
+      'Los hombres tienen una predisposición fisiológica al patrón de distribución de grasa androide —concentración en el compartimento abdominal y visceral— en contraste con el patrón ginoide femenino (cadera, muslos). Esto no es solo estética: la grasa visceral (intraabdominal) libera ácidos grasos libres directamente al sistema porta hepático y produce citoquinas proinflamatorias (TNF-α, IL-6) que generan resistencia a la insulina, elevación de triglicéridos y supresión del HDL-colesterol. Despres y Lemieux (Nature, 2006) establecieron que la circunferencia de cintura es el mejor predictor del riesgo metabólico en hombres, más que el IMC.',
+      'El punto de corte clínico para hombres es una cintura >102 cm, aunque hay evidencia de que el riesgo metabólico relevante empieza antes, en torno a los 94 cm. En hombres activos con entrenamiento de fuerza, el perímetro de cintura puede estar influido por el volumen muscular lumbar, por lo que la relación cintura-cadera (>0.95 en hombres es zona de alerta) complementa la evaluación. La medición mensual de cintura en ayunas es más informativa que el peso para seguir la evolución de la grasa visceral.',
+      'La respuesta a las intervenciones de la grasa visceral masculina es más rápida que la de la grasa subcutánea: un déficit calórico moderado (300-400 kcal/día) combinado con ejercicio aeróbico de intensidad moderada-alta (150-200 min/semana) produce reducción visceral medible en 8-12 semanas. El entrenamiento de fuerza amplifica el efecto al mejorar la sensibilidad a la insulina y aumentar el gasto calórico basal. El manejo del estrés y el sueño son variables no negociables: el cortisol crónico es un promotor directo de acumulación visceral en el hombre.',
+    ],
+    recomendacionPractica: 'Mide tu cintura mensualmente (a la altura del ombligo, en ayunas). Si superas 94 cm, es señal de alerta metabólica real. Protocolo base: déficit moderado (no agresivo), 150 min/semana de cardio + 2-3 sesiones de fuerza, y prioriza sueño de calidad sobre cualquier suplemento.',
+    fuente: 'Despres & Lemieux Nature 2006 · Ross et al. Ann Intern Med 2020 · Janssen et al. Obes Res 2002',
+    evidencia: 'alta',
+    esEvergreen: true,
+    pesoBase: 9,
+    tagsRelevantes: ['sexo_m', 'grasa_elevada', 'recomp_candidato', 'obj_grasa'],
+    tagsSecundarios: ['edad_40plus', 'activo_bajo', 'activo_moderado'],
+  },
+  {
+    id: 'proteina_recomposicion_hombre',
+    titulo: 'Proteína en hombres: cuánta necesitas para perder grasa sin perder músculo',
+    subtitulo: 'El error más común en hombres que quieren cambiar su cuerpo: no comer suficiente proteína mientras recortan calorías.',
+    categoria: 'nutricion',
+    imagen: 'https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&w=900&q=80',
+    tiempoLectura: 3,
+    resumen: 'En déficit calórico, la proteína alta es la diferencia entre perder grasa preservando músculo o perder músculo además de grasa. Los hombres activos necesitan entre 1.8 y 2.4 g/kg/día para proteger su masa muscular.',
+    cuerpo: [
+      'Helms et al. (JISSN, 2014) revisaron la evidencia sobre proteína en déficit calórico para deportistas y encontraron que las recomendaciones estándar de 0.8 g/kg/día son completamente insuficientes cuando el objetivo es preservar músculo mientras se pierde grasa. En hombres activos con entrenamiento de fuerza, la ingesta óptima en déficit calórico se sitúa entre 1.8 y 2.4 g/kg de peso corporal al día. El límite superior se aplica en déficits más agresivos o con mayor masa muscular que preservar.',
+      'El mecanismo es sencillo: en déficit calórico, el cuerpo tiene menor disponibilidad de carbohidratos y grasas como combustible. La proteína muscular puede ser catabolizada para obtener energía (gluconeogénesis). Una ingesta proteica alta actúa como señal antiCatabólica —activa mTOR, satura los aminoácidos disponibles para oxidación— y reduce esa pérdida muscular. Para un hombre de 80 kg en déficit moderado, esto significa entre 145-190 g de proteína al día: más del doble de lo que come el hombre promedio.',
+      'La distribución horaria importa tanto como el total diario. Aragon y Schoenfeld demostraron que distribuir esa proteína en 4-5 tomas de 35-45 g maximiza la síntesis proteica muscular a lo largo del día. Concentrarla en 1-2 comidas —como ocurre con dietas hipocalóricas típicas donde se suprime el desayuno— activa la síntesis solo parcialmente. Las fuentes de mayor calidad para lograr estos valores: pollo, huevos, atún, queso cottage, proteína de suero (whey) como complemento práctico.',
+    ],
+    recomendacionPractica: 'Si estás en déficit calórico y entrenas fuerza: apunta a 2 g de proteína por kilo de peso corporal al día, distribuidos en 4 comidas. Esto protege el músculo y acelera la pérdida de grasa relativa. Ajusta calorías reduciendo carbohidratos y grasas, no proteína.',
+    fuente: 'Helms et al. JISSN 2014 · Aragon & Schoenfeld JISSN 2013 · Morton et al. AJCN 2018',
+    evidencia: 'alta',
+    esEvergreen: true,
+    pesoBase: 9,
+    tagsRelevantes: ['sexo_m', 'obj_grasa', 'obj_musculo', 'recomp_candidato', 'grasa_elevada'],
+    tagsSecundarios: ['masa_baja', 'ej_fuerza', 'activo_moderado'],
   },
 ]
 
@@ -544,7 +609,16 @@ function getWeekSeed(): string {
 export function getNoticiasPersonalizadas(form: Partial<FormData>, count = 3): Noticia[] {
   const tags = getTagsPaciente(form)
   const seed = getWeekSeed()
-  const scored = NOTICIAS.map(n => {
+
+  // Exclusión por sexo: si el paciente tiene sexo definido, los artículos marcados
+  // con el sexo opuesto en tagsRelevantes se excluyen completamente del ranking
+  const pool = NOTICIAS.filter(n => {
+    if (tags.has('sexo_m') && n.tagsRelevantes.includes('sexo_f')) return false
+    if (tags.has('sexo_f') && n.tagsRelevantes.includes('sexo_m')) return false
+    return true
+  })
+
+  const scored = pool.map(n => {
     let score = n.pesoBase
     for (const t of n.tagsRelevantes)  if (tags.has(t)) score += 2
     for (const t of n.tagsSecundarios) if (tags.has(t)) score += 1
