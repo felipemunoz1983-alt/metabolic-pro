@@ -7,6 +7,7 @@ import { OBJETIVO_LABELS, formulaLabel } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
 import { WeeklyPlan } from './WeeklyPlan'
+import { MenuHoy } from './MenuHoy'
 import { ShoppingList } from './ShoppingList'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
 import { cn } from '@/lib/utils'
@@ -185,6 +186,9 @@ export function PlanResult({ result, form, onReset }: Props) {
           ))}
         </div>
       </div>
+
+      {/* Menú de hoy */}
+      <MenuHoy plan={weekPlan} nombre={form.nombre} />
 
       {/* Datos clínicos */}
       <div className="bg-white rounded-2xl border border-[#D6E3ED] p-5">
