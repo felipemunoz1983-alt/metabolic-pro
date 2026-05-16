@@ -7,6 +7,7 @@ import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@
 import type { MealOption, UltraOption } from '@/lib/foods'
 import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts } from '@/lib/foods'
 import { cn } from '@/lib/utils'
+import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
 const STEPS = ['Datos personales', 'Ejercicio', 'Objetivo', 'Digestivo', 'Suplementación', 'Alimentación', 'Antojos']
 
@@ -971,6 +972,16 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 />
                 <p className="text-xs text-[#6B7C93] mt-1">Sirve para evitar duplicar dosis y revisar interacciones.</p>
               </div>
+
+              {/* Divisor */}
+              <div className="flex items-center gap-3 pt-2">
+                <div className="flex-1 h-px bg-[#E2ECF4]" />
+                <p className="text-xs font-black text-[#0C1F2C] px-2 whitespace-nowrap">🤖 Recomendación IA de suplementos</p>
+                <div className="flex-1 h-px bg-[#E2ECF4]" />
+              </div>
+
+              {/* Módulo IA de suplementación */}
+              <SupIAPanel form={form} />
             </div>
           )}
 
