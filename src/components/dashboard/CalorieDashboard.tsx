@@ -92,69 +92,155 @@ function getMilestone(streak: number): string | null {
   return null
 }
 
-// ── Streak banner ─────────────────────────────────────────────────────────────
-function StreakBanner({ current, best }: { current: number; best: number }) {
-  const milestone = getMilestone(current)
-  if (current === 0 && best === 0) return null
+// ── Resumen semanal (replaces simple StreakBanner) ────────────────────────────
+function ResumenSemanal({
+  weekLogs,
+  streak,
+  today,
+}: {
+  weekLogs: DayLog[]
+  streak: { current: number; best: number }
+  today: string
+}) {
+  // Generate last 7 calendar days (oldest → newest, today last)
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today + 'T12:00:00')
+    d.setDate(d.getDate() - (6 - i))
+    return d.toISOString().split('T')[0]
+  })
+
+  const logByDate = Object.fromEntries(weekLogs.map(l => [l.fecha, l]))
+
+  const shortDay = (dateStr: string) => {
+    const raw = new Date(dateStr + 'T12:00:00')
+      .toLocaleDateString('es-CL', { weekday: 'short' })
+      .replace('.', '')
+    return raw.charAt(0).toUpperCase() + raw.slice(1, 3)
+  }
+
+  const daysLogged = days.filter(d => {
+    const log = logByDate[d]
+    return log && log.comidas_completadas > 0
+  }).length
+
+  const logsWithMeals = weekLogs.filter(l => l.comidas_total > 0)
+  const weekAdh = logsWithMeals.length > 0
+    ? Math.round(logsWithMeals.reduce((s, l) => s + (l.comidas_completadas / l.comidas_total) * 100, 0) / logsWithMeals.length)
+    : 0
+
+  const milestone = getMilestone(streak.current)
+  const flameColor = streak.current >= 7 ? 'text-amber-400' : streak.current >= 3 ? 'text-orange-400' : 'text-[#29ABE2]'
+  const flameBg    = streak.current >= 7 ? 'bg-amber-500/20' : streak.current >= 3 ? 'bg-orange-500/20' : 'bg-[#29ABE2]/20'
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-r from-[#0C1F2C] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-4 text-white flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4"
+      className="bg-gradient-to-br from-[#081F2D] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-5 text-white"
     >
-      {/* Row: current streak + divider + best streak (horizontal even on mobile) */}
-      <div className="flex items-center gap-4">
+      {/* ── Top row: streak + weekly stats ── */}
+      <div className="flex items-start justify-between gap-3 mb-4">
         {/* Current streak */}
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className={cn(
-            'w-10 h-10 rounded-xl flex items-center justify-center',
-            current >= 7 ? 'bg-amber-500/20' : current >= 3 ? 'bg-orange-500/20' : 'bg-white/10'
-          )}>
-            <Flame size={20} className={cn(
-              current >= 7 ? 'text-amber-400' : current >= 3 ? 'text-orange-400' : 'text-[#9EC8E0]'
-            )} />
+        <div className="flex items-center gap-3">
+          <div className={cn('w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0', flameBg)}>
+            <Flame size={22} className={flameColor} />
           </div>
           <div>
             <p className="text-2xl font-black leading-none">
-              {current}
+              {streak.current}
               <span className="text-sm font-semibold text-[#9EC8E0] ml-1">días</span>
             </p>
             <p className="text-[10px] text-[#4A7A94] font-medium">Racha actual</p>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="w-px h-10 bg-white/10 flex-shrink-0" />
-
-        {/* Best streak */}
-        {best > 0 && (
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Trophy size={16} className="text-[#29ABE2]" />
-            <div>
-              <p className="text-lg font-black leading-none">
-                {best}
-                <span className="text-xs font-semibold text-[#9EC8E0] ml-1">días</span>
-              </p>
-              <p className="text-[10px] text-[#4A7A94] font-medium">Mejor racha</p>
-            </div>
+        {/* Right stats cluster */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Days this week */}
+          <div className="text-right">
+            <p className="text-xl font-black text-[#29ABE2] leading-none">{daysLogged}<span className="text-sm font-semibold text-[#9EC8E0]">/7</span></p>
+            <p className="text-[10px] text-[#4A7A94]">esta semana</p>
           </div>
-        )}
+
+          {weekAdh > 0 && (
+            <>
+              <div className="w-px h-8 bg-white/10" />
+              <div className="text-right">
+                <p className={cn('text-xl font-black leading-none', weekAdh >= 80 ? 'text-green-400' : 'text-amber-400')}>
+                  {weekAdh}<span className="text-sm font-semibold text-[#9EC8E0]">%</span>
+                </p>
+                <p className="text-[10px] text-[#4A7A94]">adherencia</p>
+              </div>
+            </>
+          )}
+
+          {streak.best > 0 && (
+            <>
+              <div className="w-px h-8 bg-white/10" />
+              <div className="text-right">
+                <div className="flex items-center justify-end gap-1">
+                  <Trophy size={12} className="text-[#29ABE2]" />
+                  <p className="text-xl font-black leading-none">{streak.best}</p>
+                </div>
+                <p className="text-[10px] text-[#4A7A94]">mejor racha</p>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Motivation/milestone — full width below on mobile, inline on sm+ */}
-      <div className="flex-1 min-w-0 sm:border-l sm:border-white/10 sm:pl-4">
-        {milestone ? (
-          <p className="text-xs font-semibold text-[#29ABE2] leading-snug">{milestone}</p>
-        ) : current > 0 ? (
-          <p className="text-xs text-[#9EC8E0] leading-snug">
-            {current >= 7
-              ? `¡Racha increíble! Sigue así para llegar a ${current < 14 ? 14 : current < 21 ? 21 : 30} días.`
-              : `¡Vas bien! Llega a 3 días seguidos para tu primer hito.`}
-          </p>
-        ) : (
-          <p className="text-xs text-[#9EC8E0]">Registra hoy para empezar tu racha 🔥</p>
-        )}
+      {/* ── 7-day dot grid ── */}
+      <div className="flex gap-1.5">
+        {days.map(date => {
+          const log = logByDate[date]
+          const logged = !!(log && log.comidas_completadas > 0)
+          const isToday = date === today
+          const adh = log && log.comidas_total > 0
+            ? Math.round((log.comidas_completadas / log.comidas_total) * 100)
+            : 0
+
+          return (
+            <div key={date} className="flex-1 flex flex-col items-center gap-1.5">
+              {/* Top bar indicator */}
+              <div className={cn(
+                'w-full h-1.5 rounded-full',
+                logged
+                  ? adh >= 80 ? 'bg-green-400' : 'bg-amber-400'
+                  : isToday ? 'bg-[#29ABE2]/40' : 'bg-white/10'
+              )} />
+              {/* Circle */}
+              <div className={cn(
+                'w-7 h-7 rounded-full flex items-center justify-center text-sm',
+                logged
+                  ? adh >= 80 ? 'bg-green-400/20' : 'bg-amber-400/20'
+                  : isToday ? 'bg-[#29ABE2]/20 ring-1 ring-[#29ABE2]/50' : 'bg-white/5'
+              )}>
+                <span className="text-sm leading-none">
+                  {logged ? (adh >= 80 ? '✅' : '🟡') : isToday ? '📍' : '○'}
+                </span>
+              </div>
+              {/* Day label */}
+              <span className={cn(
+                'text-[9px] font-semibold',
+                isToday ? 'text-[#29ABE2]' : logged ? 'text-[#9EC8E0]' : 'text-[#4A7A94]'
+              )}>
+                {shortDay(date)}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* ── Milestone or motivation ── */}
+      <div className="mt-3 pt-3 border-t border-white/10">
+        <p className="text-xs text-[#9EC8E0] leading-snug">
+          {milestone ?? (streak.current >= 7
+            ? `¡Racha increíble! Sigue para llegar a ${streak.current < 14 ? 14 : streak.current < 21 ? 21 : 30} días.`
+            : streak.current >= 1
+            ? `¡Vas bien! Llega a 3 días seguidos para tu primer hito. 💪`
+            : `Registra hoy para empezar tu racha 🔥`
+          )}
+        </p>
       </div>
     </motion.div>
   )
@@ -332,8 +418,8 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* ── Streak banner ── */}
-      <StreakBanner current={streak.current} best={streak.best} />
+      {/* ── Resumen semanal ── */}
+      <ResumenSemanal weekLogs={weekLogs} streak={streak} today={today} />
 
       {/* ── Metric cards row ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
