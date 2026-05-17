@@ -275,6 +275,14 @@ function YogurtTypePicker({
           </p>
         </div>
       )}
+      {value === 'soprole_power' && (
+        <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          <span className="text-xs flex-shrink-0">⚠️</span>
+          <p className="text-[10px] text-amber-800">
+            <strong>Soprole Protein+ Power · Sin lactosa · Con Magnesio · Libre de sellos · Alérgenos:</strong> Elaborado en líneas que también procesan nueces.
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -747,6 +755,12 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
               <p className="text-xs text-[#6B7C93]">Selecciona una o más opciones por tiempo de comida. El plan rotará entre tus elecciones.</p>
 
+              {/* Selector tipo yogur — PRIMERO, siempre visible */}
+              <YogurtTypePicker
+                value={(form.yogurtTipo ?? 'griego') as YogurTipo}
+                onChange={t => set('yogurtTipo', t)}
+              />
+
               {/* Tendencia alimentaria */}
               <div className="border border-[#D6E3ED] rounded-xl p-4">
                 <label className="block text-sm font-semibold text-[#0C3547] mb-1">🌿 Tendencia alimentaria</label>
@@ -860,18 +874,6 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                   onChange={v => set('once', v)}
                 />
               </div>
-
-              {/* Selector tipo yogur — aparece si hay opción de yogur activa en desayuno, colación AM u once */}
-              {(
-                (form.desayunos ?? []).some(k => desayunosOpts[k]?.tieneYogur) ||
-                (form.colacionManana ?? []).some(k => colacionesOpts[k]?.tieneYogur) ||
-                (form.once ?? []).some(k => colacionesOpts[k]?.tieneYogur)
-              ) && (
-                <YogurtTypePicker
-                  value={(form.yogurtTipo ?? 'griego') as YogurTipo}
-                  onChange={t => set('yogurtTipo', t)}
-                />
-              )}
 
               {/* Cenas */}
               <div>
