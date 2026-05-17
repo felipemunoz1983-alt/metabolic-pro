@@ -236,7 +236,7 @@ export const colacionesOpts: Record<string, MealOption> = {
   wild_protein_col: {
     label: '💪 Barra Wild Protein',
     items: ['1 barra Wild Protein (45g)', '200ml agua o infusión'],
-    baseKcal: 373, p: 33, c: 39, g: 3,
+    baseKcal: 173, p: 15, c: 17, g: 5,  // fuente: etiqueta oficial 1 porción 45g (Sabor Caramelo)
     foto: USP('1490474418585-ba9bad8fd0ea'),
     tiempo: '0 min',
     pasos: [
@@ -337,17 +337,22 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   ensalada_proteica_alm: {
     label: 'Ensalada proteica de pollo + huevo + palta',
-    items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria'],
-    baseKcal: 540, p: 44, c: 24, g: 22, tieneHuevo: true, eggsDefault: 1,
+    // Macros base por porción: 150g pollo (250kcal/47g prot/0g CH/5g G) + 1 huevo (78kcal/6g P/0.6g CH/5g G)
+    // + ½ palta (120kcal/1.5g P/6g CH/11g G) + verduras (60kcal/2g P/12g CH/0.5g G)
+    // + 100g quinoa cocida (120kcal/4g P/21g CH/2g G) + 1 cda aceite oliva (90kcal/0/0/10g G)
+    // Total: 718 kcal · 60g prot · 40g CH · 34g grasa
+    items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', '100g quinoa cocida', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria', '1 cda aceite de oliva'],
+    baseKcal: 718, p: 60, c: 40, g: 34, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
-    tiempo: '20 min',
+    tiempo: '25 min',
     pasos: [
+      'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar enfriar.',
       'Pollo: sazonar con sal, pimienta y limón. Cocinar en plancha 5-6 min por lado. Dejar reposar 2 min y cortar en tiras.',
       'Huevo: cocinar a elección: duro (10 min) o pochado (agua con vinagre, 3 min). El huevo aporta proteína de alto valor biológico y vitamina D.',
       'Palta: cortar en láminas justo antes de servir para evitar oxidación. Aporta ácido oleico que mejora absorción de vitaminas liposolubles.',
-      'Verduras: lavar y secar el mix. Cortar tomate cherry, pepino y zanahoria.',
-      'Armado: disponer las verduras como base, agregar el pollo, huevo y palta. Aliñar con aceite de oliva y limón.',
+      'Verduras: lavar y secar el mix. Cortar tomate cherry, pepino y zanahoria rallada.',
+      'Armado: disponer la quinoa como base, agregar las verduras, el pollo, huevo y palta. Aliñar con aceite de oliva y limón.',
     ],
   },
   arroz_huevo_saltado: {
