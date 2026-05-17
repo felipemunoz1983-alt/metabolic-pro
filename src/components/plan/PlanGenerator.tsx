@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
-import type { MealOption, UltraOption } from '@/lib/foods'
-import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts } from '@/lib/foods'
+import type { MealOption, UltraOption, YogurTipo } from '@/lib/foods'
+import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
 import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
@@ -31,6 +31,7 @@ const defaultForm: Partial<FormData> = {
   semanas: 1,
   desayunos: ['avena_platano'],
   wheyIndicado: false,
+  yogurtTipo: 'griego' as YogurTipo,
   colacionManana: ['yogur_frutossecos_am'],
   almuerzos: ['pollo_arroz'],
   cenas: ['pollo_verduras'],
@@ -232,6 +233,48 @@ function EggsQtyPicker({
           </button>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ─── Yogurt Type Picker ───────────────────────────────────────────────────────
+function YogurtTypePicker({
+  value,
+  onChange,
+}: {
+  value: YogurTipo
+  onChange: (t: YogurTipo) => void
+}) {
+  return (
+    <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
+      <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
+      <div className="flex gap-2">
+        {(Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]).map(([key, info]) => (
+          <button
+            key={key}
+            onClick={() => onChange(key)}
+            className={cn(
+              'flex-1 py-2 px-3 rounded-xl border-2 text-left transition-all',
+              value === key
+                ? 'bg-sky-500 border-sky-500 text-white'
+                : 'border-sky-200 text-sky-800 hover:border-sky-400 bg-white'
+            )}
+          >
+            <div className="text-sm font-bold">{info.emoji} {info.label}</div>
+            <div className={cn('text-[10px] mt-0.5 font-semibold', value === key ? 'text-sky-100' : 'text-sky-600')}>
+              {info.badge}
+            </div>
+          </button>
+        ))}
+      </div>
+      {value === 'fullpro' && (
+        <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          <span className="text-xs flex-shrink-0">⚠️</span>
+          <p className="text-[10px] text-amber-800">
+            <strong>FullPro Loncoleche · Sin lactosa · Alérgenos:</strong> Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena).
+          </p>
+        </div>
+      )}
     </div>
   )
 }
@@ -783,12 +826,14 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               </div>
 
               {/* Colación mañana */}
-              <MealChips
-                label="☕ Colación de mañana"
-                pool={colacionesOpts}
-                selected={form.colacionManana ?? []}
-                onChange={v => set('colacionManana', v)}
-              />
+              <div>
+                <MealChips
+                  label="☕ Colación de mañana"
+                  pool={colacionesOpts}
+                  selected={form.colacionManana ?? []}
+                  onChange={v => set('colacionManana', v)}
+                />
+              </div>
 
               {/* Almuerzos */}
               <div>
@@ -807,12 +852,26 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               </div>
 
               {/* Once */}
-              <MealChips
-                label="🫖 Once"
-                pool={colacionesOpts}
-                selected={form.once ?? []}
-                onChange={v => set('once', v)}
-              />
+              <div>
+                <MealChips
+                  label="🫖 Once"
+                  pool={colacionesOpts}
+                  selected={form.once ?? []}
+                  onChange={v => set('once', v)}
+                />
+              </div>
+
+              {/* Selector tipo yogur — aparece si hay opción de yogur activa en desayuno, colación AM u once */}
+              {(
+                (form.desayunos ?? []).some(k => desayunosOpts[k]?.tieneYogur) ||
+                (form.colacionManana ?? []).some(k => colacionesOpts[k]?.tieneYogur) ||
+                (form.once ?? []).some(k => colacionesOpts[k]?.tieneYogur)
+              ) && (
+                <YogurtTypePicker
+                  value={(form.yogurtTipo ?? 'griego') as YogurTipo}
+                  onChange={t => set('yogurtTipo', t)}
+                />
+              )}
 
               {/* Cenas */}
               <div>

@@ -1,7 +1,7 @@
 // ── Generador de plan semanal · Centro Metabólico Pro ──
 
 import type { FormData } from './nutrition'
-import type { MealOption, UltraOption } from './foods'
+import type { MealOption, UltraOption, YogurTipo } from './foods'
 import {
   desayunosOpts,
   colacionesOpts,
@@ -9,6 +9,7 @@ import {
   cenasOpts,
   ultraProcOpts,
   getMealOption,
+  YOGUR_TIPOS,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -119,11 +120,11 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Desayuno
     const desayuno = getMealOption(desayunosPool, form.desayunos, d)
-    meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno))
+    meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno, form.yogurtTipo))
 
     // Colación mañana
     const colManana = getMealOption(colacionesOpts, form.colacionManana, d)
-    meals.push(buildMeal('colacion_manana', colManana, targetKcal))
+    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo))
 
     // Almuerzo
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
@@ -131,7 +132,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Once
     const once = getMealOption(colacionesOpts, form.once, d + 1) // offset for variety
-    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce))
+    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo))
 
     // Cena
     const cena = getMealOption(cenasPool, form.cenas, d)
@@ -186,23 +187,57 @@ function buildUltraMeal(opt: UltraOption): DayMeal {
   }
 }
 
-function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number, eggsQty?: number): DayMeal {
+function buildMeal(
+  tipo: DayMeal['tipo'],
+  option: MealOption,
+  targetKcal: number,
+  eggsQty?: number,
+  yogurTipo?: YogurTipo,
+): DayMeal {
   const pct = PCT[tipo]
   const kcal = Math.round(targetKcal * pct)
 
   // Escalar macros proporcionalmente al kcal real vs base
   const scale = kcal / (option.baseKcal || kcal)
-  const p = Math.round(option.p * scale)
-  const c = Math.round(option.c * scale)
-  const g = Math.round(option.g * scale)
+  let p = Math.round(option.p * scale)
+  let c = Math.round(option.c * scale)
+  let g = Math.round(option.g * scale)
 
   // Sustituir cantidad de huevos si el usuario eligió una cantidad distinta
-  let items = option.items
+  let items = [...option.items]
   if (eggsQty !== undefined && option.tieneHuevo) {
     const huevoSingular = eggsQty === 1 ? 'huevo' : 'huevos'
     items = items.map(item =>
       item.replace(/^\d+(-\d+)?\s+(huevo(s)?)/i, `${eggsQty} ${huevoSingular}`)
     )
+  }
+
+  // Sustituir yogur si la opción tiene yogur y el usuario eligió un tipo específico
+  let alergenosNota = option.alergenosNota
+  if (option.tieneYogur && yogurTipo && yogurTipo !== 'griego') {
+    const yogurInfo = YOGUR_TIPOS[yogurTipo]
+    // Reemplazar cualquier mención de yogur griego / yogur alto en proteínas en los items
+    items = items.map(item =>
+      item
+        .replace(/150g yogur griego(?: natural)?(?:\s+sin azúcar)?/i, yogurInfo.item)
+        .replace(/150g yogur alto en proteínas/i, yogurInfo.item)
+        .replace(/yogur griego/i, yogurInfo.label)
+    )
+    // Ajustar label de la comida para reflejar el cambio
+    // Los macros del FullPro son distintos: recalcular delta con yogur griego base (130kcal/17p/6c/5g)
+    const gBaseMacros = YOGUR_TIPOS['griego']
+    const deltaP = yogurInfo.p - gBaseMacros.p  // +1g prot
+    const deltaC = yogurInfo.c - gBaseMacros.c  // +2g carbs
+    const deltaG = yogurInfo.g - gBaseMacros.g  // -4g grasa
+    p = Math.max(0, p + Math.round(deltaP * scale))
+    c = Math.max(0, c + Math.round(deltaC * scale))
+    g = Math.max(0, g + Math.round(deltaG * scale))
+    // Agregar nota de alérgenos del yogur elegido
+    if (yogurInfo.alergenosNota) {
+      alergenosNota = alergenosNota
+        ? `${alergenosNota}\n${yogurInfo.alergenosNota}`
+        : yogurInfo.alergenosNota
+    }
   }
 
   return {
@@ -218,6 +253,6 @@ function buildMeal(tipo: DayMeal['tipo'], option: MealOption, targetKcal: number
     tiempo: option.tiempo,
     pasos: option.pasos,
     sellos: option.sellos,
-    alergenosNota: option.alergenosNota,
+    alergenosNota,
   }
 }

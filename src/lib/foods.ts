@@ -21,7 +21,33 @@ export interface MealOption {
   tieneHuevo?: boolean      // muestra selector de cantidad de huevos en PlanGenerator
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
+  tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
 }
+
+// ─── Tipos de yogur disponibles ───────────────────────────────────────────────
+export const YOGUR_TIPOS = {
+  griego: {
+    label: 'Yogur griego natural',
+    emoji: '🥛',
+    // item que se sustituye en la receta (150g)
+    item: '150g yogur griego natural sin azúcar',
+    // macros por 150g (valores de referencia para ajuste)
+    kcal: 130, p: 17, c: 6, g: 5,
+    badge: '17g prot · Clásico',
+    alergenosNota: undefined as string | undefined,
+  },
+  fullpro: {
+    label: 'FullPro Protein Loncoleche',
+    emoji: '💪',
+    item: 'Yogur FullPro Protein Loncoleche 150g (frutilla)',
+    // Fuente: etiqueta oficial 150g — 112.5 kcal · 18g prot · 7.5g CH · 1.2g G · sin lactosa
+    kcal: 113, p: 18, c: 8, g: 1,
+    badge: '18g prot · Sin lactosa · Bajo en grasa',
+    alergenosNota: '⚠️ FullPro Loncoleche · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena).',
+  },
+} as const
+
+export type YogurTipo = keyof typeof YOGUR_TIPOS
 
 export interface UltraOption {
   label: string
@@ -97,6 +123,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Yogur griego + berries + semillas',
     items: ['150g yogur griego natural', '½ taza berries (arándanos, frambuesas o frutillas)', '1 cda chía o linaza', '10-15 almendras naturales'],
     baseKcal: 380, p: 20, c: 50, g: 8,
+    tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '5 min',
     pasos: [
@@ -126,6 +153,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Chía pudding + yogur proteico',
     items: ['2 cdas semillas de chía (~20g)', '150g yogur alto en proteínas', '1 fruta a elección', 'Canela o vainilla sin azúcar'],
     baseKcal: 430, p: 24, c: 58, g: 10,
+    tieneYogur: true,
     foto: IMG + 'chia_pudding.jfif',
     tiempo: '5 min + reposo 2h',
     pasos: [
@@ -172,6 +200,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     label: 'Yogur griego + frutos secos',
     items: ['150g yogur griego sin azúcar', '20g mix frutos secos (nueces, almendras)', '1 fruta pequeña'],
     baseKcal: 230, p: 14, c: 22, g: 10,
+    tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '3 min',
     pasos: [

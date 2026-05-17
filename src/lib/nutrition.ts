@@ -60,6 +60,8 @@ export interface FormData {
   // ── Suplementación indicada ──
   /** true = el profesional indicó proteína en polvo (whey u otra). Habilita opciones con scoop en el plan. */
   wheyIndicado?: boolean
+  /** Tipo de yogur seleccionado por el paciente. 'griego' = yogur griego natural, 'fullpro' = FullPro Protein Loncoleche (sin lactosa). */
+  yogurtTipo?: 'griego' | 'fullpro'
 }
 
 export interface Macros {
