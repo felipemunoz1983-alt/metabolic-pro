@@ -246,6 +246,22 @@ export const colacionesOpts: Record<string, MealOption> = {
     ],
     alergenosNota: '⚠️ Wild Protein · Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces, sulfitos.',
   },
+  protein_bite_bw_col: {
+    label: '🍫 Protein Bite Black & White',
+    items: ['1 barra Protein Bite Black & White (55g)', '200ml agua o infusión'],
+    // Fuente: etiqueta oficial 1 porción 55g — Your Goal Smart Nutrition
+    // Energía: 161 kcal · Proteínas: 21g · Carbs disponibles: 2.6g · Grasa: 7.4g · Fibra: 3.2g
+    baseKcal: 161, p: 21, c: 3, g: 7,
+    foto: 'https://hausnusse.cl/cdn/shop/files/Black2.png?v=1692795895',
+    tiempo: '0 min',
+    pasos: [
+      'Consumir directamente como colación portátil de alta proteína.',
+      'Sin azúcar añadida. Baja en carbohidratos disponibles (2.6g/porción).',
+      'Ideal como snack de media mañana o media tarde en planes de pérdida de grasa e hipertrofia.',
+      'Refrigerar en verano para mejor textura del chocolate blanco.',
+    ],
+    alergenosNota: '⚠️ Protein Bite · Contiene leche, soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina (sucralosa).',
+  },
   moroketo_col: {
     label: '🍪 Galletón Moroketo Proteína',
     items: ['1 galletón Moroketo (45g)', 'Té o infusión sin azúcar'],

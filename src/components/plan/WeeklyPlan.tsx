@@ -133,6 +133,7 @@ function MealRow({ meal }: { meal: DayMeal }) {
             alt={meal.label}
             className="w-full h-full object-cover object-center transition-transform duration-300 hover:scale-105"
             loading="lazy"
+            referrerPolicy="no-referrer"
           />
         </div>
       )}
