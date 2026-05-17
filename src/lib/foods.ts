@@ -262,6 +262,23 @@ export const colacionesOpts: Record<string, MealOption> = {
     ],
     alergenosNota: '⚠️ Protein Bite · Contiene leche, soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina (sucralosa).',
   },
+  twentys_hazelnut_col: {
+    label: "🔵 Twenty's Hazelnut Praline",
+    items: ["1 barra Twenty's Hazelnut Praline (60g)", '200ml agua o infusión'],
+    // Fuente: etiqueta oficial 1 porción 60g — Your Goal Smart Nutrition
+    // Energía: 152 kcal · Proteínas: 19.4g · Carbs disp.: 5.5g · Grasa: 5.8g · Fibra: 14.3g
+    baseKcal: 152, p: 19, c: 6, g: 6,
+    foto: 'https://www.mixgreen.cl/cdn/shop/files/13363a.jpg?v=1724272525',
+    tiempo: '0 min',
+    pasos: [
+      'Consumir directamente como colación portátil de alta proteína y fibra.',
+      '19g de proteína de leche + 14g de fibra dietética por barra — alta saciedad.',
+      'Sin azúcar añadida · Sin gluten · Low carb garantizado.',
+      'Sabor avellana con cobertura de chocolate blanco y nibs de cacao crujientes.',
+      'Ideal para planes hipocalóricos, hiperproteicos o bajos en carbohidratos.',
+    ],
+    alergenosNota: '⚠️ Twenty\'s · Contiene leche, soya (lecitinas), avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.',
+  },
   moroketo_col: {
     label: '🍪 Galletón Moroketo Proteína',
     items: ['1 galletón Moroketo (45g)', 'Té o infusión sin azúcar'],

@@ -860,8 +860,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
 
               {/* Disclaimer barras proteicas */}
               {(
-                (form.colacionManana ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col'].includes(k)) ||
-                (form.once ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col'].includes(k))
+                (form.colacionManana ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col','twentys_hazelnut_col'].includes(k)) ||
+                (form.once ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col','twentys_hazelnut_col'].includes(k))
               ) && (
                 <div className="space-y-2">
                   {(form.colacionManana ?? []).concat(form.once ?? []).includes('wild_protein_col') && (
@@ -874,6 +874,12 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                     <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
                       <span className="text-base flex-shrink-0">⚠️</span>
                       <p className="text-xs text-amber-800"><strong>Protein Bite Black &amp; White · Alérgenos:</strong> Contiene leche y soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina.</p>
+                    </div>
+                  )}
+                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('twentys_hazelnut_col') && (
+                    <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">⚠️</span>
+                      <p className="text-xs text-amber-800"><strong>Twenty&apos;s Hazelnut Praline · Alérgenos:</strong> Contiene leche, soya (lecitinas) y avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.</p>
                     </div>
                   )}
                   {(form.colacionManana ?? []).concat(form.once ?? []).includes('moroketo_col') && (
