@@ -214,6 +214,7 @@ function buildMeal(
 
   // Sustituir yogur si la opción tiene yogur y el usuario eligió un tipo específico
   let alergenosNota = option.alergenosNota
+  let foto = option.foto
   if (option.tieneYogur && yogurTipo && yogurTipo !== 'griego') {
     const yogurInfo = YOGUR_TIPOS[yogurTipo]
     // Reemplazar cualquier mención de yogur griego / yogur alto en proteínas en los items
@@ -223,15 +224,18 @@ function buildMeal(
         .replace(/150g yogur alto en proteínas/i, yogurInfo.item)
         .replace(/yogur griego/i, yogurInfo.label)
     )
-    // Ajustar label de la comida para reflejar el cambio
-    // Los macros del FullPro son distintos: recalcular delta con yogur griego base (130kcal/17p/6c/5g)
+    // Ajustar macros: delta FullPro vs griego base (17p/6c/5g → 18p/8c/1g)
     const gBaseMacros = YOGUR_TIPOS['griego']
-    const deltaP = yogurInfo.p - gBaseMacros.p  // +1g prot
-    const deltaC = yogurInfo.c - gBaseMacros.c  // +2g carbs
-    const deltaG = yogurInfo.g - gBaseMacros.g  // -4g grasa
+    const deltaP = yogurInfo.p - gBaseMacros.p
+    const deltaC = yogurInfo.c - gBaseMacros.c
+    const deltaG = yogurInfo.g - gBaseMacros.g
     p = Math.max(0, p + Math.round(deltaP * scale))
     c = Math.max(0, c + Math.round(deltaC * scale))
     g = Math.max(0, g + Math.round(deltaG * scale))
+    // Sustituir foto por la foto oficial del yogur elegido (si existe)
+    if ('foto' in yogurInfo && yogurInfo.foto) {
+      foto = yogurInfo.foto as string
+    }
     // Agregar nota de alérgenos del yogur elegido
     if (yogurInfo.alergenosNota) {
       alergenosNota = alergenosNota
@@ -249,7 +253,7 @@ function buildMeal(
     p,
     c,
     g,
-    foto: option.foto,
+    foto,
     tiempo: option.tiempo,
     pasos: option.pasos,
     sellos: option.sellos,

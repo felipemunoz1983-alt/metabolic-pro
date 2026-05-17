@@ -44,6 +44,7 @@ export const YOGUR_TIPOS = {
     kcal: 113, p: 18, c: 8, g: 1,
     badge: '18g prot · Sin lactosa · Bajo en grasa',
     alergenosNota: '⚠️ FullPro Loncoleche · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena).',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/485106-900-900?width=900&height=900&aspect=true',
   },
 } as const
 
