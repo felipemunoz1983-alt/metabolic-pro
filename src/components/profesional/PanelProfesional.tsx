@@ -1217,6 +1217,7 @@ export function PanelProfesional({
   const supabase = createClient()
   const [patients, setPatients] = useState<PatientRow[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<PatientRow | null>(null)
   const [filter, setFilter] = useState<'todos' | 'premium' | 'activos' | 'alerta'>('todos')
@@ -1229,15 +1230,22 @@ export function PanelProfesional({
 
   async function loadPatients() {
     setLoading(true)
+    setLoadError(null)
 
     // 1. Load patients
-    const { data: profiles } = await supabase
+    const { data: profiles, error: profilesError } = await supabase
       .from('profiles')
       .select('*')
       .eq('professional_id', professionalId)
       .eq('role', 'patient')
       .order('nombre', { ascending: true })
 
+    if (profilesError) {
+      console.error('[PanelProfesional] Error loading patients:', profilesError)
+      setLoadError(`Error al cargar pacientes: ${profilesError.message} (code: ${profilesError.code})`)
+      setLoading(false)
+      return
+    }
     if (!profiles) { setLoading(false); return }
 
     // 2. Batch-fetch plan counts for all patients in one query
@@ -1495,6 +1503,27 @@ export function PanelProfesional({
         </div>
       )}
 
+      {/* Error banner — visible cuando Supabase devuelve error (RLS, sesión expirada, etc.) */}
+      {loadError && (
+        <div className="mb-4 flex gap-3 bg-red-50 border border-red-200 rounded-xl p-4">
+          <AlertCircle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="text-sm font-bold text-red-700 mb-0.5">Error al cargar pacientes</p>
+            <p className="text-xs text-red-600">{loadError}</p>
+            <p className="text-xs text-red-500 mt-1">
+              Posibles causas: sesión expirada, políticas RLS no aplicadas, o cuenta sin rol profesional.
+              Intenta cerrar sesión y volver a entrar. Si persiste, contacta soporte.
+            </p>
+            <button
+              onClick={loadPatients}
+              className="mt-2 text-xs font-bold text-red-700 underline"
+            >
+              Reintentar
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -1516,7 +1545,7 @@ export function PanelProfesional({
       )}
 
       {/* Empty state */}
-      {!loading && filtered.length === 0 && (
+      {!loading && !loadError && filtered.length === 0 && (
         <div className="text-center py-16">
           <div className="w-16 h-16 bg-[#EAF4FB] rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Users size={28} className="text-[#29ABE2]" />
@@ -1524,9 +1553,15 @@ export function PanelProfesional({
           {patients.length === 0 ? (
             <>
               <h3 className="text-base font-bold text-[#0C1F2C] mb-2">Sin pacientes aún</h3>
-              <p className="text-sm text-[#8BA5BE] max-w-xs mx-auto">
-                Los pacientes que se registren con tu código profesional aparecerán aquí.
+              <p className="text-sm text-[#8BA5BE] max-w-xs mx-auto mb-5">
+                Usa el botón <strong className="text-[#0C1F2C]">Agregar</strong> para generar un link de invitación y compartirlo con tus pacientes.
               </p>
+              <button
+                onClick={() => setShowModal(true)}
+                className="inline-flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:opacity-90 transition"
+              >
+                <UserPlus size={14} /> Agregar primer paciente
+              </button>
             </>
           ) : (
             <>

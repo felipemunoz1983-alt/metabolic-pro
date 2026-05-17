@@ -435,6 +435,24 @@ export default function PacientePage() {
                 <div className="px-4 py-4 md:px-8 md:py-8 max-w-3xl mx-auto">
                   {result && formData ? (
                     <>
+                      {/* Botón "Nueva planificación" prominente para profesionales */}
+                      {profile?.role === 'professional' && (
+                        <div className="mb-4 flex items-center justify-between bg-[#EAF4FB] border border-[#C6E4F4] rounded-2xl px-4 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-lg">🧑‍⚕️</span>
+                            <div>
+                              <p className="text-xs font-bold text-[#0C3547]">Viendo tu plan personal</p>
+                              <p className="text-[10px] text-[#6B8FA8]">Para crear un plan de paciente ve a Mis Pacientes</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => { setResult(null); setFormData(null) }}
+                            className="flex-shrink-0 text-xs font-bold bg-[#29ABE2] text-white px-4 py-2 rounded-xl hover:bg-[#1a8fc2] transition"
+                          >
+                            + Nueva planificación
+                          </button>
+                        </div>
+                      )}
                       {/* Noticias personalizadas — ANTES del plan para visibilidad inmediata */}
                       <div className="mb-6">
                         <NoticiasHub form={formData} />
