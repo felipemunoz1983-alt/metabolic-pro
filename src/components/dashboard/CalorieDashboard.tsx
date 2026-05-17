@@ -518,24 +518,24 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           </div>
 
           {/* Peso + save */}
-          <div className="flex gap-3 mt-4">
-            <div className="flex items-center gap-2 flex-1 border border-[#E2ECF4] rounded-xl px-3 py-2.5">
+          <div className="flex flex-col sm:flex-row gap-2.5 mt-4">
+            <div className="flex items-center gap-2 flex-1 border border-[#E2ECF4] rounded-xl px-3 py-2.5 bg-white">
               <Scale size={14} className="text-[#8BA5BE] flex-shrink-0" />
               <input
                 type="number" step="0.1" value={peso}
                 onChange={e => setPeso(e.target.value)}
-                placeholder="Peso corporal (kg)"
-                className="flex-1 text-sm text-[#0C1F2C] bg-transparent outline-none placeholder:text-[#C8D8E4]"
+                placeholder="Peso (kg)"
+                className="flex-1 min-w-0 text-sm text-[#0C1F2C] bg-transparent outline-none placeholder:text-[#C8D8E4]"
               />
             </div>
             <button
               onClick={handleSave} disabled={saving}
               className={cn(
-                'px-4 py-2.5 rounded-xl font-bold text-sm text-white transition-all flex-shrink-0',
-                saved ? 'bg-green-500' : 'bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] hover:opacity-90'
+                'w-full sm:w-auto px-5 py-2.5 rounded-xl font-bold text-sm text-white transition-all text-center',
+                saved ? 'bg-green-500' : 'bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] hover:opacity-90 disabled:opacity-50'
               )}
             >
-              {saved ? '✅ Guardado' : saving ? '...' : 'Guardar día'}
+              {saved ? '✅ Guardado' : saving ? 'Guardando...' : 'Guardar día'}
             </button>
           </div>
         </div>
