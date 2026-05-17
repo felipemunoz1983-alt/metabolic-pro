@@ -46,6 +46,16 @@ export const YOGUR_TIPOS = {
     alergenosNota: '⚠️ FullPro Loncoleche · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena).',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/485106-900-900?width=900&height=900&aspect=true',
   },
+  soprole_power: {
+    label: 'Soprole Protein+ Power',
+    emoji: '⚡',
+    item: 'Yogur Soprole Protein+ Power 155g (frutilla)',
+    // Fuente: etiqueta oficial 155g — 130 kcal · 16g prot · 11g CH · 2g G · sin lactosa · sin gluten · libre de sellos
+    kcal: 130, p: 16, c: 11, g: 2,
+    badge: '16g prot · Sin lactosa · Con Magnesio · Libre sellos',
+    alergenosNota: '⚠️ Soprole Protein+ Power · Elaborado en líneas que también procesan nueces.',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/364428-900-900?width=900&height=900&aspect=true',
+  },
 } as const
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
