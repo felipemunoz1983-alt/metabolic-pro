@@ -115,17 +115,27 @@ export function MenuHoy({ plan, nombre }: Props) {
 
                 <div className="flex-1 min-w-0">
                   {/* Label + macros */}
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className={cn('text-xs font-black uppercase tracking-wide', cfg.text)}>
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className={cn('text-xs font-black uppercase tracking-wide flex-shrink-0', cfg.text)}>
                       {cfg.label}
                     </span>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', cfg.badge)}>
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap', cfg.badge)}>
                         {meal.kcal} kcal
                       </span>
-                      <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', cfg.badge)}>
-                        {meal.p}g prot
+                      <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap', cfg.badge)}>
+                        {meal.p}g P
                       </span>
+                      {meal.c > 0 && (
+                        <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap', cfg.badge)}>
+                          {meal.c}g CH
+                        </span>
+                      )}
+                      {meal.g > 0 && (
+                        <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap', cfg.badge)}>
+                          {meal.g}g G
+                        </span>
+                      )}
                     </div>
                   </div>
 
