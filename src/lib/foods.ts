@@ -30,6 +30,42 @@ export interface MealOption {
   altoFODMAP?: boolean
   /** true = alta en grasas saturadas / frituras — se filtra de cenas si hay reflujo frecuente */
   altaGrasa?: boolean
+  /** Estacionalidad: 'frio' para sopas/cremas (preferida en otoño-invierno),
+   *  'calor' para bowls/ensaladas frías (preferida en primavera-verano). undefined = todo año. */
+  estacional?: 'frio' | 'calor'
+  /** Dificultad culinaria. Si paciente declara principiante, se ocultan 'avanzado'. */
+  dificultad?: 'facil' | 'intermedio' | 'avanzado'
+  /** Duración numérica en minutos para filtrar por tiempoCocinar del paciente.
+   *  Si no se define, se intenta parsear desde `tiempo` (string como "20 min"). */
+  tiempoMin?: number
+}
+
+// ─── Helpers de contexto temporal ─────────────────────────────────────────────
+/** Estación actual en Chile (hemisferio sur).
+ *  - frio: abril a septiembre (otoño + invierno)
+ *  - calor: octubre a marzo (primavera + verano) */
+export function getCurrentSeason(): 'frio' | 'calor' {
+  const month = new Date().getMonth() + 1 // 1-12
+  return month >= 4 && month <= 9 ? 'frio' : 'calor'
+}
+
+/** Parser de tiempo "20 min" → 20. Devuelve Infinity si no puede parsear. */
+export function parseTiempoMin(opt: MealOption): number {
+  if (opt.tiempoMin !== undefined) return opt.tiempoMin
+  if (!opt.tiempo) return 30 // default razonable
+  const match = opt.tiempo.match(/(\d+)/)
+  return match ? Number(match[1]) : 30
+}
+
+/** Convierte el rango UI "menos_15" / "15_30" / "30_60" / "mas_60" a minutos máximos */
+export function tiempoCocinarMax(t: string | undefined): number {
+  switch (t) {
+    case 'menos_15': return 15
+    case '15_30': return 30
+    case '30_60': return 60
+    case 'mas_60': return Infinity
+    default: return 30
+  }
 }
 
 // ─── Tipos de yogur disponibles ───────────────────────────────────────────────
@@ -488,6 +524,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
+    estacional: 'calor',
     tiempo: '25 min',
     pasos: [
       'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar enfriar.',
@@ -571,6 +608,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'cebolla_ajo'],
     altoFODMAP: true,
+    estacional: 'calor',   // bowl con vegetales asados — versátil pero ideal templado
     pasos: [
       'Vegetales: cortar en trozos medianos, mezclar con aceite, sal y comino. Asar a 200°C por 20-25 min hasta caramelizar.',
       'Garbanzos: si son de lata, enjuagar bien. Si son secos, remojar 12h y hervir 45 min. Los garbanzos aportan 15g de proteína por 100g.',
@@ -676,6 +714,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
+    estacional: 'calor',
     tiempo: '15 min',
     pasos: [
       'Atún: escurrir bien la lata. El atún en agua aporta 26g de proteína por 100g con solo 1g de grasa.',
@@ -724,6 +763,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    estacional: 'frio',   // sopa caliente — preferida en otoño/invierno
     tiempo: '35 min',
     pasos: [
       'Caldo: calentar 1 litro de caldo de pollo en una olla grande a fuego medio.',
@@ -742,6 +782,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'gluten', 'cebolla_ajo'],  // pan integral
     altoFODMAP: true,
+    estacional: 'frio',
     pasos: [
       'Sofrito: saltear cebolla, ajo y zanahoria en una olla con pizca de aceite 3-4 min.',
       'Tomate: agregar tomate picado, cocinar 5 min hasta ablandar.',
@@ -759,6 +800,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano'],
     contiene: ['legumbres', 'huevo'],
     altoFODMAP: true,
+    estacional: 'calor',   // ensalada fría — ideal primavera/verano
     pasos: [
       'Huevos: cocinar duros 10 min en agua hirviendo. Pelar y cortar en mitades.',
       'Garbanzos: si son de lata, enjuagar y escurrir. Secar levemente para que absorban el aliño.',
@@ -792,6 +834,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres'],
     altoFODMAP: true,
+    estacional: 'calor',
     pasos: [
       'Lentejas: usar cocidas (lata o cocción previa). Escurrir y sazonar con sal, comino y limón.',
       'Verduras: cortar tomate cherry por la mitad, rodajas de pepino y lavar la rúcula.',

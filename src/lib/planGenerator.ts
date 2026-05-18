@@ -12,6 +12,9 @@ import {
   YOGUR_TIPOS,
   SNACK_NUTREVO_TIPOS,
   BARRA_PROTEINA_TIPOS,
+  getCurrentSeason,
+  parseTiempoMin,
+  tiempoCocinarMax,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -56,15 +59,9 @@ export interface WeekPlan {
 // ─── Constantes ───────────────────────────────────────────────────────────────
 const DIAS_ES = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
 
-/** % de las kcal diarias por comida (ultra = 0 porque su kcal ya viene fija) */
-const PCT: Record<DayMeal['tipo'], number> = {
-  desayuno:        0.25,
-  colacion_manana: 0.10,
-  almuerzo:        0.35,
-  once:            0.15,
-  cena:            0.15,
-  ultra:           0,
-}
+// Nota: PCT (% fijo por slot) fue reemplazado por slotPct dinámico que se recalcula
+// según `comidasPorDia` en cada llamada a generarPlan(). Ver buildMealSlots() y slotPct
+// dentro de generarPlan() para la nueva lógica.
 
 const MEAL_ICONS: Record<DayMeal['tipo'], string> = {
   desayuno:        '🌅',
@@ -85,6 +82,69 @@ function filtrarPorWhey<T extends { requiereWhey?: boolean }>(
     Object.entries(pool).filter(([, opt]) => !opt.requiereWhey)
   )
   return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
+// ─── Filtrar pool por tiempo disponible para cocinar ─────────────────────────
+function filtrarPorTiempo(
+  pool: Record<string, MealOption>,
+  tiempoCocinar: string | undefined
+): Record<string, MealOption> {
+  const max = tiempoCocinarMax(tiempoCocinar)
+  if (max === Infinity) return pool
+  const filtered = Object.fromEntries(
+    Object.entries(pool).filter(([, opt]) => parseTiempoMin(opt) <= max)
+  )
+  // Fallback: si el filtro deja vacío, devuelvo todo (no romper el plan)
+  return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
+// ─── Filtrar pool por habilidad culinaria ────────────────────────────────────
+function filtrarPorHabilidad(
+  pool: Record<string, MealOption>,
+  habilidad: string | undefined
+): Record<string, MealOption> {
+  if (habilidad !== 'principiante') return pool
+  const filtered = Object.fromEntries(
+    Object.entries(pool).filter(([, opt]) => opt.dificultad !== 'avanzado')
+  )
+  return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
+// ─── Ordenar pool con prioridad estacional ───────────────────────────────────
+function priorizarPorEstacion(
+  pool: Record<string, MealOption>,
+): Record<string, MealOption> {
+  const season = getCurrentSeason()
+  const entries = Object.entries(pool)
+  // Sort: items que matchean la estación van primero, off-season van al final
+  entries.sort(([, a], [, b]) => {
+    const aMatch = a.estacional === season ? -1 : a.estacional && a.estacional !== season ? 1 : 0
+    const bMatch = b.estacional === season ? -1 : b.estacional && b.estacional !== season ? 1 : 0
+    return aMatch - bMatch
+  })
+  return Object.fromEntries(entries)
+}
+
+/** Construye lista de slots de comida según comidasPorDia + horario de entrenamiento.
+ *  - 3 comidas: solo desayuno + almuerzo + cena
+ *  - 4 comidas: + 1 colación (AM si entrena AM, once si entrena PM/noche o no entrena)
+ *  - 5 comidas: + colación mañana + once (default)
+ *  - 6 comidas: + colación mañana + once + ultra (snack adicional vespertino) */
+function buildMealSlots(
+  comidasPorDia: number,
+  horarioEntrenamiento: string | undefined,
+): Array<'desayuno' | 'colacion_manana' | 'almuerzo' | 'once' | 'cena' | 'ultra_extra'> {
+  const n = comidasPorDia || 5
+  const slots: Array<'desayuno' | 'colacion_manana' | 'almuerzo' | 'once' | 'cena' | 'ultra_extra'> = []
+  slots.push('desayuno')
+  if (n >= 5) slots.push('colacion_manana')
+  else if (n === 4 && horarioEntrenamiento === 'AM') slots.push('colacion_manana')
+  slots.push('almuerzo')
+  if (n >= 5) slots.push('once')
+  else if (n === 4 && horarioEntrenamiento !== 'AM') slots.push('once')
+  slots.push('cena')
+  if (n === 6) slots.push('ultra_extra')   // 6ta comida (snack o ultra controlado)
+  return slots
 }
 
 // ─── Filtrar pool por tendencia alimentaria ───────────────────────────────────
@@ -110,9 +170,32 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const totalDias = semanas * 7
   const ultraDias = form.ultraDias ?? 2
   const tendencia = form.tendencia ?? 'omnivoro'
-  const desayunosPool = filtrarPorWhey(desayunosOpts, form.wheyIndicado)
-  const almuerzosPool = filtrarPorTendencia(almuerzosOpts, tendencia)
-  const cenasPool     = filtrarPorTendencia(cenasOpts,     tendencia)
+
+  // Pipeline de filtrado: tendencia → whey → tiempo → habilidad → priorización estacional
+  const tiempo = form.tiempoCocinar
+  const habilidad = form.habilidadCulinaria
+  const desayunosPool = priorizarPorEstacion(
+    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorWhey(desayunosOpts, form.wheyIndicado), tiempo), habilidad)
+  )
+  const almuerzosPool = priorizarPorEstacion(
+    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorTendencia(almuerzosOpts, tendencia), tiempo), habilidad)
+  )
+  const cenasPool = priorizarPorEstacion(
+    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorTendencia(cenasOpts, tendencia), tiempo), habilidad)
+  )
+
+  // Slots dinámicos según comidasPorDia (3/4/5/6)
+  const slots = buildMealSlots(form.comidasPorDia ?? 5, form.horarioEntrenamiento)
+
+  // Recalcular % kcal por comida para que sume ~100% según slots presentes
+  // Pesos base: desayuno 25, colacion 10, almuerzo 35, once 15, cena 15, ultra_extra 5
+  const baseWeights: Record<string, number> = {
+    desayuno: 25, colacion_manana: 10, almuerzo: 35, once: 15, cena: 15, ultra_extra: 5,
+  }
+  const totalWeight = slots.reduce((sum, s) => sum + (baseWeights[s] ?? 0), 0)
+  const slotPct: Record<string, number> = {}
+  slots.forEach(s => { slotPct[s] = (baseWeights[s] ?? 0) / totalWeight })
+
   const dias: DayPlan[] = []
 
   for (let d = 0; d < totalDias; d++) {
@@ -122,43 +205,49 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     const meals: DayMeal[] = []
 
-    // Desayuno
-    const desayuno = getMealOption(desayunosPool, form.desayunos, d)
-    meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno, form.yogurtTipo))
+    // Recorrer los slots planificados según comidasPorDia
+    for (const slot of slots) {
+      // kcal proporcional al peso recalculado del slot
+      const pct = slotPct[slot] ?? 0
+      const slotKcal = Math.round(targetKcal * pct)
 
-    // Colación mañana — slot AM; snack/barra se inyectan solo si el paciente entrena AM
-    const colMananaPool = buildColacionPool(form.colacionManana, form, 'AM')
-    const colManana = colMananaPool[d % colMananaPool.length]
-    const colMananaMeal = buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo)
-    // Marcar timing peri-entreno: si entrena AM, esta colación es post-entreno
-    if (form.horarioEntrenamiento === 'AM') colMananaMeal.timingEntreno = 'post_entreno'
-    meals.push(colMananaMeal)
+      if (slot === 'desayuno') {
+        const desayuno = getMealOption(desayunosPool, form.desayunos, d)
+        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo))
+      } else if (slot === 'colacion_manana') {
+        const pool = buildColacionPool(form.colacionManana, form, 'AM')
+        const opt = pool[d % pool.length]
+        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo)
+        if (form.horarioEntrenamiento === 'AM') m.timingEntreno = 'post_entreno'
+        meals.push(m)
+      } else if (slot === 'almuerzo') {
+        const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty))
+      } else if (slot === 'once') {
+        const pool = buildColacionPool(form.once, form, 'PM')
+        const opt = pool[(d + 1) % pool.length]
+        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo)
+        if (form.horarioEntrenamiento === 'PM') m.timingEntreno = 'post_entreno'
+        else if (form.horarioEntrenamiento === 'noche') m.timingEntreno = 'pre_entreno'
+        meals.push(m)
+      } else if (slot === 'cena') {
+        const cena = getMealOption(cenasPool, form.cenas, d)
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena))
+      } else if (slot === 'ultra_extra') {
+        // 6ta comida: colación adicional vespertina con snack/barra si opt-in
+        const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
+        const opt = extraPool[(d + 2) % extraPool.length]
+        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo))
+      }
+    }
 
-    // Almuerzo
-    const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-    meals.push(buildMeal('almuerzo', almuerzo, targetKcal, form.eggsQty))
-
-    // Once — slot PM; snack/barra se inyectan solo si el paciente entrena PM o noche
-    const oncePool = buildColacionPool(form.once, form, 'PM')
-    const once = oncePool[(d + 1) % oncePool.length] // offset para variedad vs. colación mañana
-    const onceMeal = buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo)
-    // Marcar timing peri-entreno: si entrena PM, once es post-entreno; si entrena noche, once es pre-entreno
-    if (form.horarioEntrenamiento === 'PM') onceMeal.timingEntreno = 'post_entreno'
-    else if (form.horarioEntrenamiento === 'noche') onceMeal.timingEntreno = 'pre_entreno'
-    meals.push(onceMeal)
-
-    // Cena
-    const cena = getMealOption(cenasPool, form.cenas, d)
-    meals.push(buildMeal('cena', cena, targetKcal, form.eggsQtyCena))
-
-    // Ultra procesado (solo en los N primeros días de cada semana)
+    // Ultra procesado planificado (solo en los N primeros días de cada semana — independiente de slots)
     const diaEnSemana = diaSemana + 1  // 1–7
     const ultraKeys = form.ultraProcesados ?? []
     if (ultraKeys.length > 0 && diaEnSemana <= ultraDias) {
       const uKey = ultraKeys[(d) % ultraKeys.length]
       const uOpt = ultraProcOpts[uKey]
       if (uOpt) meals.push(buildUltraMeal(uOpt))
-
     }
 
     const totalKcal = meals.reduce((s, m) => s + m.kcal, 0)
@@ -203,12 +292,11 @@ function buildUltraMeal(opt: UltraOption): DayMeal {
 function buildMeal(
   tipo: DayMeal['tipo'],
   option: MealOption,
-  targetKcal: number,
+  finalKcal: number,
   eggsQty?: number,
   yogurTipo?: YogurTipo,
 ): DayMeal {
-  const pct = PCT[tipo]
-  const kcal = Math.round(targetKcal * pct)
+  const kcal = Math.round(finalKcal)
 
   // Escalar macros proporcionalmente al kcal real vs base
   const scale = kcal / (option.baseKcal || kcal)
