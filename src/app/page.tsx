@@ -380,7 +380,7 @@ export default function LandingPage() {
                     <Icon key={s} d={ICONS.star} size={13} className="text-amber-400 fill-amber-400" />
                   ))}
                 </div>
-                <p className="text-sm text-[#0C1F2C] leading-relaxed italic mb-5">"{t.text}"</p>
+                <p className="text-sm text-[#0C1F2C] leading-relaxed italic mb-5">&ldquo;{t.text}&rdquo;</p>
                 <div className="flex items-center gap-3">
                   <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center flex-shrink-0 text-white text-xs font-black', t.grad)}>
                     {t.initials}

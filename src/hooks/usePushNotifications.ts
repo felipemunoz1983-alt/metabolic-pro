@@ -47,6 +47,8 @@ export function usePushNotifications(userId: string | null): UsePushResult {
   const [swReg,      setSwReg]      = useState<ServiceWorkerRegistration | null>(null)
 
   // ── Register service worker + check existing subscription ─────────────────
+  // Feature detection + browser API init at mount — patrón legítimo.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
@@ -67,6 +69,7 @@ export function usePushNotifications(userId: string | null): UsePushResult {
       setError('Error al registrar el servicio de notificaciones.')
     })
   }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   // ── Subscribe ─────────────────────────────────────────────────────────────
   const subscribe = useCallback(async () => {

@@ -50,6 +50,7 @@ export function ShoppingList({ plan, userId }: Props) {
 
   // Re-hidratar si cambia el usuario (cambio de cuenta sin refresh)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- legitimate hydration from localStorage on userId change
     setChecked(loadChecked(userId))
   }, [userId])
 

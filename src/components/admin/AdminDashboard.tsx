@@ -136,6 +136,7 @@ export function AdminDashboard() {
     }
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount (legitimate pattern)
   useEffect(() => { fetchStats() }, [fetchStats])
 
   // ── Loading ──

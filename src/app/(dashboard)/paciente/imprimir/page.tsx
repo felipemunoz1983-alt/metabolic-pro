@@ -17,14 +17,20 @@ export default function ImprimirPlan() {
   const [printed, setPrinted] = useState(false)
 
   useEffect(() => {
+    // Hidratación desde sessionStorage al mount — sessionStorage no existe en SSR
+    // por lo que `useState(() => ...)` no es viable. Patrón legítimo de hidratación.
     try {
       const raw = sessionStorage.getItem('plan_para_imprimir')
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot hydration from sessionStorage
       if (raw) setData(JSON.parse(raw))
     } catch { /* noop */ }
   }, [])
 
   useEffect(() => {
+    // Trigger window.print() una sola vez después de cargar los datos.
+    // Toggle `printed` es la guarda anti-doble-impresión.
     if (data && !printed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot side-effect guard
       setPrinted(true)
       setTimeout(() => window.print(), 600)
     }

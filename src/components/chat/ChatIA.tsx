@@ -79,12 +79,13 @@ Limita tus respuestas a máximo 3 párrafos cortos.
 ${getNutrievoAIContext()}`
 
   useEffect(() => {
-    // Mensaje de bienvenida
+    // Mensaje de bienvenida one-shot al mount
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot welcome message
     setMessages([{
       role: 'assistant',
       content: `¡Hola ${firstName}! 👋 Soy tu nutricionista virtual del Centro Metabólico Pro. ¿En qué te puedo ayudar hoy? Puedo orientarte sobre tu plan nutricional, recetas, suplementación o cualquier duda sobre alimentación. 🥗`
     }])
-  }, [])
+  }, [firstName])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })

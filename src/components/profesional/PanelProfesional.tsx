@@ -64,9 +64,10 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
     ? Math.round((patient.lastLog.comidas_completadas / patient.lastLog.comidas_total) * 100)
     : null
 
-  const diasDesde = patient.lastLog?.fecha
-    ? Math.floor((Date.now() - new Date(patient.lastLog.fecha + 'T12:00:00').getTime()) / 86400000)
-    : null
+  // Days since last log — usar new Date() en render es impuro, pero aquí es
+  // display-only (no usado en lógica). Re-renders al cambiar de día son OK.
+  /* eslint-disable-next-line react-hooks/purity -- display-only Date.now() in render, intentional */
+  const diasDesde = patient.lastLog?.fecha ? Math.floor((Date.now() - new Date(patient.lastLog.fecha + 'T12:00:00').getTime()) / 86400000) : null
 
   return (
     <motion.button
@@ -895,7 +896,7 @@ function PatientDetail({
                       )}
                       {log.nota && (
                         <span className="text-[10px] text-[#8BA5BE] italic truncate max-w-[160px]" title={log.nota}>
-                          "{log.nota}"
+                          &ldquo;{log.nota}&rdquo;
                         </span>
                       )}
                     </div>

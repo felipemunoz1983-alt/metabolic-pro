@@ -9,6 +9,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  // Auth check side-effect — solo levantamos `redirect()` si confirmamos sin user.
+  // Cualquier error server-side se silencia y se deja que el cliente lo maneje.
   try {
     const cookieStore = await cookies()
 
@@ -29,10 +31,11 @@ export default async function DashboardLayout({
     if (!user) {
       redirect('/login')
     }
-
-    return <>{children}</>
   } catch {
-    // If anything goes wrong server-side, let the client handle it
-    return <>{children}</>
+    // Si la verificación falla, dejamos que el client guard maneje el redirect
   }
+
+  // JSX fuera del try/catch para que React 19 pueda capturar render errors
+  // mediante error boundaries (no por try/catch del server component).
+  return <>{children}</>
 }

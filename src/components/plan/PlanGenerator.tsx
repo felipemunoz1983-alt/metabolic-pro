@@ -628,6 +628,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     setForm(prev => ({ ...prev, [key]: value }))
     const labeler = TOAST_LABELS[key]
     if (labeler) {
+      // Date.now() en event handler (no en render) — patrón válido.
+      // eslint-disable-next-line react-hooks/purity -- event handler, not render
       setToast({ msg: labeler(value), id: Date.now() })
     }
   }

@@ -116,7 +116,7 @@ function ProductCard({
         {/* Claim personalizado por objetivo */}
         {claim ? (
           <p className="text-xs text-[#1a6fa0] leading-relaxed mb-3 font-medium italic">
-            "{claim}"
+            &ldquo;{claim}&rdquo;
           </p>
         ) : (
           <p className="text-xs text-[#6B7C93] leading-relaxed mb-3">{product.descripcion}</p>
@@ -235,7 +235,7 @@ export function NutrievoPanel({ objetivo }: { objetivo?: string }) {
             <Sparkles size={14} className="text-[#29ABE2] flex-shrink-0 mt-0.5" />
             <p className="text-xs text-[#0C3547] leading-relaxed">
               <strong>Selección para tu objetivo:</strong> los productos marcados{' '}
-              <span className="text-[#29ABE2] font-bold">"Para tu objetivo"</span>{' '}
+              <span className="text-[#29ABE2] font-bold">&ldquo;Para tu objetivo&rdquo;</span>{' '}
               están especialmente recomendados para <strong>{goalLabel}</strong>.
             </p>
           </div>

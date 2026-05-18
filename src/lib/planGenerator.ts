@@ -396,7 +396,7 @@ function buildMeal(
   // El paciente eligió un yogur específico en el selector; el plan lo incorpora explícitamente.
   let alergenosNota = option.alergenosNota
   let foto = option.foto
-  let label = option.label
+  const label = option.label
   if (option.tieneYogur && yogurTipo) {
     const yogurInfo = YOGUR_TIPOS[yogurTipo]
     // Reemplazar el item genérico "150g yogur natural / sin azúcar / alto en proteínas" por la línea oficial del yogur elegido

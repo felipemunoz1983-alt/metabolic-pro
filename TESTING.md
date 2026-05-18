@@ -100,11 +100,12 @@ it('mi caso clínico', () => {
 
 **GitHub Actions** corre automáticamente en cada push y PR — ver [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
-**Steps del workflow:**
+**Steps del workflow (todos bloqueantes):**
 1. Setup Node 22 LTS (mismo que Vercel, pin en `.nvmrc`)
 2. `npm ci` con cache
 3. `npx tsc --noEmit` — type-check estricto
 4. `npm test` con `TZ=UTC` — garantiza mismo comportamiento que Vercel
+5. `npm run lint` — ESLint (0 errores permitidos)
 
 **Triggers:**
 - Push a cualquier branch (incluye `nextjs`)
@@ -114,9 +115,9 @@ it('mi caso clínico', () => {
 
 **Próximas mejoras opcionales:**
 - [ ] Vercel preview deploy bloquea si CI falla (configurable en Vercel UI)
-- [ ] ESLint en CI (hoy hay 22 errores de tech debt — fix antes de hacer el job bloqueante)
 - [ ] Coverage threshold 80% con `vitest --coverage`
 - [ ] Pre-commit hook con husky + lint-staged
+- [ ] Reducir los 29 warnings de ESLint restantes (`<img>` → `<Image>`, unused imports)
 
 ## Versionado de Node
 

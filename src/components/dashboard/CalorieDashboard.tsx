@@ -395,11 +395,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
   const [animo, setAnimo] = useState('')
   const [nota, setNota] = useState('')
 
-  useEffect(() => {
-    loadToday().catch(console.error)
-    loadMonth().catch(console.error)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
+  // ── Loaders (declarados antes del useEffect que los llama: evita TDZ) ─────
   async function loadToday() {
     const { data, error } = await supabase
       .from('registros_diarios').select('*')
@@ -441,6 +437,12 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
       setStreak(computeStreak(data, today))
     }
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- async data fetch on mount sets state when ready
+    loadToday().catch(console.error)
+    loadMonth().catch(console.error)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Solo contamos comidas REALES del plan (no las claves legacy que ya migramos)
   const completedCount = MEALS.reduce((n, m) => n + (checkedMeals[m.id] ? 1 : 0), 0)

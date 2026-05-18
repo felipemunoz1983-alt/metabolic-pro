@@ -443,7 +443,7 @@ export default function UpgradePage() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-[#8BA5BE] text-center">Lo que dicen nuestros usuarios</p>
                 {TESTIMONIALS.map((t, i) => (
                   <div key={i} className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
-                    <p className="text-sm text-[#0C1F2C] leading-relaxed italic mb-4">"{t.text}"</p>
+                    <p className="text-sm text-[#0C1F2C] leading-relaxed italic mb-4">&ldquo;{t.text}&rdquo;</p>
                     <div className="flex items-center gap-3">
                       <div className={cn('w-8 h-8 rounded-full bg-gradient-to-br flex items-center justify-center flex-shrink-0 text-white text-xs font-black', t.color)}>
                         {t.initials}

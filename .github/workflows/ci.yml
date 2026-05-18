@@ -1,16 +1,13 @@
 name: CI
 
-# Disciplina del proyecto:
+# Disciplina del proyecto (3 gates bloqueantes):
+#  - npx tsc --noEmit  → garantía de tipos correctos.
 #  - npm test  → 215 tests (Vitest) cubren motor nutricional, planGenerator,
-#                 catálogos, lista de compras, notificaciones y digests semanales.
-#  - npx tsc --noEmit  → garantía de tipos correctos antes de mergear.
+#                catálogos, lista de compras, notificaciones, digests semanales.
+#  - npm run lint  → ESLint (0 errores, warnings permitidos por ahora).
 #
 # Triggers: push a cualquier branch y pull-requests hacia main.
 # Vercel queda configurado en su UI para bloquear deploys si este workflow falla.
-#
-# NOTA: ESLint NO está en CI por ahora — el repo tiene tech debt (22 errores
-# acumulados) que requieren cleanup dedicado. Agregar `lint` job cuando se
-# limpie. Por ahora se ejecuta solo localmente con `npm run lint`.
 
 on:
   push:
@@ -26,7 +23,7 @@ concurrency:
 
 jobs:
   test:
-    name: Tests + Typecheck
+    name: Tests + Typecheck + Lint
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -53,3 +50,8 @@ jobs:
           # de Vercel en producción. Importante para diasDesde() y otras
           # funciones sensibles a zona horaria.
           TZ: UTC
+
+      - name: Lint (ESLint)
+        # 0 errores permitidos. Warnings se reportan pero no bloquean (29 warnings
+        # de tech debt pendiente: img elements, unused imports). Limpiar gradualmente.
+        run: npm run lint
