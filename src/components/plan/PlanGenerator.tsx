@@ -277,6 +277,14 @@ function YogurtTypePicker({
           </button>
         ))}
       </div>
+      {value === 'griego' && (
+        <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          <span className="text-xs flex-shrink-0">⚠️</span>
+          <p className="text-[10px] text-amber-800">
+            <strong>Danone Oikos Griego Endulzado · Yogur griego clásico · Alérgenos:</strong> Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena). Endulzado con estevia y sucralosa. 5.3g proteína por porción 110g.
+          </p>
+        </div>
+      )}
       {value === 'fullpro' && (
         <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
           <span className="text-xs flex-shrink-0">⚠️</span>

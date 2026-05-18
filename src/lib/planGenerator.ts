@@ -225,7 +225,7 @@ function buildMeal(
         .replace(/\b\d+\s*g\s+yogur\s+alto en proteínas\b/i, yogurInfo.item)
     )
     // Reemplazar pasos: "el yogur" / "del yogur" → mantener genérico, no inyectar nombre largo en cada paso
-    // Ajustar macros: delta del yogur elegido vs base griego (17p/6c/5g)
+    // Ajustar macros: delta del yogur elegido vs base Danone Oikos (5p/11c/4g por 110g — referencia clásico griego)
     const gBaseMacros = YOGUR_TIPOS['griego']
     const deltaP = yogurInfo.p - gBaseMacros.p
     const deltaC = yogurInfo.c - gBaseMacros.c

@@ -27,15 +27,15 @@ export interface MealOption {
 // ─── Tipos de yogur disponibles ───────────────────────────────────────────────
 export const YOGUR_TIPOS = {
   griego: {
-    label: 'Yogur griego natural',
+    label: 'Danone Oikos Griego Endulzado',
     emoji: '🥛',
-    // item que se sustituye en la receta (150g)
-    item: '150g yogur griego natural sin azúcar',
-    // macros por 150g (valores de referencia para ajuste)
-    kcal: 130, p: 17, c: 6, g: 5,
-    badge: '17g prot · Clásico',
-    alergenosNota: undefined as string | undefined,
-    foto: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&auto=format&fit=crop&q=80',
+    // item oficial Danone Oikos Griego Natural Endulzado 110g
+    item: 'Yogur Danone Oikos Griego Natural Endulzado 110g',
+    // Fuente: etiqueta oficial 110g — 104.5 kcal · 5.3g prot · 10.9g CH · 4.4g G · endulzado con estevia + sucralosa
+    kcal: 105, p: 5, c: 11, g: 4,
+    badge: '5g prot · Clásico griego Danone',
+    alergenosNota: '⚠️ Danone Oikos · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena). Endulzado con estevia y sucralosa.',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/361284-900-900?width=900&height=900&aspect=true',
   },
   fullpro: {
     label: 'FullPro Protein Loncoleche',
