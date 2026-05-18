@@ -124,17 +124,19 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     const desayuno = getMealOption(desayunosPool, form.desayunos, d)
     meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno, form.yogurtTipo))
 
-    // Colación mañana
-    const colManana = getMealOption(colacionesOpts, form.colacionManana, d)
-    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo, form.snackNutrevoTipo, form.barraProteinaTipo))
+    // Colación mañana — rotación incluye colaciones naturales + snack/barra favoritos elegidos por el paciente
+    const colMananaPool = buildColacionPool(form.colacionManana, form)
+    const colManana = colMananaPool[d % colMananaPool.length]
+    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo))
 
     // Almuerzo
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
     meals.push(buildMeal('almuerzo', almuerzo, targetKcal, form.eggsQty))
 
-    // Once
-    const once = getMealOption(colacionesOpts, form.once, d + 1) // offset for variety
-    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo, form.snackNutrevoTipo, form.barraProteinaTipo))
+    // Once — misma lógica que colación: rotación con snack y barra favoritos
+    const oncePool = buildColacionPool(form.once, form)
+    const once = oncePool[(d + 1) % oncePool.length] // offset para variedad vs. colación mañana
+    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo))
 
     // Cena
     const cena = getMealOption(cenasPool, form.cenas, d)
@@ -195,8 +197,6 @@ function buildMeal(
   targetKcal: number,
   eggsQty?: number,
   yogurTipo?: YogurTipo,
-  snackTipo?: SnackNutrevoTipo,
-  barraTipo?: BarraProteinaTipo,
 ): DayMeal {
   const pct = PCT[tipo]
   const kcal = Math.round(targetKcal * pct)
@@ -250,39 +250,6 @@ function buildMeal(
     }
   }
 
-  // Sustituir snack saludable Nutrevo si la colación es un placeholder con tieneSnack
-  if (option.tieneSnack && snackTipo) {
-    const snackInfo = SNACK_NUTREVO_TIPOS[snackTipo]
-    label = `${snackInfo.emoji} ${snackInfo.label}`
-    items = [snackInfo.item, '200ml agua o infusión sin azúcar']
-    // Override macros con los oficiales del snack (no escalar — el snack es lo que es)
-    p = snackInfo.p
-    c = snackInfo.c
-    g = snackInfo.g
-    if (snackInfo.foto) foto = snackInfo.foto
-    if (snackInfo.alergenosNota) {
-      alergenosNota = alergenosNota
-        ? `${alergenosNota}\n${snackInfo.alergenosNota}`
-        : snackInfo.alergenosNota
-    }
-  }
-
-  // Sustituir barra de proteína si la colación es un placeholder con tieneBarra
-  if (option.tieneBarra && barraTipo) {
-    const barraInfo = BARRA_PROTEINA_TIPOS[barraTipo]
-    label = `${barraInfo.emoji} ${barraInfo.label}`
-    items = [barraInfo.item, '200ml agua o infusión sin azúcar']
-    p = barraInfo.p
-    c = barraInfo.c
-    g = barraInfo.g
-    if (barraInfo.foto) foto = barraInfo.foto
-    if (barraInfo.alergenosNota) {
-      alergenosNota = alergenosNota
-        ? `${alergenosNota}\n${barraInfo.alergenosNota}`
-        : barraInfo.alergenosNota
-    }
-  }
-
   return {
     tipo,
     label,
@@ -298,4 +265,64 @@ function buildMeal(
     sellos: option.sellos,
     alergenosNota,
   }
+}
+
+// ─── Inyección dinámica de snack/barra favoritos en pool de colaciones ────────
+// Cuando el paciente elige un snack Nutrevo o una barra de proteína en los
+// selectores dedicados de Alimentación, ese producto se inyecta automáticamente
+// en la rotación de colaciones (mañana + once) como un MealOption virtual.
+
+function snackToMealOption(snackTipo: SnackNutrevoTipo): MealOption {
+  const s = SNACK_NUTREVO_TIPOS[snackTipo]
+  return {
+    label: `${s.emoji} ${s.label}`,
+    items: [s.item, '200ml agua o infusión sin azúcar'],
+    baseKcal: s.kcal,
+    p: s.p,
+    c: s.c,
+    g: s.g,
+    foto: s.foto,
+    tiempo: '0 min',
+    alergenosNota: s.alergenosNota,
+    pasos: [
+      `${s.label} — tu snack saludable favorito de Nutrevo.`,
+      'Consumir como colación portátil entre comidas.',
+      'Acompaña con 200ml de agua o infusión sin azúcar para mayor saciedad.',
+    ],
+  }
+}
+
+function barraToMealOption(barraTipo: BarraProteinaTipo): MealOption {
+  const b = BARRA_PROTEINA_TIPOS[barraTipo]
+  return {
+    label: `${b.emoji} ${b.label}`,
+    items: [b.item, '200ml agua o infusión sin azúcar'],
+    baseKcal: b.kcal,
+    p: b.p,
+    c: b.c,
+    g: b.g,
+    foto: b.foto,
+    tiempo: '0 min',
+    alergenosNota: b.alergenosNota,
+    pasos: [
+      `${b.label} — tu barra de proteína favorita.`,
+      'Consumir directa como colación portátil — ideal post-entreno o media mañana/tarde.',
+      'Acompañar con 200ml de agua o infusión sin azúcar.',
+    ],
+  }
+}
+
+function buildColacionPool(
+  userKeys: string[] | undefined,
+  form: Partial<FormData>,
+): MealOption[] {
+  const naturalOpts = (userKeys ?? [])
+    .map(k => colacionesOpts[k])
+    .filter((o): o is MealOption => Boolean(o))
+  const extras: MealOption[] = []
+  if (form.snackNutrevoTipo) extras.push(snackToMealOption(form.snackNutrevoTipo))
+  if (form.barraProteinaTipo) extras.push(barraToMealOption(form.barraProteinaTipo))
+  const pool = [...naturalOpts, ...extras]
+  // Si el paciente no eligió nada (ni natural ni snack/barra), fallback al primer item del catálogo
+  return pool.length > 0 ? pool : [Object.values(colacionesOpts)[0]]
 }

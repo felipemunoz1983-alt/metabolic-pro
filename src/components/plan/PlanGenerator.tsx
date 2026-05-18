@@ -1079,44 +1079,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               )}
 
-              {/* Disclaimer barras proteicas */}
-              {(
-                (form.colacionManana ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col','twentys_hazelnut_col'].includes(k)) ||
-                (form.once ?? []).some(k => ['wild_protein_col','moroketo_col','alfajor_keto_col','protein_bite_bw_col','twentys_hazelnut_col'].includes(k))
-              ) && (
-                <div className="space-y-2">
-                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('wild_protein_col') && (
-                    <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">⚠️</span>
-                      <p className="text-xs text-amber-800"><strong>Wild Protein · Alérgenos:</strong> Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces, sulfitos.</p>
-                    </div>
-                  )}
-                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('protein_bite_bw_col') && (
-                    <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">⚠️</span>
-                      <p className="text-xs text-amber-800"><strong>Protein Bite Black &amp; White · Alérgenos:</strong> Contiene leche y soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina.</p>
-                    </div>
-                  )}
-                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('twentys_hazelnut_col') && (
-                    <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">⚠️</span>
-                      <p className="text-xs text-amber-800"><strong>Twenty&apos;s Hazelnut Praline · Alérgenos:</strong> Contiene leche, soya (lecitinas) y avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.</p>
-                    </div>
-                  )}
-                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('moroketo_col') && (
-                    <div className="flex gap-2 bg-green-50 border border-green-300 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">✅</span>
-                      <p className="text-xs text-green-800"><strong>Moroketo Proteína:</strong> Sin gluten · Chocolate 85% cacao · Sin azúcar añadida.</p>
-                    </div>
-                  )}
-                  {(form.colacionManana ?? []).concat(form.once ?? []).includes('alfajor_keto_col') && (
-                    <div className="flex gap-2 bg-amber-50 border border-amber-300 rounded-xl p-3">
-                      <span className="text-base flex-shrink-0">⚠️</span>
-                      <p className="text-xs text-amber-800"><strong>Alfajor Keto Nutrevo · Alérgenos:</strong> Contiene leche, soya, huevo. Revisar etiqueta si hay alergias.</p>
-                    </div>
-                  )}
-                </div>
-              )}
+              {/* Disclaimers de barras/snacks: ahora se muestran dentro de los CatalogPicker */}
 
               {/* Semanas */}
               <div>

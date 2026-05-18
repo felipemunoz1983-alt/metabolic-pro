@@ -22,8 +22,6 @@ export interface MealOption {
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
   tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
-  tieneSnack?: boolean      // placeholder de snack — se sustituye por SNACK_NUTREVO_TIPOS según preferencia del paciente
-  tieneBarra?: boolean      // placeholder de barra — se sustituye por BARRA_PROTEINA_TIPOS según preferencia del paciente
 }
 
 // ─── Tipos de yogur disponibles ───────────────────────────────────────────────
@@ -377,107 +375,10 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Ideal cuando no hay tiempo de preparar colación elaborada.',
     ],
   },
-  // ── Barras proteicas (con disclaimer de alérgenos) ──
-  wild_protein_col: {
-    label: '💪 Barra Wild Protein',
-    items: ['1 barra Wild Protein (45g)', '200ml agua o infusión'],
-    baseKcal: 173, p: 15, c: 17, g: 5,  // fuente: etiqueta oficial 1 porción 45g (Sabor Caramelo)
-    foto: USP('1490474418585-ba9bad8fd0ea'),
-    tiempo: '0 min',
-    pasos: [
-      'Consumir directamente como colación portátil.',
-      'Ideal post-entrenamiento o como snack de media mañana.',
-      'Refrigerar en verano para mejor textura.',
-    ],
-    alergenosNota: '⚠️ Wild Protein · Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces, sulfitos.',
-  },
-  protein_bite_bw_col: {
-    label: '🍫 Protein Bite Black & White',
-    items: ['1 barra Protein Bite Black & White (55g)', '200ml agua o infusión'],
-    // Fuente: etiqueta oficial 1 porción 55g — Your Goal Smart Nutrition
-    // Energía: 161 kcal · Proteínas: 21g · Carbs disponibles: 2.6g · Grasa: 7.4g · Fibra: 3.2g
-    baseKcal: 161, p: 21, c: 3, g: 7,
-    foto: 'https://hausnusse.cl/cdn/shop/files/Black2.png?v=1692795895',
-    tiempo: '0 min',
-    pasos: [
-      'Consumir directamente como colación portátil de alta proteína.',
-      'Sin azúcar añadida. Baja en carbohidratos disponibles (2.6g/porción).',
-      'Ideal como snack de media mañana o media tarde en planes de pérdida de grasa e hipertrofia.',
-      'Refrigerar en verano para mejor textura del chocolate blanco.',
-    ],
-    alergenosNota: '⚠️ Protein Bite · Contiene leche, soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina (sucralosa).',
-  },
-  twentys_hazelnut_col: {
-    label: "🔵 Twenty's Hazelnut Praline",
-    items: ["1 barra Twenty's Hazelnut Praline (60g)", '200ml agua o infusión'],
-    // Fuente: etiqueta oficial 1 porción 60g — Your Goal Smart Nutrition
-    // Energía: 152 kcal · Proteínas: 19.4g · Carbs disp.: 5.5g · Grasa: 5.8g · Fibra: 14.3g
-    baseKcal: 152, p: 19, c: 6, g: 6,
-    foto: 'https://www.mixgreen.cl/cdn/shop/files/13363a.jpg?v=1724272525',
-    tiempo: '0 min',
-    pasos: [
-      'Consumir directamente como colación portátil de alta proteína y fibra.',
-      '19g de proteína de leche + 14g de fibra dietética por barra — alta saciedad.',
-      'Sin azúcar añadida · Sin gluten · Low carb garantizado.',
-      'Sabor avellana con cobertura de chocolate blanco y nibs de cacao crujientes.',
-      'Ideal para planes hipocalóricos, hiperproteicos o bajos en carbohidratos.',
-    ],
-    alergenosNota: '⚠️ Twenty\'s · Contiene leche, soya (lecitinas), avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.',
-  },
-  moroketo_col: {
-    label: '🍪 Galletón Moroketo Proteína',
-    items: ['1 galletón Moroketo (45g)', 'Té o infusión sin azúcar'],
-    baseKcal: 231, p: 36, c: 0, g: 19,
-    foto: USP('1490474418585-ba9bad8fd0ea'),
-    tiempo: '0 min',
-    pasos: [
-      'Consumir directo como colación sólida.',
-      'Sin gluten · Chocolate 85% cacao · Sin azúcar añadida.',
-      'Combinar con una infusión sin azúcar para mayor saciedad.',
-    ],
-    alergenosNota: '✅ Moroketo Proteína · Sin gluten · Chocolate 85% cacao · Sin azúcar añadida.',
-  },
-  alfajor_keto_col: {
-    label: '🍫 Alfajor Keto Nutrevo',
-    items: ['1 alfajor Keto Nutrevo (65g)', '200ml agua'],
-    baseKcal: 297, p: 33, c: 0, g: 21,
-    foto: USP('1490474418585-ba9bad8fd0ea'),
-    tiempo: '0 min',
-    pasos: [
-      'Consumir directamente como colación keto/proteica.',
-      'Bajo en carbohidratos. Ideal para planes de pérdida de grasa.',
-      'Conservar en lugar fresco y seco.',
-    ],
-    alergenosNota: '⚠️ Alfajor Keto · Contiene leche, soya, huevo. Revisar etiqueta si hay alergias.',
-  },
-
-  // ── Placeholders que el planGenerator sustituye por la preferencia del paciente ──
-  snack_favorito: {
-    label: '🍫 Snack saludable Nutrevo',
-    items: ['1 snack saludable según tu preferencia', '200ml agua o infusión sin azúcar'],
-    baseKcal: 230, p: 12, c: 18, g: 10,    // se ajusta dinámicamente al snack elegido
-    foto: USP('1490474418585-ba9bad8fd0ea'),
-    tiempo: '0 min',
-    tieneSnack: true,
-    pasos: [
-      'Consumir como colación portátil — el plan usa el snack que elegiste en Alimentación.',
-      'Cambia tu snack favorito en el selector "Snack saludable favorito (Nutrevo)" si quieres rotarlo.',
-      'Acompaña con 200ml de agua o infusión sin azúcar.',
-    ],
-  },
-  barra_favorita: {
-    label: '💪 Mi barra de proteína',
-    items: ['1 barra de proteína según tu preferencia', '200ml agua o infusión sin azúcar'],
-    baseKcal: 170, p: 18, c: 10, g: 6,     // se ajusta dinámicamente a la barra elegida
-    foto: USP('1490474418585-ba9bad8fd0ea'),
-    tiempo: '0 min',
-    tieneBarra: true,
-    pasos: [
-      'Consumir directa como colación portátil — el plan usa la barra que elegiste en Alimentación.',
-      'Cambia tu barra favorita en el selector "Barra de proteína favorita" si quieres rotarla.',
-      'Ideal post-entreno o como snack de media mañana/tarde.',
-    ],
-  },
+  // Nota: las barras de proteína y snacks Nutrevo se integran al plan
+  // exclusivamente a través de los selectores dedicados "Barra de proteína favorita"
+  // y "Snack saludable favorito (Nutrevo)" en PlanGenerator (step 5).
+  // El planGenerator las inyecta en la rotación de colaciones automáticamente.
 
   hummus_verduras: {
     label: 'Hummus + bastones de verdura',
