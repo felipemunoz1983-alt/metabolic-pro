@@ -212,19 +212,20 @@ function buildMeal(
     )
   }
 
-  // Sustituir yogur si la opción tiene yogur y el usuario eligió un tipo específico
+  // Sustituir yogur si la opción tiene yogur (siempre — incluye griego).
+  // El paciente eligió un yogur específico en el selector; el plan lo incorpora explícitamente.
   let alergenosNota = option.alergenosNota
   let foto = option.foto
-  if (option.tieneYogur && yogurTipo && yogurTipo !== 'griego') {
+  if (option.tieneYogur && yogurTipo) {
     const yogurInfo = YOGUR_TIPOS[yogurTipo]
-    // Reemplazar cualquier mención de yogur griego / yogur alto en proteínas en los items
+    // Reemplazar el item genérico "150g yogur natural / sin azúcar / alto en proteínas" por la línea oficial del yogur elegido
     items = items.map(item =>
       item
-        .replace(/150g yogur griego(?: natural)?(?:\s+sin azúcar)?/i, yogurInfo.item)
-        .replace(/150g yogur alto en proteínas/i, yogurInfo.item)
-        .replace(/yogur griego/i, yogurInfo.label)
+        .replace(/\b\d+\s*g\s+yogur(?:\s+natural)?(?:\s+sin azúcar)?\b/i, yogurInfo.item)
+        .replace(/\b\d+\s*g\s+yogur\s+alto en proteínas\b/i, yogurInfo.item)
     )
-    // Ajustar macros: delta FullPro vs griego base (17p/6c/5g → 18p/8c/1g)
+    // Reemplazar pasos: "el yogur" / "del yogur" → mantener genérico, no inyectar nombre largo en cada paso
+    // Ajustar macros: delta del yogur elegido vs base griego (17p/6c/5g)
     const gBaseMacros = YOGUR_TIPOS['griego']
     const deltaP = yogurInfo.p - gBaseMacros.p
     const deltaC = yogurInfo.c - gBaseMacros.c

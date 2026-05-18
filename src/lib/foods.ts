@@ -152,14 +152,14 @@ export const desayunosOpts: Record<string, MealOption> = {
     ],
   },
   yogur_granola: {
-    label: 'Yogur griego + berries + semillas',
-    items: ['150g yogur griego natural', '½ taza berries (arándanos, frambuesas o frutillas)', '1 cda chía o linaza', '10-15 almendras naturales'],
+    label: 'Yogur + berries + semillas',
+    items: ['150g yogur natural', '½ taza berries (arándanos, frambuesas o frutillas)', '1 cda chía o linaza', '10-15 almendras naturales'],
     baseKcal: 380, p: 20, c: 50, g: 8,
     tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '5 min',
     pasos: [
-      'Base: verter el yogur griego en un bowl. El yogur griego tiene el doble de proteína que el yogur común.',
+      'Base: verter el yogur en un bowl. Los yogures proteicos aportan el doble de proteína que un yogur común.',
       'Berries: agregar ½ taza de berries encima del yogur. Aportan antioxidantes y fibra soluble.',
       'Semillas: espolvorear 1 cda de chía o linaza. La chía absorbe líquido y prolonga la saciedad.',
       'Almendras: agregar las almendras enteras o picadas.',
@@ -229,14 +229,14 @@ export const desayunosOpts: Record<string, MealOption> = {
 // ─── COLACIONES MAÑANA y ONCE (mismo pool) ────────────────────────────────────
 export const colacionesOpts: Record<string, MealOption> = {
   yogur_frutossecos_am: {
-    label: 'Yogur griego + frutos secos',
-    items: ['150g yogur griego sin azúcar', '20g mix frutos secos (nueces, almendras)', '1 fruta pequeña'],
+    label: 'Yogur + frutos secos',
+    items: ['150g yogur sin azúcar', '20g mix frutos secos (nueces, almendras)', '1 fruta pequeña'],
     baseKcal: 230, p: 14, c: 22, g: 10,
     tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '3 min',
     pasos: [
-      'Verter el yogur griego en un bowl o tazón.',
+      'Verter el yogur en un bowl o tazón.',
       'Agregar la fruta pequeña cortada en trozos encima del yogur.',
       'Distribuir los frutos secos sobre la mezcla.',
       'Sin cocción. Listo para consumir en menos de 3 minutos.',
