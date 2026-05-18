@@ -132,14 +132,14 @@ export type SnackNutrevoTipo = keyof typeof SNACK_NUTREVO_TIPOS
 // ─── Barras de proteína (marcas Chile) ────────────────────────────────────────
 export const BARRA_PROTEINA_TIPOS = {
   wild_protein: {
-    label: 'Wild Protein',
+    label: 'Wild Protein Caramelo',
     emoji: '💪',
-    item: '1 Barra Wild Protein (45g)',
+    item: '1 Barra Wild Protein Caramelo (45g)',
     // Fuente: etiqueta oficial 45g — 173 kcal · 15g prot · 17g CH · 5g G
     kcal: 173, p: 15, c: 17, g: 5,
-    badge: '15g prot · Sabor caramelo · 45g',
+    badge: '15g prot · Sabor caramelo · Libre sellos',
     alergenosNota: '⚠️ Wild Protein · Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces y sulfitos.',
-    foto: 'https://wild-protein.cl/cdn/shop/files/Caramelo_Frente.png?v=1740773832',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/542802-900-900?width=900&height=900&aspect=true',
   },
   protein_bite_bw: {
     label: 'Protein Bite Black & White',
@@ -160,16 +160,6 @@ export const BARRA_PROTEINA_TIPOS = {
     badge: '19g prot · 14g fibra · Sin gluten',
     alergenosNota: "⚠️ Twenty's · Contiene leche, soya (lecitinas), avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.",
     foto: 'https://www.mixgreen.cl/cdn/shop/files/13363a.jpg?v=1724272525',
-  },
-  moroketo_barra: {
-    label: 'Galletón Moroketo Proteína',
-    emoji: '🍪',
-    item: '1 Galletón Moroketo Proteína (45g)',
-    // Fuente: Nutrevo — 231 kcal · 36g prot · 0g CH · 19g G · sin gluten · sin azúcar añadida
-    kcal: 231, p: 36, c: 0, g: 19,
-    badge: '36g prot · Sin gluten · Cacao 85%',
-    alergenosNota: '✅ Moroketo Galletón · Sin gluten · Chocolate 85% cacao · Sin azúcar añadida. Contiene leche (whey) y frutos secos.',
-    foto: 'https://nutrevo.cl/wp-content/uploads/2026/04/MOROKETO_WEB12-1FINAL-600x750.webp',
   },
 } as const
 
