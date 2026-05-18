@@ -35,6 +35,7 @@ export const YOGUR_TIPOS = {
     kcal: 130, p: 17, c: 6, g: 5,
     badge: '17g prot · Clásico',
     alergenosNota: undefined as string | undefined,
+    foto: 'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=600&auto=format&fit=crop&q=80',
   },
   fullpro: {
     label: 'FullPro Protein Loncoleche',

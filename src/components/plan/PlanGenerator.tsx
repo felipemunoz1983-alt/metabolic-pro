@@ -248,21 +248,31 @@ function YogurtTypePicker({
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
       <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
-      <div className="flex gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {(Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]).map(([key, info]) => (
           <button
             key={key}
             onClick={() => onChange(key)}
             className={cn(
-              'flex-1 py-2 px-3 rounded-xl border-2 text-left transition-all',
+              'flex flex-col items-center rounded-xl border-2 overflow-hidden transition-all',
               value === key
-                ? 'bg-sky-500 border-sky-500 text-white'
+                ? 'bg-sky-500 border-sky-500 text-white shadow-md scale-[1.02]'
                 : 'border-sky-200 text-sky-800 hover:border-sky-400 bg-white'
             )}
           >
-            <div className="text-sm font-bold">{info.emoji} {info.label}</div>
-            <div className={cn('text-[10px] mt-0.5 font-semibold', value === key ? 'text-sky-100' : 'text-sky-600')}>
-              {info.badge}
+            {(info as { foto?: string }).foto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={(info as { foto?: string }).foto}
+                alt={info.label}
+                className="w-full h-20 sm:h-24 object-cover bg-white"
+              />
+            )}
+            <div className="w-full px-2 py-2 text-left">
+              <div className="text-xs sm:text-sm font-bold leading-tight">{info.emoji} {info.label}</div>
+              <div className={cn('text-[10px] mt-0.5 font-semibold leading-tight', value === key ? 'text-sky-100' : 'text-sky-600')}>
+                {info.badge}
+              </div>
             </div>
           </button>
         ))}
