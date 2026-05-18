@@ -1,0 +1,6 @@
+# Pre-commit hook — RÁPIDO (<5s típico).
+# Solo lintea archivos staged via lint-staged. No corre tests ni typecheck
+# completos para no fricionar el flow de commits chicos.
+# La validación completa vive en pre-push (tsc + vitest 215 tests).
+
+npx lint-staged

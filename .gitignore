@@ -41,3 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .vercel
+
+# Supabase CLI working dir (regenerated on link / cli commands)
+/supabase/.temp/
+/supabase/.branches/

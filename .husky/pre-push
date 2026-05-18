@@ -1,0 +1,24 @@
+# Pre-push hook — LENTO pero exhaustivo (~30-60s típico).
+# Valida que el código que se va a pushear pasa los mismos gates que el CI.
+# Evita ciclos rotos en GitHub Actions y ahorra runner minutes.
+#
+# Si necesitas pushear de emergencia sin validar: git push --no-verify
+# (no abuses — solo en casos justificados como hotfixes urgentes).
+
+echo "🔍 Pre-push: validando tipos + tests antes de subir..."
+echo "   (Skip con: git push --no-verify)"
+echo ""
+
+echo "→ TypeScript check..."
+npx tsc --noEmit || {
+  echo "❌ tsc --noEmit FAILED. Corrige los errores de tipo antes de pushear."
+  exit 1
+}
+
+echo "→ Tests..."
+TZ=UTC npm test || {
+  echo "❌ npm test FAILED. Algún test rojo: corrígelo antes de pushear."
+  exit 1
+}
+
+echo "✅ Validación local OK. Pusheando a remoto..."
