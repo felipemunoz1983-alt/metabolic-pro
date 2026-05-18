@@ -755,7 +755,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
               <p className="text-xs text-[#6B7C93]">Selecciona una o más opciones por tiempo de comida. El plan rotará entre tus elecciones.</p>
 
-              {/* Selector tipo yogur — PRIMERO, siempre visible */}
+              {/* Selector tipo yogur — siempre visible, antes de tendencia */}
               <YogurtTypePicker
                 value={(form.yogurtTipo ?? 'griego') as YogurTipo}
                 onChange={t => set('yogurtTipo', t)}
