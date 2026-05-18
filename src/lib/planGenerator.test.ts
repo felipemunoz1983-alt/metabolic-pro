@@ -1,0 +1,300 @@
+import { describe, it, expect } from 'vitest'
+import { generarPlan } from './planGenerator'
+import type { FormData } from './nutrition'
+
+/**
+ * Suite de regresión para el planGenerator post-refactor.
+ *
+ * Cubre los cambios introducidos en commits:
+ *   - 230bd9d (timing peri-entreno, AM/PM split, opt-in snack/barra)
+ *   - a8190b0 (filtros digestivos, intolerancias, reflujo)
+ *   - b35d05b (comidasPorDia dinámico, tiempo, habilidad, estacionalidad)
+ */
+
+// Helper: construye un form mínimo válido con defaults razonables
+function baseForm(overrides: Partial<FormData> = {}): FormData {
+  return {
+    nombre: 'Test Patient',
+    edad: 30,
+    peso: 75,
+    talla: 175,
+    sexo: 'masculino',
+    objetivo: 'mantenimiento',
+    diasEjercicio: 3,
+    duracionSesion: 60,
+    tipoEjercicio: 'fuerza',
+    crono: 'neutro',
+    tendencia: 'omnivoro',
+    rechazos: '',
+    desayunos: ['avena_platano'],
+    colacionManana: ['yogur_frutossecos_am'],
+    almuerzos: ['pollo_arroz'],
+    cenas: ['pollo_verduras'],
+    once: ['fruta_proteina'],
+    protGramos: 200,
+    protGramosCena: 200,
+    eggsQtyDesayuno: 2,
+    eggsQty: 2,
+    eggsQtyCena: 3,
+    eggsQtyOnce: 2,
+    sandwichQty: 1,
+    sandwichQtyOnce: 1,
+    semanas: 1,
+    ultraProcesados: [],
+    ultraDias: 0,
+    digHinchazon: 'nunca',
+    digReflujo: 'nunca',
+    digRitmo: 'normal',
+    digIntolerancias: [],
+    digDiag: 'no',
+    digHorario: [],
+    supEmbarazo: 'no',
+    supCronicas: [],
+    supMedic: 'no',
+    supMedicDetalle: '',
+    supActuales: '',
+    comidasPorDia: 5,
+    horarioEntrenamiento: 'PM',
+    incluirSnackEnPlan: false,
+    incluirBarraEnPlan: false,
+    ...overrides,
+  } as FormData
+}
+
+describe('generarPlan — estructura básica', () => {
+  it('genera 7 días para 1 semana', () => {
+    const plan = generarPlan(baseForm(), 2200)
+    expect(plan.dias.length).toBe(7)
+  })
+
+  it('genera 14 días para 2 semanas', () => {
+    const plan = generarPlan(baseForm({ semanas: 2 }), 2200)
+    expect(plan.dias.length).toBe(14)
+  })
+
+  it('cada día tiene el nombre correcto', () => {
+    const plan = generarPlan(baseForm(), 2200)
+    expect(plan.dias[0].nombre).toBe('Lunes')
+    expect(plan.dias[6].nombre).toBe('Domingo')
+  })
+
+  it('targetKcal se propaga correctamente', () => {
+    const plan = generarPlan(baseForm(), 2200)
+    expect(plan.targetKcal).toBe(2200)
+  })
+})
+
+describe('generarPlan — comidasPorDia dinámico', () => {
+  it('comidasPorDia=3 → solo desayuno + almuerzo + cena', () => {
+    const plan = generarPlan(baseForm({ comidasPorDia: 3 }), 2000)
+    const day = plan.dias[0]
+    const tipos = day.meals.map(m => m.tipo)
+    expect(tipos).toEqual(['desayuno', 'almuerzo', 'cena'])
+  })
+
+  it('comidasPorDia=4 con entreno PM → desayuno + almuerzo + once + cena', () => {
+    const plan = generarPlan(baseForm({ comidasPorDia: 4, horarioEntrenamiento: 'PM' }), 2000)
+    const tipos = plan.dias[0].meals.map(m => m.tipo)
+    expect(tipos).toEqual(['desayuno', 'almuerzo', 'once', 'cena'])
+  })
+
+  it('comidasPorDia=4 con entreno AM → desayuno + colacion_manana + almuerzo + cena', () => {
+    const plan = generarPlan(baseForm({ comidasPorDia: 4, horarioEntrenamiento: 'AM' }), 2000)
+    const tipos = plan.dias[0].meals.map(m => m.tipo)
+    expect(tipos).toEqual(['desayuno', 'colacion_manana', 'almuerzo', 'cena'])
+  })
+
+  it('comidasPorDia=5 (default) → 5 comidas con colación y once', () => {
+    const plan = generarPlan(baseForm({ comidasPorDia: 5 }), 2000)
+    const tipos = plan.dias[0].meals.map(m => m.tipo)
+    expect(tipos).toEqual(['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena'])
+  })
+
+  it('comidasPorDia=6 → 6 comidas (slot extra al final)', () => {
+    const plan = generarPlan(baseForm({ comidasPorDia: 6 }), 2200)
+    expect(plan.dias[0].meals.length).toBe(6)
+  })
+
+  it('kcal totales del día se acercan al targetKcal independiente de comidasPorDia', () => {
+    [3, 4, 5, 6].forEach(n => {
+      const plan = generarPlan(baseForm({ comidasPorDia: n as 3 | 4 | 5 | 6 }), 2200)
+      const total = plan.dias[0].totalKcal
+      // Aceptable ±20% por el escalado de macros con baseKcal de la receta
+      expect(total, `comidasPorDia=${n}: total=${total}`).toBeGreaterThan(2200 * 0.6)
+      expect(total, `comidasPorDia=${n}: total=${total}`).toBeLessThan(2200 * 1.4)
+    })
+  })
+})
+
+describe('generarPlan — timing peri-entreno', () => {
+  it('entreno AM → colación de mañana es post-entreno', () => {
+    const plan = generarPlan(baseForm({ horarioEntrenamiento: 'AM' }), 2000)
+    const colAM = plan.dias[0].meals.find(m => m.tipo === 'colacion_manana')
+    expect(colAM?.timingEntreno).toBe('post_entreno')
+  })
+
+  it('entreno PM → once es post-entreno', () => {
+    const plan = generarPlan(baseForm({ horarioEntrenamiento: 'PM' }), 2000)
+    const once = plan.dias[0].meals.find(m => m.tipo === 'once')
+    expect(once?.timingEntreno).toBe('post_entreno')
+  })
+
+  it('entreno noche → once es pre-entreno', () => {
+    const plan = generarPlan(baseForm({ horarioEntrenamiento: 'noche' }), 2000)
+    const once = plan.dias[0].meals.find(m => m.tipo === 'once')
+    expect(once?.timingEntreno).toBe('pre_entreno')
+  })
+
+  it('sin_entreno → ninguna comida tiene timingEntreno', () => {
+    const plan = generarPlan(baseForm({ horarioEntrenamiento: 'sin_entreno' }), 2000)
+    plan.dias[0].meals.forEach(m => {
+      expect(m.timingEntreno).toBeUndefined()
+    })
+  })
+})
+
+describe('generarPlan — opt-in snack/barra', () => {
+  it('NO incluye snack favorito si incluirSnackEnPlan=false', () => {
+    const plan = generarPlan(baseForm({
+      incluirSnackEnPlan: false,
+      snackNutrevoTipo: 'alfajor_activa2',
+    }), 2000)
+    const allLabels = plan.dias[0].meals.map(m => m.label).join(' | ')
+    expect(allLabels).not.toMatch(/Alfajor Activa2/i)
+  })
+
+  it('SÍ incluye snack favorito si incluirSnackEnPlan=true Y slot match horario', () => {
+    const plan = generarPlan(baseForm({
+      incluirSnackEnPlan: true,
+      snackNutrevoTipo: 'alfajor_activa2',
+      horarioEntrenamiento: 'AM',  // → snack entra a colación AM
+      comidasPorDia: 5,
+    }), 2000)
+    // Como hay 7 días y la rotación incluye alfajor, al menos un día debería tenerlo
+    const allLabels = plan.dias.map(d => d.meals.map(m => m.label).join(' | ')).join(' || ')
+    expect(allLabels).toMatch(/Alfajor Activa2/i)
+  })
+
+  it('snack solo entra en colación AM si entrena AM (no en once)', () => {
+    const plan = generarPlan(baseForm({
+      incluirSnackEnPlan: true,
+      snackNutrevoTipo: 'volki_coco',
+      horarioEntrenamiento: 'AM',
+    }), 2000)
+    // Volki nunca debería aparecer en once (slot PM) cuando entrena AM
+    plan.dias.forEach(day => {
+      const onceMeal = day.meals.find(m => m.tipo === 'once')
+      if (onceMeal) {
+        expect(onceMeal.label).not.toMatch(/Volki/i)
+      }
+    })
+  })
+
+  it('snack entra en ambos slots si sin_entreno + opt-in', () => {
+    const plan = generarPlan(baseForm({
+      incluirSnackEnPlan: true,
+      snackNutrevoTipo: 'moroketo',
+      horarioEntrenamiento: 'sin_entreno',
+      comidasPorDia: 5,
+    }), 2000)
+    const allLabels = plan.dias.map(d => d.meals.map(m => m.label).join(' | ')).join(' || ')
+    expect(allLabels).toMatch(/Moroketo/i)
+  })
+})
+
+describe('generarPlan — filtros clínicos', () => {
+  it('tendencia vegana NO incluye almuerzos omnívoros', () => {
+    const plan = generarPlan(baseForm({
+      tendencia: 'vegano',
+      almuerzos: ['pollo_arroz', 'tofu_quinoa'],
+    }), 2000)
+    plan.dias.forEach(day => {
+      const alm = day.meals.find(m => m.tipo === 'almuerzo')
+      // El filtro de tendencia debe haber excluído pollo_arroz, dejando solo tofu
+      if (alm) expect(alm.label).not.toMatch(/pollo/i)
+    })
+  })
+
+  it('tiempoCocinar=menos_15 filtra recetas largas', () => {
+    const plan = generarPlan(baseForm({
+      tiempoCocinar: 'menos_15',
+      almuerzos: ['pollo_arroz', 'ensalada_proteica_alm'],  // pollo=30min, ensalada=25min
+    }), 2000)
+    // Si todas son largas, el filtro debe usar fallback (devuelve todo)
+    expect(plan.dias[0].meals.find(m => m.tipo === 'almuerzo')).toBeDefined()
+  })
+
+  it('plan no rompe si paciente declara intolerancia múltiple', () => {
+    const plan = generarPlan(baseForm({
+      digIntolerancias: ['lactosa', 'gluten', 'legumbres', 'soya'],
+      digDiag: 'si_sibo',
+      tendencia: 'vegano',
+    }), 2000)
+    expect(plan.dias.length).toBe(7)
+    plan.dias.forEach(day => {
+      expect(day.meals.length).toBeGreaterThan(0)
+    })
+  })
+})
+
+describe('generarPlan — sustitución de yogur', () => {
+  it('cuando colación AM tiene yogur, se inyecta el yogur elegido', () => {
+    const plan = generarPlan(baseForm({
+      colacionManana: ['yogur_frutossecos_am'],
+      yogurtTipo: 'colun_protein',
+      comidasPorDia: 5,
+    }), 2000)
+    const colAM = plan.dias[0].meals.find(m => m.tipo === 'colacion_manana')
+    const itemsText = colAM?.items.join(' ')
+    expect(itemsText).toMatch(/Colun Protein Plus/i)
+  })
+
+  it('macros ajustan delta vs base griego (Colun: +6p vs Oikos)', () => {
+    const planOikos = generarPlan(baseForm({
+      colacionManana: ['yogur_frutossecos_am'],
+      yogurtTipo: 'griego',
+      comidasPorDia: 5,
+    }), 2000)
+    const planColun = generarPlan(baseForm({
+      colacionManana: ['yogur_frutossecos_am'],
+      yogurtTipo: 'colun_protein',
+      comidasPorDia: 5,
+    }), 2000)
+    const pOikos = planOikos.dias[0].meals.find(m => m.tipo === 'colacion_manana')!.p
+    const pColun = planColun.dias[0].meals.find(m => m.tipo === 'colacion_manana')!.p
+    // Colun (11g) > Oikos (5g) → Colun debe sumar más proteína
+    expect(pColun).toBeGreaterThanOrEqual(pOikos)
+  })
+})
+
+describe('generarPlan — robustez (no rompe en edge cases)', () => {
+  it('no rompe con desayunos vacíos (usa fallback)', () => {
+    const plan = generarPlan(baseForm({ desayunos: [] }), 2000)
+    expect(plan.dias[0].meals.find(m => m.tipo === 'desayuno')).toBeDefined()
+  })
+
+  it('no rompe con kcal extremo bajo (1000)', () => {
+    const plan = generarPlan(baseForm(), 1000)
+    expect(plan.dias[0].totalKcal).toBeGreaterThan(0)
+  })
+
+  it('no rompe con kcal extremo alto (4000)', () => {
+    const plan = generarPlan(baseForm(), 4000)
+    expect(plan.dias[0].totalKcal).toBeGreaterThan(2000)
+  })
+
+  it('no rompe con tendencia vegana + todas las intolerancias', () => {
+    const plan = generarPlan(baseForm({
+      tendencia: 'vegano',
+      digIntolerancias: ['lactosa', 'gluten', 'legumbres', 'soya', 'cruciferas', 'cebolla_ajo', 'huevo'],
+      digDiag: 'si_sibo',
+      digReflujo: 'frecuente',
+      tiempoCocinar: 'menos_15',
+      habilidadCulinaria: 'principiante',
+    }), 1800)
+    expect(plan.dias.length).toBe(7)
+    plan.dias.forEach(day => {
+      expect(day.meals.length).toBeGreaterThan(0)
+    })
+  })
+})

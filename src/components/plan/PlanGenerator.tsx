@@ -699,7 +699,10 @@ export function PlanGenerator({ onResult, initialData }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-4 sm:p-6 pb-6 relative">
-      {/* Toast de confirmación visual al cambiar preferencias */}
+      {/* Toast de confirmación visual al cambiar preferencias — accesible para screen readers */}
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {toast?.msg}
+      </div>
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -709,6 +712,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
             exit={{ opacity: 0, y: -8, scale: 0.96 }}
             transition={{ duration: 0.18 }}
             className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#0C3547] text-white px-4 py-2 rounded-full shadow-lg text-xs font-semibold flex items-center gap-2 max-w-[90vw]"
+            aria-hidden="true"   /* el contenido textual ya lo anuncia el sr-only de arriba */
           >
             <span className="text-emerald-400">●</span>
             <span className="truncate">{toast.msg}</span>

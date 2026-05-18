@@ -147,6 +147,28 @@ function buildMealSlots(
   return slots
 }
 
+// ─── Filtrar pool por intolerancias / FODMAP / reflujo (defense-in-depth) ────
+// La UI ya filtra estas opciones en MealChips, pero replicamos aquí para que
+// el motor sea seguro independientemente del cliente (test, API directa, etc.)
+function filtrarClinico(
+  pool: Record<string, MealOption>,
+  intolerancias: string[],
+  bloquearSIBO: boolean,
+  bloquearAltaGrasa: boolean,
+): Record<string, MealOption> {
+  const filtered = Object.fromEntries(
+    Object.entries(pool).filter(([, opt]) => {
+      if (intolerancias.length > 0 && opt.contiene) {
+        if (opt.contiene.some(c => intolerancias.includes(c))) return false
+      }
+      if (bloquearSIBO && opt.altoFODMAP) return false
+      if (bloquearAltaGrasa && opt.altaGrasa) return false
+      return true
+    })
+  )
+  return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
 // ─── Filtrar pool por tendencia alimentaria ───────────────────────────────────
 function filtrarPorTendencia<T extends { tendencia?: string[] }>(
   pool: Record<string, T>,
@@ -171,17 +193,40 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const ultraDias = form.ultraDias ?? 2
   const tendencia = form.tendencia ?? 'omnivoro'
 
-  // Pipeline de filtrado: tendencia → whey → tiempo → habilidad → priorización estacional
+  // Pipeline de filtrado: tendencia → whey → clínico → tiempo → habilidad → estacional
   const tiempo = form.tiempoCocinar
   const habilidad = form.habilidadCulinaria
+  const intol = form.digIntolerancias ?? []
+  const bloquearSIBO = form.digDiag === 'si_sibo' || form.digDiag === 'si_sii' || form.digHinchazon === 'diaria'
+  const bloquearAltaGrasaCena = form.digReflujo === 'frecuente'
+
   const desayunosPool = priorizarPorEstacion(
-    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorWhey(desayunosOpts, form.wheyIndicado), tiempo), habilidad)
+    filtrarPorHabilidad(
+      filtrarPorTiempo(
+        filtrarClinico(filtrarPorWhey(desayunosOpts, form.wheyIndicado), intol, bloquearSIBO, false),
+        tiempo
+      ),
+      habilidad
+    )
   )
   const almuerzosPool = priorizarPorEstacion(
-    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorTendencia(almuerzosOpts, tendencia), tiempo), habilidad)
+    filtrarPorHabilidad(
+      filtrarPorTiempo(
+        filtrarClinico(filtrarPorTendencia(almuerzosOpts, tendencia), intol, bloquearSIBO, false),
+        tiempo
+      ),
+      habilidad
+    )
   )
   const cenasPool = priorizarPorEstacion(
-    filtrarPorHabilidad(filtrarPorTiempo(filtrarPorTendencia(cenasOpts, tendencia), tiempo), habilidad)
+    filtrarPorHabilidad(
+      filtrarPorTiempo(
+        // Solo cenas filtran altaGrasa con reflujo frecuente (consistente con MealChips)
+        filtrarClinico(filtrarPorTendencia(cenasOpts, tendencia), intol, bloquearSIBO, bloquearAltaGrasaCena),
+        tiempo
+      ),
+      habilidad
+    )
   )
 
   // Slots dinámicos según comidasPorDia (3/4/5/6)

@@ -659,7 +659,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'beyond_burguer.jpg',
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
-    contiene: ['legumbres'],   // proteína de arveja
+    contiene: ['legumbres'],   // proteína aislada de arveja + frijol mungo
+    altoFODMAP: true,           // proteína aislada tiene menos FODMAP que legumbre entera, pero precaución en SIBO
     altaGrasa: true,
     sellos: ['Alto en Grasas Saturadas (5,1 g/porción)'],
     alergenosNota: 'Ingredientes: Agua, Aislado de proteína de arveja, Aceite de canola, Aceite de coco refinado, Proteína de arroz, Almidón de papa, Saborizantes naturales vegetales, Levadura seca, Proteína de frijol mungo, Metilcelulosa, Extracto de manzana, Extracto de granada, Extracto de levadura, Cloruro de potasio, Sal, Extracto de betarraga, Concentrado de jugo de limón, Lecitina de maravilla, Extracto licopeno de tomate, Aceite de maravilla, Glicerina vegetal, Maltodextrina, Ácido ascórbico, Vinagre. Sin gluten · Sin soya · Sin mariscos · Sin lácteos · Sin huevo. Elaborado en planta que también procesa soya y gluten.',
