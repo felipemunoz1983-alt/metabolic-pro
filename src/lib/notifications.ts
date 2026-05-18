@@ -13,6 +13,81 @@ export interface AppNotification {
   patientName?: string
 }
 
+// ─── Logic pure helpers (testeable sin mockear Supabase) ─────────────────────
+
+/** Calcula porcentaje de adherencia con división segura (0 si comidas_total = 0) */
+export function adherenciaPct(comidas_completadas: number, comidas_total: number): number {
+  if (comidas_total <= 0) return 0
+  return Math.round((comidas_completadas / comidas_total) * 100)
+}
+
+/** Calcula adherencia promedio de una serie de logs. Devuelve null si <1 log. */
+export function adherenciaMedia(logs: Array<{ comidas_completadas: number; comidas_total: number }>): number | null {
+  if (!logs || logs.length === 0) return null
+  const sum = logs.reduce((s, l) => s + adherenciaPct(l.comidas_completadas, l.comidas_total), 0)
+  return Math.round(sum / logs.length)
+}
+
+/** Días desde una fecha (formato YYYY-MM-DD) hasta hoy.
+ *  Usa UTC al mediodía para evitar drift de zonas horarias en pruebas y servidores. */
+export function diasDesde(fechaISO: string, now: Date = new Date()): number {
+  const [y, m, d] = fechaISO.split('-').map(Number)
+  const fechaMs = Date.UTC(y, (m ?? 1) - 1, d ?? 1, 12, 0, 0)
+  return Math.floor((now.getTime() - fechaMs) / 86400000)
+}
+
+/** Banda clínica de adherencia semanal — coincide con skill nutriapp-pro */
+export type BandaAdherencia = 'excelente' | 'buena' | 'irregular' | 'critica'
+export function bandaAdherencia(pct: number): BandaAdherencia {
+  if (pct >= 90) return 'excelente'
+  if (pct >= 70) return 'buena'
+  if (pct >= 50) return 'irregular'
+  return 'critica'
+}
+
+/** Lista pacientes con baja adherencia (umbral por defecto: 60%) — input puro, sin Supabase */
+export interface PatientLogRow {
+  user_id: string
+  fecha: string
+  comidas_completadas: number
+  comidas_total: number
+}
+export function pacientesConBajaAdherencia(
+  patients: Array<{ id: string; nombre: string }>,
+  logsByPatient: Map<string, PatientLogRow[]>,
+  umbralPct = 60,
+  minLogs = 3,
+): Array<{ name: string; pct: number }> {
+  const result: Array<{ name: string; pct: number }> = []
+  for (const patient of patients) {
+    const logs = logsByPatient.get(patient.id) ?? []
+    if (logs.length < minLogs) continue
+    const avg = adherenciaMedia(logs)
+    if (avg !== null && avg < umbralPct) result.push({ name: patient.nombre, pct: avg })
+  }
+  return result
+}
+
+/** Lista pacientes inactivos (sin registro reciente). diasMin = 3 por defecto. */
+export function pacientesInactivos(
+  patients: Array<{ id: string; nombre: string }>,
+  logsByPatient: Map<string, PatientLogRow[]>,
+  diasMin = 3,
+  now: Date = new Date(),
+): string[] {
+  const inactivos: string[] = []
+  for (const patient of patients) {
+    const logs = logsByPatient.get(patient.id) ?? []
+    const recentLog = logs[0]
+    if (!recentLog) {
+      inactivos.push(patient.nombre)
+    } else if (diasDesde(recentLog.fecha, now) >= diasMin) {
+      inactivos.push(patient.nombre)
+    }
+  }
+  return inactivos
+}
+
 // ─── Generate notifications for a PATIENT ────────────────────────────────────
 export async function getPatientNotifications(
   supabase: SupabaseClient,
@@ -150,31 +225,9 @@ export async function getProfessionalNotifications(
     }
   }
 
-  const inactive: string[] = []
-  const lowAdh: { name: string; pct: number }[] = []
-
-  for (const patient of patients) {
-    const logs = logsByPatient.get(patient.id) ?? []
-
-    // No activity in last 3 days
-    const recentLog = logs[0]
-    if (!recentLog) {
-      inactive.push(patient.nombre)
-    } else {
-      const daysSince = Math.floor(
-        (Date.now() - new Date(recentLog.fecha + 'T12:00:00').getTime()) / 86400000
-      )
-      if (daysSince >= 3) inactive.push(patient.nombre)
-    }
-
-    // Low adherence (<60%) with enough data
-    if (logs.length >= 3) {
-      const avg = Math.round(
-        logs.reduce((s, l) => s + (l.comidas_total > 0 ? (l.comidas_completadas / l.comidas_total) * 100 : 0), 0) / logs.length
-      )
-      if (avg < 60) lowAdh.push({ name: patient.nombre, pct: avg })
-    }
-  }
+  // Cálculo delegado a helpers puros (testeables)
+  const inactive = pacientesInactivos(patients, logsByPatient as Map<string, PatientLogRow[]>)
+  const lowAdh = pacientesConBajaAdherencia(patients, logsByPatient as Map<string, PatientLogRow[]>)
 
   // Batch inactive into one notification
   if (inactive.length > 0) {
