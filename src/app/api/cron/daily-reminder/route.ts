@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
 import { sendPushToUser } from '@/lib/push'
+import { filterActivePatients } from '@/lib/digestSummary'
 
 const today = () => new Date().toISOString().split('T')[0]
 
@@ -102,14 +103,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   const now = new Date()
-  // Keep users with active paid plan OR active trial
-  const validPatients = activePacientes.filter(p => {
-    if (p.plan !== 'gratuito') {
-      return !p.premium_until || new Date(p.premium_until) > now
-    }
-    // gratuito → must have active trial
-    return !!p.trial_ends_at && new Date(p.trial_ends_at) > now
-  })
+  // Keep users with active paid plan OR active trial — lógica delegada a helper puro
+  const validPatients = filterActivePatients(activePacientes, now)
 
   if (validPatients.length === 0) {
     return NextResponse.json({ ok: true, sent: 0, message: 'No active patients' })

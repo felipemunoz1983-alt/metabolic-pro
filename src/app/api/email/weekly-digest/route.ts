@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
-
-interface PatientSummary {
-  nombre: string
-  email: string
-  adherenciaMedia: number | null
-  kcalMedia: number | null
-  logsCount: number
-  ultimoPeso: number | null
-  pesoAnterior: number | null
-  necesitaIntervencion: boolean
-  sinActividad: boolean
-}
+import {
+  computePatientWeeklySummary,
+  type PatientWeeklySummary as PatientSummary,
+  type PatientLogRowFull,
+} from '@/lib/digestSummary'
 
 function buildHtml(professionalName: string, patients: PatientSummary[], weekLabel: string): string {
   const urgent = patients.filter(p => p.necesitaIntervencion || p.sinActividad)
@@ -205,48 +198,16 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     .order('fecha', { ascending: false })
 
   // Group logs by patient
-  const logsByPatient: Record<string, typeof allLogs> = {}
+  const logsByPatient: Record<string, PatientLogRowFull[]> = {}
   allLogs?.forEach(log => {
     if (!logsByPatient[log.user_id]) logsByPatient[log.user_id] = []
-    logsByPatient[log.user_id]!.push(log)
+    logsByPatient[log.user_id]!.push(log as PatientLogRowFull)
   })
 
-  // Compute summaries
-  const summaries: PatientSummary[] = patients.map(p => {
-    const logs = logsByPatient[p.id] || []
-    const sinActividad = logs.length === 0
-
-    const adherencias = logs
-      .filter(l => l.comidas_total > 0)
-      .map(l => (l.comidas_completadas / l.comidas_total) * 100)
-
-    const adherenciaMedia = adherencias.length > 0
-      ? Math.round(adherencias.reduce((s, v) => s + v, 0) / adherencias.length)
-      : null
-
-    const kcals = logs.filter(l => l.kcal_consumida > 0).map(l => l.kcal_consumida)
-    const kcalMedia = kcals.length > 0
-      ? Math.round(kcals.reduce((s, v) => s + v, 0) / kcals.length)
-      : null
-
-    const pesosOrdered = logs.filter(l => l.peso).map(l => l.peso!)
-    const ultimoPeso = pesosOrdered[0] ?? null
-    const pesoAnterior = pesosOrdered[pesosOrdered.length - 1] ?? null
-
-    const necesitaIntervencion = !sinActividad && adherenciaMedia !== null && adherenciaMedia < 50
-
-    return {
-      nombre: p.nombre || 'Sin nombre',
-      email: p.email,
-      adherenciaMedia,
-      kcalMedia,
-      logsCount: logs.length,
-      ultimoPeso,
-      pesoAnterior: pesosOrdered.length > 1 ? pesoAnterior : null,
-      necesitaIntervencion,
-      sinActividad,
-    }
-  })
+  // Compute summaries — lógica delegada a helper puro (testeable)
+  const summaries: PatientSummary[] = patients.map(p =>
+    computePatientWeeklySummary(p, logsByPatient[p.id] || [])
+  )
 
   // Build week label
   const now = new Date()
