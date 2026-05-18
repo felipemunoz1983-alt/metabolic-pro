@@ -248,7 +248,7 @@ function YogurtTypePicker({
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
       <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {(Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]).map(([key, info]) => (
           <button
             key={key}
@@ -298,6 +298,14 @@ function YogurtTypePicker({
           <span className="text-xs flex-shrink-0">⚠️</span>
           <p className="text-[10px] text-amber-800">
             <strong>Soprole Protein+ · Sin lactosa · Libre de gluten · Libre de sellos:</strong> Endulzado con sucralosa (18.5 mg/porción) y estevia (7.6 mg/porción). 10g proteína por porción de 155g.
+          </p>
+        </div>
+      )}
+      {value === 'colun_protein' && (
+        <div className="flex gap-2 bg-amber-50 border border-amber-200 rounded-lg p-2">
+          <span className="text-xs flex-shrink-0">⚠️</span>
+          <p className="text-[10px] text-amber-800">
+            <strong>Colun Protein Plus Vainilla · 11g proteína · 0% grasa · Sin lactosa · Libre de gluten:</strong> Formato squeeze 150g. Libre de soya, huevo, mariscos, maní, frutos secos, nueces, sulfitos y trigo. Ideal para personas con alergias múltiples.
           </p>
         </div>
       )}

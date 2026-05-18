@@ -67,6 +67,16 @@ export const YOGUR_TIPOS = {
     alergenosNota: '⚠️ Soprole Protein+ · Endulzado con sucralosa y estevia.',
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202304051741batido-frutilla.png',
   },
+  colun_protein: {
+    label: 'Colun Protein Plus Vainilla',
+    emoji: '🌾',
+    item: 'Yogur Colun Protein Plus! Squeeze Vainilla 150g',
+    // Fuente: etiqueta oficial 150g — 120 kcal · 11.1g prot · 17.9g CH · 0.5g G · sin lactosa · 0% grasa · libre de gluten
+    kcal: 120, p: 11, c: 18, g: 1,
+    badge: '11g prot · 0% grasa · Sin lactosa · Libre gluten',
+    alergenosNota: '⚠️ Colun Protein Plus · Libre de soya, huevo, mariscos, maní, frutos secos, nueces, sulfitos, trigo, gluten y lactosa.',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/365573-900-900?width=900&height=900&aspect=true',
+  },
 } as const
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
