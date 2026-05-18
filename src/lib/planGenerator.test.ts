@@ -267,6 +267,91 @@ describe('generarPlan — sustitución de yogur', () => {
   })
 })
 
+describe('generarPlan — selector de gramaje de carne', () => {
+  it('sustituye gramaje en items cuando carneGramosAlmuerzo != base', () => {
+    const plan = generarPlan(baseForm({
+      almuerzos: ['pollo_arroz'],   // base = 200g pollo
+      carneGramosAlmuerzo: 300,
+    }), 2200)
+    const alm = plan.dias[0].meals.find(m => m.tipo === 'almuerzo')
+    const items = alm?.items.join(' ') ?? ''
+    expect(items).toMatch(/300g/)
+    expect(items).not.toMatch(/200g pechuga pollo/)
+  })
+
+  it('NO modifica items si carneGramosAlmuerzo === carneGramosBase', () => {
+    const plan = generarPlan(baseForm({
+      almuerzos: ['pollo_arroz'],   // base = 200g
+      carneGramosAlmuerzo: 200,
+    }), 2200)
+    const alm = plan.dias[0].meals.find(m => m.tipo === 'almuerzo')
+    expect(alm?.items[0]).toMatch(/200g pechuga pollo/)
+  })
+
+  it('aumentar gramaje aumenta proteína (pollo: +0.31g prot/g)', () => {
+    const plan150 = generarPlan(baseForm({
+      almuerzos: ['pollo_verduras'],   // base 150g pollo en cena, pero acá es almuerzo dummy
+      cenas: ['pollo_verduras'],       // base 150g, lo usamos como cena
+      carneGramosCena: 150,
+    }), 2200)
+    const plan250 = generarPlan(baseForm({
+      cenas: ['pollo_verduras'],
+      carneGramosCena: 250,             // +100g
+    }), 2200)
+    const cena150 = plan150.dias[0].meals.find(m => m.tipo === 'cena')!
+    const cena250 = plan250.dias[0].meals.find(m => m.tipo === 'cena')!
+    // +100g pollo × 0.31 = +31g proteína (con scale ajustado)
+    expect(cena250.p).toBeGreaterThan(cena150.p)
+  })
+
+  it('reducir gramaje disminuye proteína (salmón)', () => {
+    const planFull = generarPlan(baseForm({
+      cenas: ['salmon_brocoli'],         // base 150g salmón
+      carneGramosCena: 150,
+    }), 2200)
+    const planLow = generarPlan(baseForm({
+      cenas: ['salmon_brocoli'],
+      carneGramosCena: 100,              // -50g
+    }), 2200)
+    const cenaFull = planFull.dias[0].meals.find(m => m.tipo === 'cena')!
+    const cenaLow = planLow.dias[0].meals.find(m => m.tipo === 'cena')!
+    expect(cenaLow.p).toBeLessThan(cenaFull.p)
+  })
+
+  it('almuerzo y cena tienen gramajes independientes', () => {
+    const plan = generarPlan(baseForm({
+      almuerzos: ['pollo_arroz'],       // base 200g
+      cenas: ['pollo_verduras'],         // base 150g
+      carneGramosAlmuerzo: 250,
+      carneGramosCena: 100,
+    }), 2200)
+    const alm = plan.dias[0].meals.find(m => m.tipo === 'almuerzo')
+    const cena = plan.dias[0].meals.find(m => m.tipo === 'cena')
+    expect(alm?.items.join(' ')).toMatch(/250g/)
+    expect(cena?.items.join(' ')).toMatch(/100g/)
+  })
+
+  it('preparaciones sin tieneCarne ignoran el gramaje', () => {
+    const plan = generarPlan(baseForm({
+      almuerzos: ['tofu_quinoa'],        // sin carne (tofu vegetal)
+      carneGramosAlmuerzo: 300,
+    }), 2200)
+    const alm = plan.dias[0].meals.find(m => m.tipo === 'almuerzo')
+    // El item de tofu original es "180g tofu firme", no debe cambiar
+    expect(alm?.items[0]).toMatch(/180g tofu/i)
+  })
+
+  it('macros se mantienen positivos (no rompe con gramaje extremo bajo)', () => {
+    const plan = generarPlan(baseForm({
+      cenas: ['carne_zapallo'],
+      carneGramosCena: 50,   // mínimo extremo
+    }), 2200)
+    const cena = plan.dias[0].meals.find(m => m.tipo === 'cena')!
+    expect(cena.p).toBeGreaterThanOrEqual(0)
+    expect(cena.g).toBeGreaterThanOrEqual(0)
+  })
+})
+
 describe('generarPlan — robustez (no rompe en edge cases)', () => {
   it('no rompe con desayunos vacíos (usa fallback)', () => {
     const plan = generarPlan(baseForm({ desayunos: [] }), 2000)

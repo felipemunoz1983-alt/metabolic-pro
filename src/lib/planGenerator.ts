@@ -15,6 +15,7 @@ import {
   getCurrentSeason,
   parseTiempoMin,
   tiempoCocinarMax,
+  CARNE_MACROS_POR_GRAMO,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -267,7 +268,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty))
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
@@ -277,7 +278,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'cena') {
         const cena = getMealOption(cenasPool, form.cenas, d)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena))
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
@@ -340,6 +341,7 @@ function buildMeal(
   finalKcal: number,
   eggsQty?: number,
   yogurTipo?: YogurTipo,
+  carneGramos?: number,
 ): DayMeal {
   const kcal = Math.round(finalKcal)
 
@@ -356,6 +358,38 @@ function buildMeal(
     items = items.map(item =>
       item.replace(/^\d+(-\d+)?\s+(huevo(s)?)/i, `${eggsQty} ${huevoSingular}`)
     )
+  }
+
+  // Sustituir gramaje de carne/pescado si el paciente eligió un gramaje distinto al base.
+  // Ajusta macros usando CARNE_MACROS_POR_GRAMO[carneTipo] como delta vs el base de la receta.
+  if (
+    option.tieneCarne &&
+    option.carneTipo &&
+    option.carneGramosBase &&
+    carneGramos !== undefined &&
+    carneGramos !== option.carneGramosBase
+  ) {
+    const baseG = option.carneGramosBase
+    const newG = carneGramos
+    // Reemplazar "Ng <fuente proteica>" en items (primer match con el peso base)
+    const reBase = new RegExp(`\\b${baseG}\\s*g\\b`)
+    let replaced = false
+    items = items.map(item => {
+      if (!replaced && reBase.test(item)) {
+        replaced = true
+        return item.replace(reBase, `${newG}g`)
+      }
+      return item
+    })
+    // Ajuste de macros: delta = (newG - baseG) × macros por gramo de la carne
+    const macros = CARNE_MACROS_POR_GRAMO[option.carneTipo]
+    const deltaG_carne = newG - baseG
+    // Aplicar scale para mantener proporcionalidad con la porción servida
+    p = Math.max(0, Math.round(p + deltaG_carne * macros.p * scale))
+    g = Math.max(0, Math.round(g + deltaG_carne * macros.g * scale))
+    // kcal/c no se recalculan: el kcal del slot ya está fijo por el targetKcal;
+    // si el paciente sube la carne sube proteína pero el kcal del plan no cambia
+    // (es decisión clínica: el plan apunta al total, las porciones se ajustan)
   }
 
   // Sustituir yogur si la opción tiene yogur (siempre — incluye griego).

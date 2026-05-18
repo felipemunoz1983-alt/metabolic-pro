@@ -34,6 +34,10 @@ export interface FormData {
   eggsQty: number           // huevos en almuerzo
   eggsQtyCena: number       // huevos en cena
   eggsQtyOnce: number       // huevos en once/colación
+  /** Gramaje de carne/pescado en preparaciones de almuerzo (default: el de la receta) */
+  carneGramosAlmuerzo?: number
+  /** Gramaje de carne/pescado en preparaciones de cena (default: el de la receta) */
+  carneGramosCena?: number
   sandwichQty: number
   sandwichQtyOnce: number
   semanas: number

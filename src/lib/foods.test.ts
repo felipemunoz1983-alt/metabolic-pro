@@ -199,6 +199,52 @@ describe('Catálogos — integridad estructural', () => {
     })
   })
 
+  describe('Almuerzos y cenas — flag tieneCarne y consistencia', () => {
+    it('cada comida con tieneCarne tiene carneTipo y carneGramosBase definidos', () => {
+      [almuerzosOpts, cenasOpts].forEach(pool => {
+        Object.entries(pool).forEach(([key, opt]) => {
+          if (opt.tieneCarne) {
+            expect(opt.carneTipo, `${key} debe tener carneTipo`).toBeDefined()
+            expect(opt.carneGramosBase, `${key} debe tener carneGramosBase`).toBeGreaterThan(0)
+          }
+        })
+      })
+    })
+
+    it('carneTipo es un valor válido del CARNE_MACROS_POR_GRAMO', () => {
+      const tiposValidos = ['pollo', 'pavo', 'carne_roja', 'salmon', 'atun']
+      ;[almuerzosOpts, cenasOpts].forEach(pool => {
+        Object.entries(pool).forEach(([key, opt]) => {
+          if (opt.carneTipo) {
+            expect(tiposValidos, `${key} carneTipo`).toContain(opt.carneTipo)
+          }
+        })
+      })
+    })
+
+    it('items contienen el gramaje base como texto "Ng"', () => {
+      ;[almuerzosOpts, cenasOpts].forEach(pool => {
+        Object.entries(pool).forEach(([key, opt]) => {
+          if (opt.tieneCarne && opt.carneGramosBase) {
+            const itemsText = opt.items.join(' ')
+            const regex = new RegExp(`\\b${opt.carneGramosBase}\\s*g\\b`)
+            expect(itemsText, `${key} items deben mencionar ${opt.carneGramosBase}g`).toMatch(regex)
+          }
+        })
+      })
+    })
+
+    it('platos vegetarianos NO tienen tieneCarne', () => {
+      ;[almuerzosOpts, cenasOpts].forEach(pool => {
+        Object.entries(pool).forEach(([key, opt]) => {
+          if (opt.tendencia?.includes('vegano')) {
+            expect(opt.tieneCarne, `${key} vegano no debe tener tieneCarne`).toBeFalsy()
+          }
+        })
+      })
+    })
+  })
+
   describe('Desayunos — flag whey', () => {
     it('hay al menos un desayuno con requiereWhey true', () => {
       const withWhey = Object.values(desayunosOpts).filter(d => d.requiereWhey)

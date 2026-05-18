@@ -26,6 +26,8 @@ const defaultForm: Partial<FormData> = {
   eggsQty: 2,
   eggsQtyCena: 3,
   eggsQtyOnce: 2,
+  carneGramosAlmuerzo: 150,
+  carneGramosCena: 150,
   sandwichQty: 1,
   sandwichQtyOnce: 1,
   semanas: 1,
@@ -279,6 +281,45 @@ function EggsQtyPicker({
             )}
           >
             {n}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Selector de gramaje de carne / pescado por tiempo de comida ─────────────
+function CarneQtyPicker({
+  label,
+  value,
+  onChange,
+  emoji = '🥩',
+}: {
+  label: string
+  value: number
+  onChange: (n: number) => void
+  emoji?: string
+}) {
+  const opciones = [100, 125, 150, 175, 200, 225, 250]
+  return (
+    <div className="mt-2 pl-1">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs text-[#6B7C93] font-semibold">{emoji} {label}:</span>
+        <span className="text-xs font-bold text-[#0C3547]">{value}g</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {opciones.map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className={cn(
+              'min-w-[44px] h-9 px-2 rounded-lg text-xs font-bold border-2 transition-all',
+              value === n
+                ? 'bg-[#E11D48] border-[#E11D48] text-white'
+                : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#E11D48] hover:text-[#E11D48]'
+            )}
+          >
+            {n}g
           </button>
         ))}
       </div>
@@ -579,6 +620,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     tendencia: v => `Tendencia: ${String(v)}`,
     wheyIndicado: v => v ? 'Proteína en polvo activada' : 'Proteína en polvo desactivada',
     horarioEntrenamiento: v => `Entreno: ${String(v).toUpperCase()}`,
+    carneGramosAlmuerzo: v => `Carne almuerzo: ${v}g`,
+    carneGramosCena: v => `Carne cena: ${v}g`,
   }
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
@@ -1421,6 +1464,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                           onChange={n => set('eggsQty', n)}
                         />
                       )}
+                      {(form.almuerzos ?? []).some(k => almuerzosOpts[k]?.tieneCarne) && (
+                        <CarneQtyPicker
+                          label="Gramos de carne / pescado en almuerzo"
+                          value={form.carneGramosAlmuerzo ?? 150}
+                          onChange={n => set('carneGramosAlmuerzo', n)}
+                        />
+                      )}
                     </div>
 
                     {/* Once */}
@@ -1450,6 +1500,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                         <EggsQtyPicker
                           value={form.eggsQtyCena ?? 3}
                           onChange={n => set('eggsQtyCena', n)}
+                        />
+                      )}
+                      {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneCarne) && (
+                        <CarneQtyPicker
+                          label="Gramos de carne / pescado en cena"
+                          value={form.carneGramosCena ?? 150}
+                          onChange={n => set('carneGramosCena', n)}
                         />
                       )}
                     </div>

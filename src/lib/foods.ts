@@ -20,6 +20,12 @@ export interface MealOption {
   sellos?: string[]
   tieneHuevo?: boolean      // muestra selector de cantidad de huevos en PlanGenerator
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
+  /** true = la preparación incluye carne / pescado — activa selector de gramaje */
+  tieneCarne?: boolean
+  /** Tipo de carne en la preparación, usado para ajustar macros al cambiar gramaje */
+  carneTipo?: 'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun'
+  /** Gramaje base de la carne en la receta (ej: 150g pollo → 150) */
+  carneGramosBase?: number
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
   tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
   /** Alérgenos / componentes que contiene — para filtrar por digIntolerancias del paciente.
@@ -38,6 +44,19 @@ export interface MealOption {
   /** Duración numérica en minutos para filtrar por tiempoCocinar del paciente.
    *  Si no se define, se intenta parsear desde `tiempo` (string como "20 min"). */
   tiempoMin?: number
+}
+
+// ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
+// Usado para reajustar p/c/g cuando el paciente cambia el gramaje en su selector.
+export const CARNE_MACROS_POR_GRAMO: Record<
+  'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun',
+  { kcal: number; p: number; g: number }
+> = {
+  pollo:      { kcal: 1.65, p: 0.31, g: 0.036 },  // pechuga magra cocida
+  pavo:       { kcal: 1.35, p: 0.29, g: 0.020 },  // pechuga pavo
+  carne_roja: { kcal: 1.50, p: 0.26, g: 0.050 },  // posta/lomo magro
+  salmon:     { kcal: 2.00, p: 0.22, g: 0.130 },  // salmón fresco
+  atun:       { kcal: 1.05, p: 0.26, g: 0.010 },  // atún en agua
 }
 
 // ─── Helpers de contexto temporal ─────────────────────────────────────────────
@@ -472,6 +491,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 200,
     tiempo: '30 min',
     pasos: [
       'Pollo: sazonar la pechuga con sal, pimienta, ajo en polvo y gotas de limón. Cocinar 6-7 min por lado en plancha caliente con spray de aceite. El sellado a fuego alto retiene los jugos.',
@@ -488,6 +508,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
     tiempo: '30 min',
     pasos: [
       'Papa: lavar y cocinar entera con cáscara en agua hirviendo con sal 20-25 min. La cáscara conserva nutrientes y reduce el índice glicémico.',
@@ -504,6 +525,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'salmon', carneGramosBase: 200,
     tiempo: '30 min',
     pasos: [
       'Quinoa: lavar en colador fino bajo agua fría. Cocinar en 2 tazas de agua con sal a fuego medio-bajo 15 min tapado. La quinoa es proteína completa con índice glicémico bajo.',
@@ -525,6 +547,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
     estacional: 'calor',
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
     tiempo: '25 min',
     pasos: [
       'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar enfriar.',
@@ -574,6 +597,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'pavo', carneGramosBase: 200,
     tiempo: '25 min',
     pasos: [
       'Papas: cocer con cáscara en agua hirviendo con sal 20 min. Escurrir y espolvorear perejil fresco.',
@@ -683,6 +707,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
     tiempo: '20 min',
     pasos: [
       'Pollo: sazonar con sal, pimienta, ajo y limón. Cocinar en plancha 6-7 min por lado.',
@@ -716,6 +741,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
     estacional: 'calor',
+    tieneCarne: true, carneTipo: 'atun', carneGramosBase: 150,
     tiempo: '15 min',
     pasos: [
       'Atún: escurrir bien la lata. El atún en agua aporta 26g de proteína por 100g con solo 1g de grasa.',
@@ -732,6 +758,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'salmon', carneGramosBase: 150,
     tiempo: '20 min',
     pasos: [
       'Salmón: sazonar con sal, pimienta, ajo y limón. Cocinar en sartén 3-4 min por lado hasta que el centro esté opaco pero jugoso.',
@@ -748,6 +775,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
     tiempo: '20 min',
     pasos: [
       'Carne: sazonar con sal, pimienta y ajo. Cocinar en plancha bien caliente 4-5 min por lado.',
@@ -765,6 +793,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     estacional: 'frio',   // sopa caliente — preferida en otoño/invierno
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
     tiempo: '35 min',
     pasos: [
       'Caldo: calentar 1 litro de caldo de pollo en una olla grande a fuego medio.',
