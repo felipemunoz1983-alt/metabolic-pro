@@ -91,6 +91,88 @@ export const YOGUR_TIPOS = {
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
 
+// ─── Snacks saludables Nutrevo ────────────────────────────────────────────────
+export const SNACK_NUTREVO_TIPOS = {
+  alfajor_activa2: {
+    label: 'Alfajor Activa2',
+    emoji: '🍫',
+    item: '1 Alfajor Activa2 Nutrevo (80g)',
+    // Fuente: nutrevo.cl — 265 kcal · 15g prot · 27g CH · 9g G · sin azúcar añadida (alulosa)
+    kcal: 265, p: 15, c: 27, g: 9,
+    badge: '15g prot · Sin azúcar añadida',
+    alergenosNota: '⚠️ Alfajor Activa2 · Contiene leche (whey), avena. Sin azúcar añadida (endulzado con alulosa).',
+    foto: 'https://nutrevo.cl/wp-content/uploads/2025/10/ALFAJORAIWEB-600x750.webp',
+  },
+  moroketo: {
+    label: 'Moroketo Proteínas',
+    emoji: '🍪',
+    item: '1 Moroketo Proteínas Nutrevo (pack 6 unid · 1 unid ≈ 30g)',
+    // Fuente: nutrevo.cl — 210 kcal · 14g prot · 4g CH · 13g G · keto · vegano
+    kcal: 210, p: 14, c: 4, g: 13,
+    badge: '14g prot · Keto · Vegano · Sin gluten',
+    alergenosNota: '⚠️ Moroketo · Contiene maní, almendra, coco. Sin gluten ni lactosa. Proteína 100% vegetal (arveja + arroz).',
+    foto: 'https://nutrevo.cl/wp-content/uploads/2026/04/MOROKETO_WEB12-1FINAL-600x750.webp',
+  },
+  volki_coco: {
+    label: 'Volki de Coco',
+    emoji: '🥥',
+    item: '1 Volki de Coco Nutrevo (pack 2 unid)',
+    // Fuente: nutrevo.cl — 129 kcal · 3g prot · keto · vegano · sin gluten · sin lácteos · sin huevo · sin soya
+    kcal: 129, p: 3, c: 5, g: 11,
+    badge: 'Keto · Vegano · Sin 5 alérgenos',
+    alergenosNota: '⚠️ Volki Coco · Contiene almendra y coco. Sin gluten, sin lácteos, sin huevo, sin soya, sin azúcar.',
+    foto: 'https://nutrevo.cl/wp-content/uploads/2025/10/VOLKI-KETO1WEB-600x750.webp',
+  },
+} as const
+
+export type SnackNutrevoTipo = keyof typeof SNACK_NUTREVO_TIPOS
+
+// ─── Barras de proteína (marcas Chile) ────────────────────────────────────────
+export const BARRA_PROTEINA_TIPOS = {
+  wild_protein: {
+    label: 'Wild Protein',
+    emoji: '💪',
+    item: '1 Barra Wild Protein (45g)',
+    // Fuente: etiqueta oficial 45g — 173 kcal · 15g prot · 17g CH · 5g G
+    kcal: 173, p: 15, c: 17, g: 5,
+    badge: '15g prot · Sabor caramelo · 45g',
+    alergenosNota: '⚠️ Wild Protein · Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces y sulfitos.',
+    foto: 'https://wild-protein.cl/cdn/shop/files/Caramelo_Frente.png?v=1740773832',
+  },
+  protein_bite_bw: {
+    label: 'Protein Bite Black & White',
+    emoji: '🍫',
+    item: '1 Protein Bite Black & White (55g)',
+    // Fuente: Your Goal Smart Nutrition — 161 kcal · 21g prot · 2.6g CH · 7.4g G · 3.2g fibra · sin azúcar
+    kcal: 161, p: 21, c: 3, g: 7,
+    badge: '21g prot · Low carb · Sin azúcar',
+    alergenosNota: '⚠️ Protein Bite · Contiene leche, soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina.',
+    foto: 'https://hausnusse.cl/cdn/shop/files/Black2.png?v=1692795895',
+  },
+  twentys_hazelnut: {
+    label: "Twenty's Hazelnut Praline",
+    emoji: '🔵',
+    item: "1 Twenty's Hazelnut Praline (60g)",
+    // Fuente: Your Goal — 152 kcal · 19.4g prot · 5.5g CH · 5.8g G · 14.3g fibra · sin azúcar · sin gluten
+    kcal: 152, p: 19, c: 6, g: 6,
+    badge: '19g prot · 14g fibra · Sin gluten',
+    alergenosNota: "⚠️ Twenty's · Contiene leche, soya (lecitinas), avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.",
+    foto: 'https://www.mixgreen.cl/cdn/shop/files/13363a.jpg?v=1724272525',
+  },
+  moroketo_barra: {
+    label: 'Galletón Moroketo Proteína',
+    emoji: '🍪',
+    item: '1 Galletón Moroketo Proteína (45g)',
+    // Fuente: Nutrevo — 231 kcal · 36g prot · 0g CH · 19g G · sin gluten · sin azúcar añadida
+    kcal: 231, p: 36, c: 0, g: 19,
+    badge: '36g prot · Sin gluten · Cacao 85%',
+    alergenosNota: '✅ Moroketo Galletón · Sin gluten · Chocolate 85% cacao · Sin azúcar añadida. Contiene leche (whey) y frutos secos.',
+    foto: 'https://nutrevo.cl/wp-content/uploads/2026/04/MOROKETO_WEB12-1FINAL-600x750.webp',
+  },
+} as const
+
+export type BarraProteinaTipo = keyof typeof BARRA_PROTEINA_TIPOS
+
 export interface UltraOption {
   label: string
   porcion: string

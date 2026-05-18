@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
-import type { MealOption, UltraOption, YogurTipo } from '@/lib/foods'
-import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS } from '@/lib/foods'
+import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
+import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
 import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
@@ -32,6 +32,8 @@ const defaultForm: Partial<FormData> = {
   desayunos: ['avena_platano'],
   wheyIndicado: false,
   yogurtTipo: 'griego' as YogurTipo,
+  snackNutrevoTipo: 'alfajor_activa2' as SnackNutrevoTipo,
+  barraProteinaTipo: 'wild_protein' as BarraProteinaTipo,
   colacionManana: ['yogur_frutossecos_am'],
   almuerzos: ['pollo_arroz'],
   cenas: ['pollo_verduras'],
@@ -323,6 +325,96 @@ function YogurtTypePicker({
           <p className="text-[10px] text-emerald-800">
             <strong>Loncoleche Vegetal Soya Mango-Maracuyá · 100% vegetal · Vegano · Sin lactosa:</strong> Base soya con trozos de fruta. Solo 3.4g proteína por porción 130g — <strong>combinar con otra fuente proteica</strong> (huevo, tofu, semillas, proteína vegetal) para alcanzar el aporte del plan.
           </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Catalog Picker genérico (snacks + barras) ────────────────────────────────
+type CatalogItem = {
+  label: string
+  emoji: string
+  badge: string
+  alergenosNota?: string
+  foto?: string
+  kcal?: number
+  p?: number
+  c?: number
+  g?: number
+}
+
+function CatalogPicker<K extends string>({
+  title,
+  catalog,
+  value,
+  onChange,
+  headerColor = 'text-emerald-800',
+  bgColor = 'bg-emerald-50',
+  borderColor = 'border-emerald-200',
+  selectedBg = 'bg-emerald-500',
+  selectedBorder = 'border-emerald-500',
+  noteBg = 'bg-amber-50',
+  noteBorder = 'border-amber-200',
+  noteText = 'text-amber-800',
+}: {
+  title: string
+  catalog: Record<K, CatalogItem>
+  value: K
+  onChange: (key: K) => void
+  headerColor?: string
+  bgColor?: string
+  borderColor?: string
+  selectedBg?: string
+  selectedBorder?: string
+  noteBg?: string
+  noteBorder?: string
+  noteText?: string
+}) {
+  const entries = Object.entries(catalog) as [K, CatalogItem][]
+  const cols = entries.length === 3 ? 'lg:grid-cols-3' : entries.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-6'
+  const current = catalog[value]
+  return (
+    <div className={cn('mt-3 p-3 border rounded-xl space-y-2', bgColor, borderColor)}>
+      <p className={cn('text-xs font-bold', headerColor)}>{title}</p>
+      <div className={cn('grid grid-cols-2 sm:grid-cols-3 gap-2', cols)}>
+        {entries.map(([key, info]) => (
+          <button
+            key={key}
+            onClick={() => onChange(key)}
+            className={cn(
+              'flex flex-col items-center rounded-xl border-2 overflow-hidden transition-all',
+              value === key
+                ? cn(selectedBg, selectedBorder, 'text-white shadow-md scale-[1.02]')
+                : cn(borderColor, headerColor, 'hover:opacity-80 bg-white')
+            )}
+          >
+            {info.foto && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={info.foto}
+                alt={info.label}
+                className="w-full h-20 sm:h-24 object-cover bg-white"
+              />
+            )}
+            <div className="w-full px-2 py-2 text-left">
+              <div className="text-xs sm:text-sm font-bold leading-tight">{info.emoji} {info.label}</div>
+              <div className={cn('text-[10px] mt-0.5 font-semibold leading-tight', value === key ? 'text-white/85' : 'opacity-70')}>
+                {info.badge}
+              </div>
+              {(info.kcal != null && info.p != null) && (
+                <div className={cn('text-[10px] mt-0.5 font-mono leading-tight', value === key ? 'text-white/80' : 'opacity-60')}>
+                  {info.kcal}kcal · {info.p}p / {info.c}c / {info.g}g
+                </div>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+      {current?.alergenosNota && (
+        <div className={cn('flex gap-2 border rounded-lg p-2', noteBg, noteBorder)}>
+          <span className="text-xs flex-shrink-0">⚠️</span>
+          <p className={cn('text-[10px]', noteText)}>{current.alergenosNota}</p>
         </div>
       )}
     </div>
@@ -801,6 +893,32 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               <YogurtTypePicker
                 value={(form.yogurtTipo ?? 'griego') as YogurTipo}
                 onChange={t => set('yogurtTipo', t)}
+              />
+
+              {/* Selector snack saludable Nutrevo */}
+              <CatalogPicker<SnackNutrevoTipo>
+                title="🍫 Snack saludable favorito (Nutrevo)"
+                catalog={SNACK_NUTREVO_TIPOS}
+                value={(form.snackNutrevoTipo ?? 'alfajor_activa2') as SnackNutrevoTipo}
+                onChange={t => set('snackNutrevoTipo', t)}
+                headerColor="text-rose-800"
+                bgColor="bg-rose-50"
+                borderColor="border-rose-200"
+                selectedBg="bg-rose-500"
+                selectedBorder="border-rose-500"
+              />
+
+              {/* Selector barra de proteína */}
+              <CatalogPicker<BarraProteinaTipo>
+                title="💪 Barra de proteína favorita"
+                catalog={BARRA_PROTEINA_TIPOS}
+                value={(form.barraProteinaTipo ?? 'wild_protein') as BarraProteinaTipo}
+                onChange={t => set('barraProteinaTipo', t)}
+                headerColor="text-violet-800"
+                bgColor="bg-violet-50"
+                borderColor="border-violet-200"
+                selectedBg="bg-violet-500"
+                selectedBorder="border-violet-500"
               />
 
               {/* Tendencia alimentaria */}

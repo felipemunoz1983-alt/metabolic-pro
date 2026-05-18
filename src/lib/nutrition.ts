@@ -2,7 +2,7 @@
 // Fórmula activa: Mifflin-St Jeor (1990) — estándar actual (Frankenfield et al. 2005)
 // Harris-Benedict conservado solo como referencia comparativa (@deprecated)
 
-import type { YogurTipo } from './foods'
+import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo } from './foods'
 
 export type Objetivo = 'perdida grasa' | 'mantenimiento' | 'hipertrofia'
 export type Sexo = 'masculino' | 'femenino'
@@ -64,6 +64,10 @@ export interface FormData {
   wheyIndicado?: boolean
   /** Tipo de yogur seleccionado por el paciente. Se extiende automáticamente con YOGUR_TIPOS en foods.ts. */
   yogurtTipo?: YogurTipo
+  /** Snack saludable favorito de Nutrevo. Se extiende automáticamente con SNACK_NUTREVO_TIPOS en foods.ts. */
+  snackNutrevoTipo?: SnackNutrevoTipo
+  /** Barra de proteína favorita. Se extiende automáticamente con BARRA_PROTEINA_TIPOS en foods.ts. */
+  barraProteinaTipo?: BarraProteinaTipo
 }
 
 export interface Macros {
