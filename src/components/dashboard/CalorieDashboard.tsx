@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { Sparkline, Ring } from '@/components/ui/Sparkline'
-import type { Macros } from '@/lib/nutrition'
+import type { Macros, FormData } from '@/lib/nutrition'
+import { generarPlan } from '@/lib/planGenerator'
 import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Trophy } from 'lucide-react'
 
 interface DayLog {
@@ -27,15 +28,45 @@ interface Props {
   userId: string
   targetKcal?: number
   macros?: Macros
+  /** Form completo del paciente — si está presente, los slots de adherencia
+   *  se sincronizan con el plan generado (comidasPorDia dinámico, nombres reales). */
+  form?: FormData
 }
 
-const MEALS = [
-  { id: 'desayuno',    label: 'Desayuno',        icon: '🌅', pct: 0.25 },
-  { id: 'col_manana',  label: 'Colación mañana',  icon: '☕', pct: 0.10 },
-  { id: 'almuerzo',    label: 'Almuerzo',         icon: '🍽️', pct: 0.35 },
-  { id: 'once',        label: 'Once',             icon: '🫖', pct: 0.15 },
-  { id: 'cena',        label: 'Cena',             icon: '🌙', pct: 0.15 },
+/** Slot de adherencia — puede ser dinámico (desde plan) o fallback estático */
+interface MealSlot {
+  id: string          // key estable para persistir en meals_json
+  label: string       // texto mostrado (nombre real del plato o genérico)
+  icon: string        // emoji
+  kcal: number        // kcal real del slot, no porcentaje teórico
+  foto?: string       // foto del plato si viene del plan
+}
+
+/** Fallback estático cuando no hay plan generado — 5 comidas genéricas */
+const FALLBACK_MEALS: MealSlot[] = [
+  { id: 'desayuno',        label: 'Desayuno',        icon: '🌅', kcal: 500 },
+  { id: 'colacion_manana', label: 'Colación mañana', icon: '☕', kcal: 200 },
+  { id: 'almuerzo',        label: 'Almuerzo',        icon: '🍽️', kcal: 700 },
+  { id: 'once',            label: 'Once',            icon: '🫖', kcal: 300 },
+  { id: 'cena',            label: 'Cena',            icon: '🌙', kcal: 300 },
 ]
+
+/** Migración legacy: registros antiguos usaban 'col_manana' en meals_json.
+ *  Si el nuevo plan usa 'colacion_manana', leemos también el valor legacy. */
+const LEGACY_KEY_MAP: Record<string, string> = {
+  colacion_manana: 'col_manana',
+}
+
+/** Tipo → emoji icon (consistente con planGenerator MEAL_ICONS) */
+const TIPO_ICONS: Record<string, string> = {
+  desayuno: '🌅',
+  colacion_manana: '☕',
+  almuerzo: '🍽️',
+  once: '🫖',
+  cena: '🌙',
+  ultra_extra: '🍎',
+  ultra: '🚨',
+}
 
 const HUNGER_LABELS = ['', 'Sin hambre', 'Poca hambre', 'Hambre normal', 'Bastante hambre', 'Mucha hambre']
 const ENERGY_LABELS = ['', 'Sin energía', 'Poca energía', 'Energía normal', 'Buena energía', 'Excelente energía']
@@ -309,9 +340,44 @@ function ScaleSelector({
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
+export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Props) {
   const supabase = createClient()
   const today = new Date().toISOString().split('T')[0]
+
+  // ── Slots dinámicos según plan del paciente ───────────────────────────────
+  // Si hay form persistido, generamos el plan del día actual y extraemos los
+  // meals reales. Si no, fallback a 5 comidas genéricas (paciente sin plan aún).
+  const MEALS: MealSlot[] = useMemo(() => {
+    if (!form) return FALLBACK_MEALS
+    try {
+      const plan = generarPlan(form, targetKcal)
+      // Día actual: 0=Lunes ... 6=Domingo según locale; JS getDay() devuelve 0=Domingo
+      // Plan usa 0=Lunes. Mapeamos: (getDay()+6)%7
+      const todayIdx = (new Date().getDay() + 6) % 7
+      const dia = plan.dias[todayIdx]
+      if (!dia || dia.meals.length === 0) return FALLBACK_MEALS
+      // Trackeamos solo las comidas regulares (no ultras planificados puntuales).
+      // Si comidasPorDia=6, planGenerator emite 2 'once' con tipo='once' — usamos
+      // posición para evitar colisión de keys en meals_json.
+      const regulares = dia.meals.filter(m => m.tipo !== 'ultra')
+      const tipoCount: Record<string, number> = {}
+      return regulares.map(m => {
+        const seen = tipoCount[m.tipo] ?? 0
+        tipoCount[m.tipo] = seen + 1
+        const id = seen === 0 ? m.tipo : `${m.tipo}_${seen + 1}`
+        return {
+          id,
+          label: m.label,
+          icon: TIPO_ICONS[m.tipo] ?? m.icon ?? '🍴',
+          kcal: m.kcal,
+          foto: m.foto,
+        }
+      })
+    } catch (e) {
+      console.error('[CalorieDashboard] error generando plan del día:', e)
+      return FALLBACK_MEALS
+    }
+  }, [form, targetKcal])
 
   const [checkedMeals, setCheckedMeals] = useState<Record<string, boolean>>({})
   const [peso, setPeso] = useState('')
@@ -341,7 +407,18 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
     if (error) { console.error('[CalorieDashboard] loadToday:', error); return }
     if (data) {
       setPeso(data.peso?.toString() || '')
-      try { setCheckedMeals(JSON.parse(data.meals_json || '{}')) } catch { /* noop */ }
+      try {
+        const raw: Record<string, boolean> = JSON.parse(data.meals_json || '{}')
+        // Migración legacy: si el registro antiguo tiene 'col_manana', leemos su valor
+        // como 'colacion_manana' (key actual del planGenerator) sin perder histórico.
+        const migrated: Record<string, boolean> = { ...raw }
+        for (const [newKey, legacyKey] of Object.entries(LEGACY_KEY_MAP)) {
+          if (raw[legacyKey] !== undefined && migrated[newKey] === undefined) {
+            migrated[newKey] = raw[legacyKey]
+          }
+        }
+        setCheckedMeals(migrated)
+      } catch { /* noop */ }
       if (data.hambre)    setHambre(data.hambre)
       if (data.energia)   setEnergia(data.energia)
       if (data.digestivo) setDigestivo(data.digestivo)
@@ -365,10 +442,11 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
     }
   }
 
-  const completedCount = Object.values(checkedMeals).filter(Boolean).length
-  const adherencia = Math.round((completedCount / MEALS.length) * 100)
-  const kcalEstimada = MEALS.reduce((s, m) =>
-    checkedMeals[m.id] ? s + Math.round(targetKcal * m.pct) : s, 0)
+  // Solo contamos comidas REALES del plan (no las claves legacy que ya migramos)
+  const completedCount = MEALS.reduce((n, m) => n + (checkedMeals[m.id] ? 1 : 0), 0)
+  const adherencia = MEALS.length > 0 ? Math.round((completedCount / MEALS.length) * 100) : 0
+  // kcalEstimada usa las kcal REALES de cada slot del plan, no porcentajes teóricos
+  const kcalEstimada = MEALS.reduce((s, m) => checkedMeals[m.id] ? s + m.kcal : s, 0)
   const deficit = targetKcal - kcalEstimada
   const progressPct = Math.min((kcalEstimada / targetKcal) * 100, 100)
 
@@ -487,7 +565,6 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
           <div className="space-y-2">
             {MEALS.map((meal, i) => {
               const checked = !!checkedMeals[meal.id]
-              const mealKcal = Math.round(targetKcal * meal.pct)
               return (
                 <motion.button
                   key={meal.id}
@@ -504,12 +581,26 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros }: Props) {
                     ? <CheckCircle2 size={18} className="text-green-500 flex-shrink-0" />
                     : <Circle size={18} className="text-[#C8D8E4] flex-shrink-0" />
                   }
-                  <span className="text-lg flex-shrink-0">{meal.icon}</span>
-                  <span className={cn('flex-1 text-sm font-semibold', checked ? 'text-green-700 line-through' : 'text-[#0C1F2C]')}>
+                  {/* Foto del plato (si viene del plan) — fallback a emoji */}
+                  {meal.foto ? (
+                    <span className="w-9 h-9 flex-shrink-0 overflow-hidden rounded-lg bg-[#F0F6FA]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={meal.foto}
+                        alt=""
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                      />
+                    </span>
+                  ) : (
+                    <span className="text-lg flex-shrink-0">{meal.icon}</span>
+                  )}
+                  <span className={cn('flex-1 text-sm font-semibold leading-tight', checked ? 'text-green-700 line-through' : 'text-[#0C1F2C]')}>
                     {meal.label}
                   </span>
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs font-bold text-[#29ABE2]">{mealKcal}</span>
+                    <span className="text-xs font-bold text-[#29ABE2]">{meal.kcal}</span>
                     <span className="text-xs text-[#8BA5BE]"> kcal</span>
                   </div>
                 </motion.button>

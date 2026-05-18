@@ -531,6 +531,7 @@ export default function PacientePage() {
                     userId={userId}
                     targetKcal={result?.kcal ? Math.round(result.kcal) : 2000}
                     macros={result?.macros}
+                    form={formData ?? undefined}
                   />
                 </div>
               )}

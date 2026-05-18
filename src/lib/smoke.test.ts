@@ -185,6 +185,32 @@ describe('🧪 SMOKE — Perfil 5: Paciente apurado, principiante, presupuesto b
   })
 })
 
+describe('🧪 SMOKE — Sincronización plan ↔ adherencia (CalorieDashboard)', () => {
+  it('plan con 3 comidas debe exponer exactamente 3 slots regulares', () => {
+    const form = baseForm({ comidasPorDia: 3 })
+    const plan = generarPlan(form, 2000)
+    const regulares = plan.dias[0].meals.filter(m => m.tipo !== 'ultra')
+    expect(regulares.length).toBe(3)
+  })
+
+  it('plan con 6 comidas debe tener 2 slots tipo "once" (uno regular, uno extra)', () => {
+    const form = baseForm({ comidasPorDia: 6 })
+    const plan = generarPlan(form, 2200)
+    const onces = plan.dias[0].meals.filter(m => m.tipo === 'once' && !m.esUltra)
+    expect(onces.length).toBe(2)
+  })
+
+  it('cada meal del plan tiene label, kcal>0 y se puede mapear a slot de adherencia', () => {
+    const form = baseForm({ comidasPorDia: 5 })
+    const plan = generarPlan(form, 2200)
+    plan.dias[0].meals.filter(m => m.tipo !== 'ultra').forEach(m => {
+      expect(m.label.length).toBeGreaterThan(0)
+      expect(m.kcal).toBeGreaterThan(0)
+      expect(m.tipo).toBeDefined()
+    })
+  })
+})
+
 describe('🧪 SMOKE — Coherencia matemática del plan generado', () => {
   it('totalKcal del día = suma de meals.kcal', () => {
     const form = baseForm()
