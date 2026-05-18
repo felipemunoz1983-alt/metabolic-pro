@@ -36,6 +36,8 @@ export const YOGUR_TIPOS = {
     badge: '5g prot · Clásico griego Danone',
     alergenosNota: '⚠️ Danone Oikos · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena). Endulzado con estevia y sucralosa.',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/361284-900-900?width=900&height=900&aspect=true',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'frutos_secos', 'soya', 'gluten'] as string[],
   },
   fullpro: {
     label: 'FullPro Protein Loncoleche',
@@ -46,6 +48,8 @@ export const YOGUR_TIPOS = {
     badge: '18g prot · Sin lactosa · Bajo en grasa',
     alergenosNota: '⚠️ FullPro Loncoleche · Puede contener trazas de almendra, pasas, nuez, soya y gluten (avena).',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/485106-900-900?width=900&height=900&aspect=true',
+    vegano: false, vegetariano: true,
+    contiene: ['frutos_secos', 'soya', 'gluten'] as string[],
   },
   soprole_power: {
     label: 'Soprole Protein+ Power',
@@ -56,6 +60,8 @@ export const YOGUR_TIPOS = {
     badge: '16g prot · Sin lactosa · Con Magnesio · Libre sellos',
     alergenosNota: '⚠️ Soprole Protein+ Power · Elaborado en líneas que también procesan nueces.',
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202604011757power%20frutilla.png',
+    vegano: false, vegetariano: true,
+    contiene: ['frutos_secos'] as string[],
   },
   soprole_protein: {
     label: 'Soprole Protein+ Frutilla',
@@ -66,6 +72,8 @@ export const YOGUR_TIPOS = {
     badge: '10g prot · Sin lactosa · Libre gluten · Libre sellos',
     alergenosNota: '⚠️ Soprole Protein+ · Endulzado con sucralosa y estevia.',
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202304051741batido-frutilla.png',
+    vegano: false, vegetariano: true,
+    contiene: [] as string[],
   },
   colun_protein: {
     label: 'Colun Protein Plus Vainilla',
@@ -76,6 +84,8 @@ export const YOGUR_TIPOS = {
     badge: '11g prot · 0% grasa · Sin lactosa · Libre gluten',
     alergenosNota: '⚠️ Colun Protein Plus · Libre de soya, huevo, mariscos, maní, frutos secos, nueces, sulfitos, trigo, gluten y lactosa.',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/365573-900-900?width=900&height=900&aspect=true',
+    vegano: false, vegetariano: true,
+    contiene: [] as string[],   // el más limpio del catálogo: libre de 9 alérgenos comunes
   },
   loncoleche_vegetal: {
     label: 'Loncoleche Vegetal Soya',
@@ -86,6 +96,8 @@ export const YOGUR_TIPOS = {
     badge: 'Vegano · 100% vegetal · 3g fibra',
     alergenosNota: '⚠️ Loncoleche Vegetal · Base soya · Vegano y vegetariano · Libre de huevo, peces, mariscos, maní, sulfitos y trigo. Solo 3.4g proteína por porción — combinar con otra fuente proteica.',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/325169-900-900?width=900&height=900&aspect=true',
+    vegano: true, vegetariano: true,
+    contiene: ['soya'] as string[],
   },
 } as const
 
@@ -102,6 +114,8 @@ export const SNACK_NUTREVO_TIPOS = {
     badge: '15g prot · Sin azúcar añadida',
     alergenosNota: '⚠️ Alfajor Activa2 · Contiene leche (whey), avena. Sin azúcar añadida (endulzado con alulosa).',
     foto: 'https://nutrevo.cl/wp-content/uploads/2025/10/ALFAJORAIWEB-600x750.webp',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'gluten'] as string[],
   },
   moroketo: {
     label: 'Moroketo Proteínas',
@@ -112,6 +126,8 @@ export const SNACK_NUTREVO_TIPOS = {
     badge: '14g prot · Keto · Vegano · Sin gluten',
     alergenosNota: '⚠️ Moroketo · Contiene maní, almendra, coco. Sin gluten ni lactosa. Proteína 100% vegetal (arveja + arroz).',
     foto: 'https://nutrevo.cl/wp-content/uploads/2026/04/MOROKETO_WEB12-1FINAL-600x750.webp',
+    vegano: true, vegetariano: true,
+    contiene: ['mani', 'frutos_secos'] as string[],
   },
   volki_coco: {
     label: 'Volki de Coco',
@@ -122,6 +138,8 @@ export const SNACK_NUTREVO_TIPOS = {
     badge: 'Keto · Vegano · Sin 5 alérgenos',
     alergenosNota: '⚠️ Volki Coco · Contiene almendra y coco. Sin gluten, sin lácteos, sin huevo, sin soya, sin azúcar.',
     foto: 'https://nutrevo.cl/wp-content/uploads/2025/10/VOLKI-KETO1WEB-600x750.webp',
+    vegano: true, vegetariano: true,
+    contiene: ['frutos_secos'] as string[],
   },
 } as const
 
@@ -138,6 +156,8 @@ export const BARRA_PROTEINA_TIPOS = {
     badge: '15g prot · Sabor caramelo · Libre sellos',
     alergenosNota: '⚠️ Wild Protein · Contiene maní, leche, soya. Elaborado en líneas que también procesan gluten, nueces y sulfitos.',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/542802-900-900?width=900&height=900&aspect=true',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'soya', 'mani', 'frutos_secos', 'gluten'] as string[],
   },
   protein_bite_bw: {
     label: 'Protein Bite Black & White',
@@ -148,6 +168,8 @@ export const BARRA_PROTEINA_TIPOS = {
     badge: '21g prot · Low carb · Sin azúcar',
     alergenosNota: '⚠️ Protein Bite · Contiene leche, soya. Elaborado en líneas que procesan huevo y maní. Fenilcetonúricos: contiene fenilalanina.',
     foto: 'https://hausnusse.cl/cdn/shop/files/Black2.png?v=1692795895',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'soya'] as string[],
   },
   twentys_hazelnut: {
     label: "Twenty's Hazelnut Praline",
@@ -158,6 +180,8 @@ export const BARRA_PROTEINA_TIPOS = {
     badge: '19g prot · 14g fibra · Sin gluten',
     alergenosNota: "⚠️ Twenty's · Contiene leche, soya (lecitinas), avellana. Elaborado en líneas que procesan huevo, maní, nueces y sulfitos.",
     foto: 'https://www.mixgreen.cl/cdn/shop/files/13363a.jpg?v=1724272525',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'soya', 'frutos_secos'] as string[],
   },
 } as const
 

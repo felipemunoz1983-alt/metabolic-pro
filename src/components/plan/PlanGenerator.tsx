@@ -34,6 +34,9 @@ const defaultForm: Partial<FormData> = {
   yogurtTipo: 'griego' as YogurTipo,
   snackNutrevoTipo: 'alfajor_activa2' as SnackNutrevoTipo,
   barraProteinaTipo: 'wild_protein' as BarraProteinaTipo,
+  incluirSnackEnPlan: false,      // opt-in: el paciente decide explícitamente
+  incluirBarraEnPlan: false,      // opt-in: el paciente decide explícitamente
+  horarioEntrenamiento: 'PM' as 'AM' | 'PM' | 'noche' | 'sin_entreno',
   colacionManana: ['yogur_frutossecos_am'],
   almuerzos: ['pollo_arroz'],
   cenas: ['pollo_verduras'],
@@ -243,15 +246,48 @@ function EggsQtyPicker({
 function YogurtTypePicker({
   value,
   onChange,
+  tendencia,
+  intolerancias = [],
 }: {
   value: YogurTipo
   onChange: (t: YogurTipo) => void
+  tendencia?: 'omnivoro' | 'vegetariano' | 'vegano'
+  intolerancias?: string[]
 }) {
+  // Filtrar por tendencia + intolerancias
+  const allEntries = Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]
+  const entries = allEntries.filter(([, info]) => {
+    if (tendencia === 'vegano' && info.vegano === false) return false
+    if (intolerancias.length > 0) {
+      const hasIntol = info.contiene.some(c => intolerancias.includes(c))
+      if (hasIntol) return false
+    }
+    return true
+  })
+
+  // Auto-fallback al primero válido si el seleccionado fue filtrado
+  useEffect(() => {
+    if (entries.length > 0 && !entries.find(([k]) => k === value)) {
+      onChange(entries[0][0])
+    }
+  }, [tendencia, intolerancias.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (entries.length === 0) {
+    return (
+      <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl">
+        <p className="text-xs font-bold text-sky-800 mb-1">🥛 Tipo de yogur</p>
+        <p className="text-[11px] text-[#6B7C93]">
+          No hay yogures compatibles con tu tendencia/intolerancias. Las recetas que requieran yogur se ajustarán manualmente con el profesional.
+        </p>
+      </div>
+    )
+  }
+
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
       <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-        {(Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]).map(([key, info]) => (
+        {entries.map(([key, info]) => (
           <button
             key={key}
             onClick={() => onChange(key)}
@@ -342,6 +378,9 @@ type CatalogItem = {
   p?: number
   c?: number
   g?: number
+  vegano?: boolean
+  vegetariano?: boolean
+  contiene?: readonly string[] | string[]
 }
 
 function CatalogPicker<K extends string>({
@@ -349,6 +388,11 @@ function CatalogPicker<K extends string>({
   catalog,
   value,
   onChange,
+  tendencia,
+  intolerancias = [],
+  includeInPlan,
+  onIncludeChange,
+  includeLabel,
   headerColor = 'text-emerald-800',
   bgColor = 'bg-emerald-50',
   borderColor = 'border-emerald-200',
@@ -362,6 +406,14 @@ function CatalogPicker<K extends string>({
   catalog: Record<K, CatalogItem>
   value: K
   onChange: (key: K) => void
+  /** Tendencia activa — filtra opciones incompatibles */
+  tendencia?: 'omnivoro' | 'vegetariano' | 'vegano'
+  /** Lista de intolerancias declaradas — filtra productos que las contienen */
+  intolerancias?: string[]
+  /** Si se provee, muestra toggle "incluir en plan" arriba del catálogo */
+  includeInPlan?: boolean
+  onIncludeChange?: (v: boolean) => void
+  includeLabel?: string
   headerColor?: string
   bgColor?: string
   borderColor?: string
@@ -371,12 +423,54 @@ function CatalogPicker<K extends string>({
   noteBorder?: string
   noteText?: string
 }) {
-  const entries = Object.entries(catalog) as [K, CatalogItem][]
-  const cols = entries.length === 3 ? 'lg:grid-cols-3' : entries.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-6'
-  const current = catalog[value]
+  // Filtrar catálogo por tendencia + intolerancias
+  const allEntries = Object.entries(catalog) as [K, CatalogItem][]
+  const entries = allEntries.filter(([, info]) => {
+    if (tendencia === 'vegano' && info.vegano === false) return false
+    if (tendencia === 'vegetariano' && info.vegetariano === false) return false
+    if (intolerancias.length > 0 && info.contiene) {
+      const hasIntolerance = info.contiene.some(c => intolerancias.includes(c))
+      if (hasIntolerance) return false
+    }
+    return true
+  })
+
+  // Si el value actual fue filtrado, autoseleccionar el primero válido
+  useEffect(() => {
+    if (entries.length > 0 && !entries.find(([k]) => k === value)) {
+      onChange(entries[0][0])
+    }
+  }, [tendencia, intolerancias.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (entries.length === 0) {
+    return (
+      <div className={cn('mt-3 p-3 border rounded-xl', bgColor, borderColor)}>
+        <p className={cn('text-xs font-bold mb-1', headerColor)}>{title}</p>
+        <p className="text-[11px] text-[#6B7C93]">
+          No hay opciones compatibles con tu tendencia/intolerancias declaradas. Conversa con tu profesional para alternativas.
+        </p>
+      </div>
+    )
+  }
+
+  const cols = entries.length === 2 ? 'lg:grid-cols-2' : entries.length === 3 ? 'lg:grid-cols-3' : entries.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-6'
+  const current = catalog[value] ?? catalog[entries[0][0]]
   return (
     <div className={cn('mt-3 p-3 border rounded-xl space-y-2', bgColor, borderColor)}>
-      <p className={cn('text-xs font-bold', headerColor)}>{title}</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className={cn('text-xs font-bold', headerColor)}>{title}</p>
+        {onIncludeChange !== undefined && (
+          <label className={cn('flex items-center gap-1.5 text-[10px] font-semibold cursor-pointer', headerColor)}>
+            <input
+              type="checkbox"
+              checked={includeInPlan ?? false}
+              onChange={e => onIncludeChange(e.target.checked)}
+              className="w-3.5 h-3.5 accent-current"
+            />
+            {includeLabel ?? 'Incluir en plan'}
+          </label>
+        )}
+      </div>
       <div className={cn('grid grid-cols-2 sm:grid-cols-3 gap-2', cols)}>
         {entries.map(([key, info]) => (
           <button
@@ -479,7 +573,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     : Object.fromEntries(Object.entries(desayunosOpts).filter(([, opt]) => !opt.requiereWhey))
 
   // ── Filtrado por tendencia ──
-  const tendenciaActual = form.tendencia ?? 'omnivoro'
+  const tendenciaActual = (form.tendencia ?? 'omnivoro') as 'omnivoro' | 'vegetariano' | 'vegano'
   const filteredAlmuerzos = (() => {
     if (tendenciaActual === 'vegano')
       return Object.fromEntries(Object.entries(almuerzosOpts).filter(([, opt]) => !opt.tendencia || opt.tendencia.includes('vegano')))
@@ -708,6 +802,38 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               </div>
 
+              {/* Horario habitual de entrenamiento — define timing peri-entreno */}
+              {(form.tipoEjercicio !== 'ninguno') && (
+                <div>
+                  <label className="block text-sm font-semibold text-[#0C3547] mb-1">⏰ Horario habitual de entrenamiento</label>
+                  <p className="text-xs text-[#6B7C93] mb-2">
+                    Define qué colación se prioriza como pre/post-entreno (snack o barra de proteína).
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {([
+                      { value: 'AM',          label: '🌅 AM',     desc: '6 - 11h' },
+                      { value: 'PM',          label: '☀️ PM',     desc: '12 - 18h' },
+                      { value: 'noche',       label: '🌙 Noche',  desc: '19 - 22h' },
+                      { value: 'sin_entreno', label: '🚫 Sin',    desc: 'No entreno fijo' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.value}
+                        onClick={() => set('horarioEntrenamiento', opt.value)}
+                        className={cn(
+                          'py-2.5 rounded-xl border-2 text-center transition-all',
+                          (form.horarioEntrenamiento ?? 'PM') === opt.value
+                            ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        <div className="text-sm font-bold">{opt.label}</div>
+                        <div className="text-[10px] font-normal mt-0.5">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 📊 Composición corporal — BIA / InBody / ISAK */}
               <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-4">
                 <div>
@@ -889,43 +1015,11 @@ export function PlanGenerator({ onResult, initialData }: Props) {
               <h3 className="text-base sm:text-lg font-bold text-[#0C3547]">🥗 Preferencias alimentarias</h3>
               <p className="text-xs text-[#6B7C93]">Selecciona una o más opciones por tiempo de comida. El plan rotará entre tus elecciones.</p>
 
-              {/* Selector tipo yogur — siempre visible, antes de tendencia */}
-              <YogurtTypePicker
-                value={(form.yogurtTipo ?? 'griego') as YogurTipo}
-                onChange={t => set('yogurtTipo', t)}
-              />
-
-              {/* Selector snack saludable Nutrevo */}
-              <CatalogPicker<SnackNutrevoTipo>
-                title="🍫 Snack saludable favorito (Nutrevo)"
-                catalog={SNACK_NUTREVO_TIPOS}
-                value={(form.snackNutrevoTipo ?? 'alfajor_activa2') as SnackNutrevoTipo}
-                onChange={t => set('snackNutrevoTipo', t)}
-                headerColor="text-rose-800"
-                bgColor="bg-rose-50"
-                borderColor="border-rose-200"
-                selectedBg="bg-rose-500"
-                selectedBorder="border-rose-500"
-              />
-
-              {/* Selector barra de proteína */}
-              <CatalogPicker<BarraProteinaTipo>
-                title="💪 Barra de proteína favorita"
-                catalog={BARRA_PROTEINA_TIPOS}
-                value={(form.barraProteinaTipo ?? 'wild_protein') as BarraProteinaTipo}
-                onChange={t => set('barraProteinaTipo', t)}
-                headerColor="text-violet-800"
-                bgColor="bg-violet-50"
-                borderColor="border-violet-200"
-                selectedBg="bg-violet-500"
-                selectedBorder="border-violet-500"
-              />
-
-              {/* Tendencia alimentaria */}
+              {/* 1️⃣ Tendencia alimentaria — global, filtra todo lo siguiente */}
               <div className="border border-[#D6E3ED] rounded-xl p-4">
                 <label className="block text-sm font-semibold text-[#0C3547] mb-1">🌿 Tendencia alimentaria</label>
                 <p className="text-xs text-[#6B7C93] mb-3">
-                  Selecciona <strong>Vegetariano</strong> para adaptar las fuentes proteicas a opciones de origen vegetal (legumbres, tofu, huevo).
+                  Filtra automáticamente desayunos, almuerzos, cenas, yogures, snacks y barras según tu tendencia.
                 </p>
                 <div className="flex gap-2">
                   {([
@@ -950,7 +1044,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 </div>
               </div>
 
-              {/* Proteína en polvo */}
+              {/* 2️⃣ Proteína en polvo (Whey) — gate de desayunos con scoop */}
               <div className="border border-[#D6E3ED] rounded-xl p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -982,6 +1076,63 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                   </div>
                 )}
               </div>
+
+              {/* Aviso si tendencia + intolerancias están aplicando filtros */}
+              {((tendenciaActual && tendenciaActual !== 'omnivoro') || (form.digIntolerancias ?? []).length > 0) && (
+                <div className="flex gap-2 bg-indigo-50 border border-indigo-200 rounded-lg p-2.5">
+                  <span className="text-sm flex-shrink-0">🔎</span>
+                  <p className="text-xs text-indigo-800">
+                    <strong>Filtros activos:</strong>
+                    {tendenciaActual && tendenciaActual !== 'omnivoro' && <> {tendenciaActual === 'vegetariano' ? 'Vegetariano' : 'Vegano'} ·</>}
+                    {(form.digIntolerancias ?? []).length > 0 && <> Intolerancias: {(form.digIntolerancias ?? []).join(', ')}</>}
+                    . Los catálogos de yogur, snack y barra ocultan opciones incompatibles automáticamente.
+                  </p>
+                </div>
+              )}
+
+              {/* 3️⃣ Selector tipo yogur — filtrado por tendencia + intolerancias */}
+              <YogurtTypePicker
+                value={(form.yogurtTipo ?? 'griego') as YogurTipo}
+                onChange={t => set('yogurtTipo', t)}
+                tendencia={tendenciaActual}
+                intolerancias={form.digIntolerancias ?? []}
+              />
+
+              {/* 4️⃣ Selector snack saludable Nutrevo — opt-in al plan */}
+              <CatalogPicker<SnackNutrevoTipo>
+                title="🍫 Snack saludable favorito (Nutrevo)"
+                catalog={SNACK_NUTREVO_TIPOS}
+                value={(form.snackNutrevoTipo ?? 'alfajor_activa2') as SnackNutrevoTipo}
+                onChange={t => set('snackNutrevoTipo', t)}
+                tendencia={tendenciaActual}
+                intolerancias={form.digIntolerancias ?? []}
+                includeInPlan={form.incluirSnackEnPlan ?? false}
+                onIncludeChange={v => set('incluirSnackEnPlan', v)}
+                includeLabel="Incluir en mi plan"
+                headerColor="text-rose-800"
+                bgColor="bg-rose-50"
+                borderColor="border-rose-200"
+                selectedBg="bg-rose-500"
+                selectedBorder="border-rose-500"
+              />
+
+              {/* 5️⃣ Selector barra de proteína — opt-in al plan */}
+              <CatalogPicker<BarraProteinaTipo>
+                title="💪 Barra de proteína favorita"
+                catalog={BARRA_PROTEINA_TIPOS}
+                value={(form.barraProteinaTipo ?? 'wild_protein') as BarraProteinaTipo}
+                onChange={t => set('barraProteinaTipo', t)}
+                tendencia={tendenciaActual}
+                intolerancias={form.digIntolerancias ?? []}
+                includeInPlan={form.incluirBarraEnPlan ?? false}
+                onIncludeChange={v => set('incluirBarraEnPlan', v)}
+                includeLabel="Incluir en mi plan"
+                headerColor="text-violet-800"
+                bgColor="bg-violet-50"
+                borderColor="border-violet-200"
+                selectedBg="bg-violet-500"
+                selectedBorder="border-violet-500"
+              />
 
               {/* Desayunos */}
               <div>

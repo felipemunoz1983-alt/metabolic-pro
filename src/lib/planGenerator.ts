@@ -124,8 +124,8 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     const desayuno = getMealOption(desayunosPool, form.desayunos, d)
     meals.push(buildMeal('desayuno', desayuno, targetKcal, form.eggsQtyDesayuno, form.yogurtTipo))
 
-    // Colación mañana — rotación incluye colaciones naturales + snack/barra favoritos elegidos por el paciente
-    const colMananaPool = buildColacionPool(form.colacionManana, form)
+    // Colación mañana — slot AM; snack/barra se inyectan solo si el paciente entrena AM
+    const colMananaPool = buildColacionPool(form.colacionManana, form, 'AM')
     const colManana = colMananaPool[d % colMananaPool.length]
     meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo))
 
@@ -133,8 +133,8 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
     meals.push(buildMeal('almuerzo', almuerzo, targetKcal, form.eggsQty))
 
-    // Once — misma lógica que colación: rotación con snack y barra favoritos
-    const oncePool = buildColacionPool(form.once, form)
+    // Once — slot PM; snack/barra se inyectan solo si el paciente entrena PM o noche
+    const oncePool = buildColacionPool(form.once, form, 'PM')
     const once = oncePool[(d + 1) % oncePool.length] // offset para variedad vs. colación mañana
     meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo))
 
@@ -312,17 +312,44 @@ function barraToMealOption(barraTipo: BarraProteinaTipo): MealOption {
   }
 }
 
+/**
+ * Construye el pool rotativo de colaciones para un slot (AM o PM).
+ *
+ * Reglas clínicas:
+ *  - Las colaciones naturales que el paciente eligió siempre entran.
+ *  - El snack/barra favorito se inyecta SOLO si:
+ *      (a) el paciente activó el toggle "Incluir en mi plan" (opt-in), Y
+ *      (b) el slot coincide con el horario de entrenamiento (pre/post-entreno):
+ *          - entreno AM   → snack/barra disponible en colación AM
+ *          - entreno PM   → snack/barra disponible en once (PM)
+ *          - entreno noche → snack/barra disponible en once (PM)
+ *          - sin entreno  → snack/barra disponible en ambos slots si opt-in
+ */
 function buildColacionPool(
   userKeys: string[] | undefined,
   form: Partial<FormData>,
+  slot: 'AM' | 'PM',
 ): MealOption[] {
   const naturalOpts = (userKeys ?? [])
     .map(k => colacionesOpts[k])
     .filter((o): o is MealOption => Boolean(o))
+
   const extras: MealOption[] = []
-  if (form.snackNutrevoTipo) extras.push(snackToMealOption(form.snackNutrevoTipo))
-  if (form.barraProteinaTipo) extras.push(barraToMealOption(form.barraProteinaTipo))
+  const horario = form.horarioEntrenamiento ?? 'PM'
+  const slotMatchesHorario =
+    horario === 'sin_entreno' ||
+    (slot === 'AM' && horario === 'AM') ||
+    (slot === 'PM' && (horario === 'PM' || horario === 'noche'))
+
+  if (slotMatchesHorario) {
+    if (form.incluirSnackEnPlan && form.snackNutrevoTipo) {
+      extras.push(snackToMealOption(form.snackNutrevoTipo))
+    }
+    if (form.incluirBarraEnPlan && form.barraProteinaTipo) {
+      extras.push(barraToMealOption(form.barraProteinaTipo))
+    }
+  }
+
   const pool = [...naturalOpts, ...extras]
-  // Si el paciente no eligió nada (ni natural ni snack/barra), fallback al primer item del catálogo
   return pool.length > 0 ? pool : [Object.values(colacionesOpts)[0]]
 }

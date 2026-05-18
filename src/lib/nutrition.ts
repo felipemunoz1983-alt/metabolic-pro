@@ -68,6 +68,12 @@ export interface FormData {
   snackNutrevoTipo?: SnackNutrevoTipo
   /** Barra de proteína favorita. Se extiende automáticamente con BARRA_PROTEINA_TIPOS en foods.ts. */
   barraProteinaTipo?: BarraProteinaTipo
+  /** ¿Incluir el snack favorito en la rotación del plan? Default: false (opt-in clínico) */
+  incluirSnackEnPlan?: boolean
+  /** ¿Incluir la barra favorita en la rotación del plan? Default: false (opt-in clínico) */
+  incluirBarraEnPlan?: boolean
+  /** Horario habitual de entrenamiento — define timing peri-entreno de snack/barra */
+  horarioEntrenamiento?: 'AM' | 'PM' | 'noche' | 'sin_entreno'
 }
 
 export interface Macros {
