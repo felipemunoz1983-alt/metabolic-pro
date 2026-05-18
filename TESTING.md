@@ -113,11 +113,16 @@ it('mi caso clínico', () => {
 
 **Concurrency:** push consecutivos al mismo branch cancelan ejecuciones anteriores — ahorra runner minutes.
 
+**Branch protection en `main`** ✅ — bloquea merge de PRs sin CI verde:
+- Required check: `Tests + Typecheck + Lint`
+- Force pushes y deletions bloqueados
+- Ver detalles en `docs/vercel-deploy-gates.md`
+
 **Próximas mejoras opcionales:**
-- [ ] Vercel preview deploy bloquea si CI falla (configurable en Vercel UI)
+- [ ] Vercel "Wait for checks" en UI (paso a paso en `docs/vercel-deploy-gates.md`)
 - [ ] Coverage threshold 80% con `vitest --coverage`
-- [ ] Pre-commit hook con husky + lint-staged
 - [ ] Reducir los 29 warnings de ESLint restantes (`<img>` → `<Image>`, unused imports)
+- [ ] Husky pre-commit + pre-push hook ✅ (instalado)
 
 ## Versionado de Node
 
