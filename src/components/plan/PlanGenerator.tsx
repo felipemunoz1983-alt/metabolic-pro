@@ -248,7 +248,7 @@ function YogurtTypePicker({
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
       <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
         {(Object.entries(YOGUR_TIPOS) as [YogurTipo, typeof YOGUR_TIPOS[YogurTipo]][]).map(([key, info]) => (
           <button
             key={key}
@@ -306,6 +306,14 @@ function YogurtTypePicker({
           <span className="text-xs flex-shrink-0">⚠️</span>
           <p className="text-[10px] text-amber-800">
             <strong>Colun Protein Plus Vainilla · 11g proteína · 0% grasa · Sin lactosa · Libre de gluten:</strong> Formato squeeze 150g. Libre de soya, huevo, mariscos, maní, frutos secos, nueces, sulfitos y trigo. Ideal para personas con alergias múltiples.
+          </p>
+        </div>
+      )}
+      {value === 'loncoleche_vegetal' && (
+        <div className="flex gap-2 bg-emerald-50 border border-emerald-200 rounded-lg p-2">
+          <span className="text-xs flex-shrink-0">🌱</span>
+          <p className="text-[10px] text-emerald-800">
+            <strong>Loncoleche Vegetal Soya Mango-Maracuyá · 100% vegetal · Vegano · Sin lactosa:</strong> Base soya con trozos de fruta. Solo 3.4g proteína por porción 130g — <strong>combinar con otra fuente proteica</strong> (huevo, tofu, semillas, proteína vegetal) para alcanzar el aporte del plan.
           </p>
         </div>
       )}

@@ -77,6 +77,16 @@ export const YOGUR_TIPOS = {
     alergenosNota: '⚠️ Colun Protein Plus · Libre de soya, huevo, mariscos, maní, frutos secos, nueces, sulfitos, trigo, gluten y lactosa.',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/365573-900-900?width=900&height=900&aspect=true',
   },
+  loncoleche_vegetal: {
+    label: 'Loncoleche Vegetal Soya',
+    emoji: '🌱',
+    item: 'Yogur Loncoleche Vegetal Soya con trozos Mango-Maracuyá 130g',
+    // Fuente: etiqueta oficial 130g — 66.3 kcal · 3.4g prot · 9.4g CH · 1.2g G · 3.4g fibra · 100% vegetal · vegano
+    kcal: 66, p: 3, c: 9, g: 1,
+    badge: 'Vegano · 100% vegetal · 3g fibra',
+    alergenosNota: '⚠️ Loncoleche Vegetal · Base soya · Vegano y vegetariano · Libre de huevo, peces, mariscos, maní, sulfitos y trigo. Solo 3.4g proteína por porción — combinar con otra fuente proteica.',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/325169-900-900?width=900&height=900&aspect=true',
+  },
 } as const
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
