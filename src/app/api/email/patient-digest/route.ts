@@ -21,8 +21,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
+import {
+  computeCurrentStreak,
+  computeBestStreak,
+  getCtaConfig,
+  type CtaConfig,
+} from '@/lib/digestSummary'
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// ─── Helpers locales (manejo de fechas para query Supabase) ──────────────────
 
 function isoToday(): string {
   return new Date().toISOString().split('T')[0]
@@ -32,79 +38,6 @@ function isoDaysAgo(n: number): string {
   const d = new Date()
   d.setDate(d.getDate() - n)
   return d.toISOString().split('T')[0]
-}
-
-/** Current streak: walk backwards from today through consecutive logged dates. */
-function computeCurrentStreak(loggedDates: Set<string>): number {
-  let streak = 0
-  const cur = new Date()
-  while (true) {
-    const iso = cur.toISOString().split('T')[0]
-    if (!loggedDates.has(iso)) break
-    streak++
-    cur.setDate(cur.getDate() - 1)
-  }
-  return streak
-}
-
-/** Best streak within the provided dates. */
-function computeBestStreak(sortedDates: string[]): number {
-  if (sortedDates.length === 0) return 0
-  let best = 1
-  let run  = 1
-  for (let i = 1; i < sortedDates.length; i++) {
-    const prev = new Date(sortedDates[i - 1])
-    const cur  = new Date(sortedDates[i])
-    const diff = (cur.getTime() - prev.getTime()) / 86400000
-    if (diff === 1) { run++; best = Math.max(best, run) }
-    else run = 1
-  }
-  return best
-}
-
-// ─── CTA config by adherence band ───────────────────────────────────────────
-
-interface CtaConfig {
-  headline: string
-  sub: string
-  btnText: string
-  btnColor: string
-  tip?: string
-}
-
-function getCtaConfig(adherencia: number | null, nombre: string): CtaConfig {
-  if (adherencia === null) {
-    return {
-      headline: `¡Empieza tu semana con fuerza, ${nombre.split(' ')[0]}!`,
-      sub: 'No registraste actividad esta semana. Esta semana es una nueva oportunidad.',
-      btnText: 'Ir a mi plan →',
-      btnColor: '#6b7280',
-    }
-  }
-  if (adherencia >= 70) {
-    return {
-      headline: `¡Excelente semana, ${nombre.split(' ')[0]}! 🔥`,
-      sub: `${adherencia}% de adherencia. Estás en la zona de máximo progreso. Mantén el ritmo.`,
-      btnText: 'Ver mi progreso →',
-      btnColor: '#16a34a',
-    }
-  }
-  if (adherencia >= 40) {
-    return {
-      headline: `Casi ahí, ${nombre.split(' ')[0]} — esta semana lo logramos`,
-      sub: `${adherencia}% de adherencia. Pequeños ajustes pueden marcar una gran diferencia.`,
-      btnText: 'Ajustar mi plan →',
-      btnColor: '#d97706',
-      tip: '💡 Tip: Prepara tus comidas el domingo para tener todo listo durante la semana.',
-    }
-  }
-  return {
-    headline: `Retomamos juntos, ${nombre.split(' ')[0]}`,
-    sub: `${adherencia}% de adherencia. No pasa nada — cada día es una nueva oportunidad.`,
-    btnText: 'Retomar el ritmo →',
-    btnColor: '#dc2626',
-    tip: '💡 Tip: Empieza solo por registrar el desayuno esta semana. Un hábito a la vez.',
-  }
 }
 
 // ─── Email builder ────────────────────────────────────────────────────────────

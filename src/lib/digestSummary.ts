@@ -148,3 +148,103 @@ export function contarPacientesUrgentes(
   const activos = summaries.length - urgentes
   return { urgentes, activos, total: summaries.length }
 }
+
+// ─── Streaks (patient-digest) ─────────────────────────────────────────────────
+
+/** Devuelve fecha ISO YYYY-MM-DD para un Date dado en UTC. */
+function isoFromDate(d: Date): string {
+  return d.toISOString().split('T')[0]
+}
+
+/**
+ * Racha actual: cuenta días consecutivos hacia atrás desde HOY mientras
+ * cada fecha esté en el set de loggedDates. Se rompe al primer día sin registro.
+ *
+ * @param loggedDates - Set de fechas ISO YYYY-MM-DD donde el paciente registró
+ * @param now - fecha de referencia (default: new Date()). Inyectable para tests.
+ */
+export function computeCurrentStreak(
+  loggedDates: Set<string>,
+  now: Date = new Date(),
+): number {
+  let streak = 0
+  const cur = new Date(now.getTime())
+  while (true) {
+    const iso = isoFromDate(cur)
+    if (!loggedDates.has(iso)) break
+    streak++
+    cur.setUTCDate(cur.getUTCDate() - 1)
+  }
+  return streak
+}
+
+/**
+ * Mejor racha dentro de un array de fechas ordenado ascendente.
+ * Una racha es una secuencia de fechas consecutivas (diff = 1 día).
+ */
+export function computeBestStreak(sortedDates: string[]): number {
+  if (sortedDates.length === 0) return 0
+  let best = 1
+  let run = 1
+  for (let i = 1; i < sortedDates.length; i++) {
+    const prev = new Date(sortedDates[i - 1] + 'T12:00:00Z')
+    const cur = new Date(sortedDates[i] + 'T12:00:00Z')
+    const diff = (cur.getTime() - prev.getTime()) / 86400000
+    if (diff === 1) { run++; best = Math.max(best, run) }
+    else run = 1
+  }
+  return best
+}
+
+// ─── CTA del email patient-digest según banda de adherencia ──────────────────
+
+export interface CtaConfig {
+  headline: string
+  sub: string
+  btnText: string
+  btnColor: string
+  tip?: string
+}
+
+/**
+ * Banda de adherencia para el CTA del email patient-digest:
+ * - null (sin actividad) → CTA neutro gris
+ * - ≥70%                → ¡Excelente! verde
+ * - 40-69%              → Casi ahí amber, con tip de meal prep
+ * - <40%                → Retomamos juntos rojo, con tip mínimo viable
+ */
+export function getCtaConfig(adherencia: number | null, nombre: string): CtaConfig {
+  const firstName = nombre.split(' ')[0]
+  if (adherencia === null) {
+    return {
+      headline: `¡Empieza tu semana con fuerza, ${firstName}!`,
+      sub: 'No registraste actividad esta semana. Esta semana es una nueva oportunidad.',
+      btnText: 'Ir a mi plan →',
+      btnColor: '#6b7280',
+    }
+  }
+  if (adherencia >= 70) {
+    return {
+      headline: `¡Excelente semana, ${firstName}! 🔥`,
+      sub: `${adherencia}% de adherencia. Estás en la zona de máximo progreso. Mantén el ritmo.`,
+      btnText: 'Ver mi progreso →',
+      btnColor: '#16a34a',
+    }
+  }
+  if (adherencia >= 40) {
+    return {
+      headline: `Casi ahí, ${firstName} — esta semana lo logramos`,
+      sub: `${adherencia}% de adherencia. Pequeños ajustes pueden marcar una gran diferencia.`,
+      btnText: 'Ajustar mi plan →',
+      btnColor: '#d97706',
+      tip: '💡 Tip: Prepara tus comidas el domingo para tener todo listo durante la semana.',
+    }
+  }
+  return {
+    headline: `Retomamos juntos, ${firstName}`,
+    sub: `${adherencia}% de adherencia. No pasa nada — cada día es una nueva oportunidad.`,
+    btnText: 'Retomar el ritmo →',
+    btnColor: '#dc2626',
+    tip: '💡 Tip: Empieza solo por registrar el desayuno esta semana. Un hábito a la vez.',
+  }
+}

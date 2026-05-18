@@ -4,6 +4,9 @@ import {
   isPatientActive,
   filterActivePatients,
   contarPacientesUrgentes,
+  computeCurrentStreak,
+  computeBestStreak,
+  getCtaConfig,
   type PatientLogRowFull,
   type PatientProfile,
 } from './digestSummary'
@@ -261,6 +264,188 @@ describe('contarPacientesUrgentes', () => {
       baseSummary({ necesitaIntervencion: true }),
     ]
     expect(contarPacientesUrgentes(summaries)).toEqual({ urgentes: 2, activos: 0, total: 2 })
+  })
+})
+
+// ─── computeCurrentStreak (patient-digest) ────────────────────────────────────
+
+describe('computeCurrentStreak', () => {
+  // Usamos UTC noon para evitar drift TZ
+  const today = new Date('2026-05-18T12:00:00Z')
+
+  it('sin logs → racha 0', () => {
+    expect(computeCurrentStreak(new Set(), today)).toBe(0)
+  })
+
+  it('1 día (hoy) registrado → racha 1', () => {
+    expect(computeCurrentStreak(new Set(['2026-05-18']), today)).toBe(1)
+  })
+
+  it('3 días consecutivos hasta hoy → racha 3', () => {
+    expect(computeCurrentStreak(
+      new Set(['2026-05-16', '2026-05-17', '2026-05-18']),
+      today,
+    )).toBe(3)
+  })
+
+  it('ayer registrado pero no hoy → racha 0 (se rompió hoy)', () => {
+    expect(computeCurrentStreak(
+      new Set(['2026-05-17']),
+      today,
+    )).toBe(0)
+  })
+
+  it('gap en el medio rompe la racha', () => {
+    // logs: 14, 15, 16, 18 — no hay 17 → solo cuenta desde 18 hacia atrás
+    expect(computeCurrentStreak(
+      new Set(['2026-05-14', '2026-05-15', '2026-05-16', '2026-05-18']),
+      today,
+    )).toBe(1) // solo el 18 cuenta
+  })
+
+  it('7 días consecutivos → racha 7', () => {
+    const fechas = new Set([
+      '2026-05-12', '2026-05-13', '2026-05-14',
+      '2026-05-15', '2026-05-16', '2026-05-17', '2026-05-18',
+    ])
+    expect(computeCurrentStreak(fechas, today)).toBe(7)
+  })
+
+  it('fechas futuras se ignoran', () => {
+    expect(computeCurrentStreak(
+      new Set(['2026-05-18', '2026-05-20']),
+      today,
+    )).toBe(1)
+  })
+})
+
+// ─── computeBestStreak ────────────────────────────────────────────────────────
+
+describe('computeBestStreak', () => {
+  it('array vacío → 0', () => {
+    expect(computeBestStreak([])).toBe(0)
+  })
+
+  it('1 fecha → 1', () => {
+    expect(computeBestStreak(['2026-05-18'])).toBe(1)
+  })
+
+  it('3 fechas consecutivas → 3', () => {
+    expect(computeBestStreak(['2026-05-16', '2026-05-17', '2026-05-18'])).toBe(3)
+  })
+
+  it('detecta la mejor racha entre múltiples', () => {
+    // 2 consec + gap + 4 consec → best = 4
+    expect(computeBestStreak([
+      '2026-05-10', '2026-05-11',
+      '2026-05-14', '2026-05-15', '2026-05-16', '2026-05-17',
+    ])).toBe(4)
+  })
+
+  it('mejor racha al inicio se conserva', () => {
+    expect(computeBestStreak([
+      '2026-05-10', '2026-05-11', '2026-05-12', '2026-05-13',  // 4 consec
+      '2026-05-15',
+    ])).toBe(4)
+  })
+
+  it('todas con gaps → mejor=1', () => {
+    expect(computeBestStreak(['2026-05-10', '2026-05-13', '2026-05-16'])).toBe(1)
+  })
+})
+
+// ─── getCtaConfig (bandas del email patient-digest) ──────────────────────────
+
+describe('getCtaConfig', () => {
+  describe('sin actividad (adherencia null)', () => {
+    it('CTA neutro gris con call-to-action genérico', () => {
+      const cta = getCtaConfig(null, 'Felipe Muñoz')
+      expect(cta.btnColor).toBe('#6b7280')
+      expect(cta.headline).toMatch(/Felipe/i)
+      expect(cta.headline).not.toMatch(/Muñoz/)  // solo first name
+      expect(cta.tip).toBeUndefined()
+    })
+  })
+
+  describe('adherencia ≥ 70% (verde)', () => {
+    it('70% → felicitación verde', () => {
+      const cta = getCtaConfig(70, 'Maria')
+      expect(cta.btnColor).toBe('#16a34a')
+      expect(cta.headline).toMatch(/Excelente|🔥/i)
+      expect(cta.sub).toMatch(/70%/)
+      expect(cta.tip).toBeUndefined()   // no tip cuando va bien
+    })
+
+    it('100% → felicitación verde', () => {
+      const cta = getCtaConfig(100, 'Sofia')
+      expect(cta.btnColor).toBe('#16a34a')
+    })
+  })
+
+  describe('adherencia 40-69% (amber con tip)', () => {
+    it('40% → amber con tip meal prep', () => {
+      const cta = getCtaConfig(40, 'Carlos')
+      expect(cta.btnColor).toBe('#d97706')
+      expect(cta.tip).toMatch(/meal|prep|domingo/i)
+    })
+
+    it('69% → todavía amber', () => {
+      const cta = getCtaConfig(69, 'Ana')
+      expect(cta.btnColor).toBe('#d97706')
+    })
+
+    it('headline incluye nombre y tono motivador', () => {
+      const cta = getCtaConfig(55, 'Diego')
+      expect(cta.headline).toMatch(/Diego/)
+      expect(cta.headline).toMatch(/Casi|logramos/i)
+    })
+  })
+
+  describe('adherencia < 40% (rojo con tip mínimo viable)', () => {
+    it('30% → rojo + tip hábito mínimo', () => {
+      const cta = getCtaConfig(30, 'Laura')
+      expect(cta.btnColor).toBe('#dc2626')
+      expect(cta.tip).toMatch(/desayuno|un hábito/i)
+    })
+
+    it('0% → rojo con tono empático', () => {
+      const cta = getCtaConfig(0, 'Roberto')
+      expect(cta.headline).toMatch(/Retomamos/i)
+      expect(cta.btnColor).toBe('#dc2626')
+    })
+
+    it('39% → todavía rojo (umbral estricto < 40)', () => {
+      const cta = getCtaConfig(39, 'X')
+      expect(cta.btnColor).toBe('#dc2626')
+    })
+
+    it('40% justo → cambia a amber (no rojo)', () => {
+      const cta = getCtaConfig(40, 'X')
+      expect(cta.btnColor).toBe('#d97706')
+    })
+  })
+
+  describe('umbrales exactos (70/40)', () => {
+    it('70 = verde, 69 = amber', () => {
+      expect(getCtaConfig(70, 'X').btnColor).toBe('#16a34a')
+      expect(getCtaConfig(69, 'X').btnColor).toBe('#d97706')
+    })
+
+    it('40 = amber, 39 = rojo', () => {
+      expect(getCtaConfig(40, 'X').btnColor).toBe('#d97706')
+      expect(getCtaConfig(39, 'X').btnColor).toBe('#dc2626')
+    })
+  })
+
+  describe('nombre: solo first name', () => {
+    it('extrae primer token del nombre', () => {
+      expect(getCtaConfig(80, 'Felipe Muñoz Ávila').headline).toContain('Felipe')
+      expect(getCtaConfig(80, 'Felipe Muñoz Ávila').headline).not.toContain('Muñoz')
+    })
+
+    it('nombre con un solo token', () => {
+      expect(getCtaConfig(80, 'Ana').headline).toContain('Ana')
+    })
   })
 })
 
