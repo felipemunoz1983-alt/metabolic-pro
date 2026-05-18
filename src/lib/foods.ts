@@ -55,7 +55,7 @@ export const YOGUR_TIPOS = {
     kcal: 130, p: 16, c: 11, g: 2,
     badge: '16g prot · Sin lactosa · Con Magnesio · Libre sellos',
     alergenosNota: '⚠️ Soprole Protein+ Power · Elaborado en líneas que también procesan nueces.',
-    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/364428-900-900?width=900&height=900&aspect=true',
+    foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202604011757power%20frutilla.png',
   },
 } as const
 
