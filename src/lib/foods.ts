@@ -57,6 +57,16 @@ export const YOGUR_TIPOS = {
     alergenosNota: '⚠️ Soprole Protein+ Power · Elaborado en líneas que también procesan nueces.',
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202604011757power%20frutilla.png',
   },
+  soprole_protein: {
+    label: 'Soprole Protein+ Frutilla',
+    emoji: '🍓',
+    item: 'Yogur Soprole Protein+ Batido Frutilla 155g',
+    // Fuente: etiqueta oficial 155g — 105 kcal · 10.2g prot · 9.8g CH · 2.8g G · sin lactosa · libre de gluten · libre de sellos
+    kcal: 105, p: 10, c: 10, g: 3,
+    badge: '10g prot · Sin lactosa · Libre gluten · Libre sellos',
+    alergenosNota: '⚠️ Soprole Protein+ · Endulzado con sucralosa y estevia.',
+    foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202304051741batido-frutilla.png',
+  },
 } as const
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
