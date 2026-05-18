@@ -1,9 +1,47 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getAuthUser } from '@/lib/auth-server'
+import {
+  checkRateLimit,
+  FOOD_SCAN_LIMIT,
+  FOOD_SCAN_DAILY_LIMIT,
+} from '@/lib/rate-limit'
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  // ── Auth guard ────────────────────────────────────────────────────────────
+  const user = await getAuthUser()
+  if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // ── Rate limit (short + daily) ────────────────────────────────────────────
+  const short = checkRateLimit(`${user.id}:food-scan`, FOOD_SCAN_LIMIT)
+  if (!short.allowed) {
+    return NextResponse.json(
+      { error: 'Demasiados escaneos. Intenta de nuevo en unos minutos.', retryAfterSec: short.retryAfterSec },
+      { status: 429, headers: {
+          'Retry-After': String(short.retryAfterSec),
+          'X-RateLimit-Limit': String(FOOD_SCAN_LIMIT.max),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.floor(short.resetAtMs / 1000)),
+        }}
+    )
+  }
+  const daily = checkRateLimit(`${user.id}:food-scan:daily`, FOOD_SCAN_DAILY_LIMIT)
+  if (!daily.allowed) {
+    return NextResponse.json(
+      { error: 'Has alcanzado el límite diario de escaneos.', retryAfterSec: daily.retryAfterSec },
+      { status: 429, headers: {
+          'Retry-After': String(daily.retryAfterSec),
+          'X-RateLimit-Limit': String(FOOD_SCAN_DAILY_LIMIT.max),
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': String(Math.floor(daily.resetAtMs / 1000)),
+        }}
+    )
+  }
+
   let imageData: string
   let mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif'
 

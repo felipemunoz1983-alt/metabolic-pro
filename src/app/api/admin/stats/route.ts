@@ -6,21 +6,9 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { getAuthUser } from '@/lib/auth-server'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'felipe.munoz1983@gmail.com'
-
-async function getAuthUser() {
-  const cookieStore = await cookies()
-  const sb = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll() } }
-  )
-  const { data: { user } } = await sb.auth.getUser()
-  return user
-}
 
 export async function GET(_req: NextRequest): Promise<NextResponse> {
   // Auth guard — must be the admin user
