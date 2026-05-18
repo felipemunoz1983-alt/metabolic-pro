@@ -22,6 +22,8 @@ export interface MealOption {
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
   tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
+  tieneSnack?: boolean      // placeholder de snack — se sustituye por SNACK_NUTREVO_TIPOS según preferencia del paciente
+  tieneBarra?: boolean      // placeholder de barra — se sustituye por BARRA_PROTEINA_TIPOS según preferencia del paciente
 }
 
 // ─── Tipos de yogur disponibles ───────────────────────────────────────────────
@@ -457,6 +459,34 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Conservar en lugar fresco y seco.',
     ],
     alergenosNota: '⚠️ Alfajor Keto · Contiene leche, soya, huevo. Revisar etiqueta si hay alergias.',
+  },
+
+  // ── Placeholders que el planGenerator sustituye por la preferencia del paciente ──
+  snack_favorito: {
+    label: '🍫 Snack saludable Nutrevo',
+    items: ['1 snack saludable según tu preferencia', '200ml agua o infusión sin azúcar'],
+    baseKcal: 230, p: 12, c: 18, g: 10,    // se ajusta dinámicamente al snack elegido
+    foto: USP('1490474418585-ba9bad8fd0ea'),
+    tiempo: '0 min',
+    tieneSnack: true,
+    pasos: [
+      'Consumir como colación portátil — el plan usa el snack que elegiste en Alimentación.',
+      'Cambia tu snack favorito en el selector "Snack saludable favorito (Nutrevo)" si quieres rotarlo.',
+      'Acompaña con 200ml de agua o infusión sin azúcar.',
+    ],
+  },
+  barra_favorita: {
+    label: '💪 Mi barra de proteína',
+    items: ['1 barra de proteína según tu preferencia', '200ml agua o infusión sin azúcar'],
+    baseKcal: 170, p: 18, c: 10, g: 6,     // se ajusta dinámicamente a la barra elegida
+    foto: USP('1490474418585-ba9bad8fd0ea'),
+    tiempo: '0 min',
+    tieneBarra: true,
+    pasos: [
+      'Consumir directa como colación portátil — el plan usa la barra que elegiste en Alimentación.',
+      'Cambia tu barra favorita en el selector "Barra de proteína favorita" si quieres rotarla.',
+      'Ideal post-entreno o como snack de media mañana/tarde.',
+    ],
   },
 
   hummus_verduras: {

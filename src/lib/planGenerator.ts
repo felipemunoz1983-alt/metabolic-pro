@@ -1,7 +1,7 @@
 // ── Generador de plan semanal · Centro Metabólico Pro ──
 
 import type { FormData } from './nutrition'
-import type { MealOption, UltraOption, YogurTipo } from './foods'
+import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo } from './foods'
 import {
   desayunosOpts,
   colacionesOpts,
@@ -10,6 +10,8 @@ import {
   ultraProcOpts,
   getMealOption,
   YOGUR_TIPOS,
+  SNACK_NUTREVO_TIPOS,
+  BARRA_PROTEINA_TIPOS,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -124,7 +126,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Colación mañana
     const colManana = getMealOption(colacionesOpts, form.colacionManana, d)
-    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo))
+    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo, form.snackNutrevoTipo, form.barraProteinaTipo))
 
     // Almuerzo
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
@@ -132,7 +134,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
     // Once
     const once = getMealOption(colacionesOpts, form.once, d + 1) // offset for variety
-    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo))
+    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo, form.snackNutrevoTipo, form.barraProteinaTipo))
 
     // Cena
     const cena = getMealOption(cenasPool, form.cenas, d)
@@ -193,6 +195,8 @@ function buildMeal(
   targetKcal: number,
   eggsQty?: number,
   yogurTipo?: YogurTipo,
+  snackTipo?: SnackNutrevoTipo,
+  barraTipo?: BarraProteinaTipo,
 ): DayMeal {
   const pct = PCT[tipo]
   const kcal = Math.round(targetKcal * pct)
@@ -216,6 +220,7 @@ function buildMeal(
   // El paciente eligió un yogur específico en el selector; el plan lo incorpora explícitamente.
   let alergenosNota = option.alergenosNota
   let foto = option.foto
+  let label = option.label
   if (option.tieneYogur && yogurTipo) {
     const yogurInfo = YOGUR_TIPOS[yogurTipo]
     // Reemplazar el item genérico "150g yogur natural / sin azúcar / alto en proteínas" por la línea oficial del yogur elegido
@@ -245,9 +250,42 @@ function buildMeal(
     }
   }
 
+  // Sustituir snack saludable Nutrevo si la colación es un placeholder con tieneSnack
+  if (option.tieneSnack && snackTipo) {
+    const snackInfo = SNACK_NUTREVO_TIPOS[snackTipo]
+    label = `${snackInfo.emoji} ${snackInfo.label}`
+    items = [snackInfo.item, '200ml agua o infusión sin azúcar']
+    // Override macros con los oficiales del snack (no escalar — el snack es lo que es)
+    p = snackInfo.p
+    c = snackInfo.c
+    g = snackInfo.g
+    if (snackInfo.foto) foto = snackInfo.foto
+    if (snackInfo.alergenosNota) {
+      alergenosNota = alergenosNota
+        ? `${alergenosNota}\n${snackInfo.alergenosNota}`
+        : snackInfo.alergenosNota
+    }
+  }
+
+  // Sustituir barra de proteína si la colación es un placeholder con tieneBarra
+  if (option.tieneBarra && barraTipo) {
+    const barraInfo = BARRA_PROTEINA_TIPOS[barraTipo]
+    label = `${barraInfo.emoji} ${barraInfo.label}`
+    items = [barraInfo.item, '200ml agua o infusión sin azúcar']
+    p = barraInfo.p
+    c = barraInfo.c
+    g = barraInfo.g
+    if (barraInfo.foto) foto = barraInfo.foto
+    if (barraInfo.alergenosNota) {
+      alergenosNota = alergenosNota
+        ? `${alergenosNota}\n${barraInfo.alergenosNota}`
+        : barraInfo.alergenosNota
+    }
+  }
+
   return {
     tipo,
-    label: option.label,
+    label,
     icon: MEAL_ICONS[tipo],
     items,
     kcal,
