@@ -267,8 +267,6 @@ describe('contarPacientesUrgentes', () => {
 // ─── Integración: escenario E2E ───────────────────────────────────────────────
 
 describe('🧪 SMOKE — Profesional con 4 pacientes (escenario real)', () => {
-  const now = new Date('2026-05-18T12:00:00Z')
-
   it('genera resumen semanal coherente para el cron', () => {
     const patients: PatientProfile[] = [
       { id: '1', nombre: 'Felipe (ejemplar)', email: 'felipe@x.com' },

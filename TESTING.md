@@ -96,11 +96,35 @@ it('mi caso clínico', () => {
 })
 ```
 
-## CI/CD futuro (no implementado aún)
+## CI/CD
 
-Recomendaciones para próxima sesión:
+**GitHub Actions** corre automáticamente en cada push y PR — ver [`.github/workflows/ci.yml`](./.github/workflows/ci.yml).
 
-- [ ] GitHub Action que corre `npm test` en cada PR
-- [ ] Vercel preview deploy bloquea si tests fallan
-- [ ] Coverage threshold 80% en `src/lib/`
-- [ ] Lint en pre-commit (husky + lint-staged)
+**Steps del workflow:**
+1. Setup Node 22 LTS (mismo que Vercel, pin en `.nvmrc`)
+2. `npm ci` con cache
+3. `npx tsc --noEmit` — type-check estricto
+4. `npm test` con `TZ=UTC` — garantiza mismo comportamiento que Vercel
+
+**Triggers:**
+- Push a cualquier branch (incluye `nextjs`)
+- Pull requests hacia `main`
+
+**Concurrency:** push consecutivos al mismo branch cancelan ejecuciones anteriores — ahorra runner minutes.
+
+**Próximas mejoras opcionales:**
+- [ ] Vercel preview deploy bloquea si CI falla (configurable en Vercel UI)
+- [ ] ESLint en CI (hoy hay 22 errores de tech debt — fix antes de hacer el job bloqueante)
+- [ ] Coverage threshold 80% con `vitest --coverage`
+- [ ] Pre-commit hook con husky + lint-staged
+
+## Versionado de Node
+
+`.nvmrc` pin a Node 22 LTS. Si usas `nvm`:
+
+```bash
+nvm install
+nvm use
+```
+
+Asegura que `npm ci` produzca el mismo lockfile en local, CI y Vercel.

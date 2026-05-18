@@ -1,3 +1,11 @@
+# Centro Metabólico Pro
+
+[![CI](https://github.com/felipemunoz1983-alt/metabolic-pro/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/felipemunoz1983-alt/metabolic-pro/actions/workflows/ci.yml)
+
+Aplicación clínica de nutrición y entrenamiento — Next.js 16, Supabase, 215 tests automatizados.
+
+Documentación QA: [`TESTING.md`](./TESTING.md)
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

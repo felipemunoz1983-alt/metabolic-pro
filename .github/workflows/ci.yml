@@ -1,0 +1,55 @@
+name: CI
+
+# Disciplina del proyecto:
+#  - npm test  → 215 tests (Vitest) cubren motor nutricional, planGenerator,
+#                 catálogos, lista de compras, notificaciones y digests semanales.
+#  - npx tsc --noEmit  → garantía de tipos correctos antes de mergear.
+#
+# Triggers: push a cualquier branch y pull-requests hacia main.
+# Vercel queda configurado en su UI para bloquear deploys si este workflow falla.
+#
+# NOTA: ESLint NO está en CI por ahora — el repo tiene tech debt (22 errores
+# acumulados) que requieren cleanup dedicado. Agregar `lint` job cuando se
+# limpie. Por ahora se ejecuta solo localmente con `npm run lint`.
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+
+# Cancela ejecuciones anteriores cuando se pushea de nuevo al mismo branch.
+# Ahorra minutos de runner y evita ver verdes obsoletos.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests + Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22 (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install deps (frozen)
+        run: npm ci --no-audit --prefer-offline
+
+      - name: TypeScript check
+        run: npx tsc --noEmit
+
+      - name: Tests (Vitest)
+        run: npm test
+        env:
+          # Forzar UTC en el runner para garantizar comportamiento idéntico al
+          # de Vercel en producción. Importante para diasDesde() y otras
+          # funciones sensibles a zona horaria.
+          TZ: UTC
