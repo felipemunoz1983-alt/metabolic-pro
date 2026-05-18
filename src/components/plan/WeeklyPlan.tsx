@@ -146,6 +146,16 @@ function MealRow({ meal }: { meal: DayMeal }) {
             </span>
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm font-semibold text-[#1E2D3D] leading-tight">{meal.label}</p>
+              {meal.timingEntreno && (
+                <span className={cn(
+                  'text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
+                  meal.timingEntreno === 'pre_entreno'
+                    ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                    : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                )}>
+                  {meal.timingEntreno === 'pre_entreno' ? '🏋️ Pre-entreno' : '💪 Post-entreno'}
+                </span>
+              )}
               {meal.tiempo && !meal.esUltra && (
                 <span className="text-xs bg-white/70 px-2 py-0.5 rounded-full text-[#0C3547] font-semibold">
                   ⏱ {meal.tiempo}

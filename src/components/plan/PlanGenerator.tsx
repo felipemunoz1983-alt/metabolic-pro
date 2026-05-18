@@ -37,6 +37,11 @@ const defaultForm: Partial<FormData> = {
   incluirSnackEnPlan: false,      // opt-in: el paciente decide explícitamente
   incluirBarraEnPlan: false,      // opt-in: el paciente decide explícitamente
   horarioEntrenamiento: 'PM' as 'AM' | 'PM' | 'noche' | 'sin_entreno',
+  comidasPorDia: 5 as 3 | 4 | 5 | 6,
+  presupuestoSemanal: 'medio' as 'bajo' | 'medio' | 'alto',
+  tiempoCocinar: '15_30' as 'menos_15' | '15_30' | '30_60' | 'mas_60',
+  habilidadCulinaria: 'intermedio' as 'principiante' | 'intermedio' | 'avanzado',
+  lugarAlmuerzo: 'casa' as 'casa' | 'oficina' | 'restaurant' | 'colegio',
   colacionManana: ['yogur_frutossecos_am'],
   almuerzos: ['pollo_arroz'],
   cenas: ['pollo_verduras'],
@@ -158,11 +163,20 @@ function MealChips({
   pool,
   selected,
   onChange,
+  intolerancias = [],
+  bloquearSIBO = false,
+  bloquearAltaGrasa = false,
 }: {
   label: string
   pool: Record<string, MealOption>
   selected: string[]
   onChange: (v: string[]) => void
+  /** Lista de intolerancias del paciente — oculta opciones con `contiene` que matchee */
+  intolerancias?: string[]
+  /** Si el paciente declaró SIBO o SII — oculta opciones con altoFODMAP */
+  bloquearSIBO?: boolean
+  /** Si el paciente tiene reflujo frecuente — oculta opciones con altaGrasa (solo aplica a cenas) */
+  bloquearAltaGrasa?: boolean
 }) {
   function toggle(key: string) {
     if (selected.includes(key)) {
@@ -173,11 +187,41 @@ function MealChips({
     }
   }
 
+  // Filtrar pool aplicando reglas clínicas declaradas por el paciente
+  const filteredEntries = Object.entries(pool).filter(([, opt]) => {
+    if (intolerancias.length > 0 && opt.contiene) {
+      if (opt.contiene.some(c => intolerancias.includes(c))) return false
+    }
+    if (bloquearSIBO && opt.altoFODMAP) return false
+    if (bloquearAltaGrasa && opt.altaGrasa) return false
+    return true
+  })
+
+  // Auto-fallback si la selección actual quedó vacía tras filtrar
+  useEffect(() => {
+    const validKeys = filteredEntries.map(([k]) => k)
+    const intersection = selected.filter(k => validKeys.includes(k))
+    if (intersection.length === 0 && validKeys.length > 0) {
+      onChange([validKeys[0]])
+    } else if (intersection.length !== selected.length) {
+      onChange(intersection)
+    }
+  }, [intolerancias.join(','), bloquearSIBO, bloquearAltaGrasa])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (filteredEntries.length === 0) {
+    return (
+      <div>
+        <label className="block text-sm font-semibold text-[#0C3547] mb-2">{label}</label>
+        <p className="text-xs text-[#6B7C93] italic">No hay opciones compatibles con tus restricciones. Conversa con tu profesional para alternativas personalizadas.</p>
+      </div>
+    )
+  }
+
   return (
     <div>
       <label className="block text-sm font-semibold text-[#0C3547] mb-2">{label}</label>
       <div className="flex flex-wrap gap-2">
-        {Object.entries(pool).map(([key, opt]) => {
+        {filteredEntries.map(([key, opt]) => {
           const active = selected.includes(key)
           return (
             <button
@@ -286,7 +330,7 @@ function YogurtTypePicker({
   return (
     <div className="mt-3 p-3 bg-sky-50 border border-sky-200 rounded-xl space-y-2">
       <p className="text-xs font-bold text-sky-800">🥛 Tipo de yogur</p>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
         {entries.map(([key, info]) => (
           <button
             key={key}
@@ -453,7 +497,7 @@ function CatalogPicker<K extends string>({
     )
   }
 
-  const cols = entries.length === 2 ? 'lg:grid-cols-2' : entries.length === 3 ? 'lg:grid-cols-3' : entries.length === 4 ? 'lg:grid-cols-4' : 'lg:grid-cols-6'
+  const cols = entries.length === 2 ? 'lg:grid-cols-2' : entries.length === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'
   const current = catalog[value] ?? catalog[entries[0][0]]
   return (
     <div className={cn('mt-3 p-3 border rounded-xl space-y-2', bgColor, borderColor)}>
@@ -523,10 +567,34 @@ interface Props {
 export function PlanGenerator({ onResult, initialData }: Props) {
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<Partial<FormData>>({ ...defaultForm, ...initialData })
+  const [toast, setToast] = useState<{ msg: string; id: number } | null>(null)
+
+  // Mensajes humanos por campo para el toast de confirmación visual
+  const TOAST_LABELS: Partial<Record<keyof FormData, (v: unknown) => string>> = {
+    yogurtTipo: v => `Yogur: ${YOGUR_TIPOS[v as YogurTipo]?.label ?? v}`,
+    snackNutrevoTipo: v => `Snack Nutrevo: ${SNACK_NUTREVO_TIPOS[v as SnackNutrevoTipo]?.label ?? v}`,
+    barraProteinaTipo: v => `Barra: ${BARRA_PROTEINA_TIPOS[v as BarraProteinaTipo]?.label ?? v}`,
+    incluirSnackEnPlan: v => v ? 'Snack incluido en tu plan ✅' : 'Snack removido del plan',
+    incluirBarraEnPlan: v => v ? 'Barra incluida en tu plan ✅' : 'Barra removida del plan',
+    tendencia: v => `Tendencia: ${String(v)}`,
+    wheyIndicado: v => v ? 'Proteína en polvo activada' : 'Proteína en polvo desactivada',
+    horarioEntrenamiento: v => `Entreno: ${String(v).toUpperCase()}`,
+  }
 
   function set<K extends keyof FormData>(key: K, value: FormData[K]) {
     setForm(prev => ({ ...prev, [key]: value }))
+    const labeler = TOAST_LABELS[key]
+    if (labeler) {
+      setToast({ msg: labeler(value), id: Date.now() })
+    }
   }
+
+  // Auto-ocultar el toast después de 2.2s
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2200)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const [errors, setErrors] = useState<string[]>([])
 
@@ -630,7 +698,24 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-4 sm:p-6 pb-6">
+    <div className="bg-white rounded-2xl border border-[#D6E3ED] shadow p-4 sm:p-6 pb-6 relative">
+      {/* Toast de confirmación visual al cambiar preferencias */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: -8, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -8, scale: 0.96 }}
+            transition={{ duration: 0.18 }}
+            className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-[#0C3547] text-white px-4 py-2 rounded-full shadow-lg text-xs font-semibold flex items-center gap-2 max-w-[90vw]"
+          >
+            <span className="text-emerald-400">●</span>
+            <span className="truncate">{toast.msg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Progress */}
       <div className="mb-5 sm:mb-6">
         {/* Circles row */}
@@ -1067,7 +1152,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                     )} />
                   </button>
                 </div>
-                {wheyActivo && (
+                {wheyActivo && tendenciaActual !== 'vegano' && (
                   <div className="mt-3 flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
                     <span className="text-sm flex-shrink-0">ℹ️</span>
                     <p className="text-xs text-blue-800">
@@ -1075,6 +1160,151 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                     </p>
                   </div>
                 )}
+                {wheyActivo && tendenciaActual === 'vegano' && (
+                  <div className="mt-3 flex gap-2 bg-rose-50 border border-rose-300 rounded-lg p-2.5">
+                    <span className="text-sm flex-shrink-0">⛔</span>
+                    <p className="text-xs text-rose-800">
+                      <strong>Contradicción detectada:</strong> el whey es proteína de leche — no compatible con tendencia <strong>vegana</strong>.
+                      Cambia a una <strong>proteína vegana</strong> (arveja, arroz, soya, hemp) o desactiva el toggle.
+                      Conversa con tu profesional para que indique la fuente vegetal adecuada.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 3️⃣ Contexto operativo del paciente — variables obligatorias para personalización real */}
+              <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-semibold text-[#0C3547]">🧭 Contexto operativo</p>
+                  <p className="text-xs text-[#6B7C93] mt-0.5">
+                    Información práctica que afecta qué preparaciones son viables para ti — no solo qué es saludable.
+                  </p>
+                </div>
+
+                {/* Comidas por día */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">🍽️ Comidas reales por día</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {([3, 4, 5, 6] as const).map(n => (
+                      <button
+                        key={n}
+                        onClick={() => set('comidasPorDia', n)}
+                        className={cn(
+                          'py-1.5 rounded-lg border-2 text-xs font-bold transition-all',
+                          (form.comidasPorDia ?? 5) === n
+                            ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Tiempo para cocinar */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">⏱️ Tiempo disponible por comida</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {([
+                      { v: 'menos_15', l: '< 15 min', d: 'Rápido' },
+                      { v: '15_30',    l: '15–30 min', d: 'Estándar' },
+                      { v: '30_60',    l: '30–60 min', d: 'Cómodo' },
+                      { v: 'mas_60',   l: '> 60 min',  d: 'Elaborado' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => set('tiempoCocinar', opt.v)}
+                        className={cn(
+                          'py-1.5 px-1.5 rounded-lg border-2 transition-all',
+                          (form.tiempoCocinar ?? '15_30') === opt.v
+                            ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        <div className="text-[11px] font-bold">{opt.l}</div>
+                        <div className="text-[9px] opacity-70">{opt.d}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Habilidad culinaria */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">👨‍🍳 Habilidad culinaria</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {([
+                      { v: 'principiante', l: '🌱 Principiante' },
+                      { v: 'intermedio',   l: '🌿 Intermedio' },
+                      { v: 'avanzado',     l: '🍳 Avanzado' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => set('habilidadCulinaria', opt.v)}
+                        className={cn(
+                          'py-1.5 rounded-lg border-2 text-xs font-bold transition-all',
+                          (form.habilidadCulinaria ?? 'intermedio') === opt.v
+                            ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Presupuesto */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">💰 Presupuesto semanal</p>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {([
+                      { v: 'bajo',  l: '$ Bajo',   d: 'Esenciales' },
+                      { v: 'medio', l: '$$ Medio', d: 'Equilibrado' },
+                      { v: 'alto',  l: '$$$ Alto', d: 'Premium' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => set('presupuestoSemanal', opt.v)}
+                        className={cn(
+                          'py-1.5 rounded-lg border-2 transition-all',
+                          (form.presupuestoSemanal ?? 'medio') === opt.v
+                            ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        <div className="text-[11px] font-bold">{opt.l}</div>
+                        <div className="text-[9px] opacity-70">{opt.d}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lugar de almuerzo */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">📍 Dónde almuerzas habitualmente</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {([
+                      { v: 'casa',       l: '🏠 Casa' },
+                      { v: 'oficina',    l: '💼 Oficina' },
+                      { v: 'restaurant', l: '🍴 Restaurant' },
+                      { v: 'colegio',    l: '🎓 Colegio' },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.v}
+                        onClick={() => set('lugarAlmuerzo', opt.v)}
+                        className={cn(
+                          'py-1.5 rounded-lg border-2 text-xs font-bold transition-all',
+                          (form.lugarAlmuerzo ?? 'casa') === opt.v
+                            ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        {opt.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Aviso si tendencia + intolerancias están aplicando filtros */}
@@ -1134,73 +1364,94 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 selectedBorder="border-violet-500"
               />
 
-              {/* Desayunos */}
-              <div>
-                <MealChips
-                  label="🌅 Desayunos"
-                  pool={filteredDesayunos}
-                  selected={form.desayunos ?? []}
-                  onChange={v => set('desayunos', v)}
-                />
-                {(form.desayunos ?? []).some(k => desayunosOpts[k]?.tieneHuevo) && (
-                  <EggsQtyPicker
-                    value={form.eggsQtyDesayuno ?? 2}
-                    onChange={n => set('eggsQtyDesayuno', n)}
-                  />
-                )}
-              </div>
+              {(() => {
+                // Reglas clínicas a propagar a todos los MealChips
+                const intol = form.digIntolerancias ?? []
+                const sibo = form.digDiag === 'si_sibo' || form.digDiag === 'si_sii' || form.digHinchazon === 'diaria'
+                const refluxFrec = form.digReflujo === 'frecuente'
+                return (
+                  <>
+                    {/* Desayunos */}
+                    <div>
+                      <MealChips
+                        label="🌅 Desayunos"
+                        pool={filteredDesayunos}
+                        selected={form.desayunos ?? []}
+                        onChange={v => set('desayunos', v)}
+                        intolerancias={intol}
+                        bloquearSIBO={sibo}
+                      />
+                      {(form.desayunos ?? []).some(k => desayunosOpts[k]?.tieneHuevo) && (
+                        <EggsQtyPicker
+                          value={form.eggsQtyDesayuno ?? 2}
+                          onChange={n => set('eggsQtyDesayuno', n)}
+                        />
+                      )}
+                    </div>
 
-              {/* Colación mañana */}
-              <div>
-                <MealChips
-                  label="☕ Colación de mañana"
-                  pool={colacionesOpts}
-                  selected={form.colacionManana ?? []}
-                  onChange={v => set('colacionManana', v)}
-                />
-              </div>
+                    {/* Colación mañana */}
+                    <div>
+                      <MealChips
+                        label="☕ Colación de mañana"
+                        pool={colacionesOpts}
+                        selected={form.colacionManana ?? []}
+                        onChange={v => set('colacionManana', v)}
+                        intolerancias={intol}
+                        bloquearSIBO={sibo}
+                      />
+                    </div>
 
-              {/* Almuerzos */}
-              <div>
-                <MealChips
-                  label="🍽️ Almuerzos"
-                  pool={filteredAlmuerzos}
-                  selected={form.almuerzos ?? []}
-                  onChange={v => set('almuerzos', v)}
-                />
-                {(form.almuerzos ?? []).some(k => almuerzosOpts[k]?.tieneHuevo) && (
-                  <EggsQtyPicker
-                    value={form.eggsQty ?? 2}
-                    onChange={n => set('eggsQty', n)}
-                  />
-                )}
-              </div>
+                    {/* Almuerzos */}
+                    <div>
+                      <MealChips
+                        label="🍽️ Almuerzos"
+                        pool={filteredAlmuerzos}
+                        selected={form.almuerzos ?? []}
+                        onChange={v => set('almuerzos', v)}
+                        intolerancias={intol}
+                        bloquearSIBO={sibo}
+                      />
+                      {(form.almuerzos ?? []).some(k => almuerzosOpts[k]?.tieneHuevo) && (
+                        <EggsQtyPicker
+                          value={form.eggsQty ?? 2}
+                          onChange={n => set('eggsQty', n)}
+                        />
+                      )}
+                    </div>
 
-              {/* Once */}
-              <div>
-                <MealChips
-                  label="🫖 Once"
-                  pool={colacionesOpts}
-                  selected={form.once ?? []}
-                  onChange={v => set('once', v)}
-                />
-              </div>
+                    {/* Once */}
+                    <div>
+                      <MealChips
+                        label="🫖 Once"
+                        pool={colacionesOpts}
+                        selected={form.once ?? []}
+                        onChange={v => set('once', v)}
+                        intolerancias={intol}
+                        bloquearSIBO={sibo}
+                      />
+                    </div>
 
-              {/* Cenas */}
-              <div>
-                <MealChips
-                  label="🌙 Cenas"
-                  pool={filteredCenas}
-                  selected={form.cenas ?? []}
-                  onChange={v => set('cenas', v)}
-                />
-                {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneHuevo) && (
-                  <EggsQtyPicker
-                    value={form.eggsQtyCena ?? 3}
-                    onChange={n => set('eggsQtyCena', n)}
-                  />
-                )}
-              </div>
+                    {/* Cenas — además filtra alta grasa si reflujo frecuente */}
+                    <div>
+                      <MealChips
+                        label="🌙 Cenas"
+                        pool={filteredCenas}
+                        selected={form.cenas ?? []}
+                        onChange={v => set('cenas', v)}
+                        intolerancias={intol}
+                        bloquearSIBO={sibo}
+                        bloquearAltaGrasa={refluxFrec}
+                      />
+                      {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneHuevo) && (
+                        <EggsQtyPicker
+                          value={form.eggsQtyCena ?? 3}
+                          onChange={n => set('eggsQtyCena', n)}
+                        />
+                      )}
+                    </div>
+                  </>
+                )
+              })()}
 
               {/* Disclaimer Vegetal Burger Abuelo */}
               {(form.almuerzos ?? []).includes('vegetal_burger_abuelo') && (

@@ -32,6 +32,8 @@ export interface DayMeal {
   sellos?: string[]          // sellos chilenos (ultra y comidas regulares con advertencia)
   alergenos?: string[]       // solo ultra
   esUltra?: boolean
+  /** Etiqueta de timing peri-entreno aplicada al meal según horario de entrenamiento del paciente */
+  timingEntreno?: 'pre_entreno' | 'post_entreno'
 }
 
 export interface DayPlan {
@@ -127,7 +129,10 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     // Colación mañana — slot AM; snack/barra se inyectan solo si el paciente entrena AM
     const colMananaPool = buildColacionPool(form.colacionManana, form, 'AM')
     const colManana = colMananaPool[d % colMananaPool.length]
-    meals.push(buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo))
+    const colMananaMeal = buildMeal('colacion_manana', colManana, targetKcal, undefined, form.yogurtTipo)
+    // Marcar timing peri-entreno: si entrena AM, esta colación es post-entreno
+    if (form.horarioEntrenamiento === 'AM') colMananaMeal.timingEntreno = 'post_entreno'
+    meals.push(colMananaMeal)
 
     // Almuerzo
     const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
@@ -136,7 +141,11 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     // Once — slot PM; snack/barra se inyectan solo si el paciente entrena PM o noche
     const oncePool = buildColacionPool(form.once, form, 'PM')
     const once = oncePool[(d + 1) % oncePool.length] // offset para variedad vs. colación mañana
-    meals.push(buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo))
+    const onceMeal = buildMeal('once', once, targetKcal, form.eggsQtyOnce, form.yogurtTipo)
+    // Marcar timing peri-entreno: si entrena PM, once es post-entreno; si entrena noche, once es pre-entreno
+    if (form.horarioEntrenamiento === 'PM') onceMeal.timingEntreno = 'post_entreno'
+    else if (form.horarioEntrenamiento === 'noche') onceMeal.timingEntreno = 'pre_entreno'
+    meals.push(onceMeal)
 
     // Cena
     const cena = getMealOption(cenasPool, form.cenas, d)

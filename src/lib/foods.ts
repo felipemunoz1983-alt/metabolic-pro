@@ -22,6 +22,14 @@ export interface MealOption {
   eggsDefault?: number      // cantidad de huevos por defecto de la receta
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
   tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
+  /** Alérgenos / componentes que contiene — para filtrar por digIntolerancias del paciente.
+   *  Valores válidos coinciden con CheckChips de Intolerancias en step 3:
+   *  'lactosa' | 'gluten' | 'legumbres' | 'cruciferas' | 'cebolla_ajo' | 'soya' | 'frutos_secos' | 'mani' | 'huevo' */
+  contiene?: string[]
+  /** true = alta carga FODMAP — se oculta si el paciente declara SIBO o SII */
+  altoFODMAP?: boolean
+  /** true = alta en grasas saturadas / frituras — se filtra de cenas si hay reflujo frecuente */
+  altaGrasa?: boolean
 }
 
 // ─── Tipos de yogur disponibles ───────────────────────────────────────────────
@@ -427,6 +435,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 580, p: 52, c: 58, g: 12,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '30 min',
     pasos: [
       'Pollo: sazonar la pechuga con sal, pimienta, ajo en polvo y gotas de limón. Cocinar 6-7 min por lado en plancha caliente con spray de aceite. El sellado a fuego alto retiene los jugos.',
@@ -442,6 +451,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 590, p: 46, c: 54, g: 16,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '30 min',
     pasos: [
       'Papa: lavar y cocinar entera con cáscara en agua hirviendo con sal 20-25 min. La cáscara conserva nutrientes y reduce el índice glicémico.',
@@ -457,6 +467,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 600, p: 48, c: 42, g: 20,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '30 min',
     pasos: [
       'Quinoa: lavar en colador fino bajo agua fría. Cocinar en 2 tazas de agua con sal a fuego medio-bajo 15 min tapado. La quinoa es proteína completa con índice glicémico bajo.',
@@ -476,6 +487,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 718, p: 60, c: 40, g: 34, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
+    contiene: ['huevo'],
     tiempo: '25 min',
     pasos: [
       'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar enfriar.',
@@ -492,6 +504,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 550, p: 32, c: 70, g: 14, tieneHuevo: true, eggsDefault: 2,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['vegetariano'],
+    contiene: ['huevo', 'soya'],   // salsa de soya
     tiempo: '15 min',
     pasos: [
       'Arroz: usar arroz frío del día anterior. El almidón retrogradado del arroz frío tiene menor índice glicémico y saltea mejor.',
@@ -507,6 +520,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 550, p: 30, c: 80, g: 8,
     foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres', 'cebolla_ajo'],
+    altoFODMAP: true,
     tiempo: '25 min',
     pasos: [
       'Sofrito: saltear cebolla y ajo picados en aceite hasta transparentar. Agregar tomate y cocinar 5 min.',
@@ -521,6 +536,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     baseKcal: 560, p: 48, c: 52, g: 11,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '25 min',
     pasos: [
       'Papas: cocer con cáscara en agua hirviendo con sal 20 min. Escurrir y espolvorear perejil fresco.',
@@ -537,6 +553,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['soya', 'cruciferas'],   // tofu = soya · champiñones aceptable
     pasos: [
       'Quinoa: lavar bajo agua fría en colador fino. Cocinar en 2 tazas de agua con sal a fuego bajo 15 min tapado. Reposar 5 min antes de esponjar con tenedor.',
       'Tofu: cortar en cubos de 2cm. Secar con papel absorbente para eliminar el exceso de agua — así queda crocante al saltear.',
@@ -552,6 +569,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres', 'cebolla_ajo'],
+    altoFODMAP: true,
     pasos: [
       'Vegetales: cortar en trozos medianos, mezclar con aceite, sal y comino. Asar a 200°C por 20-25 min hasta caramelizar.',
       'Garbanzos: si son de lata, enjuagar bien. Si son secos, remojar 12h y hervir 45 min. Los garbanzos aportan 15g de proteína por 100g.',
@@ -567,6 +586,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: USP('1565557981-d9a55e1b9e6c'),
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres', 'cebolla_ajo'],
+    altoFODMAP: true,
     pasos: [
       'Sofrito: calentar aceite en sartén profunda. Saltear cebolla y ajo 3 min hasta transparentar.',
       'Especias: agregar 1 cdta curry, cúrcuma y comino. Tostar 1 min sin quemar — libera aromas y activa los polifenoles.',
@@ -582,6 +603,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'vegetal_burguer_abuelo.jpg',
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres', 'gluten', 'soya', 'cebolla_ajo'],
+    altoFODMAP: true,
     alergenosNota: 'Ingredientes: Porotos negros, Agua, Cebolla, Aceite de soya, Zapallo italiano (5%), Champiñones, Pimentón rojo, Harina de trigo (gluten), Metilcelulosa, Sal, Extracto de levadura, Maltodextrina, Aceite de maravilla, Aceite de canola, Saborizante idéntico a natural, Dióxido de silicio amorfo. Puede contener trazas de huevo, leche y alimentos cárnicos. Contiene gluten (harina de trigo) — no apto para celíacos.',
     pasos: [
       'Sartén o plancha: cocinar el medallón congelado directo a fuego medio-alto, 4-5 min por lado sin presionar. No descongelar antes — cocinar directo da mejor textura.',
@@ -598,6 +621,8 @@ export const almuerzosOpts: Record<string, MealOption> = {
     foto: IMG + 'beyond_burguer.jpg',
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres'],   // proteína de arveja
+    altaGrasa: true,
     sellos: ['Alto en Grasas Saturadas (5,1 g/porción)'],
     alergenosNota: 'Ingredientes: Agua, Aislado de proteína de arveja, Aceite de canola, Aceite de coco refinado, Proteína de arroz, Almidón de papa, Saborizantes naturales vegetales, Levadura seca, Proteína de frijol mungo, Metilcelulosa, Extracto de manzana, Extracto de granada, Extracto de levadura, Cloruro de potasio, Sal, Extracto de betarraga, Concentrado de jugo de limón, Lecitina de maravilla, Extracto licopeno de tomate, Aceite de maravilla, Glicerina vegetal, Maltodextrina, Ácido ascórbico, Vinagre. Sin gluten · Sin soya · Sin mariscos · Sin lácteos · Sin huevo. Elaborado en planta que también procesa soya y gluten.',
     pasos: [
@@ -618,6 +643,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 320, p: 40, c: 16, g: 9,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
+    contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
     tiempo: '20 min',
     pasos: [
       'Pollo: sazonar con sal, pimienta, ajo y limón. Cocinar en plancha 6-7 min por lado.',
@@ -633,6 +659,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 310, p: 28, c: 10, g: 18, tieneHuevo: true, eggsDefault: 3,
     foto: IMG + 'omelette_pan_integral.jfif',
     tendencia: ['vegetariano'],
+    contiene: ['huevo'],
     tiempo: '12 min',
     pasos: [
       'Batido: mezclar los 3 huevos con sal y pimienta hasta homogeneizar.',
@@ -648,6 +675,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 330, p: 36, c: 12, g: 14, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
+    contiene: ['huevo'],
     tiempo: '15 min',
     pasos: [
       'Atún: escurrir bien la lata. El atún en agua aporta 26g de proteína por 100g con solo 1g de grasa.',
@@ -663,6 +691,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 340, p: 38, c: 8, g: 16,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
+    contiene: ['cruciferas', 'cebolla_ajo'],
     tiempo: '20 min',
     pasos: [
       'Salmón: sazonar con sal, pimienta, ajo y limón. Cocinar en sartén 3-4 min por lado hasta que el centro esté opaco pero jugoso.',
@@ -678,6 +707,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 310, p: 35, c: 14, g: 11,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '20 min',
     pasos: [
       'Carne: sazonar con sal, pimienta y ajo. Cocinar en plancha bien caliente 4-5 min por lado.',
@@ -693,6 +723,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 290, p: 30, c: 22, g: 6,
     foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
     tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
     tiempo: '35 min',
     pasos: [
       'Caldo: calentar 1 litro de caldo de pollo en una olla grande a fuego medio.',
@@ -709,6 +740,8 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres', 'gluten', 'cebolla_ajo'],  // pan integral
+    altoFODMAP: true,
     pasos: [
       'Sofrito: saltear cebolla, ajo y zanahoria en una olla con pizca de aceite 3-4 min.',
       'Tomate: agregar tomate picado, cocinar 5 min hasta ablandar.',
@@ -724,6 +757,8 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '15 min',
     tendencia: ['vegetariano'],
+    contiene: ['legumbres', 'huevo'],
+    altoFODMAP: true,
     pasos: [
       'Huevos: cocinar duros 10 min en agua hirviendo. Pelar y cortar en mitades.',
       'Garbanzos: si son de lata, enjuagar y escurrir. Secar levemente para que absorban el aliño.',
@@ -739,6 +774,7 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['soya', 'gluten', 'cruciferas', 'cebolla_ajo'],   // tofu+soya · fideos integrales · brócoli
     pasos: [
       'Tofu: cortar en cubos de 2cm, secar con papel absorbente. Saltear en wok caliente con aceite 4-5 min por lado hasta dorar y crocante.',
       'Verduras: retirar el tofu, saltear brócoli, pimentón y zanahoria a fuego alto 3-4 min. Agregar champiñones los últimos 2 min.',
@@ -754,6 +790,8 @@ export const cenasOpts: Record<string, MealOption> = {
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '10 min',
     tendencia: ['vegetariano', 'vegano'],
+    contiene: ['legumbres'],
+    altoFODMAP: true,
     pasos: [
       'Lentejas: usar cocidas (lata o cocción previa). Escurrir y sazonar con sal, comino y limón.',
       'Verduras: cortar tomate cherry por la mitad, rodajas de pepino y lavar la rúcula.',

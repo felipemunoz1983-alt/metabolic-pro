@@ -139,10 +139,22 @@ export function MenuHoy({ plan, nombre }: Props) {
                     </div>
                   </div>
 
-                  {/* Nombre del plato */}
-                  <p className="text-sm font-semibold text-[#0C1F2C] leading-snug mb-1">
-                    {meal.label}
-                  </p>
+                  {/* Nombre del plato + badge peri-entreno si aplica */}
+                  <div className="flex items-start gap-1.5 flex-wrap mb-1">
+                    <p className="text-sm font-semibold text-[#0C1F2C] leading-snug">
+                      {meal.label}
+                    </p>
+                    {meal.timingEntreno && (
+                      <span className={cn(
+                        'text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap',
+                        meal.timingEntreno === 'pre_entreno'
+                          ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                          : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                      )}>
+                        {meal.timingEntreno === 'pre_entreno' ? '🏋️ Pre-entreno' : '💪 Post-entreno'}
+                      </span>
+                    )}
+                  </div>
 
                   {/* Ingredientes (primeros 2-3) */}
                   {meal.items.length > 0 && (
