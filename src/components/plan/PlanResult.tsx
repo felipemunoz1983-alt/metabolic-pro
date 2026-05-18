@@ -16,6 +16,8 @@ interface Props {
   result: NutritionResult
   form: FormData
   onReset: () => void
+  /** ID de usuario para persistir el checklist de compras en localStorage */
+  userId?: string
 }
 
 const ALERT_STYLES: Record<ClinicalAlert['nivel'], { bg: string; border: string; text: string; icon: string }> = {
@@ -130,7 +132,7 @@ function ClinicalPanel({ form }: { form: FormData }) {
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
-export function PlanResult({ result, form, onReset }: Props) {
+export function PlanResult({ result, form, onReset, userId }: Props) {
   const { kcal, macros, bmr, tdee, pal } = result
 
   const weekPlan = useMemo(
@@ -251,7 +253,7 @@ export function PlanResult({ result, form, onReset }: Props) {
       <WeeklyPlan plan={weekPlan} />
 
       {/* Lista de supermercado generada automáticamente */}
-      <ShoppingList plan={weekPlan} />
+      <ShoppingList plan={weekPlan} userId={userId} />
 
       {/* Productos Nutrevo recomendados según objetivo */}
       <NutrievoPanel objetivo={form.objetivo} />

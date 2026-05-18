@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ShoppingCart, Check, ChevronDown, Copy, CheckCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,22 +10,53 @@ import type { WeekPlan } from '@/lib/planGenerator'
 
 interface Props {
   plan: WeekPlan
+  /** ID del usuario — habilita persistencia del checklist en localStorage */
+  userId?: string
+}
+
+// ─── Persistencia ligera en localStorage ──────────────────────────────────────
+// Key namespaced por usuario para no mezclar checklists entre cuentas en mismo dispositivo.
+const STORAGE_PREFIX = 'cm:shopping:'
+function loadChecked(userId?: string): Set<string> {
+  if (!userId || typeof window === 'undefined') return new Set()
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + userId)
+    if (!raw) return new Set()
+    const arr = JSON.parse(raw)
+    return Array.isArray(arr) ? new Set(arr) : new Set()
+  } catch { return new Set() }
+}
+function saveChecked(userId: string | undefined, set: Set<string>) {
+  if (!userId || typeof window === 'undefined') return
+  try {
+    localStorage.setItem(STORAGE_PREFIX + userId, JSON.stringify([...set]))
+  } catch { /* quota / privacy mode → fail silent */ }
 }
 
 const CATEGORY_ORDER: ShoppingCategory[] = [
   'proteinas', 'lacteos', 'cereales', 'frutas_verduras', 'grasas', 'condimentos', 'suplementos', 'otros',
 ]
 
-export function ShoppingList({ plan }: Props) {
+export function ShoppingList({ plan, userId }: Props) {
   const lista = useMemo(() => generarListaSupermercado(plan), [plan])
 
-  // Estado de tachado por item (key = nombre)
-  const [checked, setChecked] = useState<Set<string>>(new Set())
+  // Estado de tachado por item (key = nombre) — hidratado desde localStorage al mount
+  const [checked, setChecked] = useState<Set<string>>(() => loadChecked(userId))
   const [openCats, setOpenCats] = useState<Set<ShoppingCategory>>(
     new Set(CATEGORY_ORDER.filter(c => lista.byCategory[c]?.length > 0))
   )
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState(false)
+
+  // Re-hidratar si cambia el usuario (cambio de cuenta sin refresh)
+  useEffect(() => {
+    setChecked(loadChecked(userId))
+  }, [userId])
+
+  // Persistir cada cambio en localStorage
+  useEffect(() => {
+    saveChecked(userId, checked)
+  }, [checked, userId])
 
   function toggleItem(nombre: string) {
     setChecked(prev => {
@@ -247,7 +278,7 @@ export function ShoppingList({ plan }: Props) {
 
               {/* Footer note */}
               <p className="text-center text-[10px] text-[#B0C4D4]">
-                Cantidades para 1 día · Multiplica según los días que vayas a comprar
+                Cantidades acumuladas para 7 días · Agua e infusiones excluidas · Tu progreso se guarda automáticamente
               </p>
 
             </div>

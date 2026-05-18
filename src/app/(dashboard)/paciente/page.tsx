@@ -461,6 +461,7 @@ export default function PacientePage() {
                         result={result}
                         form={formData}
                         onReset={() => { setResult(null); setFormData(null) }}
+                        userId={userId ?? undefined}
                       />
                     </>
                   ) : profile?.role === 'patient' ? (

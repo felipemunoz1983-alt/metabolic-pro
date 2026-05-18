@@ -85,6 +85,64 @@ const CATEGORY_KEYWORDS: Array<{ keywords: string[]; category: ShoppingCategory 
   },
 ]
 
+// ─── Líquidos acompañantes que NO van a la lista de compras ───────────────────
+// El agua, té e infusiones sin azúcar son acompañamientos universales que el
+// paciente ya tiene en casa — incluirlos satura la lista sin valor real.
+const SKIP_KEYWORDS = [
+  'agua', 'infusión', 'infusion', 'té ', 'te sin azúcar', 'tisana',
+]
+
+function isAcompañamiento(name: string): boolean {
+  const n = name.toLowerCase()
+  return SKIP_KEYWORDS.some(k => n.includes(k))
+}
+
+// ─── Parser de cantidad numérica + unidad ─────────────────────────────────────
+interface ParsedQty {
+  value: number       // valor numérico (NaN si no parsea)
+  unit: string        // 'g' | 'kg' | 'ml' | 'unidad' | 'taza' | etc.
+  raw: string         // texto original como fallback
+}
+
+/** Parsea "200g", "1.5kg", "½ taza", "2 cdas", "200ml" → estructurado */
+function parseQuantity(raw: string): ParsedQty {
+  // Soporte fracciones unicode
+  const normalized = raw.replace(/½/g, '0.5').replace(/¼/g, '0.25').replace(/¾/g, '0.75')
+  const match = normalized.match(/^([\d.,]+)(?:\s*-\s*[\d.,]+)?\s*([a-záéíóúñ]+)?/i)
+  if (!match) return { value: NaN, unit: '', raw }
+  const value = parseFloat(match[1].replace(',', '.'))
+  let unit = (match[2] ?? '').toLowerCase().trim()
+  // Normalizar unidades equivalentes
+  if (['unidades', 'un', 'un.'].includes(unit)) unit = 'unidad'
+  if (['cdas'].includes(unit)) unit = 'cda'
+  if (['cdtas'].includes(unit)) unit = 'cdta'
+  if (['tazas'].includes(unit)) unit = 'taza'
+  if (['rebanadas'].includes(unit)) unit = 'rebanada'
+  // Sin unidad → asumir "unidad" para enteros, vacío si decimal raro
+  if (!unit && !isNaN(value)) unit = 'unidad'
+  return { value, unit, raw }
+}
+
+/** Formatea ParsedQty acumulado a string legible */
+function formatQty(value: number, unit: string): string {
+  if (isNaN(value)) return '1 unidad'
+  // g → kg cuando supera 1000
+  if (unit === 'g' && value >= 1000) {
+    return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)} kg`
+  }
+  // ml → L cuando supera 1000
+  if (unit === 'ml' && value >= 1000) {
+    return `${(value / 1000).toFixed(value % 1000 === 0 ? 0 : 1)} L`
+  }
+  // Plurales básicos
+  let unitDisplay = unit
+  if (value !== 1 && ['unidad', 'taza', 'rebanada', 'cda', 'cdta'].includes(unit)) {
+    unitDisplay = unit + (unit.endsWith('a') ? 's' : 'es')
+  }
+  const valStr = value % 1 === 0 ? String(value) : value.toFixed(1)
+  return unitDisplay ? `${valStr} ${unitDisplay}` : valStr
+}
+
 // ─── Normalize ingredient name ────────────────────────────────────────────────
 /** Elimina cantidades y unidades del inicio del string para obtener el nombre del ingrediente */
 function extractIngredientName(raw: string): string {
@@ -96,12 +154,6 @@ function extractIngredientName(raw: string): string {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase()
-}
-
-/** Extrae la cantidad/unidad del inicio del string */
-function extractQuantity(raw: string): string {
-  const match = raw.match(/^([\d.,½¼¾\/\-]+\s*(ml|g|kg|cc|tazas?|cdas?|cdtas?|scoop|unidades?|rebanadas?|un\.?)?)/i)
-  return match ? match[0].trim() : '1 unidad'
 }
 
 /** Detecta la categoría según palabras clave */
@@ -116,28 +168,63 @@ function detectCategory(name: string): ShoppingCategory {
 }
 
 // ─── Función principal ────────────────────────────────────────────────────────
+/**
+ * Genera la lista de compras semanal a partir del plan.
+ *
+ * Reglas clínicas:
+ * - Considera solo la semana 1 (7 días representativos).
+ * - Excluye ultras planificados (treats controlados, no lista de compra).
+ * - Excluye acompañamientos universales (agua, infusiones, té sin azúcar).
+ * - SUMA cantidades del mismo ingrediente cuando aparece varios días con
+ *   misma unidad (200g pollo × 5 días → 1 kg pollo).
+ * - Si las unidades difieren, fallback a "cantidad base × días" en texto.
+ */
 export function generarListaSupermercado(plan: WeekPlan): ShoppingList {
-  // Recopilar todos los items de la semana 1 (7 días representativos)
   const semana1Dias = plan.dias.filter(d => d.semana === 1)
 
-  // Map: nombreNormalizado → { cantidad, diasUsado, rawName }
-  const ingredientMap = new Map<string, { cantidad: string; diasUsado: number; rawName: string }>()
+  // Acumulador: nombre normalizado → { total numérico, unidad, diasUsado, fallbackText }
+  const ingredientMap = new Map<string, {
+    totalValue: number
+    unit: string
+    diasUsado: number
+    fallbackRaw: string
+  }>()
 
   for (const dia of semana1Dias) {
     for (const meal of dia.meals) {
-      if (meal.esUltra) continue   // excluir ultra procesados de la lista
+      if (meal.esUltra) continue
       for (const rawItem of meal.items) {
         const name = extractIngredientName(rawItem)
-        const qty  = extractQuantity(rawItem)
-
         if (!name || name.length < 2) continue
+        if (isAcompañamiento(name)) continue        // omite agua/infusiones
 
         const key = name.replace(/\s+/g, ' ').toLowerCase()
+        const parsed = parseQuantity(rawItem)
 
-        if (ingredientMap.has(key)) {
-          ingredientMap.get(key)!.diasUsado++
+        const existing = ingredientMap.get(key)
+        if (existing) {
+          existing.diasUsado++
+          // Sumamos solo si las unidades coinciden y ambos valores son numéricos
+          if (
+            !isNaN(parsed.value) && !isNaN(existing.totalValue) &&
+            parsed.unit === existing.unit && parsed.unit !== ''
+          ) {
+            existing.totalValue += parsed.value
+          } else if (isNaN(existing.totalValue)) {
+            // Caso degenerate: ambos no parseables, dejar fallback
+          }
+          // Si las unidades NO coinciden, mantenemos el primer valor parseable y
+          // marcamos como no-sumable (NaN bandera) para usar fallback en formato.
+          else if (parsed.unit !== existing.unit) {
+            existing.totalValue = NaN
+          }
         } else {
-          ingredientMap.set(key, { cantidad: qty, diasUsado: 1, rawName: rawItem })
+          ingredientMap.set(key, {
+            totalValue: parsed.value,
+            unit: parsed.unit,
+            diasUsado: 1,
+            fallbackRaw: rawItem,
+          })
         }
       }
     }
@@ -146,13 +233,22 @@ export function generarListaSupermercado(plan: WeekPlan): ShoppingList {
   // Construir lista final
   const items: ShoppingItem[] = []
   for (const [key, meta] of ingredientMap.entries()) {
-    // Capitalizar nombre
     const nombre = key.charAt(0).toUpperCase() + key.slice(1)
     const category = detectCategory(key)
-    items.push({ nombre, cantidad: meta.cantidad, diasUsado: meta.diasUsado, category })
+    let cantidad: string
+    if (!isNaN(meta.totalValue) && meta.unit) {
+      // Sumable: mostramos total semanal en unidad legible
+      cantidad = formatQty(meta.totalValue, meta.unit)
+    } else {
+      // No sumable: fallback al texto original con multiplicador de días
+      cantidad = meta.diasUsado > 1
+        ? `${meta.fallbackRaw.match(/^[^\s]+/)?.[0] ?? '1'} × ${meta.diasUsado} días`
+        : meta.fallbackRaw.match(/^[^\s]+/)?.[0] ?? '1 unidad'
+    }
+    items.push({ nombre, cantidad, diasUsado: meta.diasUsado, category })
   }
 
-  // Ordenar: primero por categoría (orden deseado), luego alfabético
+  // Ordenar: por categoría, luego alfabético
   const ORDER: ShoppingCategory[] = ['proteinas', 'lacteos', 'cereales', 'frutas_verduras', 'grasas', 'condimentos', 'suplementos', 'otros']
   items.sort((a, b) => ORDER.indexOf(a.category) - ORDER.indexOf(b.category) || a.nombre.localeCompare(b.nombre))
 
