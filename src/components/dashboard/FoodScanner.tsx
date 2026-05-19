@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCw, Zap, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
+import { getTodayCL } from '@/lib/date-cl'
 
 interface Food {
   nombre: string
@@ -106,7 +107,8 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
 
     try {
       const supabase = createClient()
-      const today = new Date().toISOString().split('T')[0]
+      // TZ Chile — registros pasadas las 21h se guardaban como día siguiente. Fix 2026-05-18
+      const today = getTodayCL()
 
       // Add scanned calories to today's registros_diarios row (upsert)
       const { data: existing } = await supabase

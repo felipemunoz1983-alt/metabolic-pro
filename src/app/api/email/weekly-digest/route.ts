@@ -6,6 +6,7 @@ import {
   type PatientWeeklySummary as PatientSummary,
   type PatientLogRowFull,
 } from '@/lib/digestSummary'
+import { getDateCLDaysAgo } from '@/lib/date-cl'
 
 function buildHtml(professionalName: string, patients: PatientSummary[], weekLabel: string): string {
   const urgent = patients.filter(p => p.necesitaIntervencion || p.sinActividad)
@@ -167,9 +168,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
 
   const supabase = createServiceClient()
-  const sevenDaysAgo = new Date()
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6)
-  const since = sevenDaysAgo.toISOString().split('T')[0]
+  // TZ Chile — coincide con fechas guardadas en registros_diarios
+  const since = getDateCLDaysAgo(6)
 
   // Fetch all patients
   const { data: patients, error: pErr } = await supabase
@@ -211,8 +211,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   // Build week label
   const now = new Date()
-  const weekStart = new Date(sevenDaysAgo)
-  const weekLabel = `${weekStart.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })} – ${now.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', year: 'numeric' })}`
+  const weekStart = new Date(now.getTime() - 6 * 86_400_000)
+  const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', timeZone: 'America/Santiago' }
+  const weekLabel = `${weekStart.toLocaleDateString('es-CL', opts)} – ${now.toLocaleDateString('es-CL', { ...opts, year: 'numeric' })}`
 
   const html = buildHtml(body.professionalName || 'Profesional', summaries, weekLabel)
 

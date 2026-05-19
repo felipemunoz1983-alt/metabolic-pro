@@ -12,11 +12,15 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
 import { sendPushToUser } from '@/lib/push'
 
-/** ISO date string N days from now */
+/** ISO date string N days from now (en TZ Chile) */
 function dateInNDays(n: number): string {
+  // trial_ends_at se compara con fecha-CL; usamos misma TZ para consistencia
   const d = new Date()
   d.setDate(d.getDate() + n)
-  return d.toISOString().split('T')[0]
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Santiago',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).format(d)
 }
 
 function buildExpiryHtml(

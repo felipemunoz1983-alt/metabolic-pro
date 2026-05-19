@@ -10,8 +10,10 @@ import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
 import { sendPushToUser } from '@/lib/push'
 import { filterActivePatients } from '@/lib/digestSummary'
+import { getTodayCL } from '@/lib/date-cl'
 
-const today = () => new Date().toISOString().split('T')[0]
+// TZ Chile — todos los pacientes están en Chile, los registros se guardan con fecha-CL
+const today = () => getTodayCL()
 
 function buildReminderHtml(nombre: string, appUrl: string): string {
   return `<!DOCTYPE html>

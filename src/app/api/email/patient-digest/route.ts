@@ -27,17 +27,17 @@ import {
   getCtaConfig,
   type CtaConfig,
 } from '@/lib/digestSummary'
+import { getTodayCL, getDateCLDaysAgo } from '@/lib/date-cl'
 
 // ─── Helpers locales (manejo de fechas para query Supabase) ──────────────────
+// TZ Chile — coincide con fechas guardadas en registros_diarios
 
 function isoToday(): string {
-  return new Date().toISOString().split('T')[0]
+  return getTodayCL()
 }
 
 function isoDaysAgo(n: number): string {
-  const d = new Date()
-  d.setDate(d.getDate() - n)
-  return d.toISOString().split('T')[0]
+  return getDateCLDaysAgo(n)
 }
 
 // ─── Email builder ────────────────────────────────────────────────────────────

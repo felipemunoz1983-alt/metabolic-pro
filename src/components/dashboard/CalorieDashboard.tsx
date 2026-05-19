@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { Sparkline, Ring } from '@/components/ui/Sparkline'
 import type { Macros, FormData } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
+import { getTodayCL, getDateCLDaysAgo } from '@/lib/date-cl'
 import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Trophy } from 'lucide-react'
 
 interface DayLog {
@@ -90,12 +91,14 @@ function computeStreak(logs: DayLog[], today: string): { current: number; best: 
   const loggedDates = new Set(
     logs.filter(l => l.comidas_completadas > 0).map(l => l.fecha)
   )
-  // Current streak: walk back from today
+  // Current streak: walk back from today.
+  // Usamos T12:00:00Z (UTC mediodía) para evitar drift TZ — el día representado
+  // queda fijo en cualquier TZ del cliente.
   let current = 0
-  const d = new Date(today + 'T12:00:00')
+  const d = new Date(today + 'T12:00:00Z')
   while (loggedDates.has(d.toISOString().split('T')[0])) {
     current++
-    d.setDate(d.getDate() - 1)
+    d.setUTCDate(d.getUTCDate() - 1)
   }
   // Best streak over loaded period
   const sorted = [...loggedDates].sort()
@@ -133,10 +136,11 @@ function ResumenSemanal({
   streak: { current: number; best: number }
   today: string
 }) {
-  // Generate last 7 calendar days (oldest → newest, today last)
+  // Generate last 7 calendar days (oldest → newest, today last).
+  // Usamos T12:00:00Z UTC para evitar drift TZ (no usar TZ local).
   const days = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(today + 'T12:00:00')
-    d.setDate(d.getDate() - (6 - i))
+    const d = new Date(today + 'T12:00:00Z')
+    d.setUTCDate(d.getUTCDate() - (6 - i))
     return d.toISOString().split('T')[0]
   })
 
@@ -342,7 +346,10 @@ function ScaleSelector({
 // ── Main component ────────────────────────────────────────────────────────────
 export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Props) {
   const supabase = createClient()
-  const today = new Date().toISOString().split('T')[0]
+  // Usa TZ Chile para que las fechas coincidan con la percepción del paciente.
+  // BUG previo: new Date().toISOString() devolvía UTC, registros pasadas las 21h
+  // se guardaban como del día siguiente. Detectado en Francisca Carrión 2026-05-18.
+  const today = getTodayCL()
 
   // ── Slots dinámicos según plan del paciente ───────────────────────────────
   // Si hay form persistido, generamos el plan del día actual y extraemos los
@@ -424,12 +431,12 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
   }
 
   async function loadMonth() {
-    const desde = new Date()
-    desde.setDate(desde.getDate() - 29)
+    // 29 días atrás en TZ Chile (no UTC) — coincide con la percepción del paciente
+    const desdeStr = getDateCLDaysAgo(29)
     const { data, error } = await supabase
       .from('registros_diarios').select('*')
       .eq('user_id', userId)
-      .gte('fecha', desde.toISOString().split('T')[0])
+      .gte('fecha', desdeStr)
       .order('fecha', { ascending: true })
     if (error) { console.error('[CalorieDashboard] loadMonth:', error); return }
     if (data) {

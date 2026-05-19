@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getTodayCL, getDateCLDaysAgo } from './date-cl'
 
 export type NotifLevel = 'ok' | 'info' | 'warning' | 'alert'
 
@@ -94,7 +95,8 @@ export async function getPatientNotifications(
   userId: string
 ): Promise<AppNotification[]> {
   const notifs: AppNotification[] = []
-  const today = new Date().toISOString().split('T')[0]
+  // TZ Chile — registros guardados con fecha-CL, comparar con fecha-CL
+  const today = getTodayCL()
   const nowHour = new Date().getHours()
 
   // ── 1. Has today's log? ──────────────────────────────────────────────────
@@ -131,13 +133,13 @@ export async function getPatientNotifications(
   }
 
   // ── 2. Last 7 days adherence ─────────────────────────────────────────────
-  const since = new Date()
-  since.setDate(since.getDate() - 6)
+  // TZ Chile — 6 días atrás desde hoy en TZ Chile
+  const sinceStr = getDateCLDaysAgo(6)
   const { data: weekLogs } = await supabase
     .from('registros_diarios')
     .select('fecha, comidas_completadas, comidas_total')
     .eq('user_id', userId)
-    .gte('fecha', since.toISOString().split('T')[0])
+    .gte('fecha', sinceStr)
 
   if (weekLogs && weekLogs.length >= 3) {
     const avgAdh = Math.round(
@@ -204,17 +206,15 @@ export async function getProfessionalNotifications(
 
   if (!patients || patients.length === 0) return notifs
 
-  const since7 = new Date()
-  since7.setDate(since7.getDate() - 6)
-  const since3 = new Date()
-  since3.setDate(since3.getDate() - 2)
+  // TZ Chile — coincide con fechas guardadas en registros_diarios
+  const since7Str = getDateCLDaysAgo(6)
 
   // 2. Load last 7 days logs for all patients in one query
   const { data: allLogs } = await supabase
     .from('registros_diarios')
     .select('user_id, fecha, comidas_completadas, comidas_total')
     .in('user_id', patients.map(p => p.id))
-    .gte('fecha', since7.toISOString().split('T')[0])
+    .gte('fecha', since7Str)
     .order('fecha', { ascending: false })
 
   const logsByPatient = new Map<string, typeof allLogs>()

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
+import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
 import { PlanResult } from '@/components/plan/PlanResult'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
@@ -308,8 +309,8 @@ function PatientDetail({
 
   useEffect(() => {
     async function loadData() {
-      const desde = new Date()
-      desde.setDate(desde.getDate() - 29)
+      // TZ Chile — coincide con fechas guardadas en registros_diarios
+      const desdeStr = getDateCLDaysAgo(29)
 
       // Load logs and ALL plans in parallel
       const [logsRes, plansRes] = await Promise.all([
@@ -317,7 +318,7 @@ function PatientDetail({
           .from('registros_diarios')
           .select('*')
           .eq('user_id', patient.id)
-          .gte('fecha', desde.toISOString().split('T')[0])
+          .gte('fecha', desdeStr)
           .order('fecha', { ascending: false }),
         supabase
           .from('planes_nutricionales')
@@ -734,16 +735,16 @@ function PatientDetail({
 
       {/* ── Gráfico de adherencia 30d ── */}
       {!loading && logs.length >= 3 && (() => {
-        // Build 30-day series
+        // Build 30-day series usando TZ Chile para que coincida con registros guardados
         const today = new Date()
         const series = Array.from({ length: 30 }, (_, i) => {
           const d = new Date(today.getTime() - (29 - i) * 86_400_000)
-          const key = d.toISOString().split('T')[0]
+          const key = formatDateCL(d)
           const log = logs.find(l => l.fecha === key)
           const adh = log && log.comidas_total > 0
             ? Math.round((log.comidas_completadas / log.comidas_total) * 100)
             : null
-          return { date: key, adh, label: d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' }) }
+          return { date: key, adh, label: d.toLocaleDateString('es-CL', { day: 'numeric', month: 'short', timeZone: 'America/Santiago' }) }
         })
         return (
           <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm mb-5">
@@ -1261,14 +1262,14 @@ export function PanelProfesional({
       planCountMap[r.user_id] = (planCountMap[r.user_id] || 0) + 1
     })
 
-    // 3. Batch-fetch last log for all patients in one query (avoids N+1)
-    const thirtyDaysAgo = new Date()
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    // 3. Batch-fetch last log for all patients en una query (avoids N+1)
+    // TZ Chile — coincide con fechas guardadas en registros_diarios
+    const thirtyDaysAgoStr = getDateCLDaysAgo(30)
     const { data: allLogs } = await supabase
       .from('registros_diarios')
       .select('user_id,fecha,kcal_consumida,comidas_completadas,comidas_total,peso')
       .in('user_id', patientIds)
-      .gte('fecha', thirtyDaysAgo.toISOString().split('T')[0])
+      .gte('fecha', thirtyDaysAgoStr)
       .order('fecha', { ascending: false })
 
     // Take the most recent log per patient
@@ -1278,9 +1279,7 @@ export function PanelProfesional({
     })
 
     // Compute 7-day adherence average per patient
-    const sevenDaysAgo = new Date()
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-    const iso7d = sevenDaysAgo.toISOString().split('T')[0]
+    const iso7d = getDateCLDaysAgo(7)
     const adherencia7dMap: Record<string, number | null> = {}
     patientIds.forEach(id => {
       const recentLogs = allLogs?.filter(l => l.user_id === id && l.fecha >= iso7d) ?? []

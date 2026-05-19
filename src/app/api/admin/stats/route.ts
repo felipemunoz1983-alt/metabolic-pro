@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getAuthUser } from '@/lib/auth-server'
+import { formatDateCL } from '@/lib/date-cl'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'felipe.munoz1983@gmail.com'
 
@@ -163,19 +164,19 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
   const signupsByDay: Record<string, number> = {}
   const revenueByDay: Record<string, number> = {}
 
-  // Fill last 30 days with zeros
+  // Fill last 30 days with zeros usando TZ Chile (consistente con admin viewing)
   for (let i = 29; i >= 0; i--) {
     const d = new Date(now.getTime() - i * 86_400_000)
-    const key = d.toISOString().split('T')[0]
+    const key = formatDateCL(d)
     signupsByDay[key] = 0
     revenueByDay[key] = 0
   }
   newUsersRaw?.forEach(u => {
-    const key = u.created_at.split('T')[0]
+    const key = formatDateCL(new Date(u.created_at))
     if (key in signupsByDay) signupsByDay[key]++
   })
   pays.filter(p => new Date(p.created_at) >= thirtyDaysAgo).forEach(p => {
-    const key = p.created_at.split('T')[0]
+    const key = formatDateCL(new Date(p.created_at))
     if (key in revenueByDay) revenueByDay[key] += p.amount ?? 0
   })
 

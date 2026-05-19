@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity, CheckCircle, ArrowLeft,
@@ -174,7 +175,7 @@ export default function UpgradePage() {
         supabase.from('registros_diarios')
           .select('fecha, comidas_completadas')
           .eq('user_id', user.id)
-          .gte('fecha', new Date(Date.now() - 30 * 86_400_000).toISOString().split('T')[0])
+          .gte('fecha', getDateCLDaysAgo(30))
           .order('fecha', { ascending: false }),
       ])
 
@@ -183,12 +184,12 @@ export default function UpgradePage() {
       // Compute streak from logs
       const logs = logsRes.data ?? []
       const loggedDates = new Set(logs.filter(l => l.comidas_completadas > 0).map(l => l.fecha))
+      // Streak en TZ Chile — coincide con fechas guardadas en registros
       let streak = 0
-      const today = new Date()
-      const d = new Date(today)
-      while (loggedDates.has(d.toISOString().split('T')[0])) {
+      const d = new Date()
+      while (loggedDates.has(formatDateCL(d))) {
         streak++
-        d.setDate(d.getDate() - 1)
+        d.setUTCDate(d.getUTCDate() - 1)
       }
 
       setStats({
