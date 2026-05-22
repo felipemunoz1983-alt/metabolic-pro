@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCw, Zap, Upload, FlipHorizontal } from 'lucide-react'
+import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCw, Zap, Upload } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { getTodayCL } from '@/lib/date-cl'
@@ -31,160 +31,101 @@ interface Props {
 const CONFIDENCE_LABEL = { alta: 'Alta', media: 'Media', baja: 'Baja' }
 const CONFIDENCE_COLOR  = { alta: 'text-green-600 bg-green-50', media: 'text-amber-600 bg-amber-50', baja: 'text-red-500 bg-red-50' }
 
+const MAX_DIM     = 480   // tamaño máximo del lado mayor en píxeles
+const JPEG_QUALITY = 0.7
+
 /**
- * Escala canvas a MAX px en el lado mayor y devuelve JPEG base64.
- * Si el resultado sigue siendo grande, re-comprime con calidad reducida.
- * Límite seguro para Vercel: < 3 MB en base64 (~2.2 MB de imagen raw).
+ * Comprime un File a JPEG base64 pequeño usando createImageBitmap con resize.
+ * Mucho más eficiente en memoria que <img> + canvas: decodifica + redimensiona
+ * en una sola operación, sin mantener la imagen full-res en RAM.
+ * Fallback a <img> + canvas si createImageBitmap no soporta resize options.
  */
-function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.72): string {
-  let dataUrl = canvas.toDataURL('image/jpeg', quality)
-  // ~4.5 MB Vercel limit, dejamos margen: si pasa de 3 MB re-comprimimos
-  if (dataUrl.length > 3_000_000 && quality > 0.45) {
-    dataUrl = canvas.toDataURL('image/jpeg', quality - 0.2)
-  }
-  return dataUrl
-}
+async function compressFile(file: File): Promise<string> {
+  // Calcular dimensiones objetivo manteniendo aspect ratio
+  let targetW = MAX_DIM
+  let targetH = MAX_DIM
 
-/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 640px) */
-function captureFrame(video: HTMLVideoElement): string {
-  const MAX = 640
-  let w = video.videoWidth
-  let h = video.videoHeight
-  if (w > MAX || h > MAX) {
-    if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
-    else        { w = Math.round((w / h) * MAX); h = MAX }
-  }
-  const canvas = document.createElement('canvas')
-  canvas.width = w; canvas.height = h
-  canvas.getContext('2d')!.drawImage(video, 0, 0, w, h)
-  return canvasToJpeg(canvas)
-}
+  try {
+    // Path eficiente: createImageBitmap con resize durante decode
+    // (chrome >= 54, firefox >= 70, safari >= 15)
+    const bitmap = await createImageBitmap(file, {
+      resizeWidth: MAX_DIM,
+      resizeHeight: MAX_DIM,
+      resizeQuality: 'medium',
+    })
+    // Ajustar a aspect ratio real (el bitmap se redimensionó manteniendo proporciones internamente)
+    const ratio = bitmap.width / bitmap.height
+    if (ratio > 1) { targetW = MAX_DIM; targetH = Math.round(MAX_DIM / ratio) }
+    else            { targetH = MAX_DIM; targetW = Math.round(MAX_DIM * ratio) }
 
-/** Comprime un File (galería) antes de enviarlo — evita OOM y 413 en Android */
-function compressFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file)
-    const img  = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(url)
-      const MAX = 640
-      let { width: w, height: h } = img
-      if (w > MAX || h > MAX) {
-        if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
-        else        { w = Math.round((w / h) * MAX); h = MAX }
+    const canvas = document.createElement('canvas')
+    canvas.width  = targetW
+    canvas.height = targetH
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(bitmap, 0, 0, targetW, targetH)
+    bitmap.close()  // libera memoria del bitmap inmediatamente
+
+    return canvas.toDataURL('image/jpeg', JPEG_QUALITY)
+  } catch {
+    // Fallback: el path tradicional con <img>. Más memoria pero compatible.
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(file)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(url)
+        let w = img.width
+        let h = img.height
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w >= h) { h = Math.round((h / w) * MAX_DIM); w = MAX_DIM }
+          else        { w = Math.round((w / h) * MAX_DIM); h = MAX_DIM }
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/jpeg', JPEG_QUALITY))
       }
-      const canvas = document.createElement('canvas')
-      canvas.width = w; canvas.height = h
-      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-      resolve(canvasToJpeg(canvas))
-    }
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al leer imagen')) }
-    img.src = url
-  })
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al leer imagen')) }
+      img.src = url
+    })
+  }
 }
 
 export function FoodScanner({ userId, onLogAdded }: Props) {
-  const [open,       setOpen]       = useState(false)
-  const [mode,       setMode]       = useState<'menu' | 'camera' | 'preview'>('menu')
-  const [image,      setImage]      = useState<string | null>(null)
-  const [scanning,   setScanning]   = useState(false)
-  const [result,     setResult]     = useState<ScanResult | null>(null)
-  const [error,      setError]      = useState('')
-  const [logging,    setLogging]    = useState(false)
-  const [logged,     setLogged]     = useState(false)
-  const [camError,   setCamError]   = useState('')
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
+  const [open,     setOpen]     = useState(false)
+  const [image,    setImage]    = useState<string | null>(null)
+  const [scanning, setScanning] = useState(false)
+  const [processing, setProcessing] = useState(false)
+  const [result,   setResult]   = useState<ScanResult | null>(null)
+  const [error,    setError]    = useState('')
+  const [logging,  setLogging]  = useState(false)
+  const [logged,   setLogged]   = useState(false)
 
-  const videoRef   = useRef<HTMLVideoElement>(null)
-  const streamRef  = useRef<MediaStream | null>(null)
-  const fileRef    = useRef<HTMLInputElement>(null)
+  // Dos inputs separados: uno con capture=environment (cámara), otro sin (galería)
+  const cameraRef  = useRef<HTMLInputElement>(null)
+  const galleryRef = useRef<HTMLInputElement>(null)
 
-  // ── Iniciar cámara getUserMedia ─────────────────────────────────────────────
-  const startCamera = useCallback(async () => {
-    setCamError('')
-    try {
-      // Resolución BAJA como hard cap — evita OOM en Android de gama baja.
-      // 960×720 es suficiente para leer etiquetas con la IA.
-      // NO usar 'ideal' > 960 para no presionar la RAM del browser.
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode,
-          width:  { ideal: 640, max: 960 },
-          height: { ideal: 480, max: 720 },
-        },
-        audio: false,
-      })
-      streamRef.current = stream
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        videoRef.current.play().catch(() => {/* autoplay policy — user gesture ya ocurrió */})
-      }
-    } catch (err) {
-      const msg = (err instanceof Error ? err.message + ' ' + (err.name ?? '') : String(err)).toLowerCase()
-      if (msg.includes('notallowed') || msg.includes('permission') || msg.includes('denied')) {
-        setCamError('Permiso de cámara denegado. Usa "Galería" para subir una foto.')
-      } else if (msg.includes('memory') || msg.includes('allocation') || msg.includes('oom')) {
-        setCamError('Memoria insuficiente para la cámara. Usa "Galería" para subir una foto desde tus imágenes.')
-      } else {
-        setCamError('Cámara no disponible. Usa "Galería" para subir una foto.')
-      }
-    }
-  }, [facingMode])
-
-  // ── Detener cámara ──────────────────────────────────────────────────────────
-  const stopCamera = useCallback(() => {
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    streamRef.current = null
-  }, [])
-
-  // Arrancar/detener cámara cuando el modo cambia.
-  // startCamera/stopCamera llaman a setState internamente (patrón legítimo de inicialización
-  // con APIs del browser no disponibles en render). Ver usePushNotifications para precedente.
-  /* eslint-disable react-hooks/set-state-in-effect */
-  useEffect(() => {
-    if (mode === 'camera') {
-      startCamera()
-    } else {
-      stopCamera()
-    }
-    return () => { if (mode === 'camera') stopCamera() }
-  }, [mode, startCamera, stopCamera])
-
-  // Reiniciar stream cuando cambia facingMode
-  useEffect(() => {
-    if (mode === 'camera') {
-      stopCamera()
-      startCamera()
-    }
-  }, [facingMode]) // eslint-disable-line react-hooks/exhaustive-deps
-  /* eslint-enable react-hooks/set-state-in-effect */
-
-  // ── Capturar foto desde el video ────────────────────────────────────────────
-  const handleCapture = useCallback(() => {
-    if (!videoRef.current) return
-    const dataUrl = captureFrame(videoRef.current)
-    setImage(dataUrl)
-    stopCamera()
-    setMode('preview')
-  }, [stopCamera])
-
-  // ── Galería / archivo ───────────────────────────────────────────────────────
-  const handleFile = useCallback((file: File) => {
+  // ── Procesar archivo seleccionado (cámara o galería) ───────────────────────
+  const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith('image/')) return
-    setError(''); setResult(null); setLogged(false)
-    compressFile(file)
-      .then(compressed => { setImage(compressed); setMode('preview') })
-      .catch(() => setError('No se pudo procesar la imagen. Intenta con otra.'))
+    setError(''); setResult(null); setLogged(false); setProcessing(true)
+    try {
+      const compressed = await compressFile(file)
+      setImage(compressed)
+    } catch {
+      setError('No se pudo procesar la imagen. Intenta con otra foto.')
+    } finally {
+      setProcessing(false)
+    }
   }, [])
 
   const reset = useCallback(() => {
     setImage(null); setResult(null)
     setError(''); setLogged(false)
-    setCamError(''); setMode('menu')
+    if (cameraRef.current)  cameraRef.current.value  = ''
+    if (galleryRef.current) galleryRef.current.value = ''
   }, [])
 
   const handleClose = () => {
-    stopCamera()
     setOpen(false)
     setTimeout(reset, 300)
   }
@@ -194,14 +135,12 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
     if (!image) return
     setScanning(true); setError(''); setResult(null)
     try {
-      // Verificar tamaño antes de enviar — evita 413 de Vercel (límite 4.5 MB)
-      // base64 length × 0.75 ≈ bytes reales. Rechazamos si supera 3.5 MB.
+      // Verificar tamaño antes de enviar — evita 413 de Vercel
       if (image.length * 0.75 > 3_500_000) {
         throw new Error('La imagen es muy grande. Vuelve a tomar la foto más cerca del alimento.')
       }
 
-      // Obtener token de sesión: getSession() puede devolver expirado en PWA.
-      // Si no hay token → intentamos refrescar antes de fallar.
+      // Obtener token de sesión: refrescar si está vencida
       const supabase = createClient()
       let { data: { session } } = await supabase.auth.getSession()
       if (!session?.access_token) {
@@ -214,15 +153,14 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
 
       const res = await fetch('/api/food-scan', { method: 'POST', headers, body: JSON.stringify({ image }) })
 
-      // Parsear JSON de forma segura: si la respuesta no es JSON (ej. 413 de Vercel),
-      // leer como texto para dar mensaje de error útil en lugar de SyntaxError crudo.
+      // Parsear JSON de forma segura
       let data: Record<string, unknown>
       try {
         data = await res.json()
       } catch {
         const text = await res.text().catch(() => '')
         if (res.status === 413 || text.toLowerCase().includes('entity too large')) {
-          throw new Error('La imagen es muy grande. Intenta retomar la foto con menos detalle.')
+          throw new Error('La imagen es muy grande. Intenta retomar la foto.')
         }
         throw new Error(`Error del servidor (${res.status}). Intenta de nuevo.`)
       }
@@ -322,12 +260,36 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
 
                 <div className="p-5 space-y-4">
 
-                  {/* ── MODO MENÚ: elegir cámara o galería ── */}
-                  {mode === 'menu' && (
+                  {/* ── Inputs ocultos: cámara nativa + galería ── */}
+                  <input
+                    ref={cameraRef}
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+                  />
+                  <input
+                    ref={galleryRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }}
+                  />
+
+                  {/* ── Procesando imagen ── */}
+                  {processing && (
+                    <div className="flex items-center justify-center gap-2 py-8">
+                      <Loader2 size={18} className="animate-spin text-[#29ABE2]" />
+                      <p className="text-sm text-[#6B7C93]">Procesando imagen...</p>
+                    </div>
+                  )}
+
+                  {/* ── SIN IMAGEN: menú de opciones ── */}
+                  {!image && !processing && (
                     <div className="space-y-3">
-                      {/* Cámara in-browser */}
                       <button
-                        onClick={() => setMode('camera')}
+                        onClick={() => cameraRef.current?.click()}
                         className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[#29ABE2]/30 hover:border-[#29ABE2] hover:bg-[#EAF4FB] transition-all text-left group"
                       >
                         <div className="w-12 h-12 bg-[#29ABE2]/10 rounded-xl flex items-center justify-center group-hover:bg-[#29ABE2]/20 transition flex-shrink-0">
@@ -335,13 +297,12 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-[#0C1F2C]">Tomar foto</p>
-                          <p className="text-xs text-[#8BA5BE]">Usa la cámara directamente en la app</p>
+                          <p className="text-xs text-[#8BA5BE]">Abre la cámara para fotografiar el plato</p>
                         </div>
                       </button>
 
-                      {/* Galería */}
                       <button
-                        onClick={() => fileRef.current?.click()}
+                        onClick={() => galleryRef.current?.click()}
                         className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[#E2ECF4] hover:border-[#29ABE2]/40 hover:bg-[#F8FBFD] transition-all text-left group"
                       >
                         <div className="w-12 h-12 bg-[#F0F6FA] rounded-xl flex items-center justify-center group-hover:bg-[#E2ECF4] transition flex-shrink-0">
@@ -349,66 +310,14 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-[#0C1F2C]">Subir desde galería</p>
-                          <p className="text-xs text-[#8BA5BE]">Elige una foto existente</p>
+                          <p className="text-xs text-[#8BA5BE]">Elige una foto existente del celular</p>
                         </div>
                       </button>
-
-                      <input ref={fileRef} type="file" accept="image/*" className="hidden"
-                        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
                     </div>
                   )}
 
-                  {/* ── MODO CÁMARA: video en vivo ── */}
-                  {mode === 'camera' && (
-                    <div className="space-y-3">
-                      <div className="relative bg-black rounded-2xl overflow-hidden aspect-[4/3]">
-                        <video
-                          ref={videoRef}
-                          autoPlay playsInline muted
-                          className="w-full h-full object-cover"
-                        />
-
-                        {/* Error de cámara */}
-                        {camError && (
-                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
-                            <AlertCircle size={28} className="text-amber-400 mb-2" />
-                            <p className="text-white text-sm font-medium">{camError}</p>
-                            <button onClick={() => { setCamError(''); setMode('menu') }}
-                              className="mt-4 px-4 py-2 rounded-xl bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition">
-                              Volver
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Flip camera */}
-                        {!camError && (
-                          <button
-                            onClick={() => setFacingMode(f => f === 'environment' ? 'user' : 'environment')}
-                            className="absolute top-3 right-3 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition"
-                            title="Cambiar cámara"
-                          >
-                            <FlipHorizontal size={16} />
-                          </button>
-                        )}
-                      </div>
-
-                      {!camError && (
-                        <div className="flex gap-2">
-                          <button onClick={() => { stopCamera(); setMode('menu') }}
-                            className="flex-shrink-0 px-4 py-3 rounded-xl border border-[#E2ECF4] text-[#8BA5BE] text-sm font-bold hover:bg-[#F0F6FA] transition">
-                            Cancelar
-                          </button>
-                          <button onClick={handleCapture}
-                            className="flex-1 py-3 bg-gradient-to-r from-[#29ABE2] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
-                            <Camera size={16} /> Capturar foto
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* ── MODO PREVIEW: imagen capturada ── */}
-                  {mode === 'preview' && image && (
+                  {/* ── CON IMAGEN: preview + analizar ── */}
+                  {image && !processing && (
                     <>
                       <div className="relative rounded-2xl overflow-hidden">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -419,7 +328,6 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         </button>
                       </div>
 
-                      {/* Analizar */}
                       {!result && (
                         <button onClick={analyze} disabled={scanning}
                           className="w-full py-3.5 bg-gradient-to-r from-[#29ABE2] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2.5">
