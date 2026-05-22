@@ -53,17 +53,21 @@ export default function LoginPage() {
           let pendingPro: string | null = null
           let pendingRole: string = 'individual'
           let pendingNombre: string = ''
+          let pendingInviteToken: string | null = null
           try {
             pendingPro    = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
             pendingRole   = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
             pendingNombre = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
-            if (pendingPro) {
+            pendingInviteToken = localStorage.getItem('pendingInviteToken') ?? sessionStorage.getItem('pendingInviteToken')
+            if (pendingPro || pendingInviteToken) {
               localStorage.removeItem('pendingProfessionalId')
               localStorage.removeItem('pendingRole')
               localStorage.removeItem('pendingNombre')
+              localStorage.removeItem('pendingInviteToken')
               sessionStorage.removeItem('pendingProfessionalId')
               sessionStorage.removeItem('pendingRole')
               sessionStorage.removeItem('pendingNombre')
+              sessionStorage.removeItem('pendingInviteToken')
             }
           } catch { /* storage unavailable */ }
 
@@ -86,9 +90,22 @@ export default function LoginPage() {
             return
           }
 
-          // Si se vinculó con un profesional ahora (al confirmar email tras registro)
-          // → avisar al profesional (email + push). Best-effort.
-          if (pendingPro) {
+          // Vinculación + notificación al profesional al confirmar email tras registro
+          //   - Si hay token firmado pendiente → /api/invites/redeem (verify + link + notify)
+          //   - Si no, legacy /api/notify/patient-registered (sólo notify, link ya hecho)
+          if (pendingInviteToken) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession()
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+              if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+              fetch('/api/invites/redeem', {
+                method:      'POST',
+                headers,
+                credentials: 'include',
+                body:        JSON.stringify({ token: pendingInviteToken }),
+              }).catch(() => { /* non-fatal */ })
+            } catch { /* non-fatal */ }
+          } else if (pendingPro) {
             const patientEmail = authData.user!.email ?? email.trim().toLowerCase()
             const patientName  = pendingNombre || authData.user!.user_metadata?.nombre || patientEmail
             try {

@@ -18,9 +18,47 @@ function decodeProParam(raw: string | null): string | null {
   }
 }
 
+/** Decodifica payload del token firmado SIN verificar (sólo display). */
+function readInvitePayloadClient(token: string): { pid: string; exp: number } | null {
+  const parts = token.split('.')
+  if (parts.length !== 2) return null
+  try {
+    let padded = parts[0].replace(/-/g, '+').replace(/_/g, '/')
+    while (padded.length % 4) padded += '='
+    const payload = JSON.parse(atob(padded))
+    if (typeof payload.pid !== 'string' || typeof payload.exp !== 'number') return null
+    return { pid: payload.pid, exp: payload.exp }
+  } catch { return null }
+}
+
 /**
- * Avisa al profesional (email + push) que un paciente se vinculó a su panel.
- * Best-effort — los errores no deben afectar el flujo de registro.
+ * Redime token firmado vía /api/invites/redeem. Server hace todo:
+ * verifica firma + exp, vincula paciente, otorga trial, notifica al profesional.
+ * Devuelve true si quedó vinculado, false si falló.
+ */
+async function redeemInviteToken(token: string): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const { createClient } = await import('@/lib/supabase')
+    const { data: { session } } = await createClient().auth.getSession()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+    const res = await fetch('/api/invites/redeem', {
+      method:      'POST',
+      headers,
+      credentials: 'include',
+      body:        JSON.stringify({ token }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) return { ok: false, message: data?.message ?? 'No se pudo procesar la invitación' }
+    return { ok: true }
+  } catch {
+    return { ok: false, message: 'Error de conexión al procesar la invitación' }
+  }
+}
+
+/**
+ * Aviso legacy al profesional para el flujo ?pro=<base64> (sin token firmado).
+ * Para tokens firmados (?invite=) usamos /api/invites/redeem que ya notifica.
  */
 async function notifyProfessionalLinked(payload: {
   patientId: string
@@ -48,8 +86,13 @@ function RegisterForm() {
   const searchParams = useSearchParams()
   const supabase = createClient()
 
+  // Soporta dos formatos de link:
+  //  - NUEVO: ?invite=<token-firmado> → verificado server-side en /api/invites/redeem
+  //  - LEGACY: ?pro=<base64> → decodificación directa (compat hacia atrás)
+  const inviteToken   = searchParams.get('invite')
+  const invitePayload = inviteToken ? readInvitePayloadClient(inviteToken) : null
   const proParam      = searchParams.get('pro')
-  const professionalId = decodeProParam(proParam)
+  const professionalId = invitePayload?.pid ?? decodeProParam(proParam)
   const isLinked      = !!professionalId
   const isProfessionalRegister = searchParams.get('type') === 'pro' && !isLinked
   const noProfile     = searchParams.get('reason') === 'no_profile'
@@ -70,7 +113,20 @@ function RegisterForm() {
     if (!professionalId) return
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return
-      // Check current access so we don't overwrite an existing trial or paid plan
+
+      // Si tenemos token firmado → server hace TODO (verify + link + notify atomic)
+      if (inviteToken) {
+        const result = await redeemInviteToken(inviteToken)
+        if (!result.ok) {
+          setError(result.message ?? 'No se pudo procesar la invitación')
+          return
+        }
+        setAutoLinked(true)
+        setTimeout(() => router.push('/paciente'), 2000)
+        return
+      }
+
+      // Camino legacy ?pro=<base64> (sin verificación)
       const { data: profile } = await supabase
         .from('profiles')
         .select('nombre, email, premium_until, trial_ends_at')
@@ -90,8 +146,6 @@ function RegisterForm() {
         })
         .eq('id', user.id)
 
-      // Avisar al profesional (email + push) que el paciente se vinculó.
-      // Best-effort: si falla no detenemos el flujo, el paciente ya quedó vinculado.
       notifyProfessionalLinked({
         patientId:      user.id,
         patientName:    profile?.nombre ?? user.email ?? 'Paciente',
@@ -143,6 +197,11 @@ function RegisterForm() {
           localStorage.setItem('pendingProfessionalId', professionalId)
           localStorage.setItem('pendingRole', 'patient')
           localStorage.setItem('pendingNombre', nombre.trim())
+          // Token firmado para que /login pueda redimir vía /api/invites/redeem
+          // (mejor seguridad — el token tiene exp 24h y firma verificable)
+          if (inviteToken) {
+            localStorage.setItem('pendingInviteToken', inviteToken)
+          }
         } catch { /* storage unavailable — non-fatal */ }
       }
       setDone(true)
@@ -179,9 +238,14 @@ function RegisterForm() {
       }
     }
 
-    // 3a. Si el paciente vino por link de invitación → avisar al profesional
-    //     (email + push). Best-effort: errores no detienen el redirect.
-    if (isLinked && professionalId) {
+    // 3a. Vinculación + notificación al profesional
+    //     - Con token firmado → /api/invites/redeem (verifica firma + exp + notifica)
+    //     - Sin token (legacy ?pro=) → notifyProfessionalLinked directo
+    if (inviteToken) {
+      // El profile.insert ya puso professional_id, pero redeem también valida
+      // el token contra el secret y otorga trial si corresponde. Idempotente.
+      redeemInviteToken(inviteToken).catch(() => { /* non-fatal */ })
+    } else if (isLinked && professionalId) {
       notifyProfessionalLinked({
         patientId:      userId,
         patientName:    nombre.trim(),

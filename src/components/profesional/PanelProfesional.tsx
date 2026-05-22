@@ -1129,15 +1129,40 @@ function ModalVincular({
   const [copied, setCopied] = useState(false)
   const [inviteEmailStatus, setInviteEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
 
-  // Código corto visual + link completo con ID decodificable
-  const inviteCode = btoa(professionalId).slice(0, 12).toUpperCase()
-  const encodedPro = typeof window !== 'undefined' ? encodeURIComponent(btoa(professionalId)) : ''
+  // Link con token firmado (24h) generado en el server. Se obtiene cuando se
+  // monta el modal. Mientras llega la respuesta, mostramos un fallback con el
+  // formato legacy ?pro=<base64> para no bloquear la UI.
+  const encodedProLegacy = typeof window !== 'undefined' ? encodeURIComponent(btoa(professionalId)) : ''
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
-  // Link genérico (sin email) — para la pestaña "Link de invitación"
-  const inviteLink = `${origin}/register?pro=${encodedPro}`
-  // Link personalizado con email pre-llenado — se usa solo al enviar por correo
+  const legacyLink = `${origin}/register?pro=${encodedProLegacy}`
+  const [signedLink, setSignedLink] = useState<string | null>(null)
+  const [signedExpires, setSignedExpires] = useState<string | null>(null)
+
+  // Pedir token firmado al server (24h). Si falla (secret no seteado, etc.),
+  // dejamos signedLink en null y el componente cae al link legacy.
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+        const res = await fetch('/api/invites/create', { method: 'POST', headers, credentials: 'include' })
+        if (!res.ok) return
+        const data = await res.json() as { link: string; expiresAt: string }
+        if (!cancelled) {
+          setSignedLink(data.link)
+          setSignedExpires(data.expiresAt)
+        }
+      } catch { /* fallback a legacy */ }
+    })()
+    return () => { cancelled = true }
+  }, [supabase])
+
+  // Link que se usa en la UI y para enviar: el firmado si existe, sino legacy
+  const inviteLink = signedLink ?? legacyLink
   const personalizedLink = email.trim()
-    ? `${origin}/register?pro=${encodedPro}&email=${encodeURIComponent(email.trim().toLowerCase())}`
+    ? `${inviteLink}${inviteLink.includes('?') ? '&' : '?'}email=${encodeURIComponent(email.trim().toLowerCase())}`
     : inviteLink
 
   async function handleSearch() {
@@ -1353,11 +1378,13 @@ function ModalVincular({
                 Comparte este link con tus pacientes. Al registrarse a través de él, quedarán vinculados automáticamente a tu panel.
               </p>
 
-              {/* Código corto */}
-              <div className="bg-[#F8FBFD] border border-[#E2ECF4] rounded-xl p-4 text-center">
-                <p className="text-[10px] text-[#8BA5BE] font-medium uppercase tracking-widest mb-1">Tu código profesional</p>
-                <p className="text-2xl font-black text-[#0C3547] tracking-widest">{inviteCode}</p>
-              </div>
+              {/* Vigencia del link */}
+              {signedExpires && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-[11px] text-amber-700 flex items-center gap-2">
+                  <Clock size={12} className="flex-shrink-0" />
+                  <span>Este link expira en 24h. Genera uno nuevo abriendo este modal otra vez.</span>
+                </div>
+              )}
 
               {/* Link completo */}
               <div>

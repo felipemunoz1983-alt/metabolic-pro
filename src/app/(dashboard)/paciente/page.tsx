@@ -32,6 +32,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/OnboardingModal'
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner'
+import { WelcomePostRegister } from '@/components/onboarding/WelcomePostRegister'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -586,6 +587,14 @@ export default function PacientePage() {
 
       {/* ── PWA install banner — prompts patient to install app on phone ── */}
       <PWAInstallBanner />
+
+      {/* ── Onboarding tras primer ingreso: 'instalar app' + 'activar push' ── */}
+      {userId && profile && profile.role === 'patient' && (
+        <WelcomePostRegister
+          userId={userId}
+          hasProfessional={!!profile.professional_id}
+        />
+      )}
     </div>
     </>
   )
