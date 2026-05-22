@@ -106,13 +106,12 @@ ${getNutrievoAIContext()}`
     try {
       // Bearer token para autenticación en PWA/mobile (cookies no siempre viajan al server)
       const { data: { session } } = await createClient().auth.getSession()
-      const authHeader = session?.access_token
-        ? { 'Authorization': `Bearer ${session.access_token}` }
-        : {}
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', ...authHeader },
+        headers,
         body: JSON.stringify({ messages: newMessages, system: systemPrompt }),
       })
 
