@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCw, Zap, Upload } from 'lucide-react'
+import { Camera, X, Loader2, CheckCircle, AlertCircle, RefreshCw, Zap, Upload, FlipHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase'
 import { getTodayCL } from '@/lib/date-cl'
@@ -29,124 +29,158 @@ interface Props {
 }
 
 const CONFIDENCE_LABEL = { alta: 'Alta', media: 'Media', baja: 'Baja' }
-const CONFIDENCE_COLOR = { alta: 'text-green-600 bg-green-50', media: 'text-amber-600 bg-amber-50', baja: 'text-red-500 bg-red-50' }
+const CONFIDENCE_COLOR  = { alta: 'text-green-600 bg-green-50', media: 'text-amber-600 bg-amber-50', baja: 'text-red-500 bg-red-50' }
 
-/**
- * Redimensiona y comprime una imagen al máximo de MAX_PX en el lado largo.
- * En Android, las fotos de cámara son 12-48MP (10-30 MB raw).
- * Sin esta compresión, el FileReader crash con "Memoria insuficiente".
- *
- * Output: JPEG base64, calidad 0.82, máx 1024px → típicamente < 200 KB.
- */
-const MAX_PX   = 1024   // lado máximo en píxeles
-const QUALITY  = 0.82   // calidad JPEG (0-1)
+/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 1024px) */
+function captureFrame(video: HTMLVideoElement, quality = 0.82): string {
+  const MAX = 1024
+  let w = video.videoWidth
+  let h = video.videoHeight
+  if (w > MAX || h > MAX) {
+    if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
+    else        { w = Math.round((w / h) * MAX); h = MAX }
+  }
+  const canvas = document.createElement('canvas')
+  canvas.width = w; canvas.height = h
+  canvas.getContext('2d')!.drawImage(video, 0, 0, w, h)
+  return canvas.toDataURL('image/jpeg', quality)
+}
 
-function compressImage(file: File): Promise<string> {
+/** Comprime un File (galería) antes de enviarlo — evita OOM en Android */
+function compressFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
-    // 1. Crear URL temporal del archivo (no carga todo en memoria de una)
-    const objectUrl = URL.createObjectURL(file)
-    const img = new Image()
-
+    const url = URL.createObjectURL(file)
+    const img  = new Image()
     img.onload = () => {
-      URL.revokeObjectURL(objectUrl)  // liberar memoria
-
-      // 2. Calcular dimensiones de salida manteniendo aspect ratio
-      let { width, height } = img
-      if (width > MAX_PX || height > MAX_PX) {
-        if (width >= height) {
-          height = Math.round((height / width) * MAX_PX)
-          width  = MAX_PX
-        } else {
-          width  = Math.round((width / height) * MAX_PX)
-          height = MAX_PX
-        }
+      URL.revokeObjectURL(url)
+      const MAX = 1024
+      let { width: w, height: h } = img
+      if (w > MAX || h > MAX) {
+        if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
+        else        { w = Math.round((w / h) * MAX); h = MAX }
       }
-
-      // 3. Dibujar en canvas y exportar JPEG comprimido
       const canvas = document.createElement('canvas')
-      canvas.width  = width
-      canvas.height = height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) { reject(new Error('Canvas no disponible')); return }
-      ctx.drawImage(img, 0, 0, width, height)
-      resolve(canvas.toDataURL('image/jpeg', QUALITY))
+      canvas.width = w; canvas.height = h
+      canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
+      resolve(canvas.toDataURL('image/jpeg', 0.82))
     }
-
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
-      reject(new Error('No se pudo cargar la imagen'))
-    }
-
-    img.src = objectUrl
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al leer imagen')) }
+    img.src = url
   })
 }
 
 export function FoodScanner({ userId, onLogAdded }: Props) {
-  const [open, setOpen] = useState(false)
-  const [image, setImage] = useState<string | null>(null)
-  const [scanning, setScanning] = useState(false)
-  const [result, setResult] = useState<ScanResult | null>(null)
-  const [error, setError] = useState('')
-  const [logging, setLogging] = useState(false)
-  const [logged, setLogged] = useState(false)
-  const fileRef = useRef<HTMLInputElement>(null)
+  const [open,       setOpen]       = useState(false)
+  const [mode,       setMode]       = useState<'menu' | 'camera' | 'preview'>('menu')
+  const [image,      setImage]      = useState<string | null>(null)
+  const [scanning,   setScanning]   = useState(false)
+  const [result,     setResult]     = useState<ScanResult | null>(null)
+  const [error,      setError]      = useState('')
+  const [logging,    setLogging]    = useState(false)
+  const [logged,     setLogged]     = useState(false)
+  const [camError,   setCamError]   = useState('')
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment')
 
-  const reset = () => {
-    setImage(null)
-    setResult(null)
-    setError('')
-    setLogged(false)
-  }
+  const videoRef   = useRef<HTMLVideoElement>(null)
+  const streamRef  = useRef<MediaStream | null>(null)
+  const fileRef    = useRef<HTMLInputElement>(null)
+
+  // ── Iniciar cámara getUserMedia ─────────────────────────────────────────────
+  const startCamera = useCallback(async () => {
+    setCamError('')
+    try {
+      // Pedir resolución baja — evita OOM en Android de gama baja
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode,
+          width:  { ideal: 1280, max: 1920 },
+          height: { ideal: 720,  max: 1080 },
+        },
+        audio: false,
+      })
+      streamRef.current = stream
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play().catch(() => {/* autoplay policy — user gesture ya ocurrió */})
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
+        setCamError('Permiso de cámara denegado. Usa "Galería" para subir una foto.')
+      } else {
+        setCamError('Cámara no disponible. Usa "Galería" para subir una foto.')
+      }
+    }
+  }, [facingMode])
+
+  // ── Detener cámara ──────────────────────────────────────────────────────────
+  const stopCamera = useCallback(() => {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+  }, [])
+
+  // Arrancar/detener cámara cuando el modo cambia.
+  // startCamera/stopCamera llaman a setState internamente (patrón legítimo de inicialización
+  // con APIs del browser no disponibles en render). Ver usePushNotifications para precedente.
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (mode === 'camera') {
+      startCamera()
+    } else {
+      stopCamera()
+    }
+    return () => { if (mode === 'camera') stopCamera() }
+  }, [mode, startCamera, stopCamera])
+
+  // Reiniciar stream cuando cambia facingMode
+  useEffect(() => {
+    if (mode === 'camera') {
+      stopCamera()
+      startCamera()
+    }
+  }, [facingMode]) // eslint-disable-line react-hooks/exhaustive-deps
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // ── Capturar foto desde el video ────────────────────────────────────────────
+  const handleCapture = useCallback(() => {
+    if (!videoRef.current) return
+    const dataUrl = captureFrame(videoRef.current)
+    setImage(dataUrl)
+    stopCamera()
+    setMode('preview')
+  }, [stopCamera])
+
+  // ── Galería / archivo ───────────────────────────────────────────────────────
+  const handleFile = useCallback((file: File) => {
+    if (!file.type.startsWith('image/')) return
+    setError(''); setResult(null); setLogged(false)
+    compressFile(file)
+      .then(compressed => { setImage(compressed); setMode('preview') })
+      .catch(() => setError('No se pudo procesar la imagen. Intenta con otra.'))
+  }, [])
+
+  const reset = useCallback(() => {
+    setImage(null); setResult(null)
+    setError(''); setLogged(false)
+    setCamError(''); setMode('menu')
+  }, [])
 
   const handleClose = () => {
+    stopCamera()
     setOpen(false)
     setTimeout(reset, 300)
   }
 
-  const handleFile = useCallback((file: File) => {
-    if (!file.type.startsWith('image/')) return
-    setError('')
-    setResult(null)
-    setLogged(false)
-
-    // Comprimir antes de cargar en memoria — evita crash "Memoria insuficiente" en Android
-    compressImage(file)
-      .then(compressed => setImage(compressed))
-      .catch(() => setError('No se pudo procesar la imagen. Intenta con otra foto.'))
-  }, [])
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) handleFile(file)
-    // Reset input so same file can be re-selected
-    e.target.value = ''
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    const file = e.dataTransfer.files[0]
-    if (file) handleFile(file)
-  }
-
+  // ── Analizar imagen con IA ──────────────────────────────────────────────────
   async function analyze() {
     if (!image) return
-    setScanning(true)
-    setError('')
-    setResult(null)
-
+    setScanning(true); setError(''); setResult(null)
     try {
-      // Obtener JWT de sesión activa para enviarlo como Bearer token
-      // (necesario en PWA/mobile donde las cookies de Supabase no viajan al server)
-      const supabase = createClient()
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await createClient().auth.getSession()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
-      const res = await fetch('/api/food-scan', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ image }),
-      })
+      const res  = await fetch('/api/food-scan', { method: 'POST', headers, body: JSON.stringify({ image }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error ?? 'Error al analizar')
       setResult(data)
@@ -157,49 +191,35 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
     }
   }
 
+  // ── Guardar en registro diario ──────────────────────────────────────────────
   async function addToLog() {
     if (!result || !userId) return
-    setLogging(true)
-    setError('')
-
+    setLogging(true); setError('')
     try {
       const supabase = createClient()
-      // TZ Chile — registros pasadas las 21h se guardaban como día siguiente. Fix 2026-05-18
-      const today = getTodayCL()
-
-      // Add scanned calories to today's registros_diarios row (upsert)
+      const today    = getTodayCL()
       const { data: existing } = await supabase
         .from('registros_diarios')
         .select('id, scan_kcal, scan_proteina, scan_carbohidrato, scan_grasa')
-        .eq('user_id', userId)
-        .eq('fecha', today)
-        .maybeSingle()
+        .eq('user_id', userId).eq('fecha', today).maybeSingle()
 
       if (existing) {
-        const { error: updateErr } = await supabase
-          .from('registros_diarios')
-          .update({
-            scan_kcal:         (existing.scan_kcal ?? 0) + result.total.kcal,
-            scan_proteina:     (existing.scan_proteina ?? 0) + result.total.proteina,
-            scan_carbohidrato: (existing.scan_carbohidrato ?? 0) + result.total.carbohidratos,
-            scan_grasa:        (existing.scan_grasa ?? 0) + result.total.grasa,
-          })
-          .eq('id', existing.id)
-        if (updateErr) throw updateErr
+        const { error: e } = await supabase.from('registros_diarios').update({
+          scan_kcal:         (existing.scan_kcal         ?? 0) + result.total.kcal,
+          scan_proteina:     (existing.scan_proteina     ?? 0) + result.total.proteina,
+          scan_carbohidrato: (existing.scan_carbohidrato ?? 0) + result.total.carbohidratos,
+          scan_grasa:        (existing.scan_grasa        ?? 0) + result.total.grasa,
+        }).eq('id', existing.id)
+        if (e) throw e
       } else {
-        const { error: insertErr } = await supabase.from('registros_diarios').upsert({
-          user_id:           userId,
-          fecha:             today,
-          scan_kcal:         result.total.kcal,
-          scan_proteina:     result.total.proteina,
-          scan_carbohidrato: result.total.carbohidratos,
-          scan_grasa:        result.total.grasa,
-          completed:         0,
-          total:             5,
+        const { error: e } = await supabase.from('registros_diarios').upsert({
+          user_id: userId, fecha: today,
+          scan_kcal: result.total.kcal, scan_proteina: result.total.proteina,
+          scan_carbohidrato: result.total.carbohidratos, scan_grasa: result.total.grasa,
+          completed: 0, total: 5,
         }, { onConflict: 'user_id,fecha' })
-        if (insertErr) throw insertErr
+        if (e) throw e
       }
-
       setLogged(true)
       onLogAdded?.()
     } catch (err) {
@@ -212,7 +232,7 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
 
   return (
     <>
-      {/* Floating trigger button */}
+      {/* Botón flotante */}
       <button
         onClick={() => setOpen(true)}
         className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-14 h-14 bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] rounded-2xl shadow-lg shadow-[#29ABE2]/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-transform"
@@ -221,22 +241,14 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
         <Camera size={22} className="text-white" />
       </button>
 
-      {/* Modal */}
       <AnimatePresence>
         {open && (
           <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm"
-              onClick={handleClose}
-            />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 z-50 backdrop-blur-sm" onClick={handleClose} />
 
-            {/* Sheet */}
             <motion.div
-              initial={{ opacity: 0, y: 60 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 60 }}
+              initial={{ opacity: 0, y: 60 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 60 }}
               transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed bottom-0 left-0 right-0 md:inset-0 md:flex md:items-center md:justify-center z-50 pointer-events-none"
             >
@@ -244,8 +256,8 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                 className="bg-white rounded-t-3xl md:rounded-2xl w-full md:max-w-lg max-h-[92vh] overflow-y-auto pointer-events-auto shadow-2xl"
                 onClick={e => e.stopPropagation()}
               >
-                {/* Handle + header */}
-                <div className="sticky top-0 bg-white border-b border-[#F0F6FA] px-5 pt-4 pb-3 rounded-t-3xl md:rounded-t-2xl">
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b border-[#F0F6FA] px-5 pt-4 pb-3 rounded-t-3xl md:rounded-t-2xl z-10">
                   <div className="w-10 h-1 bg-[#E2ECF4] rounded-full mx-auto mb-3 md:hidden" />
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -264,71 +276,114 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                 </div>
 
                 <div className="p-5 space-y-4">
-                  {/* Image area */}
-                  {!image ? (
-                    <div
-                      onDrop={handleDrop}
-                      onDragOver={e => e.preventDefault()}
-                      className="relative border-2 border-dashed border-[#E2ECF4] rounded-2xl p-8 text-center hover:border-[#29ABE2]/50 transition-colors cursor-pointer group"
-                      onClick={() => fileRef.current?.click()}
-                    >
-                      <div className="w-16 h-16 bg-[#EAF4FB] rounded-2xl flex items-center justify-center mx-auto mb-3 group-hover:bg-[#29ABE2]/10 transition-colors">
-                        <Camera size={28} className="text-[#29ABE2]" />
-                      </div>
-                      <p className="text-sm font-bold text-[#0C1F2C] mb-1">Toma una foto o sube una imagen</p>
-                      <p className="text-xs text-[#8BA5BE]">Arrastra aquí o haz click para seleccionar</p>
 
-                      {/* Mobile camera + gallery buttons */}
-                      <div className="flex gap-2 justify-center mt-4">
-                        <button
-                          onClick={e => { e.stopPropagation(); const i = document.createElement('input'); i.type='file'; i.accept='image/*'; i.capture='environment'; i.onchange=(ev)=>{ const f=(ev.target as HTMLInputElement).files?.[0]; if(f) handleFile(f) }; i.click() }}
-                          className="flex items-center gap-1.5 text-xs font-bold text-white bg-[#29ABE2] px-3 py-2 rounded-xl hover:bg-[#1a8fc2] transition"
-                        >
-                          <Camera size={13} /> Cámara
-                        </button>
-                        <button
-                          onClick={e => { e.stopPropagation(); fileRef.current?.click() }}
-                          className="flex items-center gap-1.5 text-xs font-bold text-[#29ABE2] border border-[#29ABE2]/40 px-3 py-2 rounded-xl hover:bg-[#EAF4FB] transition"
-                        >
-                          <Upload size={13} /> Galería
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="relative rounded-2xl overflow-hidden">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={image} alt="Food photo" className="w-full max-h-64 object-cover rounded-2xl" />
+                  {/* ── MODO MENÚ: elegir cámara o galería ── */}
+                  {mode === 'menu' && (
+                    <div className="space-y-3">
+                      {/* Cámara in-browser */}
                       <button
-                        onClick={reset}
-                        className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition"
+                        onClick={() => setMode('camera')}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[#29ABE2]/30 hover:border-[#29ABE2] hover:bg-[#EAF4FB] transition-all text-left group"
                       >
-                        <X size={14} />
+                        <div className="w-12 h-12 bg-[#29ABE2]/10 rounded-xl flex items-center justify-center group-hover:bg-[#29ABE2]/20 transition flex-shrink-0">
+                          <Camera size={22} className="text-[#29ABE2]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#0C1F2C]">Tomar foto</p>
+                          <p className="text-xs text-[#8BA5BE]">Usa la cámara directamente en la app</p>
+                        </div>
                       </button>
+
+                      {/* Galería */}
+                      <button
+                        onClick={() => fileRef.current?.click()}
+                        className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-[#E2ECF4] hover:border-[#29ABE2]/40 hover:bg-[#F8FBFD] transition-all text-left group"
+                      >
+                        <div className="w-12 h-12 bg-[#F0F6FA] rounded-xl flex items-center justify-center group-hover:bg-[#E2ECF4] transition flex-shrink-0">
+                          <Upload size={22} className="text-[#6B7C93]" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#0C1F2C]">Subir desde galería</p>
+                          <p className="text-xs text-[#8BA5BE]">Elige una foto existente</p>
+                        </div>
+                      </button>
+
+                      <input ref={fileRef} type="file" accept="image/*" className="hidden"
+                        onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
                     </div>
                   )}
 
-                  {/* Hidden file input */}
-                  <input
-                    ref={fileRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleInputChange}
-                  />
+                  {/* ── MODO CÁMARA: video en vivo ── */}
+                  {mode === 'camera' && (
+                    <div className="space-y-3">
+                      <div className="relative bg-black rounded-2xl overflow-hidden aspect-[4/3]">
+                        <video
+                          ref={videoRef}
+                          autoPlay playsInline muted
+                          className="w-full h-full object-cover"
+                        />
 
-                  {/* Analyze button */}
-                  {image && !result && (
-                    <button
-                      onClick={analyze}
-                      disabled={scanning}
-                      className="w-full py-3.5 bg-gradient-to-r from-[#29ABE2] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2.5"
-                    >
-                      {scanning ? (
-                        <><Loader2 size={16} className="animate-spin" /> Analizando con IA...</>
-                      ) : (
-                        <><Zap size={16} /> Estimar calorías</>
+                        {/* Error de cámara */}
+                        {camError && (
+                          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-6 text-center">
+                            <AlertCircle size={28} className="text-amber-400 mb-2" />
+                            <p className="text-white text-sm font-medium">{camError}</p>
+                            <button onClick={() => { setCamError(''); setMode('menu') }}
+                              className="mt-4 px-4 py-2 rounded-xl bg-white/20 text-white text-xs font-bold hover:bg-white/30 transition">
+                              Volver
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Flip camera */}
+                        {!camError && (
+                          <button
+                            onClick={() => setFacingMode(f => f === 'environment' ? 'user' : 'environment')}
+                            className="absolute top-3 right-3 w-9 h-9 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition"
+                            title="Cambiar cámara"
+                          >
+                            <FlipHorizontal size={16} />
+                          </button>
+                        )}
+                      </div>
+
+                      {!camError && (
+                        <div className="flex gap-2">
+                          <button onClick={() => { stopCamera(); setMode('menu') }}
+                            className="flex-shrink-0 px-4 py-3 rounded-xl border border-[#E2ECF4] text-[#8BA5BE] text-sm font-bold hover:bg-[#F0F6FA] transition">
+                            Cancelar
+                          </button>
+                          <button onClick={handleCapture}
+                            className="flex-1 py-3 bg-gradient-to-r from-[#29ABE2] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 transition flex items-center justify-center gap-2">
+                            <Camera size={16} /> Capturar foto
+                          </button>
+                        </div>
                       )}
-                    </button>
+                    </div>
+                  )}
+
+                  {/* ── MODO PREVIEW: imagen capturada ── */}
+                  {mode === 'preview' && image && (
+                    <>
+                      <div className="relative rounded-2xl overflow-hidden">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={image} alt="Food photo" className="w-full max-h-64 object-cover rounded-2xl" />
+                        <button onClick={reset}
+                          className="absolute top-2 right-2 w-8 h-8 bg-black/50 rounded-full flex items-center justify-center text-white hover:bg-black/70 transition">
+                          <X size={14} />
+                        </button>
+                      </div>
+
+                      {/* Analizar */}
+                      {!result && (
+                        <button onClick={analyze} disabled={scanning}
+                          className="w-full py-3.5 bg-gradient-to-r from-[#29ABE2] to-[#1a6fa0] text-white font-bold rounded-xl hover:opacity-90 disabled:opacity-60 transition flex items-center justify-center gap-2.5">
+                          {scanning
+                            ? <><Loader2 size={16} className="animate-spin" /> Analizando con IA...</>
+                            : <><Zap size={16} /> Estimar calorías</>}
+                        </button>
+                      )}
+                    </>
                   )}
 
                   {/* Error */}
@@ -339,10 +394,9 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                     </div>
                   )}
 
-                  {/* Results */}
+                  {/* ── Resultados ── */}
                   {result && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
-                      {/* Confidence + notes */}
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold text-[#0C1F2C]">Resultado del análisis</p>
                         <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded-full', CONFIDENCE_COLOR[result.confianza])}>
@@ -350,7 +404,6 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         </span>
                       </div>
 
-                      {/* Food list */}
                       {result.alimentos.length > 0 ? (
                         <div className="space-y-2">
                           {result.alimentos.map((food, i) => (
@@ -364,9 +417,9 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                               </div>
                               <div className="grid grid-cols-3 gap-2">
                                 {[
-                                  { label: 'Proteína', value: food.proteina, color: 'text-blue-600' },
-                                  { label: 'Carbos', value: food.carbohidratos, color: 'text-amber-600' },
-                                  { label: 'Grasa', value: food.grasa, color: 'text-rose-500' },
+                                  { label: 'Proteína',  value: food.proteina,      color: 'text-blue-600'  },
+                                  { label: 'Carbos',    value: food.carbohidratos, color: 'text-amber-600' },
+                                  { label: 'Grasa',     value: food.grasa,         color: 'text-rose-500'  },
                                 ].map(m => (
                                   <div key={m.label} className="text-center">
                                     <p className={cn('text-xs font-bold', m.color)}>{m.value}g</p>
@@ -381,7 +434,6 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         <div className="text-center py-4 text-sm text-[#8BA5BE]">No se detectaron alimentos en la imagen.</div>
                       )}
 
-                      {/* Totals */}
                       {result.alimentos.length > 0 && (
                         <div className="bg-gradient-to-r from-[#0C1F2C] to-[#0C3547] rounded-xl px-4 py-3">
                           <p className="text-[10px] font-bold text-[#4A7A94] uppercase tracking-widest mb-2">Total estimado</p>
@@ -389,9 +441,9 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                             <span className="text-2xl font-black text-white">{result.total.kcal} <span className="text-sm font-medium text-[#4A7A94]">kcal</span></span>
                             <div className="flex gap-4 text-center">
                               {[
-                                { label: 'P', value: result.total.proteina, color: 'text-blue-400' },
+                                { label: 'P', value: result.total.proteina,      color: 'text-blue-400'  },
                                 { label: 'C', value: result.total.carbohidratos, color: 'text-amber-400' },
-                                { label: 'G', value: result.total.grasa, color: 'text-rose-400' },
+                                { label: 'G', value: result.total.grasa,         color: 'text-rose-400'  },
                               ].map(m => (
                                 <div key={m.label}>
                                   <p className={cn('text-sm font-black', m.color)}>{m.value}g</p>
@@ -406,33 +458,22 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
                         </div>
                       )}
 
-                      {/* Actions */}
                       <div className="flex gap-2 pt-1">
-                        <button
-                          onClick={reset}
-                          className="flex items-center gap-1.5 text-xs font-bold text-[#8BA5BE] border border-[#E2ECF4] px-4 py-2.5 rounded-xl hover:bg-[#F0F6FA] transition flex-shrink-0"
-                        >
+                        <button onClick={reset}
+                          className="flex items-center gap-1.5 text-xs font-bold text-[#8BA5BE] border border-[#E2ECF4] px-4 py-2.5 rounded-xl hover:bg-[#F0F6FA] transition flex-shrink-0">
                           <RefreshCw size={12} /> Nueva foto
                         </button>
-
                         {result.alimentos.length > 0 && (
-                          <button
-                            onClick={addToLog}
-                            disabled={logging || logged}
+                          <button onClick={addToLog} disabled={logging || logged}
                             className={cn(
                               'flex-1 flex items-center justify-center gap-1.5 text-xs font-bold py-2.5 rounded-xl transition',
                               logged
                                 ? 'bg-green-50 text-green-600 border border-green-200'
                                 : 'bg-[#29ABE2] text-white hover:bg-[#1a8fc2] disabled:opacity-60'
-                            )}
-                          >
-                            {logging ? (
-                              <><Loader2 size={12} className="animate-spin" /> Guardando...</>
-                            ) : logged ? (
-                              <><CheckCircle size={12} /> Agregado al registro</>
-                            ) : (
-                              <>+ Agregar al registro de hoy</>
-                            )}
+                            )}>
+                            {logging  ? <><Loader2 size={12} className="animate-spin" /> Guardando...</>
+                             : logged ? <><CheckCircle size={12} /> Agregado al registro</>
+                             :           <>+ Agregar al registro de hoy</>}
                           </button>
                         )}
                       </div>
