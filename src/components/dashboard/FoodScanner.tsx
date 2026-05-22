@@ -148,10 +148,18 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
         session = data.session
       }
 
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        'X-Client-Version': 'v4',  // útil para diagnosticar versión cliente desde server
+      }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
-      const res = await fetch('/api/food-scan', { method: 'POST', headers, body: JSON.stringify({ image }) })
+      const res = await fetch('/api/food-scan', {
+        method:      'POST',
+        headers,
+        body:        JSON.stringify({ image }),
+        credentials: 'include',  // garantiza que cookies viajen incluso en PWA standalone
+      })
 
       // Parsear JSON de forma segura
       let data: Record<string, unknown>
