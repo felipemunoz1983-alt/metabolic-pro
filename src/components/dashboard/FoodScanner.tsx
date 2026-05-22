@@ -31,9 +31,23 @@ interface Props {
 const CONFIDENCE_LABEL = { alta: 'Alta', media: 'Media', baja: 'Baja' }
 const CONFIDENCE_COLOR  = { alta: 'text-green-600 bg-green-50', media: 'text-amber-600 bg-amber-50', baja: 'text-red-500 bg-red-50' }
 
-/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 1024px) */
-function captureFrame(video: HTMLVideoElement, quality = 0.82): string {
-  const MAX = 1024
+/**
+ * Escala canvas a MAX px en el lado mayor y devuelve JPEG base64.
+ * Si el resultado sigue siendo grande, re-comprime con calidad reducida.
+ * Límite seguro para Vercel: < 3 MB en base64 (~2.2 MB de imagen raw).
+ */
+function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.72): string {
+  let dataUrl = canvas.toDataURL('image/jpeg', quality)
+  // ~4.5 MB Vercel limit, dejamos margen: si pasa de 3 MB re-comprimimos
+  if (dataUrl.length > 3_000_000 && quality > 0.45) {
+    dataUrl = canvas.toDataURL('image/jpeg', quality - 0.2)
+  }
+  return dataUrl
+}
+
+/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 800px) */
+function captureFrame(video: HTMLVideoElement): string {
+  const MAX = 800
   let w = video.videoWidth
   let h = video.videoHeight
   if (w > MAX || h > MAX) {
@@ -43,17 +57,17 @@ function captureFrame(video: HTMLVideoElement, quality = 0.82): string {
   const canvas = document.createElement('canvas')
   canvas.width = w; canvas.height = h
   canvas.getContext('2d')!.drawImage(video, 0, 0, w, h)
-  return canvas.toDataURL('image/jpeg', quality)
+  return canvasToJpeg(canvas)
 }
 
-/** Comprime un File (galería) antes de enviarlo — evita OOM en Android */
+/** Comprime un File (galería) antes de enviarlo — evita OOM y 413 en Android */
 function compressFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const img  = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const MAX = 1024
+      const MAX = 800
       let { width: w, height: h } = img
       if (w > MAX || h > MAX) {
         if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
@@ -62,7 +76,7 @@ function compressFile(file: File): Promise<string> {
       const canvas = document.createElement('canvas')
       canvas.width = w; canvas.height = h
       canvas.getContext('2d')!.drawImage(img, 0, 0, w, h)
-      resolve(canvas.toDataURL('image/jpeg', 0.82))
+      resolve(canvasToJpeg(canvas))
     }
     img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Error al leer imagen')) }
     img.src = url
@@ -180,10 +194,23 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 
-      const res  = await fetch('/api/food-scan', { method: 'POST', headers, body: JSON.stringify({ image }) })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Error al analizar')
-      setResult(data)
+      const res = await fetch('/api/food-scan', { method: 'POST', headers, body: JSON.stringify({ image }) })
+
+      // Parsear JSON de forma segura: si la respuesta no es JSON (ej. 413 de Vercel),
+      // leer como texto para dar mensaje de error útil en lugar de SyntaxError crudo.
+      let data: Record<string, unknown>
+      try {
+        data = await res.json()
+      } catch {
+        const text = await res.text().catch(() => '')
+        if (res.status === 413 || text.toLowerCase().includes('entity too large')) {
+          throw new Error('La imagen es muy grande. Intenta retomar la foto con menos detalle.')
+        }
+        throw new Error(`Error del servidor (${res.status}). Intenta de nuevo.`)
+      }
+
+      if (!res.ok) throw new Error((data.error as string) ?? 'Error al analizar')
+      setResult(data as unknown as ScanResult)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo analizar la imagen')
     } finally {
