@@ -15,7 +15,7 @@ import {
   CheckCircle, AlertCircle, RefreshCw,
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
   FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
-  MessageSquare, Smartphone,
+  MessageSquare, Smartphone, Loader2, Trash2,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -305,9 +305,11 @@ function PatientDetail({
   const [planForm, setPlanForm] = useState<FormData | null>(null)
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'save_error'>('idle')
-  const [showMensaje, setShowMensaje] = useState(false)
+  const [showMensaje,      setShowMensaje]      = useState(false)
   const [showInstallModal, setShowInstallModal] = useState(false)
-  const [installCopied, setInstallCopied] = useState(false)
+  const [installCopied,    setInstallCopied]    = useState(false)
+  const [showUnlink,       setShowUnlink]       = useState(false)
+  const [unlinking,        setUnlinking]        = useState(false)
 
   /** Mensaje WhatsApp con instrucciones de instalación para el paciente */
   const installMessage = (() => {
@@ -335,6 +337,29 @@ ${appUrl}
 
 Cualquier duda, escríbeme 😊`
   })()
+
+  /** Desvincula al paciente de este profesional (no elimina su cuenta) */
+  async function handleUnlink() {
+    setUnlinking(true)
+    try {
+      const res = await fetch('/api/patients/link', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ patientId: patient.id, professionalId }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        throw new Error(d.error ?? `HTTP ${res.status}`)
+      }
+      // Volver al listado — el paciente ya no aparecerá
+      onBack()
+    } catch (err) {
+      console.error('[unlink]', err)
+      setShowUnlink(false)
+    } finally {
+      setUnlinking(false)
+    }
+  }
 
   useEffect(() => {
     async function loadData() {
@@ -511,6 +536,51 @@ Cualquier duda, escríbeme 😊`
         )}
       </AnimatePresence>
 
+      {/* ── Modal: confirmar desvinculación ── */}
+      <AnimatePresence>
+        {showUnlink && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+            onClick={() => !unlinking && setShowUnlink(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-red-50 border border-red-200 flex items-center justify-center mx-auto mb-4">
+                <X size={22} className="text-red-500" />
+              </div>
+              <h3 className="text-base font-black text-[#0C1F2C] text-center mb-1">
+                Eliminar de la lista
+              </h3>
+              <p className="text-sm text-[#6B7C93] text-center mb-6 leading-relaxed">
+                ¿Quieres eliminar a <strong className="text-[#0C1F2C]">{patient.nombre}</strong> de tu lista de pacientes?
+                <br />
+                <span className="text-xs text-[#8BA5BE] mt-1 block">Su cuenta se mantiene. Solo se desvincula de tu panel.</span>
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowUnlink(false)}
+                  disabled={unlinking}
+                  className="flex-1 py-2.5 rounded-xl border border-[#E2ECF4] text-sm font-bold text-[#6B7C93] hover:bg-[#F8FBFD] transition disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleUnlink}
+                  disabled={unlinking}
+                  className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {unlinking ? <><Loader2 size={14} className="animate-spin" /> Eliminando...</> : 'Sí, eliminar'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── Modal: instrucciones de instalación ── */}
       <AnimatePresence>
         {showInstallModal && (
@@ -616,6 +686,14 @@ Cualquier duda, escríbeme 😊`
             title="Enviar mensaje al paciente"
           >
             <MessageSquare size={14} /> <span className="hidden sm:inline">Mensaje</span>
+          </button>
+          {/* Eliminar de lista */}
+          <button
+            onClick={() => setShowUnlink(true)}
+            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-red-400 hover:text-red-500 transition"
+            title="Eliminar paciente de la lista"
+          >
+            <Trash2 size={14} /> <span className="hidden sm:inline">Eliminar</span>
           </button>
           {allPlans.length > 0 && planResult && planForm && view === 'overview' && (
             <button

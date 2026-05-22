@@ -65,3 +65,60 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
   return NextResponse.json({ ok: true, grantedTrial: grantTrial })
 }
+
+/**
+ * DELETE /api/patients/link
+ * Desvincula un paciente del profesional (professional_id → null, role → individual).
+ * NO elimina la cuenta del paciente en Supabase Auth.
+ *
+ * Body: { patientId: string, professionalId: string }
+ */
+export async function DELETE(req: NextRequest): Promise<NextResponse> {
+  let patientId: string
+  let professionalId: string
+
+  try {
+    const body = await req.json()
+    patientId      = body.patientId
+    professionalId = body.professionalId
+    if (!patientId || !professionalId) throw new Error('missing fields')
+  } catch {
+    return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
+  }
+
+  const supabase = createServiceClient()
+
+  // Verificar que quien pide es realmente profesional
+  const { data: pro } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', professionalId)
+    .maybeSingle()
+
+  if (!pro || pro.role !== 'professional') {
+    return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
+  }
+
+  // Verificar que el paciente pertenece a este profesional
+  const { data: patient } = await supabase
+    .from('profiles')
+    .select('professional_id')
+    .eq('id', patientId)
+    .maybeSingle()
+
+  if (!patient || patient.professional_id !== professionalId) {
+    return NextResponse.json({ error: 'Patient not linked to this professional' }, { status: 404 })
+  }
+
+  // Desvincular: quitar professional_id y volver a rol individual
+  const { error } = await supabase
+    .from('profiles')
+    .update({ professional_id: null, role: 'individual' })
+    .eq('id', patientId)
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}

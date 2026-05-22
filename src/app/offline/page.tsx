@@ -1,3 +1,5 @@
+'use client'
+
 /**
  * Página offline — se muestra cuando el usuario no tiene conexión
  * y navega a una ruta que no está en el cache del service worker.
