@@ -10,13 +10,12 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Activity, CheckCircle, ArrowLeft,
   Star, Shield, Users,
-  CreditCard, Loader2, User, FlaskConical,
+  CreditCard, Loader2, User,
   ChevronDown, Flame, BarChart2, Brain,
   Lock, RefreshCw, XCircle, MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const IS_INTEGRATION = process.env.NEXT_PUBLIC_TRANSBANK_MODE !== 'production'
 import type { Profile, PlanType } from '@/types'
 import { isOnTrial, trialDaysLeft, hasAccess, isPlanExpired } from '@/types'
 
@@ -465,22 +464,6 @@ export default function UpgradePage() {
                   <FAQItem key={faq.q} q={faq.q} a={faq.a} />
                 ))}
               </div>
-
-              {/* ── Integration test data ── */}
-              {IS_INTEGRATION && (
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <FlaskConical size={13} className="text-amber-600" />
-                    <span className="text-[10px] font-bold text-amber-700 uppercase tracking-wide">Modo integración — credenciales de prueba</span>
-                  </div>
-                  <div className="space-y-1 text-[11px] text-amber-800 font-mono">
-                    <p>Tarjeta VISA: <strong>4051 8856 0044 6623</strong></p>
-                    <p>CVV: <strong>123</strong> &nbsp; Vencimiento: <strong>12/29</strong></p>
-                    <p>RUT tarjetahabiente: <strong>11.111.111-1</strong></p>
-                    <p className="pt-1 border-t border-amber-200 mt-1">Banco — RUT: <strong>11.111.111-1</strong> &nbsp; Clave: <strong>123</strong></p>
-                  </div>
-                </div>
-              )}
 
               {/* ── Sticky bottom CTA (mobile) ── */}
               <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-[#E2ECF4] md:hidden z-10">
