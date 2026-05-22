@@ -62,14 +62,23 @@ export function AdherenciaPaciente({ patientId }: Props) {
     setError(null)
     setLoading(true)
     try {
-      const { data: { session } } = await createClient().auth.getSession()
+      // Refrescar token primero — sin esto, sessions de >1h dan 401 inmediato
+      const supabase = createClient()
+      let { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        const { data } = await supabase.auth.refreshSession()
+        session = data.session
+      }
       const headers: Record<string, string> = {}
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch(
         `/api/pacientes/${encodeURIComponent(patientId)}/adherencia?ventana=${vent}`,
         { method: 'GET', headers, credentials: 'include' },
       )
-      if (!res.ok) throw new Error(`Error ${res.status}`)
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({} as { error?: string }))
+        throw new Error(errBody.error ?? `Error ${res.status}`)
+      }
       setData(await res.json() as AdherenciaResponse)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudieron cargar las métricas')

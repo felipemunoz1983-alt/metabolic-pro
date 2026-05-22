@@ -14,7 +14,7 @@
  * Auth: solo profesional vinculado al paciente.
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthUser } from '@/lib/auth-server'
+import { getAuthUserDebug } from '@/lib/auth-server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { obtenerPlan } from '@/lib/repositorioPlanes'
 import type { OpcionPreparacion } from '@/types/banco'
@@ -35,9 +35,15 @@ export async function GET(
 ): Promise<NextResponse> {
   const { id: pacienteId } = await params
 
-  // 1. Auth — caller debe ser profesional
-  const caller = await getAuthUser(req)
-  if (!caller) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  // 1. Auth — caller debe ser profesional. Usamos versión debug para devolver
+  //    el motivo del 401 al cliente (sin acceso a logs de Vercel).
+  const { user: caller, reason } = await getAuthUserDebug(req)
+  if (!caller) {
+    return NextResponse.json(
+      { error: `Unauthorized [${reason}]`, hint: 'Refresca la pestaña o vuelve a iniciar sesión.' },
+      { status: 401 },
+    )
+  }
 
   const sb = createServiceClient()
 
@@ -48,7 +54,7 @@ export async function GET(
     .maybeSingle()
 
   if (!callerProfile || callerProfile.role !== 'professional') {
-    return NextResponse.json({ error: 'Forbidden — only professionals' }, { status: 403 })
+    return NextResponse.json({ error: `Forbidden — role=${callerProfile?.role ?? 'unknown'}` }, { status: 403 })
   }
 
   // 2. Verificar que el paciente está vinculado a este profesional
