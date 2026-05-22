@@ -200,7 +200,15 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
         throw new Error('La imagen es muy grande. Vuelve a tomar la foto más cerca del alimento.')
       }
 
-      const { data: { session } } = await createClient().auth.getSession()
+      // Obtener token de sesión: getSession() puede devolver expirado en PWA.
+      // Si no hay token → intentamos refrescar antes de fallar.
+      const supabase = createClient()
+      let { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        const { data } = await supabase.auth.refreshSession()
+        session = data.session
+      }
+
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
 

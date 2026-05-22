@@ -1,0 +1,83 @@
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import "./globals.css";
+import { ServiceWorkerUpdater } from "@/components/shared/ServiceWorkerUpdater";
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
+
+export const viewport: Viewport = {
+  themeColor: "#0C1F2C",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+}
+
+export const metadata: Metadata = {
+  title: "Centro Metabólico Pro",
+  description: "Seguimiento nutricional clínico personalizado · Planes nutricionales, adherencia diaria y asistente IA",
+  applicationName: "Centro Metabólico Pro",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CMetabólico",
+  },
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
+  openGraph: {
+    title: "Centro Metabólico Pro",
+    description: "Seguimiento nutricional clínico personalizado",
+    type: "website",
+    locale: "es_CL",
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Centro Metabólico Pro — Nutrición clínica con IA',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Centro Metabólico Pro',
+    description: 'Planes nutricionales personalizados, adherencia diaria y asistente IA',
+    images: ['/opengraph-image'],
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="es" className={inter.variable}>
+      <head>
+        {/* Apple-specific PWA meta — not covered by the Metadata API */}
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="CMetabólico" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
+        <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
+      </head>
+      <body className="antialiased">
+        {children}
+      </body>
+    </html>
+  );
+}

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
-import { getAuthUser } from '@/lib/auth-server'
+import { getAuthUserDebug } from '@/lib/auth-server'
 import {
   checkRateLimit,
   FOOD_SCAN_LIMIT,
@@ -10,10 +10,13 @@ import {
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // ── Auth guard (Bearer token → cookie fallback) ───────────────────────────
-  const user = await getAuthUser(req)
+  // ── Auth guard con diagnóstico (Bearer → cookie fallback) ─────────────────
+  const { user, reason } = await getAuthUserDebug(req)
   if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    return NextResponse.json(
+      { error: `Unauthorized [${reason}]` },
+      { status: 401 },
+    )
   }
 
   // ── Rate limit (short + daily) ────────────────────────────────────────────
