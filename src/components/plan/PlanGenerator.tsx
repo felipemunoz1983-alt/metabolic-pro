@@ -605,10 +605,54 @@ interface Props {
   initialData?: Partial<FormData>
 }
 
+// Key para persistir el form en sessionStorage. Sobrevive a remounts del
+// componente (por ej. cambios de pestaña o reroute de Next.js App Router) y
+// a refreshes accidentales. Se limpia cuando handleGenerate completa.
+const FORM_DRAFT_KEY = 'plan-generator-draft-v1'
+const STEP_DRAFT_KEY = 'plan-generator-step-v1'
+
+function readDraftForm(): Partial<FormData> | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.sessionStorage.getItem(FORM_DRAFT_KEY)
+    return raw ? (JSON.parse(raw) as Partial<FormData>) : null
+  } catch { return null }
+}
+function readDraftStep(): number | null {
+  if (typeof window === 'undefined') return null
+  const raw = window.sessionStorage.getItem(STEP_DRAFT_KEY)
+  const n = raw ? Number(raw) : NaN
+  return Number.isFinite(n) ? n : null
+}
+
 export function PlanGenerator({ onResult, initialData }: Props) {
-  const [step, setStep] = useState(0)
-  const [form, setForm] = useState<Partial<FormData>>({ ...defaultForm, ...initialData })
+  // Lazy initializer: si hay un draft previo en sessionStorage (porque el
+  // componente se remontó o el usuario refrescó), lo restauramos antes de
+  // mezclar con initialData. Así NO se pierden los datos del usuario.
+  const [step, setStep] = useState<number>(() => readDraftStep() ?? 0)
+  const [form, setForm] = useState<Partial<FormData>>(() => {
+    const draft = readDraftForm()
+    return { ...defaultForm, ...initialData, ...(draft ?? {}) }
+  })
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null)
+
+  // Persistir form a sessionStorage en cada cambio — red de seguridad
+  // contra remounts inesperados y refreshes accidentales.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(form))
+    } catch { /* quota exceeded o storage deshabilitado: degradar silencioso */ }
+  }, [form])
+
+  // Persistir step también, para que un remount no devuelva al paciente
+  // al paso 0 cuando ya iba avanzado.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    try {
+      window.sessionStorage.setItem(STEP_DRAFT_KEY, String(step))
+    } catch { /* idem */ }
+  }, [step])
 
   // Mensajes humanos por campo para el toast de confirmación visual
   const TOAST_LABELS: Partial<Record<keyof FormData, (v: unknown) => string>> = {
@@ -644,12 +688,21 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   const [errors, setErrors] = useState<string[]>([])
 
   // ── Sincronizar pasos con historial del navegador ──
-  // Cada vez que el usuario avanza un paso, se hace pushState.
-  // El botón "atrás" del navegador/móvil dispara popstate y retrocede un paso
-  // en lugar de salir de la página.
+  // Cada vez que el usuario avanza, hacemos pushState con el step destino.
+  // El botón atrás del navegador/móvil dispara popstate y leemos el step
+  // del event.state (no asumimos un decremento ciego). El form NO se toca
+  // aquí — sigue en su propio estado + sessionStorage.
   useEffect(() => {
-    function onPopState() {
-      setStep(s => (s > 0 ? s - 1 : s))
+    function onPopState(e: PopStateEvent) {
+      const target = (e.state && typeof e.state === 'object' && 'planStep' in e.state)
+        ? Number((e.state as { planStep: unknown }).planStep)
+        : NaN
+      if (Number.isFinite(target) && target >= 0) {
+        setStep(target)
+      } else {
+        // Sin state.planStep: estamos en la entrada base de la página → step 0
+        setStep(0)
+      }
     }
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
@@ -676,7 +729,25 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   function handleGenerate() {
     const f = form as FormData
     const result = calcularNutricion(f)
+    // Plan generado con éxito → limpiar draft del wizard (ya no se necesita)
+    try {
+      window.sessionStorage.removeItem(FORM_DRAFT_KEY)
+      window.sessionStorage.removeItem(STEP_DRAFT_KEY)
+    } catch { /* noop */ }
     onResult(result, f)
+  }
+
+  // Botón en pantalla "← Atrás": en vez de window.history.back() (que puede
+  // causar re-render del route en Next.js App Router), decrementamos el step
+  // directamente y empujamos al historial para mantener Android-back coherente.
+  function handleBack() {
+    setStep(s => {
+      const next = Math.max(0, s - 1)
+      try {
+        window.history.replaceState({ planStep: next }, '')
+      } catch { /* noop */ }
+      return next
+    })
   }
 
   // ── Filtrado por whey ──
@@ -1819,7 +1890,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
         {step > 0 && (
           <button
             type="button"
-            onClick={() => window.history.back()}
+            onClick={handleBack}
             className="flex-1 py-2.5 sm:py-3 text-sm sm:text-base border-2 border-[#D6E3ED] text-[#6B7C93] font-bold rounded-xl hover:border-[#29ABE2] hover:text-[#29ABE2] transition"
           >
             ← Atrás
