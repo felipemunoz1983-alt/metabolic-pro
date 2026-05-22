@@ -33,6 +33,7 @@ import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/Onboard
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner'
 import { WelcomePostRegister } from '@/components/onboarding/WelcomePostRegister'
+import { BancoPaciente } from '@/components/banco/BancoPaciente'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -465,6 +466,15 @@ export default function PacientePage() {
                         onReset={() => { setResult(null); setFormData(null) }}
                         userId={userId ?? undefined}
                       />
+
+                      {/* ── Banco de opciones del paciente ──
+                          Solo para pacientes (no para profesionales viendo su propio plan).
+                          Aparece debajo del PlanResult tradicional. */}
+                      {profile?.role === 'patient' && (
+                        <div className="mt-8">
+                          <BancoPaciente />
+                        </div>
+                      )}
                     </>
                   ) : profile?.role === 'patient' ? (
                     /* Paciente vinculado sin plan aún */
@@ -487,6 +497,11 @@ export default function PacientePage() {
                           </div>
                         ))}
                       </div>
+                      {/* Banco de opciones — empty-state amigable mientras espera */}
+                      <div className="mt-8 w-full max-w-xl text-left">
+                        <BancoPaciente />
+                      </div>
+
                       {/* Noticias mientras esperan el plan */}
                       <div className="mt-8 w-full max-w-xl text-left">
                         <NoticiasHub form={{}} />
