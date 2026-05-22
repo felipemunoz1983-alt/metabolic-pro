@@ -12,7 +12,7 @@
  * antiguo causa que se ejecute JS viejo aunque Vercel haya desplegado código nuevo.
  */
 
-const CACHE_NAME  = 'cmp-shell-v3'
+const CACHE_NAME  = 'cmp-shell-v4'
 const OFFLINE_URL = '/offline'
 
 // Solo pre-cachear assets VERDADERAMENTE estáticos (íconos y manifest).

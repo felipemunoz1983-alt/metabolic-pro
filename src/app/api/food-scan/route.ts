@@ -9,15 +9,17 @@ import {
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-// Versión del route — usado para verificar qué deploy está respondiendo
-const ROUTE_VERSION = 'v4-auth-debug'
+// Versión del route — string distintivo para confirmar qué deploy responde.
+// Si el cliente sigue viendo "Unauthorized" en vez de este texto, está corriendo
+// código de ANTES de este commit (cliente o server stale).
+const ROUTE_VERSION = 'V5-DEBUG'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   // ── Auth guard con diagnóstico (Bearer → cookie fallback) ─────────────────
   const { user, reason } = await getAuthUserDebug(req)
   if (!user) {
     return NextResponse.json(
-      { error: `Auth fallida (${ROUTE_VERSION}): ${reason}` },
+      { error: `🔍 ${ROUTE_VERSION} — Sesión no encontrada: ${reason}` },
       { status: 401 },
     )
   }
