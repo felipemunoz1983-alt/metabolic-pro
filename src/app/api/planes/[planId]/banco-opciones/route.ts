@@ -17,7 +17,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAuthUser } from "@/lib/auth-server";
+import { getAuthUser, getAuthUserDebug } from "@/lib/auth-server";
 import { createServiceClient } from "@/lib/supabase-server";
 import {
   validarYAnotar,
@@ -44,11 +44,23 @@ import {
 export const runtime = "nodejs";
 export const maxDuration = 300; // segundos; ajusta a tu plan/Fluid Compute.
 
-/** Guard común: el caller debe estar logueado y tener role='professional'. */
-async function exigirProfesional(req: NextRequest): Promise<{ ok: true } | { ok: false; res: NextResponse }> {
-  const user = await getAuthUser(req);
+/**
+ * Guard común: el caller debe estar logueado y tener role='professional'.
+ * Devuelve el motivo del fallo en el 401 para diagnosticar producción
+ * sin acceso a logs de Vercel.
+ */
+async function exigirProfesional(req: NextRequest): Promise<
+  { ok: true; userId: string } | { ok: false; res: NextResponse }
+> {
+  const { user, reason } = await getAuthUserDebug(req);
   if (!user) {
-    return { ok: false, res: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+    return {
+      ok: false,
+      res: NextResponse.json(
+        { error: `Unauthorized [${reason}]`, hint: 'Refresca la pestaña o cierra y reabre sesión.' },
+        { status: 401 },
+      ),
+    };
   }
   const { data: profile } = await createServiceClient()
     .from("profiles")
@@ -56,10 +68,19 @@ async function exigirProfesional(req: NextRequest): Promise<{ ok: true } | { ok:
     .eq("id", user.id)
     .maybeSingle();
   if (!profile || profile.role !== "professional") {
-    return { ok: false, res: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+    return {
+      ok: false,
+      res: NextResponse.json(
+        { error: `Forbidden — role=${profile?.role ?? 'unknown'}` },
+        { status: 403 },
+      ),
+    };
   }
-  return { ok: true };
+  return { ok: true, userId: user.id };
 }
+
+// Mantengo el import getAuthUser unused-safe (route puede usarlo en el futuro).
+void getAuthUser;
 
 function claveDedupe(op: OpcionPreparacion): string {
   return `${op.nombre.trim().toLowerCase()}|${op.meta.cocina}`;

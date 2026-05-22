@@ -99,11 +99,19 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  /** Lee el banco actual desde el endpoint GET. Se llama al mount y tras regenerar. */
+  /** Lee el banco actual desde el endpoint GET. Se llama al mount y tras regenerar.
+   *  Refresca la sesión Supabase antes para evitar 401 por JWT expirado. */
   async function fetchBanco() {
     setLoadError(null)
     try {
-      const { data: { session } } = await createClient().auth.getSession()
+      const supabase = createClient()
+      // Refrescar token primero — sin esto, sessions de >1h dan 401
+      let { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        const { data } = await supabase.auth.refreshSession()
+        session = data.session
+      }
+
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch(`/api/planes/${encodeURIComponent(planId)}/banco-opciones`, {
@@ -111,14 +119,16 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
       })
       if (!res.ok) {
         if (res.status === 404) {
-          // Plan no tiene aún banco persistido — primera vez. No es error.
           setOpcionesFetched({})
           return
         }
-        throw new Error(`Error ${res.status}`)
+        // Intentar leer el motivo del error desde el body (el endpoint lo incluye)
+        const errBody = await res.json().catch(() => ({} as { error?: string; hint?: string }))
+        const detail = errBody.error ?? `Error ${res.status}`
+        const hint   = errBody.hint   ? ` · ${errBody.hint}` : ''
+        throw new Error(detail + hint)
       }
       const data = await res.json() as { opcionesPorTiempo?: Record<string, OpcionPreparacion[]> }
-      // Normalizar keys para hacer match con los tipos del adapter
       const normalizado: Record<string, OpcionPreparacion[]> = {}
       for (const [k, v] of Object.entries(data.opcionesPorTiempo ?? {})) {
         normalizado[normTipo(k)] = v
@@ -157,7 +167,12 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
     setRegenError(null)
     setRegenTipo(tipo)
     try {
-      const { data: { session } } = await createClient().auth.getSession()
+      const supabase = createClient()
+      let { data: { session } } = await supabase.auth.getSession()
+      if (!session?.access_token) {
+        const { data } = await supabase.auth.refreshSession()
+        session = data.session
+      }
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
       const res = await fetch(

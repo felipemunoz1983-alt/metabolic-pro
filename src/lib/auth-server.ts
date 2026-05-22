@@ -17,6 +17,35 @@ import type { NextRequest } from 'next/server'
  * Pasa `req` para habilitar la verificación por Bearer token (recomendado).
  * Sin `req` sólo usa cookies (puede fallar en mobile sin middleware).
  */
+/**
+ * Helper para crear el cliente Supabase server-side con cookie store que
+ * SOPORTA write-back (setAll). Sin setAll, Supabase no puede refrescar
+ * tokens expirados y getUser() devuelve null aunque haya refresh_token válido.
+ *
+ * En route handlers de Next.js 15, cookies().set() lanza si estamos en un
+ * contexto read-only; lo envolvemos en try/catch silencioso.
+ */
+type CookieToSet = { name: string; value: string; options?: Parameters<Awaited<ReturnType<typeof cookies>>['set']>[2] }
+
+async function makeServerClient(supabaseUrl: string, supabaseAnon: string) {
+  const cookieStore = await cookies()
+  return createServerClient(supabaseUrl, supabaseAnon, {
+    cookies: {
+      getAll: () => cookieStore.getAll(),
+      setAll: (cookiesToSet: CookieToSet[]) => {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieStore.set(name, value, options)
+          })
+        } catch {
+          // Read-only context (server component) — Supabase no puede refrescar
+          // pero el getUser anterior puede haber funcionado con el token actual.
+        }
+      },
+    },
+  })
+}
+
 export async function getAuthUser(req?: NextRequest) {
   const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -27,10 +56,7 @@ export async function getAuthUser(req?: NextRequest) {
     if (authHeader.startsWith('Bearer ')) {
       const token = authHeader.slice(7).trim()
       if (token) {
-        const cookieStore = await cookies()
-        const sb = createServerClient(supabaseUrl, supabaseAnon, {
-          cookies: { getAll: () => cookieStore.getAll() },
-        })
+        const sb = await makeServerClient(supabaseUrl, supabaseAnon)
         const { data: { user }, error } = await sb.auth.getUser(token)
         if (!error && user) return user
       }
@@ -39,10 +65,7 @@ export async function getAuthUser(req?: NextRequest) {
 
   // ── 2. Fallback: cookie de sesión (SSR tradicional) ────────────────────────
   try {
-    const cookieStore = await cookies()
-    const sb = createServerClient(supabaseUrl, supabaseAnon, {
-      cookies: { getAll: () => cookieStore.getAll() },
-    })
+    const sb = await makeServerClient(supabaseUrl, supabaseAnon)
     const { data: { user } } = await sb.auth.getUser()
     return user ?? null
   } catch {
@@ -72,10 +95,7 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
       const token = authHeader.slice(7).trim()
       if (!token) return { user: null, reason: 'bearer_empty' }
 
-      const cookieStore = await cookies()
-      const sb = createServerClient(supabaseUrl, supabaseAnon, {
-        cookies: { getAll: () => cookieStore.getAll() },
-      })
+      const sb = await makeServerClient(supabaseUrl, supabaseAnon)
       const { data, error } = await sb.auth.getUser(token)
       if (data?.user) {
         return { user: { id: data.user.id, email: data.user.email }, reason: 'bearer_ok' }
@@ -85,11 +105,9 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
 
       // ── 2. Cookie fallback ──
       try {
+        const sb2 = await makeServerClient(supabaseUrl, supabaseAnon)
         const cookieStore2 = await cookies()
         const allCookies = cookieStore2.getAll()
-        const sb2 = createServerClient(supabaseUrl, supabaseAnon, {
-          cookies: { getAll: () => allCookies },
-        })
         const { data: data2 } = await sb2.auth.getUser()
         if (data2?.user) {
           return { user: { id: data2.user.id, email: data2.user.email }, reason: 'cookie_ok' }
@@ -98,7 +116,7 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
           user: null,
           reason: `bearer_failed:${reasonBearer.slice(0, 40)};cookies:${allCookies.length}`,
         }
-      } catch (e) {
+      } catch {
         return { user: null, reason: `bearer_failed:${reasonBearer.slice(0, 40)};cookie_err` }
       }
     }
@@ -107,17 +125,15 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
 
   // ── Sin req o sin Bearer: solo cookie ──
   try {
+    const sb = await makeServerClient(supabaseUrl, supabaseAnon)
     const cookieStore = await cookies()
     const allCookies = cookieStore.getAll()
-    const sb = createServerClient(supabaseUrl, supabaseAnon, {
-      cookies: { getAll: () => allCookies },
-    })
     const { data } = await sb.auth.getUser()
     if (data?.user) {
       return { user: { id: data.user.id, email: data.user.email }, reason: 'cookie_only_ok' }
     }
     return { user: null, reason: `no_bearer;cookies:${allCookies.length}` }
-  } catch (e) {
+  } catch {
     return { user: null, reason: 'no_bearer;cookie_err' }
   }
 }
