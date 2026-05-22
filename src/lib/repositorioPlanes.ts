@@ -1,48 +1,57 @@
 /**
- * lib/repositorioPlanes.ts — Capa de persistencia con Supabase.
+ * lib/repositorioPlanes.ts — Capa de persistencia del banco con Supabase.
  *
- * ADAPTADO AL ESQUEMA REAL de Centro Metabólico Pro (verificado por inspección):
+ * ESQUEMA REAL DE CENTRO METABÓLICO PRO (verificado en supabase/planes_nutricionales.sql):
  *
- *   planes(id uuid, user_id, patient_id, professional_id, objetivo, kcal,
- *          macros jsonb, plan_data jsonb, ...)
- *   plan_data = { comidas: [ { nombre, kcal, p, items: string[] } ], plan: [...] }
- *   perfiles_digestivos(user_id, hinchazon, reflujo, ritmo, diag,
- *                       intolerancias text[], horario text[], severidad)
- *   profiles(id, nombre, email, role, ...)  ← identidad/suscripción, NO nutrición
+ *   planes_nutricionales(
+ *     id uuid pk,
+ *     user_id uuid → profiles.id,
+ *     professional_id uuid → profiles.id (nullable),
+ *     objetivo text, kcal int, proteina int, carbohidrato int, grasa int,
+ *     plan_json jsonb not null,   ← { form: FormData, result: NutritionResult, opcionesPorTiempo? }
+ *     created_at timestamptz
+ *   )
+ *   perfiles_digestivos(user_id, hinchazon, reflujo, ritmo, diag, intolerancias, ...)
+ *   profiles(id, nombre, email, role, ...)
  *
- * El "banco" agrega un array `opciones[]` dentro de cada comida de plan_data,
- * junto a `items` (no lo reemplaza). El resto de la app sigue leyendo `items`.
+ * EL BANCO SE PERSISTE COMO EXTENSIÓN DE plan_json:
+ *   plan_json.opcionesPorTiempo: Record<tipo, OpcionPreparacion[]>
+ * Los campos originales `form` y `result` no se tocan — la app sigue leyendo
+ * plan_json.form y plan_json.result sin cambios.
  *
- * Este archivo TRADUCE entre el shape real de la DB y el modelo de dominio
- * (TiempoComida con macros target). Por eso route.ts y aporte.ts NO cambian.
+ * LOS TIEMPOS DE COMIDA SE DERIVAN — NO SE PERSISTEN como columnas separadas.
+ * Reusamos `generarPlan(form, result.kcal)` (la misma lógica que muestra el
+ * PlanResult al paciente) para obtener los meals del día 1, sus kcal y macros.
+ * Así, una sola fuente de verdad: el form genera los tiempos siempre igual.
  *
- * Requiere:  npm i @supabase/supabase-js
- * Variables de entorno (server-only):
+ * Variables de entorno (server-only, NUNCA exponer al cliente):
  *   SUPABASE_URL
- *   SUPABASE_SERVICE_ROLE_KEY   ← NUNCA exponer al cliente.
+ *   SUPABASE_SERVICE_ROLE_KEY
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
+import { generarPlan } from "@/lib/planGenerator";
+import type { FormData, NutritionResult } from "@/lib/nutrition";
 import type {
   ContextoPaciente,
-  MacrosTarget,
   OpcionPreparacion,
   Plan,
   TiempoComida,
 } from "@/types/banco";
 
-// --- Apuntadores al esquema real. Si más adelante consolidas en
-//     `planes_nutricionales`/`plan_json`, cambia SÓLO estas constantes. ---
-const TABLA_PLANES = "planes";
-const COL_PLAN_DATA = "plan_data";
-const ARRAY_COMIDAS = "comidas";
+// --- Apuntadores al schema real ----------------------------------------------
+const TABLA_PLANES = "planes_nutricionales";
+const COL_PLAN_JSON = "plan_json";
 
-// Split energético para DERIVAR el target de CHO/grasa por comida, porque el
-// esquema sólo guarda kcal + proteína (`p`) por comida. Es una estimación
-// razonable; si algún día guardas CHO/grasa por comida, úsalos directamente.
-const SPLIT_CHO = 0.6; // del kcal restante tras la proteína
-const SPLIT_GRASA = 0.4;
+// --- Etiquetas humanas por tipo de DayMeal (alineado con banco-adapter.ts) ---
+const MEAL_TYPE_LABEL: Record<string, string> = {
+  desayuno:        "Desayuno",
+  colacion_manana: "Colación AM",
+  almuerzo:        "Almuerzo",
+  once:            "Once",
+  cena:            "Cena",
+};
 
 function client(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
@@ -57,70 +66,73 @@ function client(): SupabaseClient {
 }
 
 // --------------------------------------------------------------------------- //
-// Tipos del shape real de plan_data (lo que vive en la DB)
+// Shape persistido en plan_json
 // --------------------------------------------------------------------------- //
-interface ComidaDB {
-  nombre: string;
-  kcal?: number;
-  p?: number; // proteína en gramos
-  items?: string[]; // alimentos como texto
-  opciones?: OpcionPreparacion[]; // ← lo que agrega el banco
-}
-interface PlanDataDB {
-  comidas?: ComidaDB[];
-  plan?: unknown[];
-  [k: string]: unknown;
-}
-
-/** Deriva el target de macros de una comida a partir de kcal + proteína. */
-function targetDeComida(c: ComidaDB): MacrosTarget {
-  const kcal = c.kcal ?? 0;
-  const proteina_g = c.p ?? 0;
-  const restante = Math.max(0, kcal - proteina_g * 4);
-  return {
-    kcal,
-    proteina_g,
-    carbohidrato_g: Math.round((restante * SPLIT_CHO) / 4),
-    grasa_g: Math.round((restante * SPLIT_GRASA) / 9),
-  };
+interface PlanJsonShape {
+  form: FormData;
+  result: NutritionResult;
+  /** Banco de opciones generadas por la skill — extensión opcional. */
+  opcionesPorTiempo?: Record<string, OpcionPreparacion[]>;
 }
 
 // --------------------------------------------------------------------------- //
-// Lectura del plan
+// Lectura del plan: deriva tiempos desde form+result y attacha opciones guardadas
 // --------------------------------------------------------------------------- //
 export async function obtenerPlan(planId: string): Promise<Plan | null> {
   const { data, error } = await client()
     .from(TABLA_PLANES)
-    .select(`id, user_id, patient_id, ${COL_PLAN_DATA}`)
+    .select(`id, user_id, ${COL_PLAN_JSON}`)
     .eq("id", planId)
     .maybeSingle();
   if (error) throw new Error(`Supabase obtenerPlan: ${error.message}`);
   if (!data) return null;
 
-  const planData = (data[COL_PLAN_DATA] ?? {}) as PlanDataDB;
-  const comidas = Array.isArray(planData[ARRAY_COMIDAS])
-    ? (planData[ARRAY_COMIDAS] as ComidaDB[])
-    : [];
+  const planJson = (data[COL_PLAN_JSON] ?? {}) as Partial<PlanJsonShape>;
+  if (!planJson.form || !planJson.result) {
+    throw new Error(
+      `Plan ${planId} no tiene form/result en plan_json (shape antiguo o vacío).`,
+    );
+  }
 
-  // Traducción DB → dominio. El id sintético "comida-N" permite volver a
-  // ubicar la comida al guardar (las comidas no tienen id propio en la DB).
-  const tiempos_comida: TiempoComida[] = comidas.map((c, i) => ({
-    id: `comida-${i}`,
-    tipo: c.nombre ?? `comida ${i + 1}`,
-    kcal: c.kcal,
-    macros: targetDeComida(c),
-    opciones: Array.isArray(c.opciones) ? c.opciones : [],
-  }));
+  // Deriva los tiempos usando la misma lógica que ve el paciente en su UI.
+  // El día 1 representa la "plantilla" del plan; el banco aplica a TODOS los días.
+  const week = generarPlan(planJson.form, planJson.result.kcal);
+  const day1 = week.dias[0];
+  if (!day1) return null;
+
+  const opcionesGuardadas = planJson.opcionesPorTiempo ?? {};
+
+  const tiempos_comida: TiempoComida[] = day1.meals
+    .filter((m) => m.tipo !== "ultra") // ultra-procesados no son tiempos del banco
+    .map((meal) => {
+      const tipoLabel = MEAL_TYPE_LABEL[meal.tipo] ?? meal.label;
+      // Aceptamos opciones guardadas tanto por etiqueta humana ("Almuerzo")
+      // como por el código interno ("almuerzo"), para sobrevivir migraciones.
+      const opciones =
+        opcionesGuardadas[tipoLabel] ?? opcionesGuardadas[meal.tipo] ?? [];
+      return {
+        id:   meal.tipo, // p.ej. "almuerzo" — estable y único por tiempo
+        tipo: tipoLabel,
+        kcal: meal.kcal,
+        macros: {
+          kcal:           meal.kcal,
+          proteina_g:     meal.p,
+          carbohidrato_g: meal.c,
+          grasa_g:        meal.g,
+        },
+        opciones,
+      };
+    });
 
   return {
-    id: data.id as string,
-    paciente_id: (data.patient_id ?? data.user_id) as string,
+    id:          data.id as string,
+    paciente_id: data.user_id as string, // plan.user_id = paciente
     tiempos_comida,
   };
 }
 
 // --------------------------------------------------------------------------- //
-// Contexto del paciente (opción "a": digestivo + médico que SÍ existen)
+// Contexto del paciente (digestivo + médico desde perfiles_digestivos)
 // --------------------------------------------------------------------------- //
 function esAfirmativo(v: unknown): boolean {
   if (typeof v !== "string") return false;
@@ -134,7 +146,7 @@ export async function obtenerContextoPaciente(
 ): Promise<ContextoPaciente> {
   const sb = client();
 
-  // Digestivo (existe).
+  // Digestivo (existe en producción).
   const { data: dig, error: eDig } = await sb
     .from("perfiles_digestivos")
     .select("hinchazon, diag, intolerancias")
@@ -145,30 +157,29 @@ export async function obtenerContextoPaciente(
   const diag = (dig?.diag ?? "").toString().toLowerCase();
   const intolerancias = Array.isArray(dig?.intolerancias) ? dig!.intolerancias : [];
 
-  // ⚠️ HUECO DE DATOS (decisión "a"): tu esquema actual NO almacena alergias,
-  // alimentos rechazados/preferidos, presupuesto, tiempo de cocina ni habilidad
-  // culinaria. Se devuelven vacíos: el generador NO podrá filtrar por ellos
-  // hasta que captures esos campos (p.ej. tabla `perfiles_nutricionales`).
-  // Cuando existan, mapéalos aquí y el generador los respetará automáticamente.
+  // ⚠️ HUECO DE DATOS: el esquema actual NO almacena alergias, alimentos
+  // rechazados/preferidos, presupuesto, tiempo de cocina ni habilidad culinaria.
+  // Devolvemos defaults razonables; cuando se capturen (p.ej. perfiles_nutricionales),
+  // mapéalos aquí y la skill los respetará automáticamente.
   return {
-    alergias: [], // ← pendiente de capturar en la app
-    alimentos_rechazados: [], // ← pendiente
-    intolerancias: [],
+    alergias:                [], // ← pendiente
+    alimentos_rechazados:    [], // ← pendiente
+    intolerancias:           [],
     intolerancias_percibidas: intolerancias,
-    alimentos_mal_caen: [],
-    diagnostico_sibo: diag.includes("sibo"),
-    hinchazon_frecuente: esAfirmativo(dig?.hinchazon),
-    alimentos_preferidos: [], // ← pendiente
-    tiempo_cocinar_min: 30, // ← default hasta capturarlo
-    habilidad_culinaria: "intermedia", // ← default
-    presupuesto: "medio", // ← default
-    objetivo_principal: "salud_metabolica", // ← se puede wirear desde planes.objetivo
-    horario_entrenamiento: null,
+    alimentos_mal_caen:      [],
+    diagnostico_sibo:        diag.includes("sibo"),
+    hinchazon_frecuente:     esAfirmativo(dig?.hinchazon),
+    alimentos_preferidos:    [], // ← pendiente
+    tiempo_cocinar_min:      30,       // ← default
+    habilidad_culinaria:     "intermedia",
+    presupuesto:             "medio",
+    objetivo_principal:      "salud_metabolica", // ← se podría wirear desde planes.objetivo
+    horario_entrenamiento:   null,
   };
 }
 
 // --------------------------------------------------------------------------- //
-// Escritura: agrega opciones[] a la comida correspondiente en plan_data
+// Escritura: actualiza plan_json.opcionesPorTiempo[tiempo.tipo] sin tocar form/result
 // --------------------------------------------------------------------------- //
 export async function guardarOpcionesTiempo(
   planId: string,
@@ -176,32 +187,37 @@ export async function guardarOpcionesTiempo(
 ): Promise<void> {
   const sb = client();
 
+  // Read current plan_json
   const { data, error } = await sb
     .from(TABLA_PLANES)
-    .select(COL_PLAN_DATA)
+    .select(COL_PLAN_JSON)
     .eq("id", planId)
     .maybeSingle();
   if (error) throw new Error(`Supabase read (guardar): ${error.message}`);
-  if (!data) throw new Error(`Plan ${planId} desapareció durante la escritura.`);
+  if (!data) throw new Error(`Plan ${planId} no encontrado al guardar opciones.`);
 
-  const planData = (data[COL_PLAN_DATA] ?? {}) as PlanDataDB;
-  const comidas = Array.isArray(planData[ARRAY_COMIDAS])
-    ? (planData[ARRAY_COMIDAS] as ComidaDB[])
-    : [];
-
-  // Recupera el índice desde el id sintético "comida-N".
-  const idx = Number.parseInt(tiempo.id.replace("comida-", ""), 10);
-  if (Number.isNaN(idx) || idx < 0 || idx >= comidas.length) {
-    throw new Error(`No se ubicó la comida ${tiempo.id} en el plan ${planId}.`);
+  const planJson = (data[COL_PLAN_JSON] ?? {}) as Partial<PlanJsonShape>;
+  if (!planJson.form || !planJson.result) {
+    throw new Error(
+      `Plan ${planId} no tiene form/result; no se pueden agregar opciones a un plan vacío.`,
+    );
   }
 
-  // Extiende SIN tocar items: agrega/reescribe sólo opciones[].
-  comidas[idx] = { ...comidas[idx], opciones: tiempo.opciones };
-  const nuevoPlanData: PlanDataDB = { ...planData, [ARRAY_COMIDAS]: comidas };
+  // Merge en el mapa por tipo. Sobrescribe lo que había para ese tipo.
+  const opcionesPorTiempo: Record<string, OpcionPreparacion[]> = {
+    ...(planJson.opcionesPorTiempo ?? {}),
+  };
+  opcionesPorTiempo[tiempo.tipo] = tiempo.opciones;
+
+  const nuevoPlanJson: PlanJsonShape = {
+    form:    planJson.form,
+    result:  planJson.result,
+    opcionesPorTiempo,
+  };
 
   const { error: errUpd } = await sb
     .from(TABLA_PLANES)
-    .update({ [COL_PLAN_DATA]: nuevoPlanData })
+    .update({ [COL_PLAN_JSON]: nuevoPlanJson })
     .eq("id", planId);
   if (errUpd) throw new Error(`Supabase update (guardar): ${errUpd.message}`);
 }
