@@ -85,6 +85,29 @@ export default function LoginPage() {
             setLoading(false)
             return
           }
+
+          // Si se vinculó con un profesional ahora (al confirmar email tras registro)
+          // → avisar al profesional (email + push). Best-effort.
+          if (pendingPro) {
+            const patientEmail = authData.user!.email ?? email.trim().toLowerCase()
+            const patientName  = pendingNombre || authData.user!.user_metadata?.nombre || patientEmail
+            try {
+              const { data: { session } } = await supabase.auth.getSession()
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+              if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+              fetch('/api/notify/patient-registered', {
+                method:      'POST',
+                headers,
+                credentials: 'include',
+                body:        JSON.stringify({
+                  patientId:      authData.user!.id,
+                  patientName,
+                  patientEmail,
+                  professionalId: pendingPro,
+                }),
+              }).catch(() => { /* non-fatal */ })
+            } catch { /* non-fatal */ }
+          }
         }
         window.location.href = '/paciente'
       }

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendMail } from '@/lib/mailer'
+import { sendPushToUser } from '@/lib/push'
+import { createServiceClient } from '@/lib/supabase-server'
 
 interface PlanEmailBody {
   patientEmail: string
@@ -9,6 +11,8 @@ interface PlanEmailBody {
   planObjetivo: string
   macros: { p: number; c: number; g: number }
   appUrl: string
+  /** Opcional — si viene, también se envía push al paciente. */
+  patientId?: string
 }
 
 function buildHtml(body: PlanEmailBody): string {
@@ -99,15 +103,39 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const result = await sendMail({
-    to: body.patientEmail,
-    subject: 'Tu profesional ha preparado un nuevo plan nutricional',
-    html: buildHtml(body),
-  })
+  // Disparar email y push en paralelo — ambos son best-effort.
+  // Si el push falla (paciente no suscrito) no debe abortar el email.
+  const [emailResult, pushResult] = await Promise.all([
+    sendMail({
+      to: body.patientEmail,
+      subject: 'Tu profesional ha preparado un nuevo plan nutricional',
+      html: buildHtml(body),
+    }),
+    (async () => {
+      if (!body.patientId) return { sent: 0, removed: 0, skipped: true as const }
+      try {
+        const sb = createServiceClient()
+        const res = await sendPushToUser(sb, body.patientId, {
+          title: '🥗 Tu plan está listo',
+          body:  `${body.professionalName} acaba de generar tu plan nutricional. Ábrelo en la app.`,
+          url:   '/paciente?tab=plan',
+          tag:   'plan-ready',
+        })
+        return { ...res, skipped: false as const }
+      } catch (err) {
+        console.error('[email/plan] push send failed:', err)
+        return { sent: 0, removed: 0, skipped: false as const, error: String(err) }
+      }
+    })(),
+  ])
 
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 500 })
+  if (!emailResult.ok) {
+    return NextResponse.json({ error: emailResult.error, push: pushResult }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, skipped: result.skipped })
+  return NextResponse.json({
+    ok: true,
+    skipped: emailResult.skipped,
+    push: pushResult,
+  })
 }

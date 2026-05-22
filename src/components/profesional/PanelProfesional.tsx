@@ -445,6 +445,7 @@ Cualquier duda, escríbeme 😊`
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          patientId: patient.id,    // ← habilita push al paciente
           patientEmail: patient.email,
           patientName: patient.nombre,
           professionalName,

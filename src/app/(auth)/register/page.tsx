@@ -18,6 +18,30 @@ function decodeProParam(raw: string | null): string | null {
   }
 }
 
+/**
+ * Avisa al profesional (email + push) que un paciente se vinculó a su panel.
+ * Best-effort — los errores no deben afectar el flujo de registro.
+ */
+async function notifyProfessionalLinked(payload: {
+  patientId: string
+  patientName: string
+  patientEmail: string
+  professionalId: string
+}): Promise<void> {
+  try {
+    const { createClient } = await import('@/lib/supabase')
+    const { data: { session } } = await createClient().auth.getSession()
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+    await fetch('/api/notify/patient-registered', {
+      method:      'POST',
+      headers,
+      credentials: 'include',
+      body:        JSON.stringify(payload),
+    })
+  } catch { /* non-fatal */ }
+}
+
 // ─── RegisterForm (needs Suspense — uses useSearchParams) ─────────────────────
 function RegisterForm() {
   const router = useRouter()
@@ -49,7 +73,7 @@ function RegisterForm() {
       // Check current access so we don't overwrite an existing trial or paid plan
       const { data: profile } = await supabase
         .from('profiles')
-        .select('premium_until, trial_ends_at')
+        .select('nombre, email, premium_until, trial_ends_at')
         .eq('id', user.id)
         .maybeSingle()
       const hasActivePremium = profile?.premium_until && new Date(profile.premium_until) > new Date()
@@ -65,6 +89,16 @@ function RegisterForm() {
           ...(trialEndsAt && { trial_ends_at: trialEndsAt }),
         })
         .eq('id', user.id)
+
+      // Avisar al profesional (email + push) que el paciente se vinculó.
+      // Best-effort: si falla no detenemos el flujo, el paciente ya quedó vinculado.
+      notifyProfessionalLinked({
+        patientId:      user.id,
+        patientName:    profile?.nombre ?? user.email ?? 'Paciente',
+        patientEmail:   profile?.email ?? user.email ?? '',
+        professionalId: professionalId,
+      }).catch(() => { /* non-fatal */ })
+
       setAutoLinked(true)
       setTimeout(() => router.push('/paciente'), 2000)
     })
@@ -143,6 +177,17 @@ function RegisterForm() {
         setLoading(false)
         return
       }
+    }
+
+    // 3a. Si el paciente vino por link de invitación → avisar al profesional
+    //     (email + push). Best-effort: errores no detienen el redirect.
+    if (isLinked && professionalId) {
+      notifyProfessionalLinked({
+        patientId:      userId,
+        patientName:    nombre.trim(),
+        patientEmail:   email.trim().toLowerCase(),
+        professionalId: professionalId,
+      }).catch(() => { /* non-fatal */ })
     }
 
     // 3. Send welcome email (non-fatal)
