@@ -45,3 +45,4 @@ next-env.d.ts
 # Supabase CLI working dir (regenerated on link / cli commands)
 /supabase/.temp/
 /supabase/.branches/
+banco_opciones_centro_metabolico.zip
