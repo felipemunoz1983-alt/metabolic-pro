@@ -24,15 +24,21 @@ export function middleware(req: NextRequest) {
     const size = contentLength ? parseInt(contentLength, 10) : 0
 
     if (size > MAX_BODY_BYTES) {
-      return NextResponse.json(
+      const res = NextResponse.json(
         {
           error: 'La imagen es muy grande. Por favor cierra completamente la app y vuelve a abrirla para cargar la versión actualizada que comprime las imágenes correctamente.',
         },
         { status: 413 },
       )
+      // Forzar al browser a limpiar caches (incluyendo SW caches viejos)
+      // para que la próxima carga de la app traiga JS fresco con compresión
+      res.headers.set('Clear-Site-Data', '"cache"')
+      return res
     }
   }
 
+  // Para requests que pasan, añadir header Clear-Site-Data en respuestas si hay error
+  // (esto se ajusta más abajo si fuera necesario; por ahora dejamos pasar limpio)
   return NextResponse.next()
 }
 

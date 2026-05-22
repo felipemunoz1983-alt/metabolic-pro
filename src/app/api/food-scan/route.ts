@@ -18,10 +18,14 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // ── Auth guard con diagnóstico (Bearer → cookie fallback) ─────────────────
   const { user, reason } = await getAuthUserDebug(req)
   if (!user) {
-    return NextResponse.json(
+    const res = NextResponse.json(
       { error: `🔍 ${ROUTE_VERSION} — Sesión no encontrada: ${reason}` },
       { status: 401 },
     )
+    // Forzar limpieza de cache cuando hay fallo de auth — esto ayuda a clientes
+    // viejos cacheados a refrescar y obtener la versión nueva en la siguiente apertura
+    res.headers.set('Clear-Site-Data', '"cache"')
+    return res
   }
 
   // ── Rate limit (short + daily) ────────────────────────────────────────────
