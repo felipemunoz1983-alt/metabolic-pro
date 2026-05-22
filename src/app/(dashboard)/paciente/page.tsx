@@ -199,11 +199,20 @@ export default function PacientePage() {
           return
         }
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle()
+        // Optimización: queries en PARALELO en vez de secuencial.
+        // profile (necesario para decidir UI) y latestPlan (para precargar el plan)
+        // son independientes — un solo Promise.all ahorra ~1-2s de latencia 4G.
+        const [profileRes, planRes] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+          supabase
+            .from('planes_nutricionales')
+            .select('plan_json')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle(),
+        ])
+        const { data: profileData, error: profileError } = profileRes
 
         // currentProfile is resolved after both branches — used for onboarding check below
         let currentProfile: Profile | null = null
@@ -277,22 +286,13 @@ export default function PacientePage() {
         // Load read state from localStorage
         setReadIds(getReadIds(user.id))
 
-        // Auto-load most recent plan so patient sees it on first login
-        const { data: latestPlan } = await supabase
-          .from('planes_nutricionales')
-          .select('plan_json')
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle()
-
+        // Plan ya viene del Promise.all de arriba (paralelizado con el profile)
+        const latestPlan = planRes.data
         const hasPlan = !!(latestPlan?.plan_json?.result && latestPlan?.plan_json?.form)
 
         if (hasPlan) {
           setResult(latestPlan!.plan_json.result)
           setFormData(latestPlan!.plan_json.form)
-          // Aterrizar en dashboard (noticias + calorías) — el plan queda en tab Nutrición
-          // No forzar tab específico: el URL param o default 'dashboard' rige
         }
 
         // All checks passed — allow render
