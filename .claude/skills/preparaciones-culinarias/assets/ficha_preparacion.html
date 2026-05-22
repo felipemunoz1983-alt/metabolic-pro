@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de preparación — Centro Metabólico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     PLANTILLA — Ficha de preparación premium · Centro Metabólico
+     Para usar: edita SOLO el objeto DATA al final del <script>.
+     Tokens de marca tomados de branding_centro_metabolico.md
+     ============================================================ */
+  :root{
+    --cyan:#1DAEEC; --cyan-osc:#039CE0; --cyan-claro:#A6E1F7;
+    --fondo:#F7FBFE; --blanco:#FFFFFF;
+    --texto:#0B2A3A; --texto-suave:#5A6C77;
+    --divisor:#E5EEF4; --gris-fondo:#EDF3F8;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--fondo); color:var(--texto);
+    -webkit-font-smoothing:antialiased; padding:32px;
+    display:flex; justify-content:center;
+  }
+  .ficha{
+    width:148mm; min-height:210mm; background:var(--blanco);
+    border-radius:20px; overflow:hidden;
+    box-shadow:0 12px 40px rgba(3,42,58,.10);
+    display:flex; flex-direction:column;
+  }
+  /* Header */
+  .head{
+    background:linear-gradient(135deg,var(--cyan) 0%,var(--cyan-osc) 100%);
+    color:#fff; padding:28px 30px 24px;
+  }
+  .marca{font-size:11px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; opacity:.85}
+  .tiempo-comida{font-size:12px; font-weight:500; opacity:.9; margin-top:2px}
+  .titulo{font-size:26px; font-weight:700; line-height:1.15; letter-spacing:-.01em; margin-top:10px}
+  .tags{display:flex; flex-wrap:wrap; gap:6px; margin-top:14px}
+  .tag{
+    background:rgba(255,255,255,.18); border:1px solid rgba(255,255,255,.28);
+    font-size:11px; font-weight:500; padding:4px 10px; border-radius:999px;
+  }
+  /* KPIs de macros */
+  .macros{display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:var(--divisor)}
+  .kpi{background:var(--blanco); padding:16px 8px; text-align:center}
+  .kpi .val{font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; line-height:1}
+  .kpi .lab{font-size:10px; font-weight:500; color:var(--texto-suave); text-transform:uppercase; letter-spacing:.06em; margin-top:5px}
+  .kpi.kcal .val{color:var(--cyan-osc)}
+  /* Cuerpo */
+  .body{padding:24px 30px; flex:1}
+  .seccion{margin-bottom:22px}
+  .seccion h3{
+    font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--cyan-osc); margin-bottom:10px; padding-bottom:6px;
+    border-bottom:1px solid var(--divisor);
+  }
+  .ingredientes{list-style:none; display:flex; flex-direction:column; gap:7px}
+  .ingredientes li{display:flex; justify-content:space-between; font-size:14px; line-height:1.4}
+  .ingredientes .nom{color:var(--texto)}
+  .ingredientes .cant{color:var(--texto-suave); font-variant-numeric:tabular-nums; font-weight:500; white-space:nowrap; padding-left:12px}
+  .pasos{list-style:none; counter-reset:p; display:flex; flex-direction:column; gap:9px}
+  .pasos li{position:relative; padding-left:30px; font-size:14px; line-height:1.45; counter-increment:p}
+  .pasos li::before{
+    content:counter(p); position:absolute; left:0; top:0;
+    width:21px; height:21px; background:var(--cyan-claro); color:var(--cyan-osc);
+    border-radius:50%; font-size:11px; font-weight:700;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .nota{
+    background:var(--gris-fondo); border-left:3px solid var(--cyan);
+    border-radius:0 10px 10px 0; padding:12px 14px; font-size:13px;
+    color:var(--texto-suave); line-height:1.45;
+  }
+  .nota b{color:var(--texto); font-weight:600}
+  /* Footer */
+  .foot{
+    padding:14px 30px; border-top:1px solid var(--divisor);
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:11px; color:var(--texto-suave);
+  }
+  .foot .meta-foot{font-variant-numeric:tabular-nums}
+  @media print{
+    body{padding:0; background:#fff}
+    .ficha{box-shadow:none; border-radius:0; width:100%; min-height:100vh}
+    @page{size:A5; margin:0}
+  }
+</style>
+</head>
+<body>
+  <article class="ficha">
+    <header class="head">
+      <div class="marca">Centro Metabólico</div>
+      <div class="tiempo-comida" id="tiempo">Almuerzo</div>
+      <h1 class="titulo" id="titulo">—</h1>
+      <div class="tags" id="tags"></div>
+    </header>
+
+    <section class="macros" id="macros"></section>
+
+    <div class="body">
+      <div class="seccion">
+        <h3>Ingredientes</h3>
+        <ul class="ingredientes" id="ingredientes"></ul>
+      </div>
+      <div class="seccion">
+        <h3>Preparación</h3>
+        <ol class="pasos" id="pasos"></ol>
+      </div>
+      <div class="seccion" id="nota-wrap">
+        <h3>Nota</h3>
+        <div class="nota" id="nota"></div>
+      </div>
+    </div>
+
+    <footer class="foot">
+      <span>Plan personalizado · uso individual</span>
+      <span class="meta-foot" id="meta-foot"></span>
+    </footer>
+  </article>
+
+<script>
+  /* ====== EDITA SOLO ESTE OBJETO ====== */
+  const DATA = {
+    tiempo_comida: "Almuerzo",
+    nombre: "Salteado de pollo, quínoa y verduras",
+    tags: ["Sin lácteos", "Sin gluten", "Post-entreno", "15 min"],
+    macros: { kcal: 420, proteina_g: 38, carbohidrato_g: 40, grasa_g: 11 },
+    ingredientes: [
+      { alimento: "Pechuga de pollo", medida: "95 g · 1 palma" },
+      { alimento: "Quínoa cocida", medida: "160 g · 1.5 tazas" },
+      { alimento: "Zapallo italiano", medida: "100 g · ¾ taza" },
+      { alimento: "Pimentón", medida: "60 g · ½ unidad" },
+      { alimento: "Aceite de oliva", medida: "4 g · 1 cdita" }
+    ],
+    pasos: [
+      "Calentar el aceite a fuego medio-alto.",
+      "Saltear el pollo en cubos 6-7 min hasta dorar.",
+      "Agregar las verduras y cocinar 4 min.",
+      "Incorporar la quínoa cocida, sazonar con limón, comino y cilantro, y servir."
+    ],
+    nota: "Bien tolerado en la ventana post-entrenamiento. Bajo en FODMAP si se modera el pimentón.",
+    porcion_casera: "1 taza de quínoa + 1 palma de pollo + 1.5 tazas de verduras"
+  };
+  /* ==================================== */
+
+  const $ = id => document.getElementById(id);
+  $("tiempo").textContent = DATA.tiempo_comida;
+  $("titulo").textContent = DATA.nombre;
+  $("tags").innerHTML = DATA.tags.map(t => `<span class="tag">${t}</span>`).join("");
+  const M = DATA.macros;
+  $("macros").innerHTML = `
+    <div class="kpi kcal"><div class="val">${M.kcal}</div><div class="lab">kcal</div></div>
+    <div class="kpi"><div class="val">${M.proteina_g}<span style="font-size:13px">g</span></div><div class="lab">Proteína</div></div>
+    <div class="kpi"><div class="val">${M.carbohidrato_g}<span style="font-size:13px">g</span></div><div class="lab">Carbohid.</div></div>
+    <div class="kpi"><div class="val">${M.grasa_g}<span style="font-size:13px">g</span></div><div class="lab">Grasa</div></div>`;
+  $("ingredientes").innerHTML = DATA.ingredientes.map(i =>
+    `<li><span class="nom">${i.alimento}</span><span class="cant">${i.medida}</span></li>`).join("");
+  $("pasos").innerHTML = DATA.pasos.map(p => `<li>${p}</li>`).join("");
+  if (DATA.nota) { $("nota").innerHTML = DATA.nota; }
+  else { $("nota-wrap").style.display = "none"; }
+  $("meta-foot").textContent = DATA.porcion_casera || "";
+</script>
+</body>
+</html>
