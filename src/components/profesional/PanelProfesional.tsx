@@ -8,6 +8,7 @@ import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
 import { PlanResult } from '@/components/plan/PlanResult'
 import { BancoOpciones } from '@/components/profesional/BancoOpciones'
+import { AdherenciaPaciente } from '@/components/profesional/AdherenciaPaciente'
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
@@ -807,6 +808,11 @@ Cualquier duda, escríbeme 😊`
           </div>
         )
       })()}
+
+      {/* ── Adherencia y patrones (Fase 2) ── */}
+      <div className="mb-5">
+        <AdherenciaPaciente patientId={patient.id} />
+      </div>
 
       {/* ── Evolución de peso ── */}
       {logs.filter(l => l.peso).length >= 2 && (
