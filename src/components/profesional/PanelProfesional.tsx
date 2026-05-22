@@ -15,7 +15,7 @@ import {
   CheckCircle, AlertCircle, RefreshCw,
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
   FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
-  MessageSquare,
+  MessageSquare, Smartphone,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -306,6 +306,35 @@ function PatientDetail({
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error' | 'save_error'>('idle')
   const [showMensaje, setShowMensaje] = useState(false)
+  const [showInstallModal, setShowInstallModal] = useState(false)
+  const [installCopied, setInstallCopied] = useState(false)
+
+  /** Mensaje WhatsApp con instrucciones de instalación para el paciente */
+  const installMessage = (() => {
+    const nombre = patient.nombre?.split(' ')[0] ?? 'Hola'
+    const appUrl = typeof window !== 'undefined'
+      ? `${window.location.origin}/paciente`
+      : 'https://app.centrometabolico.cl/paciente'
+    return `¡Hola ${nombre}! 👋 Te comparto la app de Centro Metabólico para registrar tus comidas fácilmente desde tu celular.
+
+📲 *Cómo instalarla:*
+
+*iPhone (Safari):*
+1. Abre este link con Safari:
+${appUrl}
+2. Toca el botón 📤 (compartir, abajo al centro)
+3. Selecciona "Agregar a pantalla de inicio"
+4. ¡Listo! La app aparece como ícono ✅
+
+*Android (Chrome):*
+1. Abre el link en Chrome:
+${appUrl}
+2. Toca ⋮ (tres puntos arriba a la derecha)
+3. Selecciona "Agregar a pantalla de inicio"
+4. ¡Listo! ✅
+
+Cualquier duda, escríbeme 😊`
+  })()
 
   useEffect(() => {
     async function loadData() {
@@ -482,6 +511,87 @@ function PatientDetail({
         )}
       </AnimatePresence>
 
+      {/* ── Modal: instrucciones de instalación ── */}
+      <AnimatePresence>
+        {showInstallModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4"
+            onClick={() => setShowInstallModal(false)}
+          >
+            <motion.div
+              initial={{ y: 40, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 40, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-[#1DAEEC]/10 flex items-center justify-center">
+                    <Smartphone size={16} className="text-[#1DAEEC]" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-[#0C1F2C]">Enviar instrucciones de instalación</p>
+                    <p className="text-xs text-[#8BA5BE]">Para {patient.nombre}</p>
+                  </div>
+                </div>
+                <button onClick={() => setShowInstallModal(false)} className="text-[#8BA5BE] hover:text-[#0C1F2C] transition-colors">
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Message preview */}
+              <div className="bg-[#F7FBFE] rounded-2xl p-4 mb-4 text-xs text-[#4A6070] leading-relaxed whitespace-pre-line font-mono border border-[#E2ECF4] max-h-56 overflow-y-auto">
+                {installMessage}
+              </div>
+
+              {/* Actions */}
+              <div className="flex flex-col gap-2.5">
+                {/* WhatsApp — si hay número */}
+                {patient.whatsapp ? (
+                  <a
+                    href={`https://wa.me/${patient.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(installMessage)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-[#25D366] text-white text-sm font-bold hover:bg-[#1fb855] transition-colors"
+                    onClick={() => setShowInstallModal(false)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    Enviar por WhatsApp ({patient.whatsapp})
+                  </a>
+                ) : (
+                  <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                    <AlertCircle size={14} className="text-amber-500 flex-shrink-0" />
+                    <p className="text-xs text-amber-700">
+                      No hay número WhatsApp registrado para este paciente. Copia el mensaje y envíalo manualmente.
+                    </p>
+                  </div>
+                )}
+
+                {/* Copiar mensaje */}
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(installMessage)
+                    setInstallCopied(true)
+                    setTimeout(() => setInstallCopied(false), 2500)
+                  }}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-[#E2ECF4] text-[#4A6070] text-sm font-medium hover:border-[#29ABE2] hover:text-[#29ABE2] transition-colors"
+                >
+                  {installCopied ? <CheckCircle size={14} className="text-green-500" /> : <Copy size={14} />}
+                  {installCopied ? '¡Copiado!' : 'Copiar mensaje'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Back + header */}
       <div className="flex items-center justify-between mb-6">
         <button
@@ -491,6 +601,14 @@ function PatientDetail({
           <ArrowLeft size={14} /> Todos los pacientes
         </button>
         <div className="flex items-center gap-2 flex-wrap justify-end">
+          {/* Enviar instrucciones de instalación de la app */}
+          <button
+            onClick={() => setShowInstallModal(true)}
+            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-[#25D366] hover:text-[#25D366] transition"
+            title="Enviar instrucciones para instalar la app en el celular"
+          >
+            <Smartphone size={14} /> <span className="hidden sm:inline">Enviar app</span>
+          </button>
           {/* Enviar mensaje */}
           <button
             onClick={() => setShowMensaje(true)}

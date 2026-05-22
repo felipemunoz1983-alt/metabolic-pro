@@ -10,8 +10,8 @@ import {
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
-  // ── Auth guard ────────────────────────────────────────────────────────────
-  const user = await getAuthUser()
+  // ── Auth guard (Bearer token → cookie fallback) ───────────────────────────
+  const user = await getAuthUser(req)
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }

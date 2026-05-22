@@ -1,7 +1,7 @@
 'use client'
 
-import { useMemo } from 'react'
-import { motion } from 'framer-motion'
+import { useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Flame, Beef } from 'lucide-react'
 import type { WeekPlan } from '@/lib/planGenerator'
 import { cn } from '@/lib/utils'
@@ -42,6 +42,16 @@ interface Props {
 }
 
 export function MenuHoy({ plan, nombre }: Props) {
+  // Tracks which meal tipos are expanded (shows all ingredients)
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set())
+
+  const toggleMeal = (tipo: string) =>
+    setExpandedMeals(prev => {
+      const next = new Set(prev)
+      if (next.has(tipo)) { next.delete(tipo) } else { next.add(tipo) }
+      return next
+    })
+
   const hoy = useMemo(() => {
     const dayIndex = new Date().getDay()
     const nombreHoy = JS_TO_NOMBRE[dayIndex]
@@ -156,15 +166,48 @@ export function MenuHoy({ plan, nombre }: Props) {
                     )}
                   </div>
 
-                  {/* Ingredientes (primeros 2-3) */}
-                  {meal.items.length > 0 && (
-                    <p className="text-xs text-[#6B7C93] leading-relaxed line-clamp-2">
-                      {meal.items.slice(0, 3).join(' · ')}
-                      {meal.items.length > 3 && (
-                        <span className="text-[#29ABE2] font-medium"> +{meal.items.length - 3} más</span>
-                      )}
-                    </p>
-                  )}
+                  {/* Ingredientes — sin line-clamp, expandibles si hay >3 items */}
+                  {meal.items.length > 0 && (() => {
+                    const SHOW       = 3
+                    const isExpanded = expandedMeals.has(meal.tipo)
+                    const hasMore    = meal.items.length > SHOW
+                    // Siempre mostramos los primeros SHOW sin corte CSS
+                    // Si hay más y está expandido, los extras aparecen debajo con animación
+                    return (
+                      <div>
+                        {/* Primeros 3 items — sin line-clamp para que no corten con "..." */}
+                        <p className="text-xs text-[#6B7C93] leading-relaxed">
+                          {meal.items.slice(0, SHOW).join(' · ')}
+                        </p>
+
+                        {/* Items adicionales (4 en adelante) — se revelan al expandir */}
+                        <AnimatePresence>
+                          {isExpanded && hasMore && (
+                            <motion.p
+                              key={`extra-${meal.tipo}`}
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.22 }}
+                              className="text-xs text-[#6B7C93] leading-relaxed overflow-hidden"
+                            >
+                              {' · '}{meal.items.slice(SHOW).join(' · ')}
+                            </motion.p>
+                          )}
+                        </AnimatePresence>
+
+                        {/* Botón solo si hay más de SHOW items */}
+                        {hasMore && (
+                          <button
+                            onClick={() => toggleMeal(meal.tipo)}
+                            className="mt-0.5 text-[11px] font-semibold text-[#29ABE2] hover:text-[#039CE0] transition-colors active:opacity-70"
+                          >
+                            {isExpanded ? '▲ Ver menos' : `+${meal.items.length - SHOW} más`}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })()}
                 </div>
               </div>
             </motion.div>

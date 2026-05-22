@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { getNutrievoAIContext } from '@/lib/nutrevo'
+import { createClient } from '@/lib/supabase'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -103,9 +104,15 @@ ${getNutrievoAIContext()}`
     setLoading(true)
 
     try {
+      // Bearer token para autenticación en PWA/mobile (cookies no siempre viajan al server)
+      const { data: { session } } = await createClient().auth.getSession()
+      const authHeader = session?.access_token
+        ? { 'Authorization': `Bearer ${session.access_token}` }
+        : {}
+
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ messages: newMessages, system: systemPrompt }),
       })
 

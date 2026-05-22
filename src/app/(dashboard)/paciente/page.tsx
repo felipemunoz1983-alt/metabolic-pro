@@ -31,6 +31,7 @@ import { BottomNav } from '@/components/layout/BottomNav'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/OnboardingModal'
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
+import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner'
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -582,6 +583,9 @@ export default function PacientePage() {
       {activeTab === 'dashboard' && userId && profile && hasAccess(profile) && (
         <FoodScanner userId={userId} />
       )}
+
+      {/* ── PWA install banner — prompts patient to install app on phone ── */}
+      <PWAInstallBanner />
     </div>
     </>
   )

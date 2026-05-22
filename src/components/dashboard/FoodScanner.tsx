@@ -31,6 +31,56 @@ interface Props {
 const CONFIDENCE_LABEL = { alta: 'Alta', media: 'Media', baja: 'Baja' }
 const CONFIDENCE_COLOR = { alta: 'text-green-600 bg-green-50', media: 'text-amber-600 bg-amber-50', baja: 'text-red-500 bg-red-50' }
 
+/**
+ * Redimensiona y comprime una imagen al máximo de MAX_PX en el lado largo.
+ * En Android, las fotos de cámara son 12-48MP (10-30 MB raw).
+ * Sin esta compresión, el FileReader crash con "Memoria insuficiente".
+ *
+ * Output: JPEG base64, calidad 0.82, máx 1024px → típicamente < 200 KB.
+ */
+const MAX_PX   = 1024   // lado máximo en píxeles
+const QUALITY  = 0.82   // calidad JPEG (0-1)
+
+function compressImage(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    // 1. Crear URL temporal del archivo (no carga todo en memoria de una)
+    const objectUrl = URL.createObjectURL(file)
+    const img = new Image()
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl)  // liberar memoria
+
+      // 2. Calcular dimensiones de salida manteniendo aspect ratio
+      let { width, height } = img
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width >= height) {
+          height = Math.round((height / width) * MAX_PX)
+          width  = MAX_PX
+        } else {
+          width  = Math.round((width / height) * MAX_PX)
+          height = MAX_PX
+        }
+      }
+
+      // 3. Dibujar en canvas y exportar JPEG comprimido
+      const canvas = document.createElement('canvas')
+      canvas.width  = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { reject(new Error('Canvas no disponible')); return }
+      ctx.drawImage(img, 0, 0, width, height)
+      resolve(canvas.toDataURL('image/jpeg', QUALITY))
+    }
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl)
+      reject(new Error('No se pudo cargar la imagen'))
+    }
+
+    img.src = objectUrl
+  })
+}
+
 export function FoodScanner({ userId, onLogAdded }: Props) {
   const [open, setOpen] = useState(false)
   const [image, setImage] = useState<string | null>(null)
@@ -55,14 +105,14 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
 
   const handleFile = useCallback((file: File) => {
     if (!file.type.startsWith('image/')) return
-    const reader = new FileReader()
-    reader.onload = e => {
-      setImage(e.target?.result as string)
-      setResult(null)
-      setError('')
-      setLogged(false)
-    }
-    reader.readAsDataURL(file)
+    setError('')
+    setResult(null)
+    setLogged(false)
+
+    // Comprimir antes de cargar en memoria — evita crash "Memoria insuficiente" en Android
+    compressImage(file)
+      .then(compressed => setImage(compressed))
+      .catch(() => setError('No se pudo procesar la imagen. Intenta con otra foto.'))
   }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,9 +135,17 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
     setResult(null)
 
     try {
+      // Obtener JWT de sesión activa para enviarlo como Bearer token
+      // (necesario en PWA/mobile donde las cookies de Supabase no viajan al server)
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      const authHeader = session?.access_token
+        ? { 'Authorization': `Bearer ${session.access_token}` }
+        : {}
+
       const res = await fetch('/api/food-scan', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader },
         body: JSON.stringify({ image }),
       })
       const data = await res.json()
