@@ -13,6 +13,21 @@ import { cookies } from 'next/headers'
 import type { NextRequest } from 'next/server'
 
 /**
+ * Limpia BOMs (U+FEFF) y whitespace de strings que van a usarse como
+ * HTTP headers o claves de Supabase. Si Felipe pegó la env var en Vercel
+ * desde un editor de Windows o similar, puede colarse un BOM invisible
+ * que rompe fetch con: 'Cannot convert argument to a ByteString'.
+ */
+function clean(s: string | undefined | null): string {
+  if (!s) return ''
+  // Quitar BOMs, zero-width spaces, y otros caracteres invisibles que
+  // colapsan al pegar desde editores o herramientas de extracción
+  return s
+    .replace(/[﻿​‌‍ ]/g, '')
+    .trim()
+}
+
+/**
  * Devuelve el usuario autenticado.
  * Pasa `req` para habilitar la verificación por Bearer token (recomendado).
  * Sin `req` sólo usa cookies (puede fallar en mobile sin middleware).
@@ -47,14 +62,14 @@ async function makeServerClient(supabaseUrl: string, supabaseAnon: string) {
 }
 
 export async function getAuthUser(req?: NextRequest) {
-  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl  = clean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const supabaseAnon = clean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
   // ── 1. Bearer token (Authorization: Bearer <jwt>) ──────────────────────────
   if (req) {
     const authHeader = req.headers.get('authorization') ?? ''
     if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.slice(7).trim()
+      const token = clean(authHeader.slice(7))
       if (token) {
         const sb = await makeServerClient(supabaseUrl, supabaseAnon)
         const { data: { user }, error } = await sb.auth.getUser(token)
@@ -81,8 +96,8 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
   user: { id: string; email?: string } | null
   reason: string
 }> {
-  const supabaseUrl  = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAnon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  const supabaseUrl  = clean(process.env.NEXT_PUBLIC_SUPABASE_URL)
+  const supabaseAnon = clean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
 
   if (!supabaseUrl || !supabaseAnon) {
     return { user: null, reason: 'env_missing' }
@@ -92,7 +107,7 @@ export async function getAuthUserDebug(req?: NextRequest): Promise<{
   if (req) {
     const authHeader = req.headers.get('authorization') ?? ''
     if (authHeader.startsWith('Bearer ')) {
-      const token = authHeader.slice(7).trim()
+      const token = clean(authHeader.slice(7))
       if (!token) return { user: null, reason: 'bearer_empty' }
 
       const sb = await makeServerClient(supabaseUrl, supabaseAnon)
