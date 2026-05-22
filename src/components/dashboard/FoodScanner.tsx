@@ -45,9 +45,9 @@ function canvasToJpeg(canvas: HTMLCanvasElement, quality = 0.72): string {
   return dataUrl
 }
 
-/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 800px) */
+/** Captura frame del video y lo exporta como JPEG base64 comprimido (máx 640px) */
 function captureFrame(video: HTMLVideoElement): string {
-  const MAX = 800
+  const MAX = 640
   let w = video.videoWidth
   let h = video.videoHeight
   if (w > MAX || h > MAX) {
@@ -67,7 +67,7 @@ function compressFile(file: File): Promise<string> {
     const img  = new Image()
     img.onload = () => {
       URL.revokeObjectURL(url)
-      const MAX = 800
+      const MAX = 640
       let { width: w, height: h } = img
       if (w > MAX || h > MAX) {
         if (w >= h) { h = Math.round((h / w) * MAX); w = MAX }
@@ -103,12 +103,14 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
   const startCamera = useCallback(async () => {
     setCamError('')
     try {
-      // Pedir resolución baja — evita OOM en Android de gama baja
+      // Resolución BAJA como hard cap — evita OOM en Android de gama baja.
+      // 960×720 es suficiente para leer etiquetas con la IA.
+      // NO usar 'ideal' > 960 para no presionar la RAM del browser.
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode,
-          width:  { ideal: 1280, max: 1920 },
-          height: { ideal: 720,  max: 1080 },
+          width:  { ideal: 640, max: 960 },
+          height: { ideal: 480, max: 720 },
         },
         audio: false,
       })
@@ -118,9 +120,11 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
         videoRef.current.play().catch(() => {/* autoplay policy — user gesture ya ocurrió */})
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err)
-      if (msg.includes('NotAllowedError') || msg.includes('Permission')) {
+      const msg = (err instanceof Error ? err.message + ' ' + (err.name ?? '') : String(err)).toLowerCase()
+      if (msg.includes('notallowed') || msg.includes('permission') || msg.includes('denied')) {
         setCamError('Permiso de cámara denegado. Usa "Galería" para subir una foto.')
+      } else if (msg.includes('memory') || msg.includes('allocation') || msg.includes('oom')) {
+        setCamError('Memoria insuficiente para la cámara. Usa "Galería" para subir una foto desde tus imágenes.')
       } else {
         setCamError('Cámara no disponible. Usa "Galería" para subir una foto.')
       }
