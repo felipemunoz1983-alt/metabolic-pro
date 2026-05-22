@@ -79,8 +79,16 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     .order('created_at', { ascending: false })
     .limit(1)
 
+  // Cuando algo falla acá, NO le devolvemos 500 al paciente — la UX queda fea
+  // ("Error 500" rojo). En su lugar, degradamos a `hasPlan: false` con un
+  // mensaje amigable, y logueamos el error real para que el profe/admin pueda
+  // diagnosticar desde Vercel logs sin acceso al device del paciente.
   if (errPlanes) {
-    return NextResponse.json({ error: errPlanes.message }, { status: 500 })
+    console.error('[banco/paciente] error leyendo planes_nutricionales:', errPlanes)
+    return NextResponse.json({
+      hasPlan: false,
+      message: 'No pudimos cargar tu banco en este momento. Vuelve a intentarlo en unos segundos.',
+    })
   }
   if (!planes || planes.length === 0) {
     return NextResponse.json({
@@ -96,10 +104,23 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
     plan = await obtenerPlan(planId)
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 500 })
+    console.error('[banco/paciente] obtenerPlan failed:', {
+      planId,
+      userId: user.id,
+      message: (err as Error).message,
+      stack: (err as Error).stack,
+    })
+    return NextResponse.json({
+      hasPlan: false,
+      message: 'Tu plan se está actualizando. Aparecerá aquí en breve.',
+    })
   }
   if (!plan) {
-    return NextResponse.json({ error: 'Plan no encontrado' }, { status: 404 })
+    console.warn('[banco/paciente] plan null para planId existente:', planId)
+    return NextResponse.json({
+      hasPlan: false,
+      message: 'Tu plan se está actualizando. Aparecerá aquí en breve.',
+    })
   }
 
   // 4. Cargar registros recientes del paciente (últimos 14 días)
