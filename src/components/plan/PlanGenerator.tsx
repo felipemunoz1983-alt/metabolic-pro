@@ -1155,7 +1155,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 <p className="text-xs text-[#6B7C93] mb-3">
                   Filtra automáticamente desayunos, almuerzos, cenas, yogures, snacks y barras según tu tendencia.
                 </p>
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {([
                     { value: 'omnivoro',    label: '🥩 Omnívoro',    desc: 'Incluye carnes, pescado y pollo' },
                     { value: 'vegetariano', label: '🌿 Vegetariano', desc: 'Legumbres, tofu, huevo y lácteos' },
@@ -1165,7 +1165,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                       key={opt.value}
                       onClick={() => handleTendenciaChange(opt.value)}
                       className={cn(
-                        'flex-1 py-3 px-4 rounded-xl border-2 text-left transition-all',
+                        'w-full py-3 px-4 rounded-xl border-2 text-left transition-all',
                         tendenciaActual === opt.value
                           ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
                           : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
