@@ -194,6 +194,12 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
     if (!image) return
     setScanning(true); setError(''); setResult(null)
     try {
+      // Verificar tamaño antes de enviar — evita 413 de Vercel (límite 4.5 MB)
+      // base64 length × 0.75 ≈ bytes reales. Rechazamos si supera 3.5 MB.
+      if (image.length * 0.75 > 3_500_000) {
+        throw new Error('La imagen es muy grande. Vuelve a tomar la foto más cerca del alimento.')
+      }
+
       const { data: { session } } = await createClient().auth.getSession()
       const headers: Record<string, string> = { 'Content-Type': 'application/json' }
       if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
