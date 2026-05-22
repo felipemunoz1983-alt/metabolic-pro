@@ -30,6 +30,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { cleanEnv } from "@/lib/clean-env";
 
 import { generarPlan } from "@/lib/planGenerator";
 import type { FormData, NutritionResult } from "@/lib/nutrition";
@@ -54,8 +55,8 @@ const MEAL_TYPE_LABEL: Record<string, string> = {
 };
 
 function client(): SupabaseClient {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = cleanEnv(process.env.SUPABASE_URL);
+  const key = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!url || !key) {
     throw new Error(
       "Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno del servidor.",

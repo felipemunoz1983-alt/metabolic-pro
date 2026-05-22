@@ -11,6 +11,7 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { AdminDashboard } from '@/components/admin/AdminDashboard'
+import { cleanEnv } from '@/lib/clean-env'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'felipe.munoz1983@gmail.com'
 
@@ -22,8 +23,8 @@ export const metadata = {
 export default async function AdminPage() {
   const cookieStore = await cookies()
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
 
