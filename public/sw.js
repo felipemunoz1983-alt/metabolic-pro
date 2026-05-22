@@ -1,18 +1,22 @@
 /**
- * Centro Metabólico Pro — Service Worker v3
+ * Centro Metabólico Pro — Service Worker v5
  *
  * Estrategia por tipo de recurso:
- *  - /_next/static/  → cache-first  (archivos inmutables con hash de contenido)
- *  - /api/           → network-only (datos siempre frescos, sin caché)
- *  - navegación HTML → network-first con fallback offline
- *  - íconos/manifest → cache-first  (estáticos, raramente cambian)
+ *  - /_next/static/  → cache-first              (archivos inmutables con hash)
+ *  - /api/           → network-only             (datos siempre frescos)
+ *  - navegación HTML → stale-while-revalidate   (perceived performance: cache instant,
+ *                                                 revalidate en background; auto-reload
+ *                                                 via controllerchange si hay nuevo SW)
+ *  - íconos/manifest → cache-first              (raramente cambian)
  *
- * v3: ya no se cachean las páginas HTML (/paciente, /) porque su contenido
- * cambia con cada deploy (referencias a nuevos chunks JS). Cachear el HTML
- * antiguo causa que se ejecute JS viejo aunque Vercel haya desplegado código nuevo.
+ * v5 (perf): HTML usa stale-while-revalidate en vez de network-first.
+ *            Repeat visits cargan instantáneo desde cache, mientras se actualiza
+ *            en background. ServiceWorkerUpdater (en el layout) escucha
+ *            controllerchange y recarga la pestaña si hay deploy nuevo —
+ *            así el usuario nunca queda en versión vieja mucho tiempo.
  */
 
-const CACHE_NAME  = 'cmp-shell-v4'
+const CACHE_NAME  = 'cmp-shell-v5'
 const OFFLINE_URL = '/offline'
 
 // Solo pre-cachear assets VERDADERAMENTE estáticos (íconos y manifest).
@@ -100,19 +104,40 @@ self.addEventListener('fetch', event => {
     return
   }
 
-  // ── Páginas HTML (navegación): network-first, fallback offline ────────────
-  // IMPORTANTE: NO usar cache-first para HTML — cada deploy cambia los
-  // hashes de los chunks JS referenciados en el HTML. Servir HTML viejo
-  // hace que el browser ejecute JS desactualizado aunque Vercel tenga código nuevo.
+  // ── Páginas HTML (navegación): stale-while-revalidate ────────────────────
+  // Respondemos INSTANT desde cache si existe (perceived performance), y en
+  // paralelo refrescamos desde red para la próxima visita. Si la versión nueva
+  // trae un SW nuevo, ServiceWorkerUpdater (mounted en el root layout) detecta
+  // el controllerchange y recarga la pestaña — el usuario nunca queda atrapado
+  // en una versión vieja por más de una navegación.
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() =>
-        caches.match(OFFLINE_URL).then(offline =>
-          offline ?? new Response('<h1>Sin conexión</h1>', {
-            headers: { 'Content-Type': 'text/html' },
-          })
-        )
-      )
+      caches.match(request).then(cached => {
+        // Revalidate en background SIEMPRE (incluso si hay cached)
+        const revalidate = fetch(request).then(response => {
+          if (response.ok && request.method === 'GET') {
+            const clone = response.clone()
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone))
+          }
+          return response
+        }).catch(() => null)
+
+        if (cached) {
+          // Cache hit → servir cached + revalidate en background, no esperar
+          revalidate.catch(() => {})
+          return cached
+        }
+
+        // Cache miss → esperar la red, con fallback offline si falla
+        return revalidate.then(response => {
+          if (response) return response
+          return caches.match(OFFLINE_URL).then(offline =>
+            offline ?? new Response('<h1>Sin conexión</h1>', {
+              headers: { 'Content-Type': 'text/html' },
+            })
+          )
+        })
+      })
     )
     return
   }

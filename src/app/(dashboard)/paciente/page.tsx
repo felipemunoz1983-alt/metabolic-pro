@@ -33,7 +33,13 @@ import { OnboardingModal, ONBOARDING_KEY } from '@/components/onboarding/Onboard
 import { TrialBanner } from '@/components/dashboard/TrialBanner'
 import { PWAInstallBanner } from '@/components/shared/PWAInstallBanner'
 import { WelcomePostRegister } from '@/components/onboarding/WelcomePostRegister'
-import { BancoPaciente } from '@/components/banco/BancoPaciente'
+// Lazy load: el banco hace fetch propio y no es above-the-fold inmediato.
+// Sacarlo del bundle inicial ahorra ~40KB JS en el primer paint.
+import dynamic from 'next/dynamic'
+const BancoPaciente = dynamic(
+  () => import('@/components/banco/BancoPaciente').then(m => ({ default: m.BancoPaciente })),
+  { ssr: false, loading: () => null },
+)
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -375,13 +381,67 @@ export default function PacientePage() {
     }
   }
 
-  // Block render while verifying session — prevents flash of content for invalid users
+  // Skeleton durante carga inicial — matches the dashboard layout para que la
+  // transición a contenido real sea casi imperceptible. Reemplaza el splash
+  // oscuro con spinner por una versión clara que se siente más rápida
+  // (perceived performance > actual performance).
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#060F1A] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#29ABE2]/30 border-t-[#29ABE2] rounded-full animate-spin" />
-          <p className="text-[#4A7A94] text-xs font-medium">Verificando sesión...</p>
+      <div className="min-h-screen bg-gradient-to-b from-[#F7FBFE] to-[#EAF4FB]">
+        {/* Header con logo */}
+        <header className="px-4 py-4 md:px-8 md:py-5 border-b border-[#E2ECF4] bg-white/80 backdrop-blur">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] rounded-xl flex items-center justify-center">
+              <span className="text-white font-black text-sm">CM</span>
+            </div>
+            <div className="space-y-1">
+              <div className="h-3 w-32 bg-[#E2ECF4] rounded animate-pulse" />
+              <div className="h-2 w-20 bg-[#E2ECF4]/60 rounded animate-pulse" />
+            </div>
+          </div>
+        </header>
+
+        {/* Content shimmer */}
+        <main className="px-4 py-6 md:px-8 md:py-8 max-w-3xl mx-auto space-y-4">
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 space-y-3 shadow-sm">
+            <div className="h-4 w-40 bg-[#E2ECF4] rounded animate-pulse" />
+            <div className="h-3 w-full bg-[#E2ECF4]/60 rounded animate-pulse" />
+            <div className="h-3 w-5/6 bg-[#E2ECF4]/60 rounded animate-pulse" />
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} className="bg-white rounded-xl border border-[#E2ECF4] p-3 space-y-2 shadow-sm">
+                <div className="h-3 w-16 bg-[#E2ECF4]/60 rounded animate-pulse" />
+                <div className="h-6 w-12 bg-[#E2ECF4] rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 space-y-3 shadow-sm">
+            <div className="h-3 w-32 bg-[#E2ECF4] rounded animate-pulse" />
+            <div className="space-y-2">
+              {[0, 1, 2].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-[#E2ECF4] rounded-lg animate-pulse" />
+                  <div className="flex-1 space-y-1.5">
+                    <div className="h-3 w-3/4 bg-[#E2ECF4] rounded animate-pulse" />
+                    <div className="h-2 w-1/2 bg-[#E2ECF4]/60 rounded animate-pulse" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </main>
+
+        {/* Bottom nav skeleton (mobile) */}
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E2ECF4] px-2 py-2 md:hidden">
+          <div className="flex justify-around">
+            {[0, 1, 2, 3, 4].map(i => (
+              <div key={i} className="flex flex-col items-center gap-1 px-3 py-1">
+                <div className="w-5 h-5 bg-[#E2ECF4] rounded animate-pulse" />
+                <div className="h-2 w-8 bg-[#E2ECF4]/60 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     )

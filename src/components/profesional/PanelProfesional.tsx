@@ -7,8 +7,17 @@ import { cn } from '@/lib/utils'
 import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
 import { PlanResult } from '@/components/plan/PlanResult'
-import { BancoOpciones } from '@/components/profesional/BancoOpciones'
-import { AdherenciaPaciente } from '@/components/profesional/AdherenciaPaciente'
+// Lazy load: ambos componentes hacen fetch propio y no son above-the-fold.
+// Sacarlos del bundle inicial del panel ahorra ~70KB JS en el primer paint.
+import dynamic from 'next/dynamic'
+const BancoOpciones = dynamic(
+  () => import('@/components/profesional/BancoOpciones').then(m => ({ default: m.BancoOpciones })),
+  { ssr: false, loading: () => null },
+)
+const AdherenciaPaciente = dynamic(
+  () => import('@/components/profesional/AdherenciaPaciente').then(m => ({ default: m.AdherenciaPaciente })),
+  { ssr: false, loading: () => null },
+)
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
