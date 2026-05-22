@@ -15,8 +15,10 @@
  *   endpoint UNA VEZ POR tiempo_comida (pásalo como query) en vez de todo junto.
  */
 
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
+import { getAuthUser } from "@/lib/auth-server";
+import { createServiceClient } from "@/lib/supabase-server";
 import {
   validarYAnotar,
 } from "@/lib/aporte";
@@ -41,6 +43,23 @@ import {
 // Node runtime (el SDK de Anthropic y supabase-js lo requieren) y duración alta.
 export const runtime = "nodejs";
 export const maxDuration = 300; // segundos; ajusta a tu plan/Fluid Compute.
+
+/** Guard común: el caller debe estar logueado y tener role='professional'. */
+async function exigirProfesional(req: NextRequest): Promise<{ ok: true } | { ok: false; res: NextResponse }> {
+  const user = await getAuthUser(req);
+  if (!user) {
+    return { ok: false, res: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  const { data: profile } = await createServiceClient()
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (!profile || profile.role !== "professional") {
+    return { ok: false, res: NextResponse.json({ error: "Forbidden" }, { status: 403 }) };
+  }
+  return { ok: true };
+}
 
 function claveDedupe(op: OpcionPreparacion): string {
   return `${op.nombre.trim().toLowerCase()}|${op.meta.cocina}`;
@@ -102,14 +121,14 @@ async function procesarTiempo(
 }
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: Promise<{ planId: string }> },
 ) {
   const { planId } = await params; // En Next.js 15 los params son async.
 
-  // TODO(seguridad): valida aquí que quien llama es un PROFESIONAL autenticado
-  // (lee la sesión Supabase del request). Esta ruta usa service role y modifica
-  // planes de pacientes: NO debe quedar abierta.
+  // Auth — solo profesionales pueden modificar el banco.
+  const guard = await exigirProfesional(req);
+  if (!guard.ok) return guard.res;
 
   // Permite override de config por body (opcional).
   let cfg: BancoConfig = BANCO_CONFIG_DEFAULT;
@@ -168,5 +187,46 @@ export async function POST(
     opciones_aceptadas: aceptadas,
     opciones_rechazadas: rechazadas,
     detalle,
+  });
+}
+
+/**
+ * GET /api/planes/{planId}/banco-opciones
+ *
+ * Lee el estado actual del banco — devuelve las opciones persistidas por tiempo
+ * de comida sin regenerar nada. Lo usa el componente BancoOpciones para
+ * hidratarse al mountar y refrescar tras un POST.
+ *
+ * Respuesta:
+ *   {
+ *     plan_id: string,
+ *     opcionesPorTiempo: { [tipo: string]: OpcionPreparacion[] }
+ *   }
+ *
+ * Auth: solo profesionales.
+ */
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ planId: string }> },
+) {
+  const { planId } = await params;
+
+  const guard = await exigirProfesional(req);
+  if (!guard.ok) return guard.res;
+
+  const plan = await obtenerPlan(planId);
+  if (!plan) {
+    return NextResponse.json({ error: `Plan ${planId} no encontrado.` }, { status: 404 });
+  }
+
+  const opcionesPorTiempo: Record<string, OpcionPreparacion[]> = {};
+  for (const tiempo of plan.tiempos_comida ?? []) {
+    opcionesPorTiempo[tiempo.tipo] = tiempo.opciones ?? [];
+  }
+
+  return NextResponse.json({
+    plan_id: planId,
+    opcionesPorTiempo,
+    tiempos_count: plan.tiempos_comida?.length ?? 0,
   });
 }

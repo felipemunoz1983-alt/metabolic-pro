@@ -512,23 +512,14 @@ Cualquier duda, escríbeme 😊`
               </div>
             )}
 
-            {/* ── Banco de opciones — preparaciones culinarias para cada tiempo ── */}
+            {/* ── Banco de opciones — preparaciones culinarias para cada tiempo ──
+                 BancoOpciones se auto-fetch desde GET /api/planes/[id]/banco-opciones
+                 al mountar y tras cada regenerate. No requiere refrescar el parent. */}
             {allPlans[0]?.id && (
               <div className="mt-8">
                 <BancoOpciones
                   planId={allPlans[0].id}
                   comidas={derivarComidasDePlan(allPlans[0].id, planForm, planResult)}
-                  onRegenerated={async () => {
-                    // Re-fetch del plan para traer las opciones recién persistidas.
-                    // El endpoint del banco actualiza plan_data.comidas[].opciones[];
-                    // re-leemos allPlans para reflejarlo en el UI.
-                    const { data } = await supabase
-                      .from('planes')
-                      .select('id, objetivo, kcal, proteina, carbohidrato, grasa, plan_json, created_at')
-                      .eq('patient_id', patient.id)
-                      .order('created_at', { ascending: false })
-                    if (data) setAllPlans(data as PlanRow[])
-                  }}
                 />
               </div>
             )}

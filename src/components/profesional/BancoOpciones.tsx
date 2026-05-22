@@ -20,7 +20,7 @@
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChefHat, Clock, Eye, RefreshCw, Loader2, X, ChevronDown, ChevronUp,
+  ChefHat, Clock, Eye, Loader2, X, ChevronDown, ChevronUp,
   Utensils, AlertCircle, Sparkles, Flame, Beef, Wheat, Droplets,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -43,9 +43,17 @@ export interface ComidaConOpciones {
 
 interface Props {
   planId: string
+  /** Estructura de tiempos: tipo, kcal target, macros target. Las opciones
+   *  llegan via GET /api/planes/[planId]/banco-opciones al montar. */
   comidas: ComidaConOpciones[]
-  /** Callback tras regenerar — el parent debe re-fetch del plan. */
+  /** Callback opcional tras regenerar — útil si el parent quiere reflejarlo. */
   onRegenerated?: () => void | Promise<void>
+}
+
+/** Normaliza el tipo de comida (case-insensitive, sin acentos) para matchear
+ *  entre lo que devuelve el adapter ("Almuerzo") y lo persistido ("almuerzo"). */
+function normTipo(s: string): string {
+  return s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim()
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -86,6 +94,56 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
   const [regenTipo, setRegenTipo] = useState<string | null>(null)
   const [regenError, setRegenError] = useState<string | null>(null)
   const [preview, setPreview] = useState<{ opcion: OpcionPreparacion; tiempoLabel: string } | null>(null)
+  /** Mapa keyed por tipo normalizado → opciones persistidas (vía GET). */
+  const [opcionesFetched, setOpcionesFetched] = useState<Record<string, OpcionPreparacion[]>>({})
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  /** Lee el banco actual desde el endpoint GET. Se llama al mount y tras regenerar. */
+  async function fetchBanco() {
+    setLoadError(null)
+    try {
+      const { data: { session } } = await createClient().auth.getSession()
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+      if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+      const res = await fetch(`/api/planes/${encodeURIComponent(planId)}/banco-opciones`, {
+        method: 'GET', headers, credentials: 'include',
+      })
+      if (!res.ok) {
+        if (res.status === 404) {
+          // Plan no tiene aún banco persistido — primera vez. No es error.
+          setOpcionesFetched({})
+          return
+        }
+        throw new Error(`Error ${res.status}`)
+      }
+      const data = await res.json() as { opcionesPorTiempo?: Record<string, OpcionPreparacion[]> }
+      // Normalizar keys para hacer match con los tipos del adapter
+      const normalizado: Record<string, OpcionPreparacion[]> = {}
+      for (const [k, v] of Object.entries(data.opcionesPorTiempo ?? {})) {
+        normalizado[normTipo(k)] = v
+      }
+      setOpcionesFetched(normalizado)
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'No se pudieron cargar las opciones')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Cargar el banco al montar y cada vez que cambia el planId.
+  // fetchBanco() llama a setState (loading/data/error) → es el patrón
+  // legítimo de "sincronizar con sistema externo" del que habla la doc de
+  // React; el lint rule es muy estricto y se silencia explícitamente acá.
+  /* eslint-disable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect -- async-fetch lifecycle pattern */
+  useEffect(() => { fetchBanco() }, [planId])
+  /* eslint-enable react-hooks/exhaustive-deps, react-hooks/set-state-in-effect */
+
+  /** Merge: estructura del adapter + opciones persistidas (override por tipo). */
+  const comidasMerged: ComidaConOpciones[] = comidas.map(c => ({
+    ...c,
+    opciones: opcionesFetched[normTipo(c.tipo)] ?? c.opciones ?? [],
+  }))
 
   function toggleExpanded(id: string) {
     setExpanded(prev => {
@@ -110,6 +168,9 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
         const txt = await res.text().catch(() => '')
         throw new Error(`Error ${res.status}: ${txt.slice(0, 120) || 'sin detalle'}`)
       }
+      // Re-fetch del banco para ver las nuevas opciones inmediatamente
+      await fetchBanco()
+      // Notifica al parent (opcional, ya no es necesario para refrescar)
       await onRegenerated?.()
     } catch (err) {
       setRegenError(err instanceof Error ? err.message : 'No se pudo regenerar el banco')
@@ -152,8 +213,22 @@ export function BancoOpciones({ planId, comidas, onRegenerated }: Props) {
         </div>
       )}
 
+      {loadError && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs rounded-xl px-4 py-3">
+          <AlertCircle size={14} className="flex-shrink-0" />
+          No se pudieron cargar las opciones existentes ({loadError}). Puedes regenerar el banco para crearlas.
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 bg-[#F8FBFD] border border-[#E2ECF4] text-[#6B7C93] text-xs rounded-xl px-4 py-3">
+          <Loader2 size={14} className="animate-spin flex-shrink-0 text-[#29ABE2]" />
+          Cargando opciones del banco...
+        </div>
+      )}
+
       {/* Lista de tiempos */}
-      {comidas.map(comida => {
+      {comidasMerged.map(comida => {
         const isExpanded = expanded.has(comida.id)
         const isRegenerating = regenTipo === comida.tipo
         const tiempoLabel = `${comida.tipo}${comida.kcal ? ` · ~${Math.round(comida.kcal)} kcal` : ''}`
@@ -381,7 +456,8 @@ function FichaPreviewModal({ opcion, tiempoLabel, onClose }: FichaPreviewModalPr
   const [error, setError] = useState<string | null>(null)
 
   // Pedir el HTML al endpoint /api/fichas/preview en cuanto el modal monta.
-  /* eslint-disable react-hooks/set-state-in-effect -- async fetch on mount */
+  // setState ocurre dentro del IIFE async, no en el body del effect — no
+  // dispara react-hooks/set-state-in-effect.
   useEffect(() => {
     let cancelled = false
     ;(async () => {
@@ -404,7 +480,6 @@ function FichaPreviewModal({ opcion, tiempoLabel, onClose }: FichaPreviewModalPr
     })()
     return () => { cancelled = true }
   }, [opcion, tiempoLabel])
-  /* eslint-enable react-hooks/set-state-in-effect */
 
   function imprimir() {
     if (!html) return
