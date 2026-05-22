@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
 import { PlanResult } from '@/components/plan/PlanResult'
+import { BancoOpciones } from '@/components/profesional/BancoOpciones'
+import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
 import {
@@ -507,6 +509,27 @@ Cualquier duda, escríbeme 😊`
                 <p className="text-xs text-red-700 font-medium">
                   Error al guardar el plan en la base de datos. Verifica que hayas aplicado el SQL de RLS en Supabase (<code className="font-mono">supabase/rls-fix.sql</code>).
                 </p>
+              </div>
+            )}
+
+            {/* ── Banco de opciones — preparaciones culinarias para cada tiempo ── */}
+            {allPlans[0]?.id && (
+              <div className="mt-8">
+                <BancoOpciones
+                  planId={allPlans[0].id}
+                  comidas={derivarComidasDePlan(allPlans[0].id, planForm, planResult)}
+                  onRegenerated={async () => {
+                    // Re-fetch del plan para traer las opciones recién persistidas.
+                    // El endpoint del banco actualiza plan_data.comidas[].opciones[];
+                    // re-leemos allPlans para reflejarlo en el UI.
+                    const { data } = await supabase
+                      .from('planes')
+                      .select('id, objetivo, kcal, proteina, carbohidrato, grasa, plan_json, created_at')
+                      .eq('patient_id', patient.id)
+                      .order('created_at', { ascending: false })
+                    if (data) setAllPlans(data as PlanRow[])
+                  }}
+                />
               </div>
             )}
           </>
