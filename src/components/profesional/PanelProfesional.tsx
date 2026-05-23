@@ -1215,6 +1215,32 @@ function ModalVincular({
     ? `${inviteLink}${inviteLink.includes('?') ? '&' : '?'}email=${encodeURIComponent(email.trim().toLowerCase())}`
     : inviteLink
 
+  // Mensaje completo (registro + instrucciones de instalación) que el profesional
+  // envía al paciente en el flujo "Por link". Mismo patrón visual que el modal
+  // "Enviar instrucciones de instalación" del PatientDetail, pero adaptado a un
+  // paciente que todavía no se ha registrado: el link lleva a /register?invite=...
+  const inviteInstallMessage = `¡Hola! 👋 Te invito a usar la app de Centro Metabólico para hacer seguimiento de tu alimentación conmigo.
+
+📲 *Cómo registrarte e instalarla:*
+
+*iPhone (Safari):*
+1. Abre este link con Safari:
+${inviteLink}
+2. Completa tu registro (nombre, email, contraseña)
+3. Toca el botón 📤 (compartir, abajo al centro)
+4. Selecciona "Agregar a pantalla de inicio"
+5. ¡Listo! La app aparece como ícono ✅
+
+*Android (Chrome):*
+1. Abre el link en Chrome:
+${inviteLink}
+2. Completa tu registro
+3. Toca ⋮ (tres puntos arriba a la derecha)
+4. Selecciona "Agregar a pantalla de inicio"
+5. ¡Listo! ✅
+
+Cualquier duda, escríbeme 😊`
+
   async function handleSearch() {
     if (!email.trim()) return
     setStatus('loading')
@@ -1248,8 +1274,8 @@ function ModalVincular({
     setTimeout(() => { onSuccess(); onClose() }, 1200)
   }
 
-  function copyLink() {
-    navigator.clipboard.writeText(inviteLink)
+  function copyInstallMessage() {
+    navigator.clipboard.writeText(inviteInstallMessage)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -1275,9 +1301,9 @@ function ModalVincular({
   }
 
   function shareWhatsApp() {
-    // WhatsApp usa el link genérico (sin email) — el paciente escribe el suyo al registrarse
-    const text = `Hola! Te invito a registrarte en Centro Metabolico Pro para hacer seguimiento de tu alimentacion conmigo. Usa este link: ${inviteLink}`
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+    // Envía el mensaje completo (instrucciones + link de invitación). WhatsApp
+    // abre el selector de contacto porque no tenemos el número del paciente todavía.
+    window.open(`https://wa.me/?text=${encodeURIComponent(inviteInstallMessage)}`, '_blank')
   }
 
   return (
@@ -1424,9 +1450,16 @@ function ModalVincular({
           {/* Tab: Link de invitación */}
           {tab === 'link' && (
             <div className="space-y-4">
-              <p className="text-xs text-[#8BA5BE]">
-                Comparte este link con tus pacientes. Al registrarse a través de él, quedarán vinculados automáticamente a tu panel.
-              </p>
+              {/* Header con icono Smartphone (mismo estilo que el modal "Enviar app" del PatientDetail) */}
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-[#1DAEEC]/10 flex items-center justify-center flex-shrink-0">
+                  <Smartphone size={16} className="text-[#1DAEEC]" />
+                </div>
+                <div>
+                  <p className="text-sm font-bold text-[#0C1F2C]">Enviar instrucciones de instalación</p>
+                  <p className="text-xs text-[#8BA5BE]">El paciente se registra y luego instala la app</p>
+                </div>
+              </div>
 
               {/* Vigencia del link */}
               {signedExpires && (
@@ -1436,43 +1469,32 @@ function ModalVincular({
                 </div>
               )}
 
-              {/* Link completo */}
-              <div>
-                <p className="text-[10px] font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">Link de registro</p>
-                <div className="flex gap-2 items-center bg-[#F8FBFD] border border-[#E2ECF4] rounded-xl px-3 py-2.5">
-                  <p className="flex-1 text-xs text-[#6B7C93] truncate font-mono">{inviteLink}</p>
-                  <button
-                    onClick={copyLink}
-                    className={cn(
-                      'flex-shrink-0 flex items-center gap-1.5 text-xs font-bold px-2.5 py-1.5 rounded-lg transition-all',
-                      copied ? 'bg-green-500 text-white' : 'bg-[#0C3547] text-white hover:opacity-90'
-                    )}
-                  >
-                    <Copy size={11} />
-                    {copied ? '¡Copiado!' : 'Copiar'}
-                  </button>
-                </div>
+              {/* Preview del mensaje completo */}
+              <div className="bg-[#F7FBFE] rounded-2xl p-4 text-xs text-[#4A6070] leading-relaxed whitespace-pre-line font-mono border border-[#E2ECF4] max-h-56 overflow-y-auto">
+                {inviteInstallMessage}
               </div>
 
-              {/* WhatsApp share */}
-              <button
-                onClick={shareWhatsApp}
-                className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl hover:opacity-90 transition"
-              >
-                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                </svg>
-                Compartir por WhatsApp
-              </button>
+              {/* Acciones */}
+              <div className="flex flex-col gap-2.5">
+                {/* WhatsApp share — abre el selector de contacto del paciente */}
+                <button
+                  onClick={shareWhatsApp}
+                  className="flex items-center justify-center gap-2.5 w-full py-3 rounded-xl bg-[#25D366] text-white text-sm font-bold hover:bg-[#1fb855] transition-colors"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                  </svg>
+                  Compartir por WhatsApp
+                </button>
 
-              {/* Instrucciones */}
-              <div className="bg-[#F8FBFD] border border-[#E2ECF4] rounded-xl p-3">
-                <p className="text-xs font-bold text-[#0C3547] mb-1">Instrucciones para el paciente</p>
-                <ol className="text-xs text-[#6B7C93] space-y-1 list-decimal list-inside">
-                  <li>Abre el link de registro</li>
-                  <li>Completa nombre, email y contrasena</li>
-                  <li>Aparece en tu panel automaticamente</li>
-                </ol>
+                {/* Copiar mensaje completo */}
+                <button
+                  onClick={copyInstallMessage}
+                  className="flex items-center justify-center gap-2 w-full py-3 rounded-xl border border-[#E2ECF4] text-[#4A6070] text-sm font-medium hover:border-[#29ABE2] hover:text-[#29ABE2] transition-colors"
+                >
+                  {copied ? <CheckCircle size={14} className="text-green-500" /> : <Copy size={14} />}
+                  {copied ? '¡Copiado!' : 'Copiar mensaje'}
+                </button>
               </div>
             </div>
           )}

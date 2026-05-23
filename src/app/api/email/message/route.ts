@@ -8,6 +8,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { createServiceClient } from '@/lib/supabase-server'
 import { sendMail } from '@/lib/mailer'
+import { cleanEnv } from '@/lib/clean-env'
 
 const TIPO_LABEL: Record<string, string> = {
   motivacional:  '💪 Mensaje de apoyo',
@@ -86,8 +87,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Auth
   const cookieStore = await cookies()
   const sbAuth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+    cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
     { cookies: { getAll: () => cookieStore.getAll() } }
   )
   const { data: { user } } = await sbAuth.auth.getUser()

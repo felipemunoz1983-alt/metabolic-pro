@@ -30,6 +30,7 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { cleanEnv } from "@/lib/clean-env";
 
 import { generarPlan } from "@/lib/planGenerator";
 import type { FormData, NutritionResult } from "@/lib/nutrition";
@@ -54,8 +55,14 @@ const MEAL_TYPE_LABEL: Record<string, string> = {
 };
 
 function client(): SupabaseClient {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Preferimos NEXT_PUBLIC_SUPABASE_URL — la app cliente la usa y sabemos que
+  // está bien formada en producción. SUPABASE_URL (sin NEXT_PUBLIC_) fue
+  // introducida después como "alias server-side" pero quedó mal configurada
+  // en Vercel (sin el https:// al inicio, según error 'Invalid supabaseUrl'
+  // de @supabase/supabase-js). Hacer fallback a SUPABASE_URL para no romper
+  // entornos donde solo está esa.
+  const url = cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL) || cleanEnv(process.env.SUPABASE_URL);
+  const key = cleanEnv(process.env.SUPABASE_SERVICE_ROLE_KEY);
   if (!url || !key) {
     throw new Error(
       "Faltan SUPABASE_URL o SUPABASE_SERVICE_ROLE_KEY en el entorno del servidor.",

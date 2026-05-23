@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
+import { cleanEnv } from '@/lib/clean-env'
 
 // Handles Supabase email confirmation redirect
 // Supabase sends users to /auth/confirm?token_hash=...&type=email
@@ -13,8 +14,8 @@ export async function GET(request: NextRequest) {
   if (token_hash && type) {
     const cookieStore = await cookies()
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       {
         cookies: {
           getAll() { return cookieStore.getAll() },

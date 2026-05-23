@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { cleanEnv } from '@/lib/clean-env'
 
 // Server-side auth guard for all routes inside (dashboard)
 // Runs on the server BEFORE the page is sent to the browser — no flash possible.
@@ -15,8 +16,8 @@ export default async function DashboardLayout({
     const cookieStore = await cookies()
 
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      cleanEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       {
         cookies: {
           getAll() {

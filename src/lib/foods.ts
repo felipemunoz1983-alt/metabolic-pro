@@ -651,6 +651,19 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Tapar con la otra mitad. Comer inmediatamente para aprovechar el crocante del pan.',
     ],
   },
+  galleton_quaker_chocolate: {
+    label: '🍪 Galletón Quaker Casero — Chips Chocolate',
+    items: ['1 galletón Quaker Casero Chips Chocolate (40 g)'],
+    baseKcal: 173, p: 2.8, c: 22, g: 7.6,
+    foto: IMG + 'galleton_quaker_chocolate.jpg',
+    tiempo: '1 min',
+    pasos: [
+      'Abrir el envase y consumir directamente.',
+      'Acompañar con té, café o agua sin azúcar.',
+    ],
+    sellos: ['Alto en azúcares', 'Alto en calorías'],
+    alergenosNota: 'Contiene trigo y avena (gluten), huevo y lecitinas (soya). Puede contener almendras, leche, maní y sulfitos.',
+  },
   // Nota: las barras de proteína y snacks Nutrevo se integran al plan
   // exclusivamente a través de los selectores dedicados "Barra de proteína favorita"
   // y "Snack saludable favorito (Nutrevo)" en PlanGenerator (step 5).
