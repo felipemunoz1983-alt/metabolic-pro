@@ -571,10 +571,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Colesterol:              1,6 mg
     // SELLOS CHILENOS: Alto en azúcares · Alto en grasas saturadas · Alto en calorías
     baseKcal: 180, p: 1.5, c: 24, g: 9,
-    foto: USP('1499636136210-6f4ee915583e'), // chocolate chip cookies, placeholder
-    // TODO: cuando se tenga el archivo del paquete real,
-    //       guardarlo como img/costa_mini_chips.webp y reemplazar:
-    //       foto: IMG + 'costa_mini_chips.webp'
+    foto: IMG + 'costa_mini_chips.webp', // chocolate chip cookies · 900x600 webp 65KB
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'], // contiene leche, huevos, soya — no vegano
     sellos: ['Alto en Azúcares', 'Alto en Grasas Saturadas', 'Alto en Calorías'],
