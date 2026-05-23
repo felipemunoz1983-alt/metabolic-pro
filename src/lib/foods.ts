@@ -731,22 +731,23 @@ export const almuerzosOpts: Record<string, MealOption> = {
     ],
   },
   carne_arroz: {
-    label: 'Carne magra + arroz + ensalada',
-    items: ['150g carne magra (posta, lomo o filete)', '150g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    label: 'Carne magra + papas salteadas con romero + ensalada',
+    items: ['150g carne magra (posta, lomo o filete)', '250g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 565, p: 44, c: 50, g: 16,
-    foto: IMG + 'carne_con_papas..webp', // placeholder hasta tener foto específica
+    foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
-    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
     tiempo: '25 min',
     pasos: [
-      'Arroz: cocinar en 2 tazas de agua con pizca de sal. Llevar a hervor, bajar a fuego bajo y tapar 12-15 min hasta que absorba el agua.',
+      'Papas: cortar 250g de papas en cubos medianos (con o sin cáscara según preferencia). Hervir 8 min en agua con sal hasta que estén firmes pero tiernas. Escurrir y dejar enfriar 2 min para que sequen.',
+      'Saltear: calentar 1 cdta de aceite de oliva en sartén bien caliente. Agregar las papas hervidas y 2-3 ramitas de romero fresco (o ½ cdta seco). Saltear 5-7 min hasta que doren en los bordes.',
       'Carne: sazonar la pieza con sal, pimienta, ajo y un toque de limón. Cocinar en plancha bien caliente 4-5 min por lado según grosor. La carne magra aporta hierro hemo y proteína de alto valor biológico.',
       'Reposo: dejar reposar la carne 2-3 min antes de cortar para que los jugos se redistribuyan.',
       'Ensalada: cortar lechuga, tomate y pepino. Aliñar con aceite de oliva, sal y limón.',
-      'Armado: servir la carne junto al arroz y la ensalada al costado.',
-      'Variante: si el target del paciente requiere más CHO (ej. surplus para hipertrofia), el profesional puede subir los gramos de arroz desde el selector dinámico.',
+      'Armado: servir la carne junto a las papas salteadas y la ensalada al costado.',
+      'Variante: si el target del paciente requiere más CHO (ej. surplus para hipertrofia), el profesional puede subir los gramos de papas desde el selector dinámico.',
     ],
   },
   salmon_quinoa: {
@@ -932,20 +933,21 @@ export const almuerzosOpts: Record<string, MealOption> = {
 // ─── CENAS ────────────────────────────────────────────────────────────────────
 export const cenasOpts: Record<string, MealOption> = {
   carne_arroz: {
-    label: 'Carne magra + arroz + ensalada (porción cena)',
-    items: ['120g carne magra (posta, lomo o filete)', '100g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    label: 'Carne magra + papas salteadas con romero + ensalada (porción cena)',
+    items: ['120g carne magra (posta, lomo o filete)', '180g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 395, p: 33, c: 33, g: 13,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 120,
-    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 100,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 180,
     tiempo: '25 min',
     pasos: [
-      'Arroz: cocinar 100g secos en agua con sal 12 min. Para cena, porción reducida vs almuerzo.',
+      'Papas: cortar 180g de papas en cubos medianos. Hervir 7-8 min en agua con sal hasta firmes pero tiernas. Escurrir y dejar secar 2 min.',
+      'Saltear: en sartén caliente con 1 cdta aceite de oliva, agregar las papas y 1-2 ramitas de romero (o ½ cdta seco). Saltear 5 min hasta dorar los bordes. Porción cena moderada.',
       'Carne: sazonar y cocinar en plancha 4-5 min por lado. Reposar 2 min antes de cortar.',
       'Ensalada: aliñar con aceite, sal y limón.',
-      'Armado: servir todo junto. Versión moderada para cena — el profesional puede ajustar gramaje del arroz según objetivo del paciente.',
+      'Armado: servir la carne con las papas salteadas y la ensalada. Versión moderada para cena — el profesional puede ajustar gramaje de las papas según objetivo del paciente.',
     ],
   },
   pollo_verduras: {
