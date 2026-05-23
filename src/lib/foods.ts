@@ -462,6 +462,29 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Ideal cuando no hay tiempo de preparar colación elaborada.',
     ],
   },
+  sandwich_jamonqueso: {
+    label: 'Sándwich de jamón queso',
+    items: [
+      '1 rebanada de pan integral (40g)',
+      '30g de jamón de pavo (cuello)',
+      '30g de queso laminado tipo gauda o mantecoso',
+      '1 hoja de lechuga',
+      '1 rodaja de tomate',
+    ],
+    baseKcal: 248, p: 16, c: 20, g: 11,
+    foto: USP('1528735602780-2552fd46c7af'), // sándwich abierto, foto real
+    tiempo: '5 min',
+    tendencia: ['omnivoro'], // jamón = carne; no apto vegetariano/vegano
+    alergenosNota: 'Contiene gluten (pan) y lácteos (queso). Si tienes intolerancia a alguno, sustituye por pan sin gluten o queso vegetal.',
+    pasos: [
+      'Tostar la rebanada de pan integral (sartén seca o tostadora) hasta dorar.',
+      'Sobre el pan tibio, colocar el jamón de pavo cubriendo toda la superficie.',
+      'Agregar el queso laminado encima del jamón.',
+      'Si tienes microondas: 15-20 s para que el queso funda apenas. Opcional.',
+      'Coronar con la hoja de lechuga y la rodaja de tomate.',
+      'Consumir inmediatamente como sándwich abierto, o cubrir con otra rebanada si se duplica la porción.',
+    ],
+  },
   // Nota: las barras de proteína y snacks Nutrevo se integran al plan
   // exclusivamente a través de los selectores dedicados "Barra de proteína favorita"
   // y "Snack saludable favorito (Nutrevo)" en PlanGenerator (step 5).
