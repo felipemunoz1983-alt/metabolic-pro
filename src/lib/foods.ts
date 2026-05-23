@@ -51,6 +51,11 @@ export interface MealOption {
   /** Duración numérica en minutos para filtrar por tiempoCocinar del paciente.
    *  Si no se define, se intenta parsear desde `tiempo` (string como "20 min"). */
   tiempoMin?: number
+  /** true = producto industrial en porción fija (barra, snack envasado, postre individual).
+   *  buildMeal NO escala sus macros al kcal del slot — usa baseKcal/p/c/g tal cual.
+   *  Aplica a: barras de proteína, snacks Nutrevo, Goodnes Protein, Costa Mini Chips,
+   *  galletón Quaker, y cualquier producto que venga en envase con porción única. */
+  porcionFija?: boolean
 }
 
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
@@ -593,6 +598,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Colesterol:              1,6 mg
     // SELLOS CHILENOS: Alto en azúcares · Alto en grasas saturadas · Alto en calorías
     baseKcal: 180, p: 1.5, c: 24, g: 9,
+    porcionFija: true, // 35g paquete individual — no escalable al slot
     foto: IMG + 'costa_mini_chips.webp', // chocolate chip cookies · 900x600 webp 65KB
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'], // contiene leche, huevos, soya — no vegano
@@ -618,6 +624,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Sodio:          167,9 mg
     //   Colesterol:     11,5 mg
     baseKcal: 98, p: 10, c: 10, g: 2,
+    porcionFija: true, // 115g pote — no escalable al slot
     foto: USP('1488477181946-6428a0291777'),
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'],
@@ -655,6 +662,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     label: '🍪 Galletón Quaker Casero — Chips Chocolate',
     items: ['1 galletón Quaker Casero Chips Chocolate (40 g)'],
     baseKcal: 173, p: 2.8, c: 22, g: 7.6,
+    porcionFija: true, // 40g unidad — no escalable al slot
     foto: IMG + 'galleton_quaker_chocolate.jpg',
     tiempo: '1 min',
     pasos: [

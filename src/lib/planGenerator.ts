@@ -345,10 +345,14 @@ function buildMeal(
   carneGramos?: number,
   carboGramos?: number,
 ): DayMeal {
-  const kcal = Math.round(finalKcal)
+  // Productos en porción fija (barras, snacks envasados, postres individuales)
+  // NO se escalan al kcal del slot — vienen en envase con macros definidos por etiqueta.
+  // El kcal mostrado refleja el producto real, no la cuota teórica del slot.
+  const isPorcionFija = option.porcionFija === true
+  const kcal = isPorcionFija ? Math.round(option.baseKcal) : Math.round(finalKcal)
 
-  // Escalar macros proporcionalmente al kcal real vs base
-  const scale = kcal / (option.baseKcal || kcal)
+  // Escalar macros proporcionalmente al kcal real vs base — excepto si es porción fija
+  const scale = isPorcionFija ? 1 : kcal / (option.baseKcal || kcal)
   let p = Math.round(option.p * scale)
   let c = Math.round(option.c * scale)
   let g = Math.round(option.g * scale)
@@ -491,6 +495,7 @@ function snackToMealOption(snackTipo: SnackNutrevoTipo): MealOption {
     p: s.p,
     c: s.c,
     g: s.g,
+    porcionFija: true, // snack envasado en porción única — macros reales, no escalar al slot
     foto: s.foto,
     tiempo: '0 min',
     alergenosNota: s.alergenosNota,
@@ -511,6 +516,7 @@ function barraToMealOption(barraTipo: BarraProteinaTipo): MealOption {
     p: b.p,
     c: b.c,
     g: b.g,
+    porcionFija: true, // barra envasada en porción única — macros reales, no escalar al slot
     foto: b.foto,
     tiempo: '0 min',
     alergenosNota: b.alergenosNota,
