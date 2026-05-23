@@ -556,6 +556,35 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Consumir como sándwich abierto. Sin queso para mantener bajo el aporte de grasa.',
     ],
   },
+  costa_mini_chips: {
+    label: 'Galletas Costa Mini Chips',
+    items: [
+      '1 paquete individual de Costa Mini Chips (35 g)',
+      '(Opcional) Té, infusión o café sin azúcar para acompañar',
+    ],
+    // Datos validados contra etiqueta nutricional del envase (35 g · 1 porción):
+    //   Energía:                 179,9 kcal
+    //   Proteínas:               1,5 g
+    //   Grasas totales:          8,8 g    (saturadas 5,1 g · trans 0,2 g)
+    //   H. de C. disp.:          23,8 g   (de los cuales azúcares: 11,5 g)
+    //   Sodio:                   112 mg
+    //   Colesterol:              1,6 mg
+    // SELLOS CHILENOS: Alto en azúcares · Alto en grasas saturadas · Alto en calorías
+    baseKcal: 180, p: 1.5, c: 24, g: 9,
+    foto: USP('1499636136210-6f4ee915583e'), // chocolate chip cookies, placeholder
+    // TODO: cuando se tenga el archivo del paquete real,
+    //       guardarlo como img/costa_mini_chips.webp y reemplazar:
+    //       foto: IMG + 'costa_mini_chips.webp'
+    tiempo: '1 min',
+    tendencia: ['omnivoro', 'vegetariano'], // contiene leche, huevos, soya — no vegano
+    sellos: ['Alto en Azúcares', 'Alto en Grasas Saturadas', 'Alto en Calorías'],
+    alergenosNota: 'Producto ultraprocesado con 3 sellos chilenos (azúcares, grasas saturadas, calorías). Contiene gluten, leche y soya. Puede contener trazas de almendras, avellanas, huevos, maní, nueces, sésamo y sulfitos. 11,5 g de azúcares por porción — usar con criterio, no como rutina diaria.',
+    pasos: [
+      'Abrir el paquete individual de 35 g.',
+      'Consumir como colación rápida acompañando té, café o infusión.',
+      'Aviso clínico: por sus 3 sellos chilenos (Alto en azúcar, grasa saturada, calorías) conviene espaciarlo — máximo 1-2 veces por semana si el plan es de pérdida de grasa.',
+    ],
+  },
   goodnes_protein_caramelo: {
     label: 'Postre Goodnes Protein (caramelo)',
     items: [
