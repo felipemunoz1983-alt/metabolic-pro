@@ -544,7 +544,15 @@ Cualquier duda, escríbeme 😊`
             </div>
             <PlanGenerator
               onResult={handlePlanResult}
-              initialData={planForm ?? undefined}
+              // Hidrata el wizard con:
+              //   1. Datos del paciente (nombre, email) — para no retipearlos
+              //   2. Datos antropométricos del último plan (peso/talla/edad/sexo)
+              //      si los tiene — solo lo que cambia entre planes (objetivo,
+              //      ejercicio, etc.) queda para el profesional ajustar
+              initialData={{
+                nombre: patient.nombre ?? '',
+                ...(planForm ?? {}),
+              }}
             />
           </>
         )}
@@ -729,7 +737,15 @@ Cualquier duda, escríbeme 😊`
             </button>
           )}
           <button
-            onClick={() => { setPlanResult(null); setPlanForm(null); setEmailStatus('idle'); setView('plan') }}
+            onClick={() => {
+              // 'Nuevo plan' → entra al wizard pero MANTIENE planForm hidratado
+              //   con los datos antropométricos del último plan (peso/talla/edad/sexo).
+              //   El profesional ajusta solo lo que cambia entre planes.
+              //   El nombre del paciente se pre-llena vía el initialData del mount.
+              setPlanResult(null)
+              setEmailStatus('idle')
+              setView('plan')
+            }}
             className="flex items-center gap-2 bg-gradient-to-r from-[#0C3547] to-[#1a6fa0] text-white text-sm font-bold px-4 py-2 rounded-xl hover:opacity-90 transition"
           >
             <Plus size={14} /> {allPlans.length > 0 ? 'Nuevo plan' : 'Generar plan'}
@@ -880,7 +896,12 @@ Cualquier duda, escríbeme 😊`
             <FileText size={24} className="text-[#D6E3ED] mx-auto mb-2" />
             <p className="text-xs text-[#8BA5BE]">Sin planes generados aún</p>
             <button
-              onClick={() => { setPlanResult(null); setPlanForm(null); setView('plan') }}
+              onClick={() => {
+                // Primer plan del paciente: no hay datos previos para hidratar,
+                // pero el initialData del PlanGenerator pre-llena el nombre.
+                setPlanResult(null)
+                setView('plan')
+              }}
               className="mt-3 flex items-center gap-1.5 text-xs font-bold text-[#29ABE2] hover:underline mx-auto"
             >
               <Plus size={12} /> Generar primer plan
