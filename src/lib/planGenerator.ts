@@ -511,19 +511,20 @@ function buildColacionPool(
     .filter((o): o is MealOption => Boolean(o))
 
   const extras: MealOption[] = []
-  const horario = form.horarioEntrenamiento ?? 'PM'
-  const slotMatchesHorario =
-    horario === 'sin_entreno' ||
-    (slot === 'AM' && horario === 'AM') ||
-    (slot === 'PM' && (horario === 'PM' || horario === 'noche'))
 
-  if (slotMatchesHorario) {
-    if (form.incluirSnackEnPlan && form.snackNutrevoTipo) {
-      extras.push(snackToMealOption(form.snackNutrevoTipo))
-    }
-    if (form.incluirBarraEnPlan && form.barraProteinaTipo) {
-      extras.push(barraToMealOption(form.barraProteinaTipo))
-    }
+  // Cuando el paciente activa 'Incluir snack/barra en mi plan' espera verlos
+  // en su plan SIEMPRE — no solo en el slot que coincida con el horario de
+  // entreno. La inclusión es opt-in del paciente, así que respetamos su
+  // intención: aparecen en ambos slots (AM y PM) cuando están activos.
+  //
+  // El planGenerator rotará entre las naturales + estas extras según los días.
+  // Si el profesional considera que solo se justifican peri-entreno, puede
+  // simplemente no activar el toggle.
+  if (form.incluirSnackEnPlan && form.snackNutrevoTipo) {
+    extras.push(snackToMealOption(form.snackNutrevoTipo))
+  }
+  if (form.incluirBarraEnPlan && form.barraProteinaTipo) {
+    extras.push(barraToMealOption(form.barraProteinaTipo))
   }
 
   const pool = [...naturalOpts, ...extras]

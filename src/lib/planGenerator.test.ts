@@ -175,19 +175,19 @@ describe('generarPlan — opt-in snack/barra', () => {
     expect(allLabels).toMatch(/Alfajor Activa2/i)
   })
 
-  it('snack solo entra en colación AM si entrena AM (no en once)', () => {
+  it('snack opt-in entra en AMBOS slots independiente del horario de entreno', () => {
+    // El paciente activó 'Incluir en mi plan' explícitamente — espera verlo.
+    // No se debe restringir por slot según horario de entreno (eso confundía
+    // al usuario al no encontrar la barra/snack que pidió ver en su plan).
     const plan = generarPlan(baseForm({
       incluirSnackEnPlan: true,
       snackNutrevoTipo: 'volki_coco',
       horarioEntrenamiento: 'AM',
+      comidasPorDia: 5,
     }), 2000)
-    // Volki nunca debería aparecer en once (slot PM) cuando entrena AM
-    plan.dias.forEach(day => {
-      const onceMeal = day.meals.find(m => m.tipo === 'once')
-      if (onceMeal) {
-        expect(onceMeal.label).not.toMatch(/Volki/i)
-      }
-    })
+    const allLabels = plan.dias.map(d => d.meals.map(m => m.label).join(' | ')).join(' || ')
+    // Con rotación de 7 días, Volki debe aparecer en algún slot al menos una vez
+    expect(allLabels).toMatch(/Volki/i)
   })
 
   it('snack entra en ambos slots si sin_entreno + opt-in', () => {
