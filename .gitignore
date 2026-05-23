@@ -46,3 +46,6 @@ next-env.d.ts
 /supabase/.temp/
 /supabase/.branches/
 banco_opciones_centro_metabolico.zip
+
+# Claude Code per-developer settings (no compartir entre maquinas)
+.claude/settings.local.json
