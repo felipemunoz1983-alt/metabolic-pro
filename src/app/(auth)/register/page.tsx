@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { createClient, getUserSafe } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { Activity, Mail, Lock, User, ArrowRight, CheckCircle, AlertCircle, ShieldCheck } from 'lucide-react'
 
@@ -111,7 +111,7 @@ function RegisterForm() {
   // Already logged-in + invite link → auto-link and redirect
   useEffect(() => {
     if (!professionalId) return
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    getUserSafe(supabase).then(async (user) => {
       if (!user) return
 
       // Si tenemos token firmado → server hace TODO (verify + link + notify atomic)

@@ -4,7 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { createClient, getUserSafe } from '@/lib/supabase'
 import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -165,7 +165,7 @@ export default function UpgradePage() {
   const [pendingPayment, setPendingPayment] = useState<{ url: string; token: string } | null>(null)
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    getUserSafe(supabase).then(async (user) => {
       if (!user) { router.replace('/login'); return }
 
       const [profileRes, plansRes, logsRes] = await Promise.all([

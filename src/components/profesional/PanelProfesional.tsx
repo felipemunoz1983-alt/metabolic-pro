@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { createClient } from '@/lib/supabase'
+import { createClient, getUserSafe } from '@/lib/supabase'
 import { cn } from '@/lib/utils'
 import { getDateCLDaysAgo, formatDateCL } from '@/lib/date-cl'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
@@ -1599,7 +1599,7 @@ export function PanelProfesional({
   }
 
   async function sendWeeklyDigest() {
-    const { data: { user } } = await supabase.auth.getUser()
+    const user = await getUserSafe(supabase)
     if (!user?.email) return
     setDigestStatus('sending')
     try {

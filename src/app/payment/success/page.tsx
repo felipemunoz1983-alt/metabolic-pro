@@ -17,7 +17,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase'
+import { createClient, getUserSafe } from '@/lib/supabase'
 import { motion } from 'framer-motion'
 import { CheckCircle, Star, Zap, ArrowRight, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
@@ -137,7 +137,7 @@ export default function PaymentSuccessPage() {
   useEffect(() => {
     let redirectTimer: ReturnType<typeof setTimeout>
 
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
+    getUserSafe(supabase).then(async (user) => {
       if (!user) { router.replace('/login'); return }
 
       const { data: profile } = await supabase

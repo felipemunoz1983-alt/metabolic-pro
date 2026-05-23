@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { createClient, getUserSafe } from '@/lib/supabase'
 import { Sidebar } from '@/components/layout/Sidebar'
 import type { Tab } from '@/components/layout/types'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
@@ -196,7 +196,10 @@ export default function PacientePage() {
 
     async function load() {
       try {
-        const { data: { user } } = await supabase.auth.getUser()
+        // getUserSafe maneja el caso de refresh token corrupto/vencido:
+        // hace signOut automatico y devuelve null en vez de tirar excepcion.
+        // Esto evita el skeleton infinito que vivimos cuando el token expira.
+        const user = await getUserSafe(supabase)
 
         // No auth session → login
         if (!user) {
