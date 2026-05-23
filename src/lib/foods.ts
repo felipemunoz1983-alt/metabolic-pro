@@ -1,6 +1,10 @@
 // ── Base de alimentos · Centro Metabólico Pro ──
 
-const IMG = 'https://raw.githubusercontent.com/felipemunoz1983-alt/metabolic-pro/main/img/'
+// Las imagenes del catalogo se sirven desde /public/img/ del propio Next.js (Vercel CDN).
+// Antes apuntaban a raw.githubusercontent.com, pero ese host requiere auth para repos
+// privados — al hacer el repo privado las fotos quedaban 404 para los pacientes.
+// /img/ es servido por Vercel directo desde la build, sin depender de GitHub.
+const IMG = '/img/'
 const USP = (id: string) => `https://images.unsplash.com/photo-${id}?w=900&h=600&fit=crop&q=90&auto=format`
 
 export interface MealOption {
