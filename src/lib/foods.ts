@@ -667,7 +667,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     items: ['1 galletón Quaker Casero Chips Chocolate (40 g)'],
     baseKcal: 173, p: 2.8, c: 22, g: 7.6,
     porcionFija: true, // 40g unidad — no escalable al slot
-    foto: IMG + 'galleton_quaker_chocolate.jpg',
+    foto: USP('1499636136210-6f4ee915583e'), // placeholder: chocolate chip cookies — reemplazar con foto real del producto Quaker
     tiempo: '1 min',
     pasos: [
       'Abrir el envase y consumir directamente.',
