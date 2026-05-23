@@ -559,24 +559,26 @@ export const colacionesOpts: Record<string, MealOption> = {
   goodnes_protein_caramelo: {
     label: 'Postre Goodnes Protein (caramelo)',
     items: [
-      '1 pote de Postre Goodnes Protein sabor caramelo (100 g)',
+      '1 pote de Postre Goodnes Protein sabor caramelo (115 g · 1 unidad)',
       '(Opcional) 1 fruta pequeña como acompañamiento',
     ],
-    // TODO Felipe: confirmar contra la etiqueta del envase actual de Lider.
-    // Valores típicos de la categoría (postres proteicos chilenos, ~100g):
-    //   - Proteína 12-15 g (atractivo principal de la línea)
-    //   - Azúcar añadida: 0 g (endulzado con sucralosa)
-    //   - Sin sellos chilenos (no alto en azúcar/grasa/sodio/calorías)
-    baseKcal: 130, p: 15, c: 10, g: 3,
-    foto: USP('1488477181946-6428a0291777'), // postre cremoso en pote, foto real
+    // Datos validados contra etiqueta nutricional del envase (115 g):
+    //   Energía:        97,7 kcal
+    //   Proteínas:      10 g
+    //   H. de C. disp.: 9,8 g  (de los cuales azúcares totales: 7 g)
+    //   Grasas:         2,1 g  (saturadas 1,3 g)
+    //   Sodio:          167,9 mg
+    //   Colesterol:     11,5 mg
+    baseKcal: 98, p: 10, c: 10, g: 2,
+    foto: USP('1488477181946-6428a0291777'),
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'],
-    alergenosNota: 'Producto industrial — contiene lácteos. 0 g azúcar añadida (endulzado con sucralosa). Verifica contraindicaciones si tienes intolerancia a la lactosa o a edulcorantes artificiales.',
+    alergenosNota: 'Producto industrial — contiene lácteos. 7 g de azúcares totales por porción (no es "sin azúcar"). Bajo en grasa y sodio. Verifica contraindicaciones si tienes intolerancia a la lactosa.',
     pasos: [
       'Sacar el pote del refrigerador (mejor frío para la textura).',
       'Abrir y revolver suavemente si el caramelo está en el fondo.',
       'Consumir directo del pote o servir en bowl con una fruta picada encima como acompañamiento.',
-      'Ideal post-entreno (proteína de absorción rápida) o como colación entre comidas para cortar el dulce sin azúcar.',
+      'Útil como colación post-entreno por su proteína de absorción rápida; el contenido de azúcar (7 g) lo hace menos óptimo si el paciente está en déficit estricto.',
     ],
   },
   marraqueta_jamonqueso: {
