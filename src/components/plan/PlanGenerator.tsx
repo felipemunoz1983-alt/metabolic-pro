@@ -288,6 +288,59 @@ function EggsQtyPicker({
   )
 }
 
+// ─── Selector de slot para snack/barra opt-in ────────────────────────────────
+// Decide en qué colación aparece el producto que el paciente activó:
+// 'am' (colación mañana), 'pm' (once), o 'ambas'.
+function SlotPicker({
+  label,
+  value,
+  onChange,
+  accent = 'cyan',
+}: {
+  label: string
+  value: 'am' | 'pm' | 'ambas'
+  onChange: (v: 'am' | 'pm' | 'ambas') => void
+  accent?: 'cyan' | 'rose' | 'violet'
+}) {
+  const accentClasses: Record<typeof accent, { bg: string; border: string; text: string }> = {
+    cyan:   { bg: 'bg-[#29ABE2]', border: 'border-[#29ABE2]', text: 'text-[#29ABE2]' },
+    rose:   { bg: 'bg-rose-500',  border: 'border-rose-500',  text: 'text-rose-600' },
+    violet: { bg: 'bg-violet-500', border: 'border-violet-500', text: 'text-violet-600' },
+  }
+  const a = accentClasses[accent]
+  const opts: { key: 'am' | 'pm' | 'ambas'; label: string; emoji: string }[] = [
+    { key: 'am',    label: 'Colación mañana', emoji: '☕' },
+    { key: 'pm',    label: 'Once',            emoji: '🫖' },
+    { key: 'ambas', label: 'Ambas',           emoji: '🔄' },
+  ]
+  return (
+    <div className="mt-2 mb-2 pl-3 border-l-2 border-[#E2ECF4]">
+      <p className="text-xs font-semibold text-[#0C3547] mb-2">{label}</p>
+      <div className="flex flex-wrap gap-2">
+        {opts.map(o => {
+          const active = value === o.key
+          return (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => onChange(o.key)}
+              className={cn(
+                'flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all',
+                active
+                  ? `${a.bg} ${a.border} text-white`
+                  : `bg-white border-[#D6E3ED] text-[#6B7C93] hover:${a.border} hover:${a.text}`,
+              )}
+            >
+              <span>{o.emoji}</span>
+              <span>{o.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // ─── Selector de gramaje de carne / pescado por tiempo de comida ─────────────
 function CarneQtyPicker({
   label,
@@ -323,6 +376,52 @@ function CarneQtyPicker({
           </button>
         ))}
       </div>
+    </div>
+  )
+}
+
+// ─── Selector de gramaje de carbo principal (arroz / papas / quinoa / fideos) ─
+// El profesional ajusta la cantidad de carbohidratos según el target del paciente:
+//   - Déficit: 100-130g          (objetivo pérdida de grasa)
+//   - Mantenimiento: 150-200g    (peso estable)
+//   - Superávit: 200-280g        (hipertrofia, deportistas de resistencia)
+function CarboQtyPicker({
+  label,
+  value,
+  onChange,
+  emoji = '🍚',
+}: {
+  label: string
+  value: number
+  onChange: (n: number) => void
+  emoji?: string
+}) {
+  const opciones = [80, 100, 130, 150, 180, 220, 280]
+  return (
+    <div className="mt-2 pl-1">
+      <div className="flex items-center gap-2 mb-1.5">
+        <span className="text-xs text-[#6B7C93] font-semibold">{emoji} {label}:</span>
+        <span className="text-xs font-bold text-[#0C3547]">{value}g</span>
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        {opciones.map(n => (
+          <button
+            key={n}
+            onClick={() => onChange(n)}
+            className={cn(
+              'min-w-[44px] h-9 px-2 rounded-lg text-xs font-bold border-2 transition-all',
+              value === n
+                ? 'bg-amber-500 border-amber-500 text-white'
+                : 'border-[#D6E3ED] text-[#6B7C93] hover:border-amber-500 hover:text-amber-600'
+            )}
+          >
+            {n}g
+          </button>
+        ))}
+      </div>
+      <p className="text-[10px] text-[#8BA5BE] mt-1.5">
+        Déficit: 80-130g · Mantenimiento: 150-180g · Superávit: 220-280g
+      </p>
     </div>
   )
 }
@@ -1465,6 +1564,15 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 selectedBg="bg-rose-500"
                 selectedBorder="border-rose-500"
               />
+              {/* Slot picker — solo aparece cuando 'incluir en plan' está activo */}
+              {form.incluirSnackEnPlan && (
+                <SlotPicker
+                  label="¿En qué colación quieres el snack?"
+                  value={(form.snackSlot ?? 'ambas') as 'am' | 'pm' | 'ambas'}
+                  onChange={v => set('snackSlot', v)}
+                  accent="rose"
+                />
+              )}
 
               {/* 5️⃣ Selector barra de proteína — opt-in al plan */}
               <CatalogPicker<BarraProteinaTipo>
@@ -1483,6 +1591,14 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 selectedBg="bg-violet-500"
                 selectedBorder="border-violet-500"
               />
+              {form.incluirBarraEnPlan && (
+                <SlotPicker
+                  label="¿En qué colación quieres la barra?"
+                  value={(form.barraSlot ?? 'ambas') as 'am' | 'pm' | 'ambas'}
+                  onChange={v => set('barraSlot', v)}
+                  accent="violet"
+                />
+              )}
 
               {(() => {
                 // Reglas clínicas a propagar a todos los MealChips
@@ -1544,6 +1660,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                           onChange={n => set('carneGramosAlmuerzo', n)}
                         />
                       )}
+                      {(form.almuerzos ?? []).some(k => almuerzosOpts[k]?.tieneCarboPrincipal) && (
+                        <CarboQtyPicker
+                          label="Gramos de carbohidrato principal en almuerzo"
+                          value={form.carboGramosAlmuerzo ?? 150}
+                          onChange={n => set('carboGramosAlmuerzo', n)}
+                        />
+                      )}
                     </div>
 
                     {/* Once */}
@@ -1580,6 +1703,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                           label="Gramos de carne / pescado en cena"
                           value={form.carneGramosCena ?? 150}
                           onChange={n => set('carneGramosCena', n)}
+                        />
+                      )}
+                      {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneCarboPrincipal) && (
+                        <CarboQtyPicker
+                          label="Gramos de carbohidrato principal en cena"
+                          value={form.carboGramosCena ?? 100}
+                          onChange={n => set('carboGramosCena', n)}
                         />
                       )}
                     </div>

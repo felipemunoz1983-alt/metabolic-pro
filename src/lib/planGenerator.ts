@@ -16,6 +16,7 @@ import {
   parseTiempoMin,
   tiempoCocinarMax,
   CARNE_MACROS_POR_GRAMO,
+  CARBO_MACROS_POR_GRAMO,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -268,7 +269,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo))
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo, form.carboGramosAlmuerzo))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
@@ -278,7 +279,7 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'cena') {
         const cena = getMealOption(cenasPool, form.cenas, d)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena))
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, form.carboGramosCena))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
@@ -342,6 +343,7 @@ function buildMeal(
   eggsQty?: number,
   yogurTipo?: YogurTipo,
   carneGramos?: number,
+  carboGramos?: number,
 ): DayMeal {
   const kcal = Math.round(finalKcal)
 
@@ -390,6 +392,38 @@ function buildMeal(
     // kcal/c no se recalculan: el kcal del slot ya está fijo por el targetKcal;
     // si el paciente sube la carne sube proteína pero el kcal del plan no cambia
     // (es decisión clínica: el plan apunta al total, las porciones se ajustan)
+  }
+
+  // Sustituir gramaje del carbohidrato principal (arroz/papas/quinoa/fideos/pan)
+  // si el paciente eligió un gramaje distinto al base. Ajusta C (y secundariamente p/g)
+  // usando CARBO_MACROS_POR_GRAMO[carboTipo] como delta vs el base de la receta.
+  if (
+    option.tieneCarboPrincipal &&
+    option.carboTipo &&
+    option.carboGramosBase &&
+    carboGramos !== undefined &&
+    carboGramos !== option.carboGramosBase
+  ) {
+    const baseG = option.carboGramosBase
+    const newG = carboGramos
+    // Reemplazar "Ng <carbo>" en items (primer match con el peso base que aún no fue tocado)
+    const reBase = new RegExp(`\\b${baseG}\\s*g\\b`)
+    let replaced = false
+    items = items.map(item => {
+      if (!replaced && reBase.test(item)) {
+        replaced = true
+        return item.replace(reBase, `${newG}g`)
+      }
+      return item
+    })
+    const macros = CARBO_MACROS_POR_GRAMO[option.carboTipo]
+    const deltaG_carbo = newG - baseG
+    // El carbohidrato aporta principalmente C; p/g se ajustan suavemente
+    c = Math.max(0, Math.round(c + deltaG_carbo * macros.c * scale))
+    p = Math.max(0, Math.round(p + deltaG_carbo * macros.p * scale))
+    g = Math.max(0, Math.round(g + deltaG_carbo * macros.g * scale))
+    // kcal del slot ya está fijado por targetKcal — la decisión clínica es que el
+    // gramaje sirve para acomodar requerimientos individuales sin alterar el total.
   }
 
   // Sustituir yogur si la opción tiene yogur (siempre — incluye griego).
@@ -512,18 +546,28 @@ function buildColacionPool(
 
   const extras: MealOption[] = []
 
-  // Cuando el paciente activa 'Incluir snack/barra en mi plan' espera verlos
-  // en su plan SIEMPRE — no solo en el slot que coincida con el horario de
-  // entreno. La inclusión es opt-in del paciente, así que respetamos su
-  // intención: aparecen en ambos slots (AM y PM) cuando están activos.
+  // Cuando el paciente activa 'Incluir snack/barra en mi plan', respetamos
+  // el slot que eligió: 'am' (colación mañana), 'pm' (once), o 'ambas'.
+  // Default: 'ambas' (compat con planes anteriores).
   //
   // El planGenerator rotará entre las naturales + estas extras según los días.
-  // Si el profesional considera que solo se justifican peri-entreno, puede
-  // simplemente no activar el toggle.
-  if (form.incluirSnackEnPlan && form.snackNutrevoTipo) {
+  const snackSlot = form.snackSlot ?? 'ambas'
+  const barraSlot = form.barraSlot ?? 'ambas'
+
+  const snackMatchesSlot =
+    snackSlot === 'ambas' ||
+    (slot === 'AM' && snackSlot === 'am') ||
+    (slot === 'PM' && snackSlot === 'pm')
+
+  const barraMatchesSlot =
+    barraSlot === 'ambas' ||
+    (slot === 'AM' && barraSlot === 'am') ||
+    (slot === 'PM' && barraSlot === 'pm')
+
+  if (form.incluirSnackEnPlan && form.snackNutrevoTipo && snackMatchesSlot) {
     extras.push(snackToMealOption(form.snackNutrevoTipo))
   }
-  if (form.incluirBarraEnPlan && form.barraProteinaTipo) {
+  if (form.incluirBarraEnPlan && form.barraProteinaTipo && barraMatchesSlot) {
     extras.push(barraToMealOption(form.barraProteinaTipo))
   }
 

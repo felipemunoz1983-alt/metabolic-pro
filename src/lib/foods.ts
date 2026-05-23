@@ -26,6 +26,13 @@ export interface MealOption {
   carneTipo?: 'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun'
   /** Gramaje base de la carne en la receta (ej: 150g pollo → 150) */
   carneGramosBase?: number
+  /** true = la preparación incluye un carbohidrato principal cuyo gramaje ajusta
+   *  el profesional según el requerimiento calórico del paciente (objetivo, target). */
+  tieneCarboPrincipal?: boolean
+  /** Tipo del carbo principal — usado para ajustar macros al cambiar gramaje */
+  carboTipo?: 'arroz_blanco' | 'arroz_integral' | 'papas' | 'quinoa' | 'fideos' | 'pan_integral'
+  /** Gramaje base del carbo principal en la receta (peso cocido) */
+  carboGramosBase?: number
   requiereWhey?: boolean    // true = solo incluir si el profesional indica proteína en polvo
   tieneYogur?: boolean      // muestra selector de tipo de yogur en PlanGenerator
   /** Alérgenos / componentes que contiene — para filtrar por digIntolerancias del paciente.
@@ -57,6 +64,21 @@ export const CARNE_MACROS_POR_GRAMO: Record<
   carne_roja: { kcal: 1.50, p: 0.26, g: 0.050 },  // posta/lomo magro
   salmon:     { kcal: 2.00, p: 0.22, g: 0.130 },  // salmón fresco
   atun:       { kcal: 1.05, p: 0.26, g: 0.010 },  // atún en agua
+}
+
+// ─── Macros por gramo de carbohidrato principal (USDA, peso COCIDO) ──────────
+// Usado para reajustar c/kcal/p cuando el profesional cambia el gramaje del
+// carbo principal según el target del paciente (déficit / mantenimiento / surplus).
+export const CARBO_MACROS_POR_GRAMO: Record<
+  'arroz_blanco' | 'arroz_integral' | 'papas' | 'quinoa' | 'fideos' | 'pan_integral',
+  { kcal: number; p: number; c: number; g: number }
+> = {
+  arroz_blanco:    { kcal: 1.30, p: 0.027, c: 0.28, g: 0.003 },   // arroz blanco cocido
+  arroz_integral:  { kcal: 1.11, p: 0.026, c: 0.23, g: 0.009 },   // arroz integral cocido
+  papas:           { kcal: 0.87, p: 0.020, c: 0.20, g: 0.001 },   // papa cocida con cáscara
+  quinoa:          { kcal: 1.20, p: 0.044, c: 0.21, g: 0.019 },   // quinoa cocida
+  fideos:          { kcal: 1.31, p: 0.050, c: 0.25, g: 0.011 },   // fideos cocidos
+  pan_integral:    { kcal: 2.47, p: 0.130, c: 0.41, g: 0.034 },   // pan integral (no cocido — base seca)
 }
 
 // ─── Helpers de contexto temporal ─────────────────────────────────────────────
@@ -659,6 +681,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 200,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_integral', carboGramosBase: 150,
     tiempo: '30 min',
     pasos: [
       'Pollo: sazonar la pechuga con sal, pimienta, ajo en polvo y gotas de limón. Cocinar 6-7 min por lado en plancha caliente con spray de aceite. El sellado a fuego alto retiene los jugos.',
@@ -676,6 +699,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
     tiempo: '30 min',
     pasos: [
       'Papa: lavar y cocinar entera con cáscara en agua hirviendo con sal 20-25 min. La cáscara conserva nutrientes y reduce el índice glicémico.',
@@ -683,6 +707,25 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Reposo: dejar reposar la carne 2-3 min antes de cortar para redistribuir los jugos.',
       'Ensalada: cortar las verduras en trozos medianos. Aliñar con aceite, sal y limón.',
       'Armado: servir la carne junto a la papa partida y la ensalada al costado.',
+    ],
+  },
+  carne_arroz: {
+    label: 'Carne magra + arroz + ensalada',
+    items: ['150g carne magra (posta, lomo o filete)', '150g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    baseKcal: 565, p: 44, c: 50, g: 16,
+    foto: IMG + 'carne_con_papas..webp', // placeholder hasta tener foto específica
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
+    tiempo: '25 min',
+    pasos: [
+      'Arroz: cocinar en 2 tazas de agua con pizca de sal. Llevar a hervor, bajar a fuego bajo y tapar 12-15 min hasta que absorba el agua.',
+      'Carne: sazonar la pieza con sal, pimienta, ajo y un toque de limón. Cocinar en plancha bien caliente 4-5 min por lado según grosor. La carne magra aporta hierro hemo y proteína de alto valor biológico.',
+      'Reposo: dejar reposar la carne 2-3 min antes de cortar para que los jugos se redistribuyan.',
+      'Ensalada: cortar lechuga, tomate y pepino. Aliñar con aceite de oliva, sal y limón.',
+      'Armado: servir la carne junto al arroz y la ensalada al costado.',
+      'Variante: si el target del paciente requiere más CHO (ej. surplus para hipertrofia), el profesional puede subir los gramos de arroz desde el selector dinámico.',
     ],
   },
   salmon_quinoa: {
@@ -867,6 +910,23 @@ export const almuerzosOpts: Record<string, MealOption> = {
 
 // ─── CENAS ────────────────────────────────────────────────────────────────────
 export const cenasOpts: Record<string, MealOption> = {
+  carne_arroz: {
+    label: 'Carne magra + arroz + ensalada (porción cena)',
+    items: ['120g carne magra (posta, lomo o filete)', '100g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    baseKcal: 395, p: 33, c: 33, g: 13,
+    foto: IMG + 'carne_con_papas..webp',
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 120,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 100,
+    tiempo: '25 min',
+    pasos: [
+      'Arroz: cocinar 100g secos en agua con sal 12 min. Para cena, porción reducida vs almuerzo.',
+      'Carne: sazonar y cocinar en plancha 4-5 min por lado. Reposar 2 min antes de cortar.',
+      'Ensalada: aliñar con aceite, sal y limón.',
+      'Armado: servir todo junto. Versión moderada para cena — el profesional puede ajustar gramaje del arroz según objetivo del paciente.',
+    ],
+  },
   pollo_verduras: {
     label: 'Pechuga de pollo + verduras al vapor',
     items: ['150g pechuga pollo a la plancha', '200g mix verduras al vapor (brócoli, zanahorias, zapallito)', '1 cdta aceite de oliva', 'Limón y ajo'],

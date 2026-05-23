@@ -74,8 +74,16 @@ export interface FormData {
   barraProteinaTipo?: BarraProteinaTipo
   /** ¿Incluir el snack favorito en la rotación del plan? Default: false (opt-in clínico) */
   incluirSnackEnPlan?: boolean
+  /** Slot donde aparece el snack opt-in. Default 'ambas'. */
+  snackSlot?: 'am' | 'pm' | 'ambas'
   /** ¿Incluir la barra favorita en la rotación del plan? Default: false (opt-in clínico) */
   incluirBarraEnPlan?: boolean
+  /** Slot donde aparece la barra opt-in. Default 'ambas'. */
+  barraSlot?: 'am' | 'pm' | 'ambas'
+  /** Gramos de arroz/carbo principal en almuerzo. Default según el target del paciente. */
+  carboGramosAlmuerzo?: number
+  /** Gramos de arroz/carbo principal en cena. Default según el target del paciente. */
+  carboGramosCena?: number
   /** Horario habitual de entrenamiento — define timing peri-entreno de snack/barra */
   horarioEntrenamiento?: 'AM' | 'PM' | 'noche' | 'sin_entreno'
   // ── Contexto operativo del paciente (skill nutriapp-pro: variables obligatorias) ──
