@@ -11,6 +11,14 @@ import { formatDateCL } from '@/lib/date-cl'
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'felipe.munoz1983@gmail.com'
 
+// Precios mensuales por tier (CLP). Coinciden con src/lib/transbank.ts PLAN_PRICES.
+// Usados para calcular MRR proyectado desde suscripciones activas.
+const TIER_PRICE: Record<string, number> = {
+  professional: 14990,
+  patient:      7000,
+  individual:   12990,
+}
+
 export async function GET(_req: NextRequest): Promise<NextResponse> {
   // Auth guard — must be the admin user
   const user = await getAuthUser()
@@ -191,6 +199,114 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
     created_at: p.created_at,
   }))
 
+  // ── MRR / ARR / ARPU / LTV ───────────────────────────────────────────────────
+  // MRR = suma de precios mensuales de TODAS las suscripciones activas hoy.
+  // Una suscripción está "activa" si premium_until > now y el tipo de plan tiene
+  // precio definido. Para usuarios cuyo profile.plan no coincide con TIER_PRICE
+  // (legacy o tipos custom) los excluimos del MRR — no inflamos números.
+  const activeSubscriptions = profiles.filter(p =>
+    p.plan && TIER_PRICE[p.plan] !== undefined &&
+    p.premium_until && new Date(p.premium_until) > now
+  )
+  const mrr = activeSubscriptions.reduce((s, p) => s + TIER_PRICE[p.plan!], 0)
+  const arr = mrr * 12
+
+  // ARPU = MRR / suscripciones activas (cuántos $ paga cada cliente promedio mes a mes)
+  const arpu = activeSubscriptions.length > 0
+    ? Math.round(mrr / activeSubscriptions.length)
+    : 0
+
+  // LTV simple = revenue total promedio por cliente único que ha pagado al menos una vez.
+  // Es un proxy razonable mientras no haya snapshot mensual de cohorts.
+  const uniquePayingUserIds = new Set(pays.map(p => p.user_id))
+  const ltv = uniquePayingUserIds.size > 0
+    ? Math.round(revenueTotal / uniquePayingUserIds.size)
+    : 0
+
+  // ── Churn rate (30 días) ─────────────────────────────────────────────────────
+  // Definición: % de clientes que tenían plan vigente hace 30 días y ya NO lo tienen hoy.
+  // Aproximación: profiles con premium_until expirado en últimos 30d Y SIN pago aprobado
+  // en últimos 30d (no renovaron).
+  const churnedLast30d = profiles.filter(p => {
+    if (!p.premium_until) return false
+    const expDate = new Date(p.premium_until)
+    if (expDate >= now) return false                          // sigue activo
+    if (expDate < thirtyDaysAgo) return false                 // expiró antes del cohort
+    // Verificar que NO tenga pago aprobado en últimos 30d (no renovó)
+    const hasRecentPay = pays.some(pay =>
+      pay.user_id === p.id && new Date(pay.created_at) >= thirtyDaysAgo
+    )
+    return !hasRecentPay
+  }).length
+
+  const activeAt30dAgo = profiles.filter(p =>
+    p.premium_until && new Date(p.premium_until) >= thirtyDaysAgo
+  ).length
+
+  const churnRate30d = activeAt30dAgo > 0
+    ? Math.round((churnedLast30d / activeAt30dAgo) * 100 * 10) / 10
+    : 0
+
+  // ── NRR (Net Revenue Retention) — comparación mes actual vs mes anterior ─────
+  // NRR = revenue este mes / revenue mes anterior (solo de clientes que existían antes).
+  // >100% = expansión neta. <100% = contracción neta. 100% = mantención.
+  const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+  const endOfPrevMonth   = new Date(now.getFullYear(), now.getMonth(),     1)
+  const revenuePrevMonth = pays.filter(p => {
+    const d = new Date(p.created_at)
+    return d >= startOfPrevMonth && d < endOfPrevMonth
+  }).reduce((s, p) => s + (p.amount ?? 0), 0)
+
+  const nrrPct = revenuePrevMonth > 0
+    ? Math.round((revenueMonth / revenuePrevMonth) * 100)
+    : 0
+
+  // ── Plans expiring soon (próximos 30 días) ──────────────────────────────────
+  // Listado accionable para outreach proactivo de renovación.
+  const in30d = new Date(now.getTime() + 30 * 86_400_000)
+  const plansExpiringSoon = profiles
+    .filter(p =>
+      p.premium_until &&
+      new Date(p.premium_until) > now &&
+      new Date(p.premium_until) <= in30d
+    )
+    .map(p => ({
+      id:           p.id,
+      nombre:       p.nombre  ?? '—',
+      email:        p.email   ?? '—',
+      plan:         p.plan    ?? '—',
+      premiumUntil: p.premium_until,
+      daysLeft:     Math.ceil((new Date(p.premium_until!).getTime() - now.getTime()) / 86_400_000),
+    }))
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .slice(0, 30)
+
+  // ── Top 10 customers by LTV (revenue acumulado) ─────────────────────────────
+  // VIPs que no puedes perder — los que más han pagado.
+  const revenueByUserId: Record<string, number> = {}
+  const paymentCountByUserId: Record<string, number> = {}
+  pays.forEach(p => {
+    if (!p.user_id) return
+    revenueByUserId[p.user_id] = (revenueByUserId[p.user_id] ?? 0) + (p.amount ?? 0)
+    paymentCountByUserId[p.user_id] = (paymentCountByUserId[p.user_id] ?? 0) + 1
+  })
+  const topCustomersByLTV = Object.entries(revenueByUserId)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 10)
+    .map(([userId, totalRevenue]) => {
+      const profile = profiles.find(p => p.id === userId)
+      return {
+        id:             userId,
+        nombre:         profile?.nombre ?? '—',
+        email:          profile?.email  ?? '—',
+        plan:           profile?.plan   ?? '—',
+        totalRevenue,
+        paymentCount:   paymentCountByUserId[userId] ?? 0,
+        premiumUntil:   profile?.premium_until ?? null,
+        isStillActive:  !!(profile?.premium_until && new Date(profile.premium_until) > now),
+      }
+    })
+
   return NextResponse.json({
     // KPIs
     total, professionals, patients, individuals,
@@ -199,6 +315,8 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
     revenueTotal, revenueMonth, paymentsMonth,
     activeUsers7d,
     planBreakdown,
+    // Métricas SaaS financieras (Tier B)
+    mrr, arr, arpu, ltv, churnRate30d, nrrPct,
     // Charts
     signupsChart,
     revenueChart,
@@ -208,5 +326,8 @@ export async function GET(_req: NextRequest): Promise<NextResponse> {
     activeUsers30d,
     churnRiskUsers,
     engagementFunnel,
+    // Comercial (Tier A)
+    plansExpiringSoon,
+    topCustomersByLTV,
   })
 }

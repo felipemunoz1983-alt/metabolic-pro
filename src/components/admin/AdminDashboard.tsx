@@ -10,7 +10,8 @@ import {
   Users, TrendingUp, DollarSign, Activity,
   UserCheck, RefreshCw, ArrowUpRight, Zap,
   ShieldCheck, Clock, CreditCard, AlertTriangle,
-  TrendingDown, ChevronRight,
+  TrendingDown, ChevronRight, Crown, CalendarClock,
+  Wallet, LineChart as LineChartIcon, Repeat, Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,6 +20,17 @@ import { cn } from '@/lib/utils'
 interface ChurnUser {
   id: string; nombre: string; email: string
   plan: string; lastLog: string | null; daysAgo: number | null
+}
+
+interface ExpiringUser {
+  id: string; nombre: string; email: string
+  plan: string; premiumUntil: string; daysLeft: number
+}
+
+interface TopCustomer {
+  id: string; nombre: string; email: string
+  plan: string; totalRevenue: number; paymentCount: number
+  premiumUntil: string | null; isStillActive: boolean
 }
 
 interface StatsData {
@@ -43,6 +55,16 @@ interface StatsData {
   recentPayments: { id: string; amount: number; plan_type: string; created_at: string }[]
   churnRiskUsers:  ChurnUser[]
   engagementFunnel: { registered: number; generatedPlan: number; loggedThisWeek: number }
+  // Métricas SaaS (Tier B)
+  mrr: number
+  arr: number
+  arpu: number
+  ltv: number
+  churnRate30d: number
+  nrrPct: number
+  // Comercial (Tier A)
+  plansExpiringSoon: ExpiringUser[]
+  topCustomersByLTV: TopCustomer[]
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -242,6 +264,150 @@ export function AdminDashboard() {
           <KPI icon={Zap}         label="Individuales"     value={s.individuals}    sub="sin profesional" />
           <KPI icon={TrendingUp}  label="Nuevos este mes"  value={s.newThisMonth}   sub="registros" color="text-[#29ABE2]" />
         </div>
+
+        {/* ══════════════════ MÉTRICAS SAAS (Tier B) ══════════════════ */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <Wallet size={14} className="text-[#29ABE2]" />
+            <p className="text-sm font-black text-[#0C1F2C]">Métricas SaaS</p>
+            <span className="text-[10px] text-[#8BA5BE] font-normal">Las que mira un CFO</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            <KPI icon={DollarSign}     label="MRR"          value={fmtCLP(s.mrr)}            sub="Recurring mensual"      color="text-green-600"  highlight />
+            <KPI icon={LineChartIcon}  label="ARR"          value={fmtCLP(s.arr)}            sub="Proyección anual"       color="text-green-500" />
+            <KPI icon={Users}          label="ARPU"         value={fmtCLP(s.arpu)}           sub="Revenue por usuario"    color="text-[#29ABE2]" />
+            <KPI icon={Crown}          label="LTV"          value={fmtCLP(s.ltv)}            sub="Lifetime value medio"   color="text-amber-500" />
+            <KPI icon={TrendingDown}   label="Churn 30d"    value={`${s.churnRate30d}%`}     sub="Cancelaciones netas"    color={s.churnRate30d > 10 ? 'text-red-500' : 'text-[#8BA5BE]'} />
+            <KPI icon={Repeat}         label="NRR"          value={`${s.nrrPct}%`}           sub="Retención de revenue"   color={s.nrrPct >= 100 ? 'text-green-500' : 'text-amber-500'} />
+          </div>
+        </div>
+
+        {/* ══════════════════ COMERCIAL (Tier A) ══════════════════ */}
+        <div className="grid lg:grid-cols-2 gap-4">
+
+          {/* Top 10 VIPs por LTV */}
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Crown size={14} className="text-amber-500" />
+                <p className="text-sm font-black text-[#0C1F2C]">Top VIPs por revenue</p>
+              </div>
+              <span className="text-[10px] text-[#8BA5BE]">Los que más han pagado</span>
+            </div>
+            {s.topCustomersByLTV.length === 0 ? (
+              <p className="text-xs text-[#8BA5BE] text-center py-8">Sin clientes con pagos aún</p>
+            ) : (
+              <div className="space-y-0">
+                {s.topCustomersByLTV.map((c, i) => (
+                  <div key={c.id} className="flex items-center justify-between py-2 border-b border-[#F8FBFD] last:border-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={cn(
+                        'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-[10px] font-black',
+                        i === 0 ? 'bg-amber-100 text-amber-700' :
+                        i === 1 ? 'bg-gray-100  text-gray-700'  :
+                        i === 2 ? 'bg-orange-100 text-orange-700' :
+                                  'bg-[#F0F6FA] text-[#8BA5BE]'
+                      )}>
+                        #{i + 1}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-[#0C1F2C] truncate">{c.nombre}</p>
+                        <p className="text-[10px] text-[#8BA5BE] truncate">{c.email} · {c.paymentCount} pago{c.paymentCount !== 1 ? 's' : ''}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      {!c.isStillActive && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-red-50 text-red-600">
+                          Expirado
+                        </span>
+                      )}
+                      <p className="text-sm font-black text-amber-600">{fmtCLP(c.totalRevenue)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Plans expiring soon */}
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <CalendarClock size={14} className="text-[#29ABE2]" />
+                <p className="text-sm font-black text-[#0C1F2C]">Por vencer (30 días)</p>
+              </div>
+              {s.plansExpiringSoon.length > 0 && (
+                <span className="text-[10px] font-black bg-[#EAF4FB] text-[#29ABE2] px-2 py-0.5 rounded-full">
+                  {s.plansExpiringSoon.length} a renovar
+                </span>
+              )}
+            </div>
+            {s.plansExpiringSoon.length === 0 ? (
+              <div className="text-center py-8">
+                <Activity size={20} className="text-[#8BA5BE] mx-auto mb-2" />
+                <p className="text-xs text-[#8BA5BE]">No hay planes próximos a vencer</p>
+              </div>
+            ) : (
+              <div className="space-y-0 overflow-y-auto max-h-72">
+                {s.plansExpiringSoon.map(u => {
+                  const urgent = u.daysLeft <= 7
+                  const expDate = new Date(u.premiumUntil)
+                  const expDateStr = expDate.toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+                  return (
+                    <div key={u.id} className="flex items-center justify-between py-2 border-b border-[#F8FBFD] last:border-0">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={cn(
+                          'w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0',
+                          urgent ? 'bg-red-50' : 'bg-amber-50'
+                        )}>
+                          <CalendarClock size={11} className={urgent ? 'text-red-500' : 'text-amber-500'} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-[#0C1F2C] truncate">{u.nombre}</p>
+                          <p className="text-[10px] text-[#8BA5BE] truncate">{u.email} · {u.plan}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                        <a
+                          href={`mailto:${u.email}?subject=${encodeURIComponent('Tu plan vence pronto — Centro Metabólico Pro')}&body=${encodeURIComponent(`Hola ${u.nombre},%0D%0A%0D%0ATu plan vence el ${expDateStr}. Renuévalo en https://centro-metabolico-pro.vercel.app/upgrade para no perder tu acceso.`)}`}
+                          className="text-[10px] text-[#29ABE2] hover:underline hidden sm:inline-flex items-center gap-0.5"
+                          title="Enviar recordatorio por email"
+                        >
+                          <Mail size={10} />
+                        </a>
+                        <span className={cn(
+                          'text-[10px] font-black px-2 py-0.5 rounded-full',
+                          urgent ? 'bg-red-50 text-red-600' : 'bg-amber-50 text-amber-600'
+                        )}>
+                          {u.daysLeft}d · {expDateStr}
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Link a tabla maestra completa */}
+        <a
+          href="/admin/customers"
+          className="block bg-gradient-to-r from-[#EAF4FB] to-white border border-[#C6E4F4] rounded-2xl p-4 hover:border-[#29ABE2] transition group"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#29ABE2]/15 rounded-xl flex items-center justify-center">
+                <Users size={18} className="text-[#29ABE2]" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-[#0C1F2C]">Ver tabla maestra de clientes</p>
+                <p className="text-[10px] text-[#8BA5BE]">Todos los pagantes con su historial comercial completo</p>
+              </div>
+            </div>
+            <ChevronRight size={18} className="text-[#29ABE2] group-hover:translate-x-1 transition" />
+          </div>
+        </a>
 
         {/* ── Charts ── */}
         <div className="grid md:grid-cols-2 gap-4">
