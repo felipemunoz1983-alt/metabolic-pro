@@ -235,16 +235,22 @@ export const PAN_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/560590-900-900?width=900&height=900&aspect=true',
   },
   blanco: {
-    label: 'Pan blanco',
+    label: 'Pan Ideal Blanco XL',
     emoji: '🍞',
-    item: 'pan blanco (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — pan blanco molde
-    kcal: 106, p: 3.6, c: 20, g: 1.3,
-    badge: 'Blanco · Índice glicémico alto',
-    alergenosNota: 'Pan blanco · Contiene gluten (trigo).',
+    // Pan Ideal Blanco XL (envase 750g · ~27 rebanadas).
+    // Cada rebanada ≈ 28g. La etiqueta reporta por PORCIÓN
+    // de 2 rebanadas (56g · 144 kcal) — lo aclaramos en badge y nota.
+    item: 'pan Ideal Blanco XL (1 rebanada · 28g)',
+    gramos: 28,
+    // Macros por 1 rebanada (28g) — derivadas de la etiqueta oficial Ideal:
+    //   100g: 257 kcal · 9.8g P · 3.3g G · 47g C disponibles · 4.9g azúcares · 392mg sodio
+    //   1 porción (2 rebanadas, 56g): 143.9 kcal · 5.5g P · 1.8g G · 26.3g C · 219.5mg sodio
+    kcal: 72, p: 2.7, c: 13.2, g: 0.9,
+    badge: 'Blanco suave · IG alto · Porción=2 rebanadas',
+    alergenosNota: 'Pan Ideal Blanco XL · Contiene gluten (trigo). LIBRE de huevo, lactosa, peces, mariscos, maní y sulfitos. Apto APLV, vegano, vegetariano y kosher. La porción estándar son 2 rebanadas (56g · 144 kcal · 5.5g proteína · 219mg sodio).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'alto',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/580441-900-900?width=900&height=900&aspect=true',
   },
   marraqueta: {
     label: 'Marraqueta',
