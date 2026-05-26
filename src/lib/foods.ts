@@ -337,16 +337,22 @@ export const PAN_TIPOS = {
     indiceGlicemico: 'alto',
   },
   proteico: {
-    label: 'Pan proteico',
+    label: 'Pan Castaño Multigrano Proteína',
     emoji: '💪',
-    item: 'pan proteico (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — pan tipo Ezequiel / proteico (alto en proteína vegetal)
-    kcal: 94, p: 4.8, c: 15.2, g: 0.6,
-    badge: 'Proteico · Alto en proteína vegetal',
-    alergenosNota: 'Pan proteico · Contiene gluten (trigo), lentejas y otras legumbres germinadas. Puede contener soya.',
-    contiene: ['gluten', 'legumbres', 'soya'] as string[],
+    // Pan Castaño Multigrano Proteína (envase 620g · ~19 rebanadas · "10g proteína por porción").
+    // Cada rebanada ≈ 32.5g. La etiqueta reporta por PORCIÓN
+    // de 2 rebanadas (65g · 170 kcal · 10.4g P) — lo aclaramos en badge y nota.
+    item: 'pan Castaño Multigrano Proteína (1 rebanada · 32.5g)',
+    gramos: 32.5,
+    // Macros por 1 rebanada (32.5g) — derivadas de la etiqueta oficial Castaño Multigrano Proteína:
+    //   100g: 261 kcal · 16g P · 4.4g G · 38.6g C disponibles · 5.2g azúcares · 6.5g fibra · 370mg sodio
+    //   1 porción (2 rebanadas, 65g): 169.7 kcal · 10.4g P · 2.9g G · 25.1g C · 4.2g fibra · 240.5mg sodio
+    kcal: 85, p: 5.2, c: 12.6, g: 1.5,
+    badge: 'Multigrano + Proteína vegetal · 10g P por porción · Porción=2 rebanadas',
+    alergenosNota: 'Pan Castaño Multigrano Proteína · 100% granos enteros + proteína de trigo y arveja (refuerzo proteico). Semillas: maravilla, sésamo, linaza, calabaza, amapola, chía + quínoa y avena. Fortificado con Zinc, Vit. A, B6 y D3. Contiene gluten (trigo, avena, gluten añadido) y semillas. La porción estándar son 2 rebanadas (65g · 170 kcal · 10g proteína · 4.2g fibra).',
+    contiene: ['gluten', 'legumbres'] as string[],
     indiceGlicemico: 'bajo',
+    foto: 'https://unimarc.vtexassets.com/arquivos/ids/251429/000000000000685504-UN-01.jpg?v=638932901997600000',
   },
   hallulla: {
     label: 'Hallulla',
