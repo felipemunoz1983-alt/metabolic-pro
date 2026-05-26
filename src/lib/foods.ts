@@ -349,7 +349,7 @@ export const PAN_TIPOS = {
     //   1 porción (2 rebanadas, 65g): 169.7 kcal · 10.4g P · 2.9g G · 25.1g C · 4.2g fibra · 240.5mg sodio
     kcal: 85, p: 5.2, c: 12.6, g: 1.5,
     badge: 'Multigrano + Proteína vegetal · 10g P por porción · Porción=2 rebanadas',
-    alergenosNota: 'Pan Castaño Multigrano Proteína · 100% granos enteros + proteína de trigo y arveja (refuerzo proteico). Semillas: maravilla, sésamo, linaza, calabaza, amapola, chía + quínoa y avena. Fortificado con Zinc, Vit. A, B6 y D3. Contiene gluten (trigo, avena, gluten añadido) y semillas. La porción estándar son 2 rebanadas (65g · 170 kcal · 10g proteína · 4.2g fibra).',
+    alergenosNota: 'Pan Castaño Multigrano Proteína · 100% granos enteros + proteína de trigo y arveja (refuerzo proteico). Semillas: maravilla, sésamo, linaza, calabaza, amapola, chía + quínoa y avena. Fortificado con Zinc, Vit. A, B6 y D3. Contiene gluten (trigo, avena, gluten añadido) y semillas. La porción estándar son 2 rebanadas (65g · 170 kcal · 10g proteína · 4.2g fibra · 240mg sodio). Envase 620g rinde ~10 porciones (~20 rebanadas).',
     contiene: ['gluten', 'legumbres'] as string[],
     indiceGlicemico: 'bajo',
     foto: 'https://unimarc.vtexassets.com/arquivos/ids/251429/000000000000685504-UN-01.jpg?v=638932901997600000',
