@@ -229,7 +229,7 @@ export const PAN_TIPOS = {
     //   1 porción (2 rebanadas, 63g): 163.8 kcal · 8.3g P · 2.9g G · 25g C · 6.7g fibra · 233mg sodio
     kcal: 82, p: 4.2, c: 12.5, g: 1.5,
     badge: 'Integral · Linaza+Chía · Prebiótico · Porción=2 rebanadas',
-    alergenosNota: 'Pan Castaño Linaza Chía Prebiótico · Contiene gluten (trigo, avena). Aporta polidextrosa prebiótica (3.5%) y semillas de linaza/chía. Puede contener trazas de leche, soya, nueces, avena, maíz, quinua y semillas (amapola, calabaza, maravilla, sésamo). La porción estándar de etiqueta son 2 rebanadas (63g · 164 kcal · 8.3g proteína · 6.7g fibra).',
+    alergenosNota: 'Pan Castaño Linaza Chía Prebiótico · Contiene gluten (trigo, avena). Aporta polidextrosa prebiótica (3.5%) y semillas de linaza/chía. Puede contener trazas de leche, soya, nueces, avena, maíz, quinua y semillas (amapola, calabaza, maravilla, sésamo). La porción estándar de etiqueta son 2 rebanadas (63g · 164 kcal · 8.3g proteína · 6.7g fibra). Envase 600g rinde ~10 porciones (~19 rebanadas).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'medio',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/560590-900-900?width=900&height=900&aspect=true',
@@ -247,7 +247,7 @@ export const PAN_TIPOS = {
     //   1 porción (2 rebanadas, 56g): 143.9 kcal · 5.5g P · 1.8g G · 26.3g C · 219.5mg sodio
     kcal: 72, p: 2.7, c: 13.2, g: 0.9,
     badge: 'Blanco suave · IG alto · Porción=2 rebanadas',
-    alergenosNota: 'Pan Ideal Blanco XL · Contiene gluten (trigo). LIBRE de huevo, lactosa, peces, mariscos, maní y sulfitos. Apto APLV, vegano, vegetariano y kosher. La porción estándar son 2 rebanadas (56g · 144 kcal · 5.5g proteína · 219mg sodio).',
+    alergenosNota: 'Pan Ideal Blanco XL · Contiene gluten (trigo). LIBRE de huevo, lactosa, peces, mariscos, maní y sulfitos. Apto APLV, vegano, vegetariano y kosher. La porción estándar son 2 rebanadas (56g · 144 kcal · 5.5g proteína · 219mg sodio). Envase 750g rinde ~13 porciones (~27 rebanadas).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'alto',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/580441-900-900?width=900&height=900&aspect=true',
@@ -271,7 +271,7 @@ export const PAN_TIPOS = {
     //   90g  (1 marraqueta): 224 kcal · 8.5g P · 0.9g G · 56.7g C · 2.7g fibra · 582mg sodio
     kcal: 224, p: 8.5, c: 56.7, g: 0.9,
     badge: 'Pan corriente chileno · INTA · ½ unidad = 45g · 112 kcal',
-    alergenosNota: 'Marraqueta · Pan corriente blanco chileno (datos INTA Chile + MINSAL/FAO). Contiene gluten (trigo). Aporta hierro (3.1 mg/unidad) y vitamina B1 (0.6 mg/unidad). La porción nutricional habitual en guías alimentarias chilenas es ½ marraqueta (45g · 112 kcal · 4.3g proteína · 291 mg sodio).',
+    alergenosNota: 'Marraqueta · Pan corriente blanco chileno (datos INTA Chile + MINSAL/FAO). Contiene gluten (trigo). Aporta hierro (3.1 mg/unidad) y vitamina B1 (0.6 mg/unidad). La porción nutricional habitual en guías alimentarias chilenas es ½ marraqueta (45g · 112 kcal · 4.3g proteína · 291 mg sodio). 1 kg de marraqueta ≈ 11 unidades de 90g (se vende a granel por peso en panadería).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'alto',
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/369294-900-900?width=900&height=900&aspect=true',
