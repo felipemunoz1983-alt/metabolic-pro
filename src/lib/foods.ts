@@ -255,14 +255,26 @@ export const PAN_TIPOS = {
   marraqueta: {
     label: 'Marraqueta',
     emoji: '🥖',
-    item: 'marraqueta (60g)',
-    gramos: 60,
-    // 1 marraqueta entera 60g — pan blanco chileno crocante
-    kcal: 168, p: 6, c: 33, g: 0.6,
-    badge: 'Clásico chileno · Pan blanco',
-    alergenosNota: 'Marraqueta · Pan blanco chileno. Contiene gluten (trigo).',
+    // Datos del INTA Chile (Tabla de Composición Química de Alimentos Chilenos)
+    // + estudio MINSAL-FAO sobre alimentos prioritarios chilenos.
+    //
+    // PORCIÓN DE REFERENCIA: 1 marraqueta entera = 90g (promedio nacional).
+    // Rango real medido: 72g (Osorno) — 111g (Iquique).
+    // Supermercado: ~86g · Panadería tradicional: ~94g.
+    //
+    // La PORCIÓN NUTRICIONAL HABITUAL en guías chilenas es ½ marraqueta (~45g · 112 kcal),
+    // pero el catálogo del plan usa 1 unidad entera porque así se consume en la práctica.
+    item: 'marraqueta (1 unidad · 90g)',
+    gramos: 90,
+    // Macros por 1 unidad de 90g — Fuente: INTA Chile + MINSAL/FAO:
+    //   100g: 249 kcal · 9.46g P · 1.0g G · 63.04g C · 3.0g fibra · 647mg sodio
+    //   90g  (1 marraqueta): 224 kcal · 8.5g P · 0.9g G · 56.7g C · 2.7g fibra · 582mg sodio
+    kcal: 224, p: 8.5, c: 56.7, g: 0.9,
+    badge: 'Pan corriente chileno · INTA · ½ unidad = 45g · 112 kcal',
+    alergenosNota: 'Marraqueta · Pan corriente blanco chileno (datos INTA Chile + MINSAL/FAO). Contiene gluten (trigo). Aporta hierro (3.1 mg/unidad) y vitamina B1 (0.6 mg/unidad). La porción nutricional habitual en guías alimentarias chilenas es ½ marraqueta (45g · 112 kcal · 4.3g proteína · 291 mg sodio).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'alto',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/369294-900-900?width=900&height=900&aspect=true',
   },
   multicereal: {
     label: 'Pan multicereal',
