@@ -217,16 +217,22 @@ export type YogurTipo = keyof typeof YOGUR_TIPOS
 // detecta el número en el item ("2 tostadas pan integral") y escala.
 export const PAN_TIPOS = {
   integral: {
-    label: 'Pan integral',
+    label: 'Pan Castaño Linaza Chía Prebiótico',
     emoji: '🍞',
-    item: 'pan integral (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — datos USDA pan integral (whole wheat)
-    kcal: 99, p: 5, c: 16, g: 1.4,
-    badge: 'Integral · Fibra y B-complex',
-    alergenosNota: 'Pan integral · Contiene gluten (trigo, avena).',
+    // Pan Castaño Linaza Chía Prebiótico (envase 600g · ~19 rebanadas).
+    // Cada rebanada ≈ 31.5g. La etiqueta nutricional reporta por PORCIÓN
+    // de 2 rebanadas (63g · 164 kcal) — lo aclaramos en el badge y en alergenosNota.
+    item: 'pan Castaño Linaza Chía Prebiótico (1 rebanada · 31.5g)',
+    gramos: 31.5,
+    // Macros por 1 rebanada (31.5g) — derivadas de la etiqueta oficial Castaño:
+    //   100g: 260 kcal · 13.2g P · 4.6g G · 39.7g C disponibles · 10.6g fibra · 370mg sodio
+    //   1 porción (2 rebanadas, 63g): 163.8 kcal · 8.3g P · 2.9g G · 25g C · 6.7g fibra · 233mg sodio
+    kcal: 82, p: 4.2, c: 12.5, g: 1.5,
+    badge: 'Integral · Linaza+Chía · Prebiótico · Porción=2 rebanadas',
+    alergenosNota: 'Pan Castaño Linaza Chía Prebiótico · Contiene gluten (trigo, avena). Aporta polidextrosa prebiótica (3.5%) y semillas de linaza/chía. Puede contener trazas de leche, soya, nueces, avena, maíz, quinua y semillas (amapola, calabaza, maravilla, sésamo). La porción estándar de etiqueta son 2 rebanadas (63g · 164 kcal · 8.3g proteína · 6.7g fibra).',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'medio',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/560590-900-900?width=900&height=900&aspect=true',
   },
   blanco: {
     label: 'Pan blanco',

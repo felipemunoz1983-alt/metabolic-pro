@@ -609,21 +609,35 @@ function PanTypePicker({
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
         {entries.map(([key, info]) => {
           const isSelected = value === key
+          const infoFoto = (info as { foto?: string }).foto
           return (
             <button
               key={key}
               onClick={() => onChange(key)}
               className={cn(
-                'flex flex-col items-center rounded-xl border-2 px-2 py-2.5 text-left transition-all',
+                'flex flex-col items-center rounded-xl border-2 overflow-hidden text-left transition-all',
                 isSelected
                   ? 'bg-amber-500 border-amber-500 text-white shadow-md scale-[1.02]'
                   : 'border-amber-200 text-amber-900 hover:border-amber-400 bg-white'
               )}
             >
-              <div className="text-lg leading-none mb-1">{info.emoji}</div>
-              <div className="text-xs font-bold leading-tight text-center">{info.label}</div>
-              <div className={cn('text-[9px] mt-1 font-semibold leading-tight text-center', isSelected ? 'text-amber-50' : 'text-amber-600')}>
-                {info.kcal} kcal · {info.gramos}g
+              {infoFoto ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={infoFoto}
+                  alt={info.label}
+                  className="w-full h-16 sm:h-20 object-cover bg-white"
+                />
+              ) : (
+                <div className="w-full h-16 sm:h-20 flex items-center justify-center bg-amber-50/40">
+                  <span className="text-3xl">{info.emoji}</span>
+                </div>
+              )}
+              <div className="w-full px-2 py-1.5 text-center">
+                <div className="text-[10px] sm:text-xs font-bold leading-tight">{info.label}</div>
+                <div className={cn('text-[9px] mt-0.5 font-semibold leading-tight', isSelected ? 'text-amber-50' : 'text-amber-600')}>
+                  {info.kcal} kcal · {info.gramos}g
+                </div>
               </div>
             </button>
           )
