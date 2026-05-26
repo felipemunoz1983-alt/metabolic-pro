@@ -60,6 +60,13 @@ export interface MealOption {
    *  Aplica a: barras de proteína, snacks Nutrevo, Goodnes Protein, Costa Mini Chips,
    *  galletón Quaker, y cualquier producto que venga en envase con porción única. */
   porcionFija?: boolean
+  /** true = la preparación incluye pan (tostada, sándwich, marraqueta, etc.).
+   *  Activa el selector de tipo de pan en el wizard. El paciente puede elegir
+   *  cambiar el tipo (ej. integral → masa madre, marraqueta → multicereal). */
+  tienePan?: boolean
+  /** Tipo de pan que usa la receta por defecto. Se usa para calcular el delta
+   *  cuando el paciente elige otro tipo en el wizard. */
+  panTipoDefault?: 'integral' | 'blanco' | 'marraqueta' | 'multicereal' | 'molde_integral' | 'pita_integral' | 'masa_madre' | 'sin_gluten' | 'proteico' | 'hallulla'
 }
 
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
@@ -197,6 +204,142 @@ export const YOGUR_TIPOS = {
 
 export type YogurTipo = keyof typeof YOGUR_TIPOS
 
+// ─── Tipos de pan disponibles ────────────────────────────────────────────────
+// Cada tipo define macros para SU porción típica (1 rebanada, 1 marraqueta, etc.)
+// porque los panes chilenos tienen pesos estándar muy distintos entre sí.
+// Si una receta usa 2 rebanadas, planGenerator multiplica el delta x2 automáticamente.
+//
+// El paciente elige UN tipo en el wizard (form.panTipo) y aplica a TODAS las
+// comidas con `tienePan: true`. Cada opción define su `panTipoDefault` para
+// que si el paciente no elige (o elige el mismo), no haya recálculo.
+//
+// Para preparaciones con 2 rebanadas (tostadas, sándwich con tapa), planGenerator
+// detecta el número en el item ("2 tostadas pan integral") y escala.
+export const PAN_TIPOS = {
+  integral: {
+    label: 'Pan integral',
+    emoji: '🍞',
+    item: 'pan integral (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — datos USDA pan integral (whole wheat)
+    kcal: 99, p: 5, c: 16, g: 1.4,
+    badge: 'Integral · Fibra y B-complex',
+    alergenosNota: 'Pan integral · Contiene gluten (trigo, avena).',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'medio',
+  },
+  blanco: {
+    label: 'Pan blanco',
+    emoji: '🍞',
+    item: 'pan blanco (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — pan blanco molde
+    kcal: 106, p: 3.6, c: 20, g: 1.3,
+    badge: 'Blanco · Índice glicémico alto',
+    alergenosNota: 'Pan blanco · Contiene gluten (trigo).',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'alto',
+  },
+  marraqueta: {
+    label: 'Marraqueta',
+    emoji: '🥖',
+    item: 'marraqueta (60g)',
+    gramos: 60,
+    // 1 marraqueta entera 60g — pan blanco chileno crocante
+    kcal: 168, p: 6, c: 33, g: 0.6,
+    badge: 'Clásico chileno · Pan blanco',
+    alergenosNota: 'Marraqueta · Pan blanco chileno. Contiene gluten (trigo).',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'alto',
+  },
+  multicereal: {
+    label: 'Pan multicereal',
+    emoji: '🌾',
+    item: 'pan multicereal (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — pan con varios granos (trigo, avena, centeno, linaza)
+    kcal: 100, p: 4.4, c: 18, g: 1.4,
+    badge: 'Multicereal · Granos enteros',
+    alergenosNota: 'Pan multicereal · Contiene gluten (trigo, avena, centeno). Puede contener trazas de sésamo y maravilla.',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'medio',
+  },
+  molde_integral: {
+    label: 'Pan de molde integral',
+    emoji: '🍞',
+    item: 'pan de molde integral (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — molde integral típico Ideal/Bimbo integral
+    kcal: 96, p: 4.4, c: 16, g: 1.6,
+    badge: 'Molde · Práctico para sándwiches',
+    alergenosNota: 'Pan de molde integral · Contiene gluten (trigo). Puede contener trazas de soya.',
+    contiene: ['gluten', 'soya'] as string[],
+    indiceGlicemico: 'medio',
+  },
+  pita_integral: {
+    label: 'Pan pita integral',
+    emoji: '🫓',
+    item: 'pan pita integral (50g)',
+    gramos: 50,
+    // 1 pan pita 50g — versión integral
+    kcal: 131, p: 4.5, c: 25, g: 1,
+    badge: 'Pita · Ideal sándwich tipo wrap',
+    alergenosNota: 'Pan pita integral · Contiene gluten (trigo).',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'medio',
+  },
+  masa_madre: {
+    label: 'Pan de masa madre',
+    emoji: '🍞',
+    item: 'pan de masa madre (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — masa madre integral (fermentación natural mejora digestión)
+    kcal: 96, p: 4.4, c: 17.6, g: 0.6,
+    badge: 'Masa madre · Mejor tolerancia digestiva',
+    alergenosNota: 'Pan de masa madre · Contiene gluten (trigo) pero su fermentación lenta lo hace más digerible para algunas personas sensibles.',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'bajo',
+  },
+  sin_gluten: {
+    label: 'Pan sin gluten',
+    emoji: '🌿',
+    item: 'pan sin gluten (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — pan sin gluten (mezcla de arroz, maíz, almidones)
+    kcal: 96, p: 1.6, c: 18, g: 2,
+    badge: 'Sin gluten · Apto celíacos',
+    alergenosNota: 'Pan sin gluten · Libre de trigo, centeno, cebada y avena. Puede contener huevo, soya o trazas de frutos secos según la marca.',
+    contiene: [] as string[],
+    indiceGlicemico: 'alto',
+  },
+  proteico: {
+    label: 'Pan proteico',
+    emoji: '💪',
+    item: 'pan proteico (40g)',
+    gramos: 40,
+    // 1 rebanada 40g — pan tipo Ezequiel / proteico (alto en proteína vegetal)
+    kcal: 94, p: 4.8, c: 15.2, g: 0.6,
+    badge: 'Proteico · Alto en proteína vegetal',
+    alergenosNota: 'Pan proteico · Contiene gluten (trigo), lentejas y otras legumbres germinadas. Puede contener soya.',
+    contiene: ['gluten', 'legumbres', 'soya'] as string[],
+    indiceGlicemico: 'bajo',
+  },
+  hallulla: {
+    label: 'Hallulla',
+    emoji: '🥯',
+    item: 'hallulla (70g)',
+    gramos: 70,
+    // 1 hallulla 70g — pan plano chileno (alternativa típica a marraqueta)
+    kcal: 196, p: 6, c: 38, g: 1.5,
+    badge: 'Clásico chileno · Plano y compacto',
+    alergenosNota: 'Hallulla · Pan blanco chileno. Contiene gluten (trigo) y manteca.',
+    contiene: ['gluten'] as string[],
+    indiceGlicemico: 'alto',
+  },
+} as const
+
+export type PanTipo = keyof typeof PAN_TIPOS
+
 // ─── Snacks saludables Nutrevo ────────────────────────────────────────────────
 export const SNACK_NUTREVO_TIPOS = {
   alfajor_activa2: {
@@ -327,6 +470,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Omelette proteico + pan integral',
     items: ['3 huevos enteros', '2 claras adicionales', 'Espinaca y champiñones', '1 rebanada pan integral', '1 cdta aceite de oliva'],
     baseKcal: 420, p: 28, c: 35, g: 18, tieneHuevo: true, eggsDefault: 3,
+    tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'omelette_pan_integral.jfif',
     tiempo: '12 min',
     pasos: [
@@ -341,6 +485,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Pan integral + palta + huevo pochado',
     items: ['2 tostadas pan integral', '½ palta madura', '2 huevos pochados', 'Café o té sin azúcar'],
     baseKcal: 460, p: 22, c: 40, g: 22, tieneHuevo: true, eggsDefault: 2,
+    tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'Pan_palta_huevo_pochado.jfif',
     tiempo: '15 min',
     pasos: [
@@ -400,6 +545,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Tostadas + ricotta + miel + nueces',
     items: ['2 tostadas de pan integral', '80-100g ricotta', '1 cdta miel', '10 nueces enteras o picadas'],
     baseKcal: 400, p: 18, c: 48, g: 14,
+    tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '8 min',
     pasos: [
@@ -472,6 +618,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     label: 'Tostada integral + ricotta',
     items: ['1 rebanada pan integral', '40g ricotta', '1 cdta miel', '5 nueces'],
     baseKcal: 190, p: 8, c: 24, g: 7,
+    tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '5 min',
     pasos: [
@@ -503,6 +650,7 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 rodaja de tomate',
     ],
     baseKcal: 248, p: 16, c: 20, g: 11,
+    tienePan: true, panTipoDefault: 'integral',
     foto: USP('1528735602780-2552fd46c7af'),
     tiempo: '5 min',
     tendencia: ['omnivoro'],
@@ -527,6 +675,7 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 rodaja de tomate',
     ],
     baseKcal: 319, p: 22, c: 20, g: 16,
+    tienePan: true, panTipoDefault: 'integral',
     foto: USP('1525351484163-7529414344d8'),
     tiempo: '12 min',
     tendencia: ['omnivoro'],
@@ -552,6 +701,7 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Sal y pimienta a gusto',
     ],
     baseKcal: 279, p: 12, c: 22, g: 16,
+    tienePan: true, panTipoDefault: 'integral',
     foto: USP('1539252554935-80c8cb01a76d'),
     tiempo: '4 min',
     tendencia: ['omnivoro', 'vegetariano'],
@@ -575,6 +725,7 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Mostaza Dijon o aceite de oliva a gusto',
     ],
     baseKcal: 165, p: 12.5, c: 19, g: 3,
+    tienePan: true, panTipoDefault: 'integral',
     foto: USP('1567234669003-dbbf01c4f7b5'),
     tiempo: '3 min',
     tendencia: ['omnivoro'],
@@ -650,6 +801,7 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 rodaja de tomate',
     ],
     baseKcal: 328, p: 17.5, c: 36, g: 11,
+    tienePan: true, panTipoDefault: 'marraqueta',
     foto: USP('1509440159596-0249088772ff'),
     tiempo: '4 min',
     tendencia: ['omnivoro'],
@@ -1061,6 +1213,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Sopa de lentejas + verduras',
     items: ['200g lentejas cocidas', 'Zanahoria, apio, tomate y espinaca', 'Caldo vegetal bajo en sodio', '1 rebanada pan integral'],
     baseKcal: 310, p: 22, c: 38, g: 5,
+    tienePan: true, panTipoDefault: 'integral',
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],

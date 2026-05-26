@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
-import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
-import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
+import type { MealOption, UltraOption, YogurTipo, PanTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
+import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
 import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
@@ -34,6 +34,7 @@ const defaultForm: Partial<FormData> = {
   desayunos: ['avena_platano'],
   wheyIndicado: false,
   yogurtTipo: 'griego' as YogurTipo,
+  panTipo: 'integral' as PanTipo,
   snackNutrevoTipo: 'alfajor_activa2' as SnackNutrevoTipo,
   barraProteinaTipo: 'wild_protein' as BarraProteinaTipo,
   incluirSnackEnPlan: false,      // opt-in: el paciente decide explícitamente
@@ -551,6 +552,98 @@ function YogurtTypePicker({
   )
 }
 
+// ─── Pan Type Picker ──────────────────────────────────────────────────────────
+// Aplica a TODAS las comidas con `tienePan: true` (sándwiches, tostadas, sopa con pan).
+// Filtra automáticamente panes con gluten si el paciente declaró intolerancia.
+function PanTypePicker({
+  value,
+  onChange,
+  intolerancias = [],
+}: {
+  value: PanTipo
+  onChange: (t: PanTipo) => void
+  intolerancias?: string[]
+}) {
+  const allEntries = Object.entries(PAN_TIPOS) as [PanTipo, typeof PAN_TIPOS[PanTipo]][]
+  const entries = allEntries.filter(([, info]) => {
+    if (intolerancias.length > 0 && info.contiene) {
+      const hasIntol = (info.contiene as readonly string[]).some(c => intolerancias.includes(c))
+      if (hasIntol) return false
+    }
+    return true
+  })
+
+  // Auto-fallback si el seleccionado fue filtrado
+  useEffect(() => {
+    if (entries.length > 0 && !entries.find(([k]) => k === value)) {
+      onChange(entries[0][0])
+    }
+  }, [intolerancias.join(',')])  // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (entries.length === 0) {
+    return (
+      <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+        <p className="text-xs font-bold text-amber-800 mb-1">🍞 Tipo de pan</p>
+        <p className="text-[11px] text-[#6B7C93]">
+          Por tus intolerancias declaradas (gluten u otras), no hay panes compatibles. Las recetas con pan se ajustarán manualmente con el profesional.
+        </p>
+      </div>
+    )
+  }
+
+  const selected = PAN_TIPOS[value]
+  const igColor =
+    selected.indiceGlicemico === 'bajo'  ? 'text-green-600' :
+    selected.indiceGlicemico === 'medio' ? 'text-amber-600' :
+                                            'text-red-600'
+
+  return (
+    <div className="mt-3 p-3 bg-amber-50/60 border border-amber-200 rounded-xl space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-xs font-bold text-amber-900">🍞 Tipo de pan favorito</p>
+        <p className="text-[10px] text-amber-700">
+          Aplica a TODAS las preparaciones con pan (sándwiches, tostadas, sopa)
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {entries.map(([key, info]) => {
+          const isSelected = value === key
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              className={cn(
+                'flex flex-col items-center rounded-xl border-2 px-2 py-2.5 text-left transition-all',
+                isSelected
+                  ? 'bg-amber-500 border-amber-500 text-white shadow-md scale-[1.02]'
+                  : 'border-amber-200 text-amber-900 hover:border-amber-400 bg-white'
+              )}
+            >
+              <div className="text-lg leading-none mb-1">{info.emoji}</div>
+              <div className="text-xs font-bold leading-tight text-center">{info.label}</div>
+              <div className={cn('text-[9px] mt-1 font-semibold leading-tight text-center', isSelected ? 'text-amber-50' : 'text-amber-600')}>
+                {info.kcal} kcal · {info.gramos}g
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Detalle del pan seleccionado */}
+      <div className="bg-white border border-amber-200 rounded-lg p-2.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px]">
+        <span className="text-amber-900"><strong>{selected.label}:</strong></span>
+        <span className="text-[#6B7C93]">{selected.kcal} kcal</span>
+        <span className="text-[#6B7C93]">{selected.p}g P</span>
+        <span className="text-[#6B7C93]">{selected.c}g C</span>
+        <span className="text-[#6B7C93]">{selected.g}g G</span>
+        <span className={cn('font-bold', igColor)}>IG {selected.indiceGlicemico}</span>
+        <span className="text-[#6B7C93] w-full mt-0.5">{selected.alergenosNota}</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Catalog Picker genérico (snacks + barras) ────────────────────────────────
 type CatalogItem = {
   label: string
@@ -756,6 +849,7 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   // Mensajes humanos por campo para el toast de confirmación visual
   const TOAST_LABELS: Partial<Record<keyof FormData, (v: unknown) => string>> = {
     yogurtTipo: v => `Yogur: ${YOGUR_TIPOS[v as YogurTipo]?.label ?? v}`,
+    panTipo:    v => `Pan: ${PAN_TIPOS[v as PanTipo]?.label ?? v}`,
     snackNutrevoTipo: v => `Snack Nutrevo: ${SNACK_NUTREVO_TIPOS[v as SnackNutrevoTipo]?.label ?? v}`,
     barraProteinaTipo: v => `Barra: ${BARRA_PROTEINA_TIPOS[v as BarraProteinaTipo]?.label ?? v}`,
     incluirSnackEnPlan: v => v ? 'Snack incluido en tu plan ✅' : 'Snack removido del plan',
@@ -1544,6 +1638,13 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                 value={(form.yogurtTipo ?? 'griego') as YogurTipo}
                 onChange={t => set('yogurtTipo', t)}
                 tendencia={tendenciaActual}
+                intolerancias={form.digIntolerancias ?? []}
+              />
+
+              {/* 3️⃣B Selector tipo pan — aplica a sándwiches, tostadas, sopa con pan */}
+              <PanTypePicker
+                value={(form.panTipo ?? 'integral') as PanTipo}
+                onChange={t => set('panTipo', t)}
                 intolerancias={form.digIntolerancias ?? []}
               />
 

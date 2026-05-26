@@ -1,7 +1,7 @@
 // ── Generador de plan semanal · Centro Metabólico Pro ──
 
 import type { FormData } from './nutrition'
-import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo } from './foods'
+import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo } from './foods'
 import {
   desayunosOpts,
   colacionesOpts,
@@ -10,6 +10,7 @@ import {
   ultraProcOpts,
   getMealOption,
   YOGUR_TIPOS,
+  PAN_TIPOS,
   SNACK_NUTREVO_TIPOS,
   BARRA_PROTEINA_TIPOS,
   getCurrentSeason,
@@ -260,31 +261,31 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
       if (slot === 'desayuno') {
         const desayuno = getMealOption(desayunosPool, form.desayunos, d)
-        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo))
+        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo, undefined, undefined, form.panTipo))
       } else if (slot === 'colacion_manana') {
         const pool = buildColacionPool(form.colacionManana, form, 'AM')
         const opt = pool[d % pool.length]
-        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo)
+        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo)
         if (form.horarioEntrenamiento === 'AM') m.timingEntreno = 'post_entreno'
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo, form.carboGramosAlmuerzo))
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo, form.carboGramosAlmuerzo, form.panTipo))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
-        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo)
+        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo, undefined, undefined, form.panTipo)
         if (form.horarioEntrenamiento === 'PM') m.timingEntreno = 'post_entreno'
         else if (form.horarioEntrenamiento === 'noche') m.timingEntreno = 'pre_entreno'
         meals.push(m)
       } else if (slot === 'cena') {
         const cena = getMealOption(cenasPool, form.cenas, d)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, form.carboGramosCena))
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, form.carboGramosCena, form.panTipo))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
         const opt = extraPool[(d + 2) % extraPool.length]
-        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo))
+        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo))
       }
     }
 
@@ -344,6 +345,7 @@ function buildMeal(
   yogurTipo?: YogurTipo,
   carneGramos?: number,
   carboGramos?: number,
+  panTipo?: PanTipo,
 ): DayMeal {
   // Productos en porción fija (barras, snacks envasados, postres individuales)
   // NO se escalan al kcal del slot — vienen en envase con macros definidos por etiqueta.
@@ -461,6 +463,65 @@ function buildMeal(
       alergenosNota = alergenosNota
         ? `${alergenosNota}\n${yogurInfo.alergenosNota}`
         : yogurInfo.alergenosNota
+    }
+  }
+
+  // Sustituir tipo de pan si la opción usa pan y el paciente eligió uno distinto al default.
+  // Detecta el numero de unidades en el item ("2 tostadas pan integral" → 2 rebanadas)
+  // para escalar el delta de macros correctamente.
+  if (option.tienePan && option.panTipoDefault && panTipo && panTipo !== option.panTipoDefault) {
+    const oldPan = PAN_TIPOS[option.panTipoDefault]
+    const newPan = PAN_TIPOS[panTipo]
+
+    // Detectar cantidad de unidades de pan en items: busca patrones tipo "2 tostadas", "1 rebanada", "1 marraqueta", etc.
+    // Default: 1 unidad si no se detecta.
+    const panRegex = /\b(\d+)\s*(tostadas?|rebanadas?|marraquetas?|hallullas?|pitas?|panes?)\b/i
+    let unidades = 1
+    for (const item of items) {
+      const m = item.match(panRegex)
+      if (m) { unidades = parseInt(m[1], 10); break }
+    }
+
+    // Reemplazar el texto del pan en items:
+    // 1) Buscar la primera línea que contenga "pan", "tostada", "marraqueta" o "hallulla"
+    //    y reescribirla con el nuevo tipo respetando la cantidad detectada.
+    const lineRegex = /\b(pan integral|pan blanco|pan multicereal|pan de molde integral|pan de molde|pan integral|pan pita integral|pan pita|pan de masa madre|pan sin gluten|pan proteico|marraqueta|hallulla|tostada de pan integral|tostadas de pan integral|tostadas pan integral|tostada pan integral)\b/i
+    let replaced = false
+    items = items.map(item => {
+      if (replaced) return item
+      if (lineRegex.test(item) || /\btostadas?\b/i.test(item)) {
+        replaced = true
+        // Construir nueva linea: "{unidades} {label-corta} ({gramos}g)"
+        const unidadesLabel = unidades === 1
+          ? newPan.item                                                  // "pan multicereal (40g)"
+          : `${unidades} unidades de ${newPan.label.toLowerCase()} (${unidades * newPan.gramos}g)`
+        return unidades === 1
+          ? `1 ${unidadesLabel}`                                         // "1 pan multicereal (40g)"
+          : unidadesLabel
+      }
+      return item
+    })
+
+    // Ajustar macros con delta. Cada unidad cambia por (newPan - oldPan).
+    const deltaKcal = (newPan.kcal - oldPan.kcal) * unidades
+    const deltaP    = (newPan.p    - oldPan.p)    * unidades
+    const deltaC    = (newPan.c    - oldPan.c)    * unidades
+    const deltaG    = (newPan.g    - oldPan.g)    * unidades
+
+    // kcal del slot ya está fijo por targetKcal — el delta queda absorbido en macros.
+    // Si el cambio es a un pan más calórico, sube p/c/g; si es más ligero, baja.
+    p = Math.max(0, Math.round(p + deltaP * scale))
+    c = Math.max(0, Math.round(c + deltaC * scale))
+    g = Math.max(0, Math.round(g + deltaG * scale))
+    // Nota: deltaKcal no se aplica al kcal mostrado porque el plan apunta al total
+    // del slot — el paciente decide su pan dentro de ese presupuesto calórico.
+    void deltaKcal
+
+    // Agregar nota de alérgenos del pan elegido si tiene info nueva relevante.
+    if (newPan.alergenosNota && !alergenosNota?.includes(newPan.label)) {
+      alergenosNota = alergenosNota
+        ? `${alergenosNota}\n${newPan.alergenosNota}`
+        : newPan.alergenosNota
     }
   }
 
