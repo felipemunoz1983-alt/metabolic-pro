@@ -75,7 +75,7 @@ export const CARNE_MACROS_POR_GRAMO: Record<
   'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun',
   { kcal: number; p: number; g: number }
 > = {
-  pollo:      { kcal: 1.65, p: 0.31, g: 0.036 },  // pechuga magra cocida
+  pollo:      { kcal: 0.96, p: 0.196, g: 0.017 },  // Super Pollo · etiqueta oficial 100g: 96kcal · 19.6gP · 1.7gG · 0.5gC · 141mg Na — usado en cálculo dinámico de gramaje + base de todos los platos con pollo
   pavo:       { kcal: 1.35, p: 0.29, g: 0.020 },  // pechuga pavo
   carne_roja: { kcal: 1.50, p: 0.26, g: 0.050 },  // posta/lomo magro
   salmon:     { kcal: 2.00, p: 0.22, g: 0.130 },  // salmón fresco
@@ -929,7 +929,11 @@ export const almuerzosOpts: Record<string, MealOption> = {
   pollo_arroz: {
     label: 'Pollo a la plancha + arroz integral + ensalada',
     items: ['200g pechuga pollo a la plancha', '150g arroz integral cocido', 'Ensalada de tomate, pepino y lechuga', '1 cda aceite de oliva'],
-    baseKcal: 580, p: 52, c: 58, g: 12,
+    // Macros recalculadas con pollo Super Pollo (96 kcal · 19.6gP · 1.7gG por 100g):
+    // 200g pollo (192 kcal · 39.2 P · 3.4 G) + 150g arroz integral cocido (167 kcal · 4 P · 35 C · 1.5 G)
+    // + ensalada (~30 kcal · 1 P · 6 C · 0 G) + 1 cda aceite oliva (~90 kcal · 0 P · 0 C · 10 G)
+    // Total ≈ 479 kcal · 44 P · 41 C · 15 G. Redondeo a:
+    baseKcal: 480, p: 44, c: 41, g: 15,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1001,12 +1005,16 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   ensalada_proteica_alm: {
     label: 'Ensalada proteica de pollo + huevo + palta',
-    // Macros base por porción: 150g pollo (250kcal/47g prot/0g CH/5g G) + 1 huevo (78kcal/6g P/0.6g CH/5g G)
-    // + ½ palta (120kcal/1.5g P/6g CH/11g G) + verduras (60kcal/2g P/12g CH/0.5g G)
-    // + 100g quinoa cocida (120kcal/4g P/21g CH/2g G) + 1 cda aceite oliva (90kcal/0/0/10g G)
-    // Total: 718 kcal · 60g prot · 40g CH · 34g grasa
+    // Macros base por porción (recalculadas con pollo Super Pollo 96kcal/19.6gP/100g):
+    // 150g pollo Super Pollo (144 kcal · 29.4 P · 0 C · 2.55 G)
+    // + 1 huevo (78kcal · 6P · 0.6C · 5G)
+    // + ½ palta (120kcal · 1.5P · 6C · 11G)
+    // + verduras (60kcal · 2P · 12C · 0.5G)
+    // + 100g quinoa cocida (120kcal · 4P · 21C · 2G)
+    // + 1 cda aceite oliva (90kcal · 0 · 0 · 10G)
+    // Total ≈ 612 kcal · 42 P · 40 C · 32 G
     items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', '100g quinoa cocida', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria', '1 cda aceite de oliva'],
-    baseKcal: 718, p: 60, c: 40, g: 34, tieneHuevo: true, eggsDefault: 1,
+    baseKcal: 612, p: 42, c: 40, g: 32, tieneHuevo: true, eggsDefault: 1,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
@@ -1185,7 +1193,11 @@ export const cenasOpts: Record<string, MealOption> = {
   pollo_verduras: {
     label: 'Pechuga de pollo + verduras al vapor',
     items: ['150g pechuga pollo a la plancha', '200g mix verduras al vapor (brócoli, zanahorias, zapallito)', '1 cdta aceite de oliva', 'Limón y ajo'],
-    baseKcal: 320, p: 40, c: 16, g: 9,
+    // Macros recalculadas con pollo Super Pollo (96 kcal · 19.6gP · 1.7gG por 100g):
+    // 150g pollo (144 kcal · 29.4 P · 0 C · 2.55 G) + 200g verduras vapor (60 kcal · 4 P · 12 C · 0.5 G)
+    // + 1 cdta aceite oliva (40 kcal · 0 P · 0 C · 4.5 G) + limón/ajo (~0)
+    // Total ≈ 244 kcal · 33 P · 12 C · 8 G — porción cena moderada con alto contenido proteico
+    baseKcal: 244, p: 33, c: 12, g: 8,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
@@ -1270,7 +1282,11 @@ export const cenasOpts: Record<string, MealOption> = {
   sopa_pollo: {
     label: 'Sopa de pollo y verduras',
     items: ['150g pollo desmenuzado', 'Zanahoria, apio, puerro y papas', 'Caldo natural bajo en sodio', 'Perejil fresco al gusto'],
-    baseKcal: 290, p: 30, c: 22, g: 6,
+    // Macros recalculadas con pollo Super Pollo (96 kcal · 19.6gP · 1.7gG por 100g):
+    // 150g pollo (144 kcal · 29.4 P · 0 C · 2.55 G) + verduras + papas (~40 kcal · 1 P · 9 C · 0 G)
+    // + caldo bajo en sodio (~3 kcal) + perejil (~0)
+    // Total ≈ 187 kcal · 30 P · 9 C · 3 G — sopa ligera proteica
+    baseKcal: 187, p: 30, c: 9, g: 3,
     foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
