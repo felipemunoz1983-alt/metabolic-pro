@@ -66,7 +66,7 @@ export interface MealOption {
   tienePan?: boolean
   /** Tipo de pan que usa la receta por defecto. Se usa para calcular el delta
    *  cuando el paciente elige otro tipo en el wizard. */
-  panTipoDefault?: 'integral' | 'blanco' | 'marraqueta' | 'multicereal' | 'molde_integral' | 'pita_integral' | 'masa_madre' | 'sin_gluten' | 'proteico' | 'hallulla'
+  panTipoDefault?: 'integral' | 'blanco' | 'marraqueta' | 'multicereal' | 'molde_integral' | 'pita_integral' | 'masa_madre' | 'sin_gluten' | 'proteico' | 'clean_label' | 'hallulla'
 }
 
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
@@ -374,6 +374,25 @@ export const PAN_TIPOS = {
     contiene: ['gluten', 'legumbres'] as string[],
     indiceGlicemico: 'bajo',
     foto: 'https://unimarc.vtexassets.com/arquivos/ids/251429/000000000000685504-UN-01.jpg?v=638932901997600000',
+  },
+  clean_label: {
+    label: 'Pan Proteína Clean Label · Jumbo Artesanal',
+    emoji: '🌱',
+    // Pan Molde Proteína Clean Label - Jumbo Artesanal (envase 780g · ~10 porciones · ~20 rebanadas).
+    // Atributo signature: CLEAN LABEL — sin aditivos artificiales, sin conservantes químicos.
+    // Solo: harina integral, proteína chía, proteína soya, sal, KCl, vinagre, enzimas, semillas.
+    // El pan con MAYOR proteína (16.4g/100g) y MAYOR fibra (8g/100g) del catálogo actual.
+    item: 'pan Proteína Clean Label Jumbo Artesanal (1 rebanada · 40g)',
+    gramos: 40,
+    // Macros por 1 rebanada (40g) — derivadas de la etiqueta oficial Jumbo Artesanal:
+    //   100g: 233 kcal · 16.4g P · 5.6g G · 33.4g C disponibles · 1.4g azúcares · 8g fibra · 395mg sodio
+    //   1 porción (2 rebanadas, 80g): 186.4 kcal · 13.1g P · 4.5g G · 26.7g C · 6.4g fibra · 316mg sodio
+    kcal: 93, p: 6.6, c: 13.4, g: 2.3,
+    badge: 'Clean Label · Sin aditivos · 13g P + 6.4g fibra / porción',
+    alergenosNota: 'Pan Proteína Clean Label Jumbo Artesanal · Ingredientes 100% reconocibles: harina integral grano entero de trigo, proteína de chía, proteína de soya, sal, KCl (cloruro potasio para reducir sodio), vinagre, enzimas, semillas (chía, sésamo, girasol). SIN aditivos artificiales, SIN conservantes químicos. Contiene gluten (trigo) y soya. LIBRE de lactosa, peces, mariscos, maní y sulfitos. Trazas de huevo, leche y nueces. El pan más alto en proteína (16.4g/100g) y fibra (8g/100g) del catálogo. La porción estándar son 2 rebanadas (80g · 186 kcal · 13.1g proteína · 6.4g fibra · 316mg sodio). Envase 780g rinde ~10 porciones (~20 rebanadas).',
+    contiene: ['gluten', 'soya'] as string[],
+    indiceGlicemico: 'bajo',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/310748-900-900?width=900&height=900&aspect=true',
   },
   hallulla: {
     label: 'Hallulla',
