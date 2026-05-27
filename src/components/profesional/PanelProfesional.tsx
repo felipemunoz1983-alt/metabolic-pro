@@ -18,6 +18,12 @@ const AdherenciaPaciente = dynamic(
   () => import('@/components/profesional/AdherenciaPaciente').then(m => ({ default: m.AdherenciaPaciente })),
   { ssr: false, loading: () => null },
 )
+// Lazy load: el componente de informes hace fetch propio + lista de uploads.
+// Sale del bundle inicial — solo carga cuando el profesional abre el detalle del paciente.
+const InformesProfesional = dynamic(
+  () => import('@/components/profesional/InformesProfesional').then(m => ({ default: m.InformesProfesional })),
+  { ssr: false, loading: () => null },
+)
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
@@ -838,6 +844,14 @@ Cualquier duda, escríbeme 😊`
       <div className="mb-5">
         <AdherenciaPaciente patientId={patient.id} />
       </div>
+
+      {/* ── Informes antropométricos (Bloque 2) ──
+          El profesional sube PDFs (InBody, ISAK, DEXA…) y el paciente
+          los ve en su app en el tab "Evaluaciones". */}
+      <InformesProfesional
+        pacienteId={patient.id}
+        pacienteNombre={patient.nombre ?? 'Paciente'}
+      />
 
       {/* ── Evolución de peso ── */}
       {logs.filter(l => l.peso).length >= 2 && (
