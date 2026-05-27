@@ -289,16 +289,23 @@ export const PAN_TIPOS = {
     indiceGlicemico: 'medio',
   },
   molde_integral: {
-    label: 'Pan de molde integral',
+    label: 'Pan Castaño Integral XL',
     emoji: '🍞',
-    item: 'pan de molde integral (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — molde integral típico Ideal/Bimbo integral
-    kcal: 96, p: 4.4, c: 16, g: 1.6,
-    badge: 'Molde · Práctico para sándwiches',
-    alergenosNota: 'Pan de molde integral · Contiene gluten (trigo). Puede contener trazas de soya.',
-    contiene: ['gluten', 'soya'] as string[],
+    // Pan Molde Castaño Integral XL (envase 770g · 14 porciones · ~28 rebanadas).
+    // La etiqueta reporta por PORCIÓN de 55g = 2 rebanadas (~27.5g cada una).
+    // Versión "integral simple" formato XL — sin semillas ni prebióticos
+    // (a diferencia del Castaño Linaza Chía que está en el slot `integral`).
+    item: 'pan Castaño Integral XL (1 rebanada · 27.5g)',
+    gramos: 27.5,
+    // Macros por 1 rebanada (27.5g) — derivadas de la etiqueta oficial Castaño Integral XL:
+    //   100g: 249 kcal · 12.7g P · 3.2g G · 42.5g C disponibles · 4.1g azúcares · 6.4g fibra · 396mg sodio
+    //   1 porción (2 rebanadas, 55g): 137 kcal · 7g P · 1.8g G · 23.4g C · 3.5g fibra · 217.8mg sodio
+    kcal: 69, p: 3.5, c: 11.7, g: 0.9,
+    badge: 'Integral simple · XL · Práctico sándwich · Porción=2 rebanadas',
+    alergenosNota: 'Pan Castaño Integral XL · 100% harina de trigo integral grano entero + trigo laminado. Contiene gluten (trigo). LIBRE de huevo, lactosa, peces, mariscos, maní, frutos secos, nueces y sulfitos. Trazas de leche y soya. Apto vegano, vegetariano y sin lactosa. La porción estándar son 2 rebanadas (55g · 137 kcal · 7g proteína · 3.5g fibra · 218mg sodio). Envase 770g rinde 14 porciones (~28 rebanadas).',
+    contiene: ['gluten'] as string[],
     indiceGlicemico: 'medio',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/445374-900-900?width=900&height=900&aspect=true',
   },
   pita_integral: {
     label: 'Pan pita integral',
