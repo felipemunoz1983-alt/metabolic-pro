@@ -315,16 +315,22 @@ export const PAN_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/445374-900-900?width=900&height=900&aspect=true',
   },
   pita_integral: {
-    label: 'Pan pita integral',
+    label: 'Pan Pita Castaño Chía Linaza',
     emoji: '🫓',
-    item: 'pan pita integral (50g)',
-    gramos: 50,
-    // 1 pan pita 50g — versión integral
-    kcal: 131, p: 4.5, c: 25, g: 1,
-    badge: 'Pita · Ideal sándwich tipo wrap',
-    alergenosNota: 'Pan pita integral · Contiene gluten (trigo).',
+    // Pan Pita Castaño Chía Linaza (envase 300g · ~8 pitas de 38g c/u).
+    // La etiqueta reporta por PORCIÓN = 1 pita entera = 38g.
+    // Integral con linaza + chía. Pita más chica que la convencional (38g vs 50-60g típicos).
+    item: 'pan pita Castaño Chía Linaza (1 pita · 38g)',
+    gramos: 38,
+    // Macros por 1 pita (38g) — derivadas de la etiqueta oficial Castaño:
+    //   100g: 232 kcal · 10.4g P · 3.6g G · 38.7g C disponibles · 2.2g azúcares · 7.8g fibra · 310mg sodio
+    //   1 porción (1 pita, 38g): 88.2 kcal · 4g P · 1.4g G · 14.7g C · 3g fibra · 117.8mg sodio
+    kcal: 88, p: 4, c: 14.7, g: 1.4,
+    badge: 'Pita integral · Chía + Linaza · Porción=1 pita',
+    alergenosNota: 'Pan Pita Castaño Chía Linaza · 100% harina integral de trigo grano entero + semillas de chía y linaza. Contiene gluten (trigo). LIBRE de huevo, lactosa, peces, mariscos, maní y sulfitos. Trazas de leche, soya, nueces, avena, maíz, quínoa y semillas (amapola, calabaza, girasol, sésamo). Apto vegano, vegetariano y sin lactosa. Buena fuente de fibra (3g por pita · 7.8g/100g). La porción estándar es 1 pita (38g · 88 kcal · 4g proteína · 3g fibra · 118mg sodio). Envase 300g rinde ~8 pitas — ideal para wraps y sándwich tipo árabe.',
     contiene: ['gluten'] as string[],
     indiceGlicemico: 'medio',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/552785-900-900?width=900&height=900&aspect=true',
   },
   masa_madre: {
     label: 'Pan de masa madre',
