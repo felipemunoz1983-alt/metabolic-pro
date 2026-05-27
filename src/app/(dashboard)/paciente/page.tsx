@@ -10,6 +10,7 @@ import { CalorieDashboard } from '@/components/dashboard/CalorieDashboard'
 import { ChatIA } from '@/components/chat/ChatIA'
 import { PanelProfesional } from '@/components/profesional/PanelProfesional'
 import { Historial } from '@/components/historial/Historial'
+import { Evaluaciones } from '@/components/evaluaciones/Evaluaciones'
 import { NotificationPanel } from '@/components/notifications/NotificationPanel'
 import { FoodScanner } from '@/components/dashboard/FoodScanner'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
@@ -97,7 +98,8 @@ function TopBar({
     dashboard:  { title: 'Dashboard',       subtitle: 'Registro calórico y adherencia diaria' },
     plan:       { title: 'Nutrición',       subtitle: 'Generador de plan alimentario personalizado' },
     chat:       { title: 'Asistente IA',   subtitle: 'Consulta clínica inteligente' },
-    historial:  { title: 'Historial',      subtitle: 'Planes y seguimiento anteriores' },
+    historial:    { title: 'Historial',     subtitle: 'Planes y seguimiento anteriores' },
+    evaluaciones: { title: 'Evaluaciones',  subtitle: 'Informes antropométricos de tu profesional' },
     pacientes:  { title: 'Mis Pacientes',  subtitle: 'Panel profesional — gestión y seguimiento' },
     perfil:     { title: 'Mi Perfil',      subtitle: 'Cuenta, suscripción y ajustes' },
   }
@@ -159,7 +161,7 @@ function TopBar({
 }
 
 // Valid tabs that can be deep-linked via ?tab=
-const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'pacientes', 'perfil']
+const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'evaluaciones', 'pacientes', 'perfil']
 
 /** Read ?tab= from the URL without useSearchParams (avoids Suspense requirement). */
 function getTabFromUrl(): Tab {
@@ -635,6 +637,11 @@ export default function PacientePage() {
               {/* ── Historial ── */}
               {activeTab === 'historial' && userId && (
                 <Historial userId={userId} />
+              )}
+
+              {/* ── Evaluaciones (informes antropométricos del profesional) ── */}
+              {activeTab === 'evaluaciones' && userId && (
+                <Evaluaciones />
               )}
 
               {/* ── Panel Profesional ── */}

@@ -17,15 +17,17 @@ import {
   Clock,
   Lock,
   UserCircle,
+  FileText,
 } from 'lucide-react'
 import { isOnTrial, trialDaysLeft, hasAccess, isPlanExpired } from '@/types'
 
 const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: string }[] = [
-  { id: 'dashboard', label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
-  { id: 'plan',      label: 'Nutrición',    icon: ClipboardList,   sublabel: 'Plan alimentario' },
-  { id: 'chat',      label: 'Asistente IA', icon: Bot,             sublabel: 'Consulta clínica' },
-  { id: 'historial', label: 'Historial',    icon: History,         sublabel: 'Planes anteriores' },
-  { id: 'perfil',    label: 'Mi Perfil',    icon: UserCircle,      sublabel: 'Cuenta y suscripción' },
+  { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
+  { id: 'plan',         label: 'Nutrición',    icon: ClipboardList,   sublabel: 'Plan alimentario' },
+  { id: 'chat',         label: 'Asistente IA', icon: Bot,             sublabel: 'Consulta clínica' },
+  { id: 'evaluaciones', label: 'Evaluaciones', icon: FileText,        sublabel: 'Informes antropométricos' },
+  { id: 'historial',    label: 'Historial',    icon: History,         sublabel: 'Planes anteriores' },
+  { id: 'perfil',       label: 'Mi Perfil',    icon: UserCircle,      sublabel: 'Cuenta y suscripción' },
 ]
 
 const NAV_PRO: { id: Tab; label: string; icon: React.ElementType; sublabel: string } = {
@@ -42,7 +44,11 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
   const [collapsed, setCollapsed] = useState(false)
 
   const isPro = profile?.role === 'professional'
-  const navItems = isPro ? [...NAV_BASE, NAV_PRO] : NAV_BASE
+  // Profesional: oculta 'evaluaciones' del paciente (la gestiona desde panel Pacientes)
+  // y agrega NAV_PRO. Paciente/Individual: todos los tabs base, incluyendo evaluaciones.
+  const navItems = isPro
+    ? [...NAV_BASE.filter(i => i.id !== 'evaluaciones'), NAV_PRO]
+    : NAV_BASE
 
   return (
     <aside

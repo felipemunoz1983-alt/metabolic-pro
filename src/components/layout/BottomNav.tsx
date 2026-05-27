@@ -4,16 +4,17 @@ import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
 import type { Tab } from './types'
 import {
-  LayoutDashboard, ClipboardList, Bot, History, Users, UserCircle, Lock,
+  LayoutDashboard, ClipboardList, Bot, History, Users, UserCircle, Lock, FileText,
 } from 'lucide-react'
 import { hasAccess } from '@/types'
 
 const NAV_BASE: { id: Tab; icon: React.ElementType; label: string }[] = [
-  { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-  { id: 'plan',      icon: ClipboardList,   label: 'Nutrición' },
-  { id: 'chat',      icon: Bot,             label: 'Asistente' },
-  { id: 'historial', icon: History,         label: 'Historial' },
-  { id: 'perfil',    icon: UserCircle,      label: 'Perfil' },
+  { id: 'dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
+  { id: 'plan',         icon: ClipboardList,   label: 'Nutrición' },
+  { id: 'chat',         icon: Bot,             label: 'Asistente' },
+  { id: 'evaluaciones', icon: FileText,        label: 'Evaluaciones' },
+  { id: 'historial',    icon: History,         label: 'Historial' },
+  { id: 'perfil',       icon: UserCircle,      label: 'Perfil' },
 ]
 
 const NAV_PRO: { id: Tab; icon: React.ElementType; label: string } = {
@@ -30,9 +31,19 @@ const GATED_TABS: Tab[] = ['chat']
 
 export function BottomNav({ profile, activeTab, onTabChange }: Props) {
   const isPro = profile?.role === 'professional'
-  // Professionals: replace last base item (perfil) temporarily after pacientes
+
+  // Profesional: dashboard · plan · chat · pacientes · perfil (5 items, sin evaluaciones —
+  //   las gestiona desde "Mis Pacientes" → detalle paciente)
+  // Paciente / Individual: dashboard · plan · chat · evaluaciones · historial · perfil (6)
+  const perfilItem = NAV_BASE.find(i => i.id === 'perfil')!
   const navItems = isPro
-    ? [...NAV_BASE.slice(0, 3), NAV_PRO, NAV_BASE[4]]   // dashboard, plan, chat, pacientes, perfil
+    ? [
+        NAV_BASE.find(i => i.id === 'dashboard')!,
+        NAV_BASE.find(i => i.id === 'plan')!,
+        NAV_BASE.find(i => i.id === 'chat')!,
+        NAV_PRO,
+        perfilItem,
+      ]
     : NAV_BASE
 
   const userHasAccess = profile ? hasAccess(profile) : false
