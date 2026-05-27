@@ -339,16 +339,23 @@ export const PAN_TIPOS = {
     indiceGlicemico: 'bajo',
   },
   sin_gluten: {
-    label: 'Pan sin gluten',
-    emoji: '🌿',
-    item: 'pan sin gluten (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — pan sin gluten (mezcla de arroz, maíz, almidones)
-    kcal: 96, p: 1.6, c: 18, g: 2,
-    badge: 'Sin gluten · Apto celíacos',
-    alergenosNota: 'Pan sin gluten · Libre de trigo, centeno, cebada y avena. Puede contener huevo, soya o trazas de frutos secos según la marca.',
-    contiene: [] as string[],
+    label: 'Marraqueta sin gluten Cuisine & Co',
+    emoji: '🥖',
+    // Pan Marraqueta sin gluten Cuisine & Co (envase 480g · 4 unidades de 120g c/u).
+    // La etiqueta reporta por PORCIÓN = 1 marraqueta entera = 120g.
+    // Base de harina de arroz + maíz + almidones de mandioca/maíz.
+    // ⚠️ Bajo en proteína (sin trigo) — combinar con fuente proteica si es comida principal.
+    item: 'marraqueta sin gluten Cuisine & Co (1 unidad · 120g)',
+    gramos: 120,
+    // Macros por 1 marraqueta (120g) — derivadas de la etiqueta oficial Cuisine & Co:
+    //   100g: 221 kcal · 2.8g P · 3.0g G · 45.6g C disponibles · 4.6g azúcares · 3.1g fibra · 522mg sodio
+    //   1 porción (1 marraqueta, 120g): 265 kcal · 3.4g P · 3.6g G · 54.7g C · 3.7g fibra · 626mg sodio
+    kcal: 265, p: 3.4, c: 54.7, g: 3.6,
+    badge: 'Sin gluten · Apto celíacos APLV · Marraqueta · Porción=1 unidad',
+    alergenosNota: 'Marraqueta sin gluten Cuisine & Co · Base de harina de arroz + maíz + almidones (mandioca + maíz). CONTIENE soya y huevo (albúmina). LIBRE de trigo, gluten, lactosa, peces, mariscos, maní, frutos secos, nueces y sulfitos. Apto celíacos, APLV, vegetariano y sin lactosa. ⚠️ Baja en proteína (2.8g/100g) — combinar con fuente proteica (huevo, palta, jamón pavo, queso, hummus). Sodio elevado: 626mg por unidad. La porción estándar es 1 marraqueta entera (120g · 265 kcal). Envase 480g = 4 marraquetas.',
+    contiene: ['soya', 'huevo'] as string[],
     indiceGlicemico: 'alto',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/636257-900-900?width=900&height=900&aspect=true',
   },
   proteico: {
     label: 'Pan Castaño Multigrano Proteína',
