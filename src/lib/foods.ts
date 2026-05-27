@@ -277,16 +277,23 @@ export const PAN_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/369294-900-900?width=900&height=900&aspect=true',
   },
   multicereal: {
-    label: 'Pan multicereal',
-    emoji: '🌾',
-    item: 'pan multicereal (40g)',
-    gramos: 40,
-    // 1 rebanada 40g — pan con varios granos (trigo, avena, centeno, linaza)
-    kcal: 100, p: 4.4, c: 18, g: 1.4,
-    badge: 'Multicereal · Granos enteros',
-    alergenosNota: 'Pan multicereal · Contiene gluten (trigo, avena, centeno). Puede contener trazas de sésamo y maravilla.',
-    contiene: ['gluten'] as string[],
-    indiceGlicemico: 'medio',
+    label: 'Pan Castaño Calabaza Proteína',
+    emoji: '🎃',
+    // Pan Molde Integral Castaño Calabaza Proteína (envase 600g · 10 porciones · ~20 rebanadas).
+    // La etiqueta reporta por PORCIÓN de 2 rebanadas (63g · 164 kcal · 10g P).
+    // Multigrano con CALABAZA (zapallo) + sésamo + refuerzo proteico (trigo + arveja).
+    // Diferencial vs el `proteico` Castaño Multigrano: este lleva calabaza como signature.
+    item: 'pan Castaño Calabaza Proteína (1 rebanada · 31.5g)',
+    gramos: 31.5,
+    // Macros por 1 rebanada (31.5g) — derivadas de la etiqueta oficial Castaño Calabaza Proteína:
+    //   100g: 261 kcal · 16.2g P · 5.1g G · 36.7g C disponibles · 5.1g azúcares · 5.9g fibra · 372mg sodio
+    //   1 porción (2 rebanadas, 63g): 164.4 kcal · 10.2g P · 3.2g G · 23.1g C · 3.7g fibra · 234.4mg sodio
+    kcal: 82, p: 5.1, c: 11.6, g: 1.6,
+    badge: 'Multigrano + Calabaza + Proteína · 10g P por porción · Porción=2 rebanadas',
+    alergenosNota: 'Pan Castaño Calabaza Proteína · 100% harina integral + proteína de trigo y arveja. Semillas tostadas de zapallo + sésamo + zapallo natural deshidratado. Fortificado con Zinc, Vit. A, B6 y D3. Contiene gluten (trigo) y sésamo. LIBRE de huevo, lactosa, peces, mariscos, maní y sulfitos. Trazas de leche, soya, nueces, avena, maíz, quinua, amapola, linaza y maravilla. Apto vegano y vegetariano. La porción estándar son 2 rebanadas (63g · 164 kcal · 10g proteína · 3.7g fibra · 234mg sodio). Envase 600g rinde 10 porciones (~20 rebanadas).',
+    contiene: ['gluten', 'legumbres'] as string[],
+    indiceGlicemico: 'bajo',
+    foto: 'https://jumbocl.vtexassets.com/arquivos/ids/560603-900-900?width=900&height=900&aspect=true',
   },
   molde_integral: {
     label: 'Pan Castaño Integral XL',
