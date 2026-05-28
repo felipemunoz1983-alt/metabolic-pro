@@ -32,21 +32,23 @@ const GATED_TABS: Tab[] = ['chat']
 export function BottomNav({ profile, activeTab, onTabChange }: Props) {
   const isPro = profile?.role === 'professional'
 
-  // Profesional: dashboard · plan · chat · pacientes · perfil (5 items)
+  // 'perfil' fue removido del bottom nav: ahora se accede tocando el avatar
+  // circular de la esquina superior derecha (TopBar). Esto libera espacio en
+  // el nav inferior y sigue el patrón estándar de apps móviles (Gmail, Twitter).
+  //
+  // Profesional: dashboard · plan · chat · pacientes (4 items, perfil → avatar arriba)
   //   sin 'evaluaciones' (lo gestiona desde Mis Pacientes)
   //   sin 'historial' (lo ve dentro del detalle de cada paciente)
-  // Paciente / Individual: dashboard · plan · chat · evaluaciones · perfil (5 items)
+  // Paciente / Individual: dashboard · plan · chat · evaluaciones (4 items, perfil → avatar arriba)
   //   sin 'historial' — vive como sub-vista DENTRO del tab "Nutrición" (toggle interno)
-  const perfilItem = NAV_BASE.find(i => i.id === 'perfil')!
   const navItems = isPro
     ? [
         NAV_BASE.find(i => i.id === 'dashboard')!,
         NAV_BASE.find(i => i.id === 'plan')!,
         NAV_BASE.find(i => i.id === 'chat')!,
         NAV_PRO,
-        perfilItem,
       ]
-    : NAV_BASE.filter(i => i.id !== 'historial')
+    : NAV_BASE.filter(i => i.id !== 'historial' && i.id !== 'perfil')
 
   const userHasAccess = profile ? hasAccess(profile) : false
 

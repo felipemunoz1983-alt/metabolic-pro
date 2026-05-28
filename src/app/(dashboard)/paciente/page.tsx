@@ -87,12 +87,15 @@ interface TopBarProps {
   onBellClick: () => void
   onCloseNotifs: () => void
   onMarkAllRead: () => void
+  /** Click en el avatar de la esquina → abre tab Perfil (reemplaza el tab Perfil del bottom nav) */
+  onAvatarClick: () => void
 }
 
 function TopBar({
   activeTab, profile,
   notifications, readIds, loadingNotifs,
   notifOpen, onBellClick, onCloseNotifs, onMarkAllRead,
+  onAvatarClick,
 }: TopBarProps) {
   const TAB_LABELS: Record<Tab, { title: string; subtitle: string }> = {
     dashboard:  { title: 'Dashboard',       subtitle: 'Registro calórico y adherencia diaria' },
@@ -151,9 +154,16 @@ function TopBar({
         </div>
 
         {profile && (
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] flex items-center justify-center text-white text-[11px] font-bold shadow">
+          <button
+            onClick={onAvatarClick}
+            title="Mi perfil"
+            aria-label="Abrir mi perfil"
+            className={`w-8 h-8 rounded-full bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] flex items-center justify-center text-white text-[11px] font-bold shadow hover:scale-105 transition-transform ${
+              activeTab === 'perfil' ? 'ring-2 ring-[#29ABE2] ring-offset-2' : ''
+            }`}
+          >
             {profile.nombre?.charAt(0).toUpperCase() || 'U'}
-          </div>
+          </button>
         )}
       </div>
     </header>
@@ -485,6 +495,7 @@ export default function PacientePage() {
           onBellClick={handleBellClick}
           onCloseNotifs={handleCloseNotifs}
           onMarkAllRead={handleMarkAllRead}
+          onAvatarClick={() => setActiveTab('perfil')}
         />
 
         {/* pb-20 on mobile to clear the bottom nav */}
