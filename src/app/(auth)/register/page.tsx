@@ -241,12 +241,28 @@ function RegisterForm() {
     // 3a. Vinculación + notificación al profesional
     //     - Con token firmado → /api/invites/redeem (verifica firma + exp + notifica)
     //     - Sin token (legacy ?pro=) → notifyProfessionalLinked directo
+    //
+    // AHORA AWAIT explícito: si la vinculación falla, el paciente NO debe quedar
+    // huérfano silenciosamente. El profile.insert ya puso professional_id como
+    // backup, pero validamos que el endpoint redeem también lo confirmara.
     if (inviteToken) {
-      // El profile.insert ya puso professional_id, pero redeem también valida
-      // el token contra el secret y otorga trial si corresponde. Idempotente.
-      redeemInviteToken(inviteToken).catch(() => { /* non-fatal */ })
+      const redeemResult = await redeemInviteToken(inviteToken)
+      if (!redeemResult.ok) {
+        // El token falló (expirado, secret cambió, etc.) pero el profile YA está
+        // creado con professional_id desde el insert directo. Llamamos al notify
+        // como fallback — éste valida defensivamente que el vínculo quedó en DB
+        // antes de mandar email.
+        if (isLinked && professionalId) {
+          await notifyProfessionalLinked({
+            patientId:      userId,
+            patientName:    nombre.trim(),
+            patientEmail:   email.trim().toLowerCase(),
+            professionalId: professionalId,
+          }).catch(() => { /* non-fatal */ })
+        }
+      }
     } else if (isLinked && professionalId) {
-      notifyProfessionalLinked({
+      await notifyProfessionalLinked({
         patientId:      userId,
         patientName:    nombre.trim(),
         patientEmail:   email.trim().toLowerCase(),

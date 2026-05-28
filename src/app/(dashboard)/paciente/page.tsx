@@ -249,18 +249,22 @@ export default function PacientePage() {
           let pendingPro: string | null = null
           let pendingRole = 'individual'
           let pendingNombre = ''
+          let pendingInviteToken: string | null = null
           try {
             // Check localStorage first (cross-tab safe), fall back to sessionStorage (legacy)
-            pendingPro    = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
-            pendingRole   = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
-            pendingNombre = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
+            pendingPro          = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
+            pendingRole         = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
+            pendingNombre       = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
+            pendingInviteToken  = localStorage.getItem('pendingInviteToken') ?? sessionStorage.getItem('pendingInviteToken')
             if (pendingPro) {
               localStorage.removeItem('pendingProfessionalId')
               localStorage.removeItem('pendingRole')
               localStorage.removeItem('pendingNombre')
+              localStorage.removeItem('pendingInviteToken')
               sessionStorage.removeItem('pendingProfessionalId')
               sessionStorage.removeItem('pendingRole')
               sessionStorage.removeItem('pendingNombre')
+              sessionStorage.removeItem('pendingInviteToken')
             }
           } catch { /* storage unavailable */ }
 
@@ -298,6 +302,26 @@ export default function PacientePage() {
             await supabase.auth.signOut()
             window.location.href = '/login?error=profile'
             return
+          }
+
+          // Si hay un invite pendiente firmado, llamarlo al redeem para que valide
+          // el token contra el secret y otorgue trial 21d. Esto cubre el caso de
+          // confirmación de email cross-browser donde el localStorage SÍ tenía el
+          // pendingInviteToken pero el redeem no se llegó a llamar en el register page.
+          // Best-effort: si falla, el profile YA quedó con professional_id desde el
+          // INSERT de arriba.
+          if (pendingInviteToken) {
+            try {
+              const { data: { session } } = await supabase.auth.getSession()
+              const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+              if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`
+              await fetch('/api/invites/redeem', {
+                method:      'POST',
+                headers,
+                credentials: 'include',
+                body:        JSON.stringify({ token: pendingInviteToken }),
+              })
+            } catch { /* non-fatal */ }
           }
 
           setUserId(user.id)

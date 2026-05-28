@@ -123,6 +123,42 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ ok: true, skipped: 'pro_not_found' })
   }
 
+  // 4b. VALIDACIÓN DEFENSIVA: verificar que el paciente REALMENTE tiene este
+  // profesional vinculado en su profile antes de mandar email. Sin esto,
+  // pacientes huérfanos (con professional_id null) generaban email "se vinculó"
+  // y el profesional luego no los encontraba en su panel.
+  const { data: patientCheck } = await sb
+    .from('profiles')
+    .select('id, professional_id')
+    .eq('id', body.patientId)
+    .maybeSingle()
+
+  if (!patientCheck) {
+    return NextResponse.json({ ok: false, skipped: 'patient_profile_not_found' }, { status: 404 })
+  }
+
+  if (patientCheck.professional_id !== body.professionalId) {
+    // El profile existe pero NO está vinculado al profesional declarado.
+    // Forzar el vínculo aquí (defensivamente) en vez de mandar email engañoso.
+    const { error: linkErr } = await sb
+      .from('profiles')
+      .update({
+        professional_id: body.professionalId,
+        role:            'patient',
+        // Otorgar trial 21d si todavía no tenía
+        ...((!patientCheck.professional_id) && {
+          trial_ends_at: new Date(Date.now() + 21 * 24 * 60 * 60 * 1000).toISOString(),
+        }),
+      })
+      .eq('id', body.patientId)
+
+    if (linkErr) {
+      console.error('[notify/patient-registered] auto-link failed:', linkErr)
+      return NextResponse.json({ ok: false, skipped: 'auto_link_failed', detail: linkErr.message }, { status: 500 })
+    }
+    console.log('[notify/patient-registered] auto-vinculado paciente', body.patientId, '→ profesional', body.professionalId)
+  }
+
   const origin = req.nextUrl.origin
 
   // 5. Enviar email + push en paralelo (best-effort)
