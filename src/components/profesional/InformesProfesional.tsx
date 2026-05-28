@@ -233,9 +233,13 @@ function UploadModal({
   const [notas, setNotas] = useState('')
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [dragActive, setDragActive] = useState(false)
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const f = e.target.files?.[0] ?? null
+  /**
+   * Centraliza la validación del File (PDF + tamaño). Lo usamos tanto
+   * para click (input change) como para drag-and-drop.
+   */
+  function acceptFile(f: File | null | undefined) {
     setError(null)
     if (!f) { setFile(null); return }
     if (f.type !== 'application/pdf') {
@@ -252,6 +256,29 @@ function UploadModal({
       const baseName = f.name.replace(/\.pdf$/i, '').replace(/[-_]/g, ' ')
       setTitulo(baseName.slice(0, 80))
     }
+  }
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    acceptFile(e.target.files?.[0])
+  }
+
+  // ── Drag-and-drop handlers ───────────────────────────────────────────────
+  function handleDragOver(e: React.DragEvent<HTMLLabelElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!dragActive) setDragActive(true)
+  }
+  function handleDragLeave(e: React.DragEvent<HTMLLabelElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+  }
+  function handleDrop(e: React.DragEvent<HTMLLabelElement>) {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    const dropped = e.dataTransfer.files?.[0]
+    if (dropped) acceptFile(dropped)
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -320,9 +347,22 @@ function UploadModal({
                 Archivo PDF *
               </label>
               {!file ? (
-                <label className="flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-[#E2ECF4] rounded-xl hover:border-[#29ABE2] cursor-pointer transition">
-                  <Upload size={24} className="text-[#8BA5BE]" />
-                  <p className="text-xs text-[#4A6070] font-bold">Haz click o arrastra el PDF</p>
+                <label
+                  onDragOver={handleDragOver}
+                  onDragEnter={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={cn(
+                    'flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed rounded-xl cursor-pointer transition',
+                    dragActive
+                      ? 'border-[#29ABE2] bg-[#EAF4FB]'
+                      : 'border-[#E2ECF4] hover:border-[#29ABE2]',
+                  )}
+                >
+                  <Upload size={24} className={dragActive ? 'text-[#29ABE2]' : 'text-[#8BA5BE]'} />
+                  <p className="text-xs text-[#4A6070] font-bold">
+                    {dragActive ? 'Suelta el archivo aquí' : 'Haz click o arrastra el PDF'}
+                  </p>
                   <p className="text-[10px] text-[#8BA5BE]">Max {MAX_FILE_SIZE_BYTES / 1024 / 1024} MB</p>
                   <input
                     type="file"
