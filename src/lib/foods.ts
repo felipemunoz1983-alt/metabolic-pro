@@ -1168,6 +1168,78 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Nota: el color rosado al centro es normal — se debe al extracto de betarraga, no indica carne cruda.',
     ],
   },
+  carne_arroz_clasico: {
+    label: 'Carne con arroz + ensalada',
+    items: ['150g carne magra (posta, lomo o filete)', '150g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cda aceite de oliva'],
+    // Macros base por porción (almuerzo amplio):
+    // 150g carne magra USDA (225 kcal · 39 P · 0 C · 7.5 G)
+    // + 150g arroz blanco cocido (195 kcal · 4 P · 42 C · 0.5 G)
+    // + ensalada simple (30 kcal · 1 P · 6 C · 0 G)
+    // + 1 cda aceite oliva (90 kcal · 0 P · 0 C · 10 G)
+    // Total ≈ 540 kcal · 44 P · 48 C · 18 G
+    baseKcal: 540, p: 44, c: 48, g: 18,
+    foto: IMG + '100GRSDEARROZ_150GRSDEALBONDIGAS.jpg',
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
+    tiempo: '25 min',
+    pasos: [
+      'Arroz: lavar 150g de arroz blanco hasta que el agua salga clara. Cocinar en 2 tazas de agua hirviendo con pizca de sal. Tapar y cocinar a fuego bajo 12-15 min hasta absorber el agua.',
+      'Carne: sazonar la pieza con sal, pimienta, ajo y un toque de limón. Cocinar en plancha bien caliente 4-5 min por lado según grosor. La carne magra aporta hierro hemo y proteína de alto valor biológico.',
+      'Reposo: dejar reposar la carne 2-3 min antes de cortar para que los jugos se redistribuyan.',
+      'Ensalada: cortar lechuga, tomate y pepino. Aliñar con aceite de oliva, sal y limón.',
+      'Armado: servir la carne junto al arroz y la ensalada al costado. Variante clásica chilena.',
+    ],
+  },
+  pure_huevo: {
+    label: 'Puré de papas + huevos + ensalada',
+    items: ['250g papas cocidas (puré)', '50ml leche descremada', '5g mantequilla', '2 huevos enteros (revueltos o pochados)', 'Ensalada de hojas verdes y tomate'],
+    // Macros base por porción (almuerzo):
+    // 250g papas cocidas (218 kcal · 5 P · 50 C · 0.3 G)
+    // + 50ml leche descremada (18 kcal · 1.8 P · 2.5 C · 0.2 G)
+    // + 5g mantequilla (35 kcal · 0 P · 0 C · 4 G)
+    // + 2 huevos (156 kcal · 12 P · 1.2 C · 10 G)
+    // + ensalada (40 kcal · 2 P · 8 C · 0.5 G)
+    // Total ≈ 467 kcal · 21 P · 62 C · 15 G
+    baseKcal: 467, p: 21, c: 62, g: 15, tieneHuevo: true, eggsDefault: 2,
+    foto: USP('1568901346375-23c9450c58cd'),  // puré con huevo y ensalada
+    tendencia: ['omnivoro', 'vegetariano'],
+    contiene: ['huevo', 'lactosa'],
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
+    tiempo: '30 min',
+    pasos: [
+      'Papas: pelar y cortar 250g de papas en cubos medianos. Hervir en agua con sal 15-18 min hasta que estén blandas al pincharlas con tenedor.',
+      'Puré: escurrir bien las papas y machacarlas con tenedor o pasapuré. Agregar 50ml de leche descremada caliente y 5g de mantequilla. Mezclar hasta lograr textura cremosa. Sazonar con sal y nuez moscada.',
+      'Huevos: cocinar a elección — revueltos (sartén con poco aceite, fuego medio, revolver constante 2-3 min) o pochados (agua con vinagre, formar remolino, verter el huevo 3 min).',
+      'Ensalada: cortar hojas verdes y tomate. Aliñar con aceite, sal y limón.',
+      'Armado: servir el puré como base, los huevos encima y la ensalada al costado. Combinación reconfortante alta en CHO con proteína completa.',
+    ],
+  },
+  arroz_huevo: {
+    label: 'Arroz salteado con huevos + verduras',
+    items: ['150g arroz blanco cocido', '2 huevos enteros', '1 cdta aceite vegetal', 'Verduras salteadas (zapallo italiano, zanahoria, cebollín)', 'Salsa de soya light (opcional)'],
+    // Macros base por porción (almuerzo, estilo salteado oriental):
+    // 150g arroz blanco cocido (195 kcal · 4 P · 42 C · 0.5 G)
+    // + 2 huevos (156 kcal · 12 P · 1.2 C · 10 G)
+    // + 1 cdta aceite (45 kcal · 0 P · 0 C · 5 G)
+    // + verduras salteadas (50 kcal · 2 P · 10 C · 0 G)
+    // + salsa soya 5ml (5 kcal · 1 P · 0 C · 0 G)
+    // Total ≈ 451 kcal · 19 P · 53 C · 16 G
+    baseKcal: 451, p: 19, c: 53, g: 16, tieneHuevo: true, eggsDefault: 2,
+    foto: IMG + 'salteado_de_arroz_con_huevo.webp',
+    tendencia: ['omnivoro', 'vegetariano'],
+    contiene: ['huevo', 'cebolla_ajo', 'soya'],
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
+    tiempo: '15 min',
+    pasos: [
+      'Pre-cocinar arroz: idealmente arroz cocido del día anterior (textura ideal para saltear). Si lo cocinas ahora: 150g secos en 2 tazas de agua con sal 12-15 min y dejar enfriar.',
+      'Verduras: cortar zapallo italiano en cubos, zanahoria en juliana y cebollín en rodajas. Saltear en sartén/wok bien caliente con 1 cdta de aceite 3-4 min hasta que estén firmes pero cocidas.',
+      'Huevos: hacer un hueco en el centro del wok, agregar los 2 huevos batidos y revolver hasta que cuajen. Integrar con las verduras.',
+      'Arroz: incorporar el arroz frío al wok y saltear todo junto 2-3 min para que se mezcle. Romper grumos con la cuchara.',
+      'Sazonar: agregar salsa de soya light al final (opcional, ojo con sodio). Pimienta blanca a gusto. Servir caliente.',
+    ],
+  },
 }
 
 // ─── CENAS ────────────────────────────────────────────────────────────────────
@@ -1370,6 +1442,76 @@ export const cenasOpts: Record<string, MealOption> = {
       'Aguacate: cortar en láminas justo antes de servir. Aporta grasas monoinsaturadas y potasio.',
       'Armado: disponer las verduras y rúcula como base, las lentejas al centro y el aguacate encima.',
       'Aliño: mezclar aceite de oliva, limón y pizca de cúrcuma. Verter sobre el bowl. Sin cocción — listo en 10 minutos.',
+    ],
+  },
+  carne_arroz_clasico: {
+    label: 'Carne con arroz + ensalada (porción cena)',
+    items: ['120g carne magra (posta, lomo o filete)', '100g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    // Macros base por porción cena (más liviana):
+    // 120g carne magra (180 kcal · 31 P · 0 C · 6 G)
+    // + 100g arroz blanco cocido (130 kcal · 2.7 P · 28 C · 0.3 G)
+    // + ensalada simple (30 kcal · 1 P · 6 C · 0 G)
+    // + 1 cdta aceite (45 kcal · 0 P · 0 C · 5 G)
+    // Total ≈ 385 kcal · 35 P · 34 C · 11 G
+    baseKcal: 385, p: 35, c: 34, g: 11,
+    foto: IMG + '100GRSDEARROZ_150GRSDEALBONDIGAS.jpg',
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 120,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 100,
+    tiempo: '25 min',
+    pasos: [
+      'Arroz: lavar y cocer 100g de arroz blanco en agua con sal 12-15 min. Versión cena con porción reducida vs almuerzo.',
+      'Carne: sazonar y cocinar en plancha 3-4 min por lado. Reposar 2 min antes de cortar.',
+      'Ensalada: aliñar con aceite, sal y limón.',
+      'Armado: servir todo junto. Porción moderada para cena — el profesional puede ajustar gramaje de carne o arroz desde el selector según objetivo.',
+    ],
+  },
+  pure_huevo: {
+    label: 'Puré de papas + huevo + ensalada (porción cena)',
+    items: ['180g papas cocidas (puré)', '30ml leche descremada', '5g mantequilla', '1 huevo entero (pochado o duro)', 'Ensalada de hojas verdes'],
+    // Macros base por porción cena:
+    // 180g papas cocidas (157 kcal · 3.6 P · 36 C · 0.2 G)
+    // + 30ml leche descremada (11 kcal · 1 P · 1.5 C · 0.1 G)
+    // + 5g mantequilla (35 kcal · 0 P · 0 C · 4 G)
+    // + 1 huevo (78 kcal · 6 P · 0.6 C · 5 G)
+    // + ensalada simple (30 kcal · 1 P · 6 C · 0 G)
+    // Total ≈ 311 kcal · 12 P · 44 C · 9 G
+    baseKcal: 311, p: 12, c: 44, g: 9, tieneHuevo: true, eggsDefault: 1,
+    foto: USP('1568901346375-23c9450c58cd'),
+    tendencia: ['omnivoro', 'vegetariano'],
+    contiene: ['huevo', 'lactosa'],
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 180,
+    tiempo: '25 min',
+    pasos: [
+      'Papas: pelar y cocer 180g en agua con sal 12-15 min hasta blandas. Escurrir bien.',
+      'Puré: machacar con tenedor, agregar 30ml leche tibia + 5g mantequilla. Mezclar hasta cremoso. Sal y nuez moscada.',
+      'Huevo: cocinar 1 huevo pochado (3 min en agua con vinagre) o duro (9 min). Versión liviana de cena con 1 solo huevo.',
+      'Ensalada: hojas verdes aliñadas con aceite y limón.',
+      'Armado: puré como base, huevo encima y ensalada al lado. Porción moderada para cena.',
+    ],
+  },
+  arroz_huevo: {
+    label: 'Arroz con huevo + verduras (porción cena)',
+    items: ['100g arroz blanco cocido', '1 huevo entero', '1 cdta aceite vegetal', 'Verduras salteadas (zapallo italiano, cebollín)', 'Limón y sal a gusto'],
+    // Macros base por porción cena:
+    // 100g arroz blanco cocido (130 kcal · 2.7 P · 28 C · 0.3 G)
+    // + 1 huevo (78 kcal · 6 P · 0.6 C · 5 G)
+    // + 1 cdta aceite (45 kcal · 0 P · 0 C · 5 G)
+    // + verduras (50 kcal · 2 P · 10 C · 0 G)
+    // Total ≈ 303 kcal · 11 P · 39 C · 10 G
+    baseKcal: 303, p: 11, c: 39, g: 10, tieneHuevo: true, eggsDefault: 1,
+    foto: IMG + 'arroz_con_huevo_app.webp',
+    tendencia: ['omnivoro', 'vegetariano'],
+    contiene: ['huevo', 'cebolla_ajo'],
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 100,
+    tiempo: '15 min',
+    pasos: [
+      'Arroz: cocer 100g de arroz en agua con sal 12-15 min. Versión cena con porción reducida.',
+      'Verduras: cortar zapallo italiano y cebollín. Saltear en sartén con 1 cdta de aceite 3-4 min.',
+      'Huevo: hacer un hueco en el centro de la sartén, agregar 1 huevo batido y revolver hasta cuajar. Integrar con las verduras.',
+      'Mezcla: incorporar el arroz tibio y saltear todo junto 1-2 min. Sazonar con limón y sal.',
+      'Servir caliente. Cena reconfortante baja en grasa, ideal cuando el paciente busca algo simple post-entreno PM.',
     ],
   },
 }
