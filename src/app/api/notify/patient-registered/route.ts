@@ -30,9 +30,12 @@ function buildEmailHtml(args: {
   professionalName: string
   patientName: string
   patientEmail: string
+  patientId: string
   appUrl: string
 }): string {
-  const { professionalName, patientName, patientEmail, appUrl } = args
+  const { professionalName, patientName, patientEmail, patientId, appUrl } = args
+  // Deep link directo a la ficha del paciente (no solo al panel general)
+  const deepLink = `${appUrl}/paciente?tab=pacientes&patient=${encodeURIComponent(patientId)}`
   return `<!DOCTYPE html>
 <html lang="es">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nuevo paciente vinculado</title></head>
@@ -60,13 +63,13 @@ function buildEmailHtml(args: {
               </td></tr>
             </table>
             <p style="margin:0 0 20px;font-size:13px;color:#4a6b80;line-height:1.5;">
-              Ya esta visible en tu panel "Mis Pacientes" listo para que generes su plan nutricional.
+              Haz clic para abrir su ficha directamente y generar su plan nutricional.
             </p>
             <table width="100%" cellpadding="0" cellspacing="0">
               <tr><td align="center">
-                <a href="${appUrl}/paciente?tab=pacientes"
+                <a href="${deepLink}"
                    style="display:inline-block;background-color:#29ABE2;color:#ffffff;font-size:14px;font-weight:800;text-decoration:none;padding:13px 32px;border-radius:10px;letter-spacing:0.5px;">
-                  Abrir Mis Pacientes
+                  Abrir ficha de ${patientName}
                 </a>
               </td></tr>
             </table>
@@ -132,6 +135,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             professionalName: pro.nombre ?? 'Profesional',
             patientName: body.patientName,
             patientEmail: body.patientEmail,
+            patientId: body.patientId,
             appUrl: origin,
           }),
         })
@@ -141,7 +145,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         const res = await sendPushToUser(sb, body.professionalId, {
           title: '👤 Nuevo paciente vinculado',
           body:  `${body.patientName} se registró con tu link y está esperando su plan.`,
-          url:   '/paciente?tab=pacientes',
+          url:   `/paciente?tab=pacientes&patient=${encodeURIComponent(body.patientId)}`,
           tag:   'patient-registered',
         })
         return res

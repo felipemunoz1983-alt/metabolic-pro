@@ -35,9 +35,12 @@ function buildProfessionalEmail(args: {
   professionalName: string
   patientName: string
   patientEmail: string
+  patientId: string
   appUrl: string
 }): string {
-  const { professionalName, patientName, patientEmail, appUrl } = args
+  const { professionalName, patientName, patientEmail, patientId, appUrl } = args
+  // Deep link directo al detalle del paciente (no solo al panel general)
+  const deepLink = `${appUrl}/paciente?tab=pacientes&patient=${encodeURIComponent(patientId)}`
   return `<!DOCTYPE html>
 <html lang="es"><head><meta charset="UTF-8"></head>
 <body style="margin:0;padding:0;background:#f0f4f8;font-family:Arial,Helvetica,sans-serif;">
@@ -59,9 +62,9 @@ function buildProfessionalEmail(args: {
       <p style="margin:4px 0 0;font-size:12px;color:#4a6b80;">${patientEmail}</p>
     </td></tr>
   </table>
-  <p style="margin:0 0 20px;font-size:13px;color:#4a6b80;line-height:1.5;">Ya esta visible en tu panel "Mis Pacientes" listo para que generes su plan nutricional.</p>
+  <p style="margin:0 0 20px;font-size:13px;color:#4a6b80;line-height:1.5;">Haz clic para abrir su ficha directamente y generar su plan nutricional.</p>
   <table width="100%" cellpadding="0" cellspacing="0"><tr><td align="center">
-    <a href="${appUrl}/paciente?tab=pacientes" style="display:inline-block;background:#29ABE2;color:#fff;font-size:14px;font-weight:800;text-decoration:none;padding:13px 32px;border-radius:10px;letter-spacing:0.5px;">Abrir Mis Pacientes</a>
+    <a href="${deepLink}" style="display:inline-block;background:#29ABE2;color:#fff;font-size:14px;font-weight:800;text-decoration:none;padding:13px 32px;border-radius:10px;letter-spacing:0.5px;">Abrir ficha de ${patientName}</a>
   </td></tr></table>
 </td></tr>
 <tr><td style="padding:16px 32px 28px;text-align:center;border-top:1px solid #e2ecf4;">
@@ -169,6 +172,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
             professionalName: pro.nombre ?? 'Profesional',
             patientName,
             patientEmail,
+            patientId: user.id,
             appUrl: origin,
           }),
         }).catch(err => console.error('[invites/redeem] email failed:', err))
@@ -176,7 +180,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     sendPushToUser(sb, professionalId, {
       title: '👤 Nuevo paciente vinculado',
       body:  `${patientName} se registró con tu link y está esperando su plan.`,
-      url:   '/paciente?tab=pacientes',
+      url:   `/paciente?tab=pacientes&patient=${encodeURIComponent(user.id)}`,
       tag:   'patient-registered',
     }).catch(err => console.error('[invites/redeem] push failed:', err)),
   ])

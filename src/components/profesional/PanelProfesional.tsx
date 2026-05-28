@@ -1540,6 +1540,27 @@ export function PanelProfesional({
     loadPatients()
   }, [professionalId])
 
+  // Deep-link desde email/push: si la URL trae ?patient=<uuid>, abre directo
+  // su ficha apenas tengamos la lista cargada. Limpiamos el param después para
+  // que un refresh accidental no quede atascado en el mismo paciente.
+  useEffect(() => {
+    if (!patients.length || selected) return
+    if (typeof window === 'undefined') return
+    const sp = new URLSearchParams(window.location.search)
+    const target = sp.get('patient')
+    if (!target) return
+    const match = patients.find(p => p.id === target)
+    if (match) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- auto-seleccionar desde URL param es el efecto deseado al cargar
+      setSelected(match)
+      // Quitamos solo el param patient, mantenemos tab=pacientes
+      sp.delete('patient')
+      const newSearch = sp.toString()
+      const newUrl = `${window.location.pathname}${newSearch ? `?${newSearch}` : ''}${window.location.hash}`
+      window.history.replaceState(null, '', newUrl)
+    }
+  }, [patients, selected])
+
   async function loadPatients() {
     setLoading(true)
     setLoadError(null)
