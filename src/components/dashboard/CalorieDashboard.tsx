@@ -164,14 +164,14 @@ function ResumenSemanal({
     : 0
 
   const milestone = getMilestone(streak.current)
-  const flameColor = streak.current >= 7 ? 'text-amber-400' : streak.current >= 3 ? 'text-orange-400' : 'text-[#29ABE2]'
+  const flameColor = streak.current >= 7 ? 'text-amber-500' : streak.current >= 3 ? 'text-orange-500' : 'text-[#29ABE2]'
   const flameBg    = streak.current >= 7 ? 'bg-amber-500/20' : streak.current >= 3 ? 'bg-orange-500/20' : 'bg-[#29ABE2]/20'
 
   return (
     <motion.div
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-gradient-to-br from-[#081F2D] via-[#0C3547] to-[#0e4f6a] rounded-2xl p-5 text-white"
+      className="bg-gradient-to-br from-white to-[#EAF4FB] rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)]"
     >
       {/* ── Top row: streak + weekly stats ── */}
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -181,11 +181,11 @@ function ResumenSemanal({
             <Flame size={22} className={flameColor} />
           </div>
           <div>
-            <p className="text-2xl font-black leading-none">
+            <p className="text-2xl font-black leading-none text-[#0C1F2C]">
               {streak.current}
-              <span className="text-sm font-semibold text-[#9EC8E0] ml-1">días</span>
+              <span className="text-sm font-semibold text-[#8BA5BE] ml-1">días</span>
             </p>
-            <p className="text-[10px] text-[#4A7A94] font-medium">Racha actual</p>
+            <p className="text-[10px] text-[#8BA5BE] font-medium">Racha actual</p>
           </div>
         </div>
 
@@ -193,31 +193,31 @@ function ResumenSemanal({
         <div className="flex items-center gap-3 flex-shrink-0">
           {/* Days this week */}
           <div className="text-right">
-            <p className="text-xl font-black text-[#29ABE2] leading-none">{daysLogged}<span className="text-sm font-semibold text-[#9EC8E0]">/7</span></p>
-            <p className="text-[10px] text-[#4A7A94]">esta semana</p>
+            <p className="text-xl font-black text-[#29ABE2] leading-none">{daysLogged}<span className="text-sm font-semibold text-[#8BA5BE]">/7</span></p>
+            <p className="text-[10px] text-[#8BA5BE]">esta semana</p>
           </div>
 
           {weekAdh > 0 && (
             <>
-              <div className="w-px h-8 bg-white/10" />
+              <div className="w-px h-8 bg-[#E2ECF4]" />
               <div className="text-right">
-                <p className={cn('text-xl font-black leading-none', weekAdh >= 80 ? 'text-green-400' : 'text-amber-400')}>
-                  {weekAdh}<span className="text-sm font-semibold text-[#9EC8E0]">%</span>
+                <p className={cn('text-xl font-black leading-none', weekAdh >= 80 ? 'text-green-600' : 'text-amber-500')}>
+                  {weekAdh}<span className="text-sm font-semibold text-[#8BA5BE]">%</span>
                 </p>
-                <p className="text-[10px] text-[#4A7A94]">adherencia</p>
+                <p className="text-[10px] text-[#8BA5BE]">adherencia</p>
               </div>
             </>
           )}
 
           {streak.best > 0 && (
             <>
-              <div className="w-px h-8 bg-white/10" />
+              <div className="w-px h-8 bg-[#E2ECF4]" />
               <div className="text-right">
                 <div className="flex items-center justify-end gap-1">
                   <Trophy size={12} className="text-[#29ABE2]" />
-                  <p className="text-xl font-black leading-none">{streak.best}</p>
+                  <p className="text-xl font-black leading-none text-[#0C3547]">{streak.best}</p>
                 </div>
-                <p className="text-[10px] text-[#4A7A94]">mejor racha</p>
+                <p className="text-[10px] text-[#8BA5BE]">mejor racha</p>
               </div>
             </>
           )}
@@ -241,14 +241,14 @@ function ResumenSemanal({
                 'w-full h-1.5 rounded-full',
                 logged
                   ? adh >= 80 ? 'bg-green-400' : 'bg-amber-400'
-                  : isToday ? 'bg-[#29ABE2]/40' : 'bg-white/10'
+                  : isToday ? 'bg-[#29ABE2]/40' : 'bg-[#E2ECF4]'
               )} />
               {/* Circle */}
               <div className={cn(
                 'w-7 h-7 rounded-full flex items-center justify-center text-sm',
                 logged
                   ? adh >= 80 ? 'bg-green-400/20' : 'bg-amber-400/20'
-                  : isToday ? 'bg-[#29ABE2]/20 ring-1 ring-[#29ABE2]/50' : 'bg-white/5'
+                  : isToday ? 'bg-[#29ABE2]/20 ring-1 ring-[#29ABE2]/50' : 'bg-[#F0F6FA]'
               )}>
                 <span className="text-sm leading-none">
                   {logged ? (adh >= 80 ? '✅' : '🟡') : isToday ? '📍' : '○'}
@@ -257,7 +257,7 @@ function ResumenSemanal({
               {/* Day label */}
               <span className={cn(
                 'text-[9px] font-semibold',
-                isToday ? 'text-[#29ABE2]' : logged ? 'text-[#9EC8E0]' : 'text-[#4A7A94]'
+                isToday ? 'text-[#29ABE2]' : logged ? 'text-[#8BA5BE]' : 'text-[#8BA5BE]'
               )}>
                 {shortDay(date)}
               </span>
@@ -267,8 +267,8 @@ function ResumenSemanal({
       </div>
 
       {/* ── Milestone or motivation ── */}
-      <div className="mt-3 pt-3 border-t border-white/10">
-        <p className="text-xs text-[#9EC8E0] leading-snug">
+      <div className="mt-3 pt-3 border-t border-[#E2ECF4]">
+        <p className="text-xs text-[#8BA5BE] leading-snug">
           {milestone ?? (streak.current >= 7
             ? `¡Racha increíble! Sigue para llegar a ${streak.current < 14 ? 14 : streak.current < 21 ? 21 : 30} días.`
             : streak.current >= 1
@@ -281,7 +281,32 @@ function ResumenSemanal({
   )
 }
 
+// ── Trend pill ────────────────────────────────────────────────────────────────
+// Reemplaza el ícono de tendencia "pelado" por una píldora teñida, alineada al
+// lenguaje visual del dashboard nuevo (landing). Mantiene EXACTAMENTE la misma
+// semántica de color que antes: up=verde, down=rojo, flat=gris (direccional, no
+// "bueno/malo"); cada card decide qué dirección pasar según su métrica.
+function TrendPill({ trend, sub }: { trend?: 'up' | 'down' | 'flat'; sub?: string }) {
+  if (!trend) return sub ? <span className="text-[11px] font-medium text-[#8BA5BE]">{sub}</span> : null
+  const Icon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
+  const style =
+    trend === 'up'
+      ? 'bg-green-50 text-green-600'
+      : trend === 'down'
+        ? 'bg-red-50 text-red-500'
+        : 'bg-[#F0F6FA] text-[#8BA5BE]'
+  return (
+    <span className={cn('inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold', style)}>
+      <Icon size={12} />
+      {sub}
+    </span>
+  )
+}
+
 // ── Metric card ───────────────────────────────────────────────────────────────
+// Reskin alineado al diseño del landing: etiqueta uppercase tracking-wider,
+// valor 2xl + unidad, y una fila inferior con píldora de tendencia a la izquierda
+// y sparkline a la derecha (en vez del sparkline a ancho completo abajo).
 function MetricCard({
   label, value, unit, sub, color, chart, trend
 }: {
@@ -293,23 +318,19 @@ function MetricCard({
   chart?: number[]
   trend?: 'up' | 'down' | 'flat'
 }) {
-  const TrendIcon = trend === 'up' ? TrendingUp : trend === 'down' ? TrendingDown : Minus
-  const trendColor = trend === 'up' ? 'text-green-500' : trend === 'down' ? 'text-red-400' : 'text-[#8BA5BE]'
-
   return (
-    <div className="bg-white rounded-2xl border border-[#E2ECF4] p-4 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between">
-        <p className="text-[10px] font-bold text-[#8BA5BE] uppercase tracking-widest">{label}</p>
-        {trend && <TrendIcon size={14} className={trendColor} />}
+    <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)] hover:shadow-md transition-shadow">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8BA5BE]">{label}</p>
+      <div className="mt-2 flex items-end gap-1.5">
+        <span className={cn('text-2xl font-bold tracking-tight leading-none', color)}>{value}</span>
+        {unit && <span className="pb-0.5 text-sm font-medium text-[#8BA5BE]">{unit}</span>}
       </div>
-      <div>
-        <span className={cn('text-3xl font-black leading-none', color)}>{value}</span>
-        {unit && <span className="text-xs text-[#8BA5BE] ml-1 font-medium">{unit}</span>}
-        {sub && <p className="text-[10px] text-[#8BA5BE] mt-1">{sub}</p>}
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <TrendPill trend={trend} sub={sub} />
+        {chart && chart.length > 1 && (
+          <Sparkline data={chart} width={88} height={32} color={color.replace('text-', '')} fill={`${color.replace('text-', '')}18`} />
+        )}
       </div>
-      {chart && chart.length > 1 && (
-        <Sparkline data={chart} width={110} height={32} color={color.replace('text-', '')} fill={`${color.replace('text-', '')}18`} />
-      )}
     </div>
   )
 }
@@ -548,7 +569,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
         {/* ── Left: Checklist de comidas ── */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#0C1F2C]">Registro de comidas del día</h3>
             <span className="text-xs text-[#8BA5BE] font-medium bg-[#F0F6FA] px-2 py-1 rounded-lg">
@@ -643,7 +664,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
         {/* ── Right: Adherencia ring + macros ── */}
         <div className="space-y-4">
           {/* Adherencia ring */}
-          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm flex flex-col items-center gap-3">
+          <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)] flex flex-col items-center gap-3">
             <p className="text-xs font-bold text-[#8BA5BE] uppercase tracking-widest w-full">Adherencia del día</p>
             <Ring
               pct={adherencia}
@@ -658,7 +679,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
 
           {/* Macros del plan */}
           {macros && (
-            <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
+            <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)]">
               <p className="text-xs font-bold text-[#8BA5BE] uppercase tracking-widest mb-3">Macros del plan</p>
               <div className="space-y-3">
                 {[
@@ -693,7 +714,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
       </div>
 
       {/* ── Bienestar del día ── */}
-      <div className="bg-white rounded-2xl border border-[#E2ECF4] shadow-sm overflow-hidden">
+      <div className="bg-white rounded-2xl border border-[#E2ECF4] shadow-[0_1px_2px_rgba(11,42,58,0.04)] overflow-hidden">
         <button
           onClick={() => setWellbeingOpen(o => !o)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-[#F8FBFD] transition"
@@ -838,7 +859,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
 
       {/* ── Evolución de peso 30d ── */}
       {weightEntries.length >= 2 && (
-        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#0C1F2C]">Evolución de peso · 30 días</h3>
             <div className="flex items-center gap-2">
@@ -904,7 +925,7 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
 
       {/* ── Historial semana ── */}
       {weekLogs.length > 0 && (
-        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-sm">
+        <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-[#0C1F2C]">Tendencia semanal · Calorías</h3>
             <div className="flex items-center gap-2">
