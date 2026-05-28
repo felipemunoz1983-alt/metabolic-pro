@@ -32,9 +32,11 @@ const GATED_TABS: Tab[] = ['chat']
 export function BottomNav({ profile, activeTab, onTabChange }: Props) {
   const isPro = profile?.role === 'professional'
 
-  // Profesional: dashboard · plan · chat · pacientes · perfil (5 items, sin evaluaciones —
-  //   las gestiona desde "Mis Pacientes" → detalle paciente)
-  // Paciente / Individual: dashboard · plan · chat · evaluaciones · historial · perfil (6)
+  // Profesional: dashboard · plan · chat · pacientes · perfil (5 items)
+  //   sin 'evaluaciones' (lo gestiona desde Mis Pacientes)
+  //   sin 'historial' (lo ve dentro del detalle de cada paciente)
+  // Paciente / Individual: dashboard · plan · chat · evaluaciones · perfil (5 items)
+  //   sin 'historial' — vive como sub-vista DENTRO del tab "Nutrición" (toggle interno)
   const perfilItem = NAV_BASE.find(i => i.id === 'perfil')!
   const navItems = isPro
     ? [
@@ -44,7 +46,7 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
         NAV_PRO,
         perfilItem,
       ]
-    : NAV_BASE
+    : NAV_BASE.filter(i => i.id !== 'historial')
 
   const userHasAccess = profile ? hasAccess(profile) : false
 

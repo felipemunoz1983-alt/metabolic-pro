@@ -176,6 +176,11 @@ export default function PacientePage() {
   const [userId, setUserId] = useState<string | null>(null)
   // Initialise from ?tab= query param so deep-links (/paciente?tab=plan) work
   const [activeTab, setActiveTab] = useState<Tab>(getTabFromUrl)
+  // Sub-vista del tab "Nutrición" para pacientes — el "Historial" se movió desde
+  // el bottom nav a un toggle interno dentro del tab Plan para reducir clutter
+  // de navegación. Solo aplica a pacientes/individuales; profesional sigue viendo
+  // historial en su sidebar como tab independiente.
+  const [planSubview, setPlanSubview] = useState<'actual' | 'historial'>('actual')
   const [result, setResult] = useState<NutritionResult | null>(null)
   const [formData, setFormData] = useState<FormData | null>(null)
   const [checking, setChecking] = useState(true)   // ← blocks render until auth verified
@@ -501,7 +506,39 @@ export default function PacientePage() {
               {/* ── Plan / Nutrición ── */}
               {activeTab === 'plan' && (
                 <div className="px-4 py-4 md:px-8 md:py-8 max-w-3xl mx-auto">
-                  {result && formData ? (
+                  {/* Toggle "Plan actual" / "Historial" — solo para pacientes/individuales.
+                      El profesional sigue teniendo Historial como tab propio en su sidebar.
+                      Cuando elige "Historial" mostramos el componente <Historial /> y saltamos
+                      todo el contenido normal del tab Plan. */}
+                  {profile?.role !== 'professional' && (
+                    <div className="mb-4 inline-flex items-center gap-1 bg-[#F0F6FA] border border-[#E2ECF4] rounded-xl p-1">
+                      <button
+                        onClick={() => setPlanSubview('actual')}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+                          planSubview === 'actual'
+                            ? 'bg-[#29ABE2] text-white shadow'
+                            : 'text-[#4A6070] hover:text-[#0C1F2C]'
+                        }`}
+                      >
+                        🥗 Mi plan actual
+                      </button>
+                      <button
+                        onClick={() => setPlanSubview('historial')}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition ${
+                          planSubview === 'historial'
+                            ? 'bg-[#29ABE2] text-white shadow'
+                            : 'text-[#4A6070] hover:text-[#0C1F2C]'
+                        }`}
+                      >
+                        📚 Historial
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Vista "Historial" embebida dentro del tab Plan para pacientes */}
+                  {profile?.role !== 'professional' && planSubview === 'historial' && userId ? (
+                    <Historial userId={userId} />
+                  ) : result && formData ? (
                     <>
                       {/* Botón "Nueva planificación" prominente para profesionales */}
                       {profile?.role === 'professional' && (
