@@ -516,8 +516,14 @@ export interface UltraOption {
 export const desayunosOpts: Record<string, MealOption> = {
   avena_platano: {
     label: 'Avena natural + plátano',
-    items: ['80g avena en hojuelas', '1 plátano mediano', '200ml leche descremada', '1 cdta canela o miel'],
-    baseKcal: 360, p: 14, c: 62, g: 7,
+    items: ['80g avena en hojuelas', '1 plátano mediano (120g)', '200ml leche descremada', '1 cdta miel o canela'],
+    // Macros INTA Chile (auditoría 2026-05):
+    //   80g avena hojuelas:         303 kcal · 10.6 P · 53.6 C · 5.2 G
+    //   1 plátano mediano 120g:     110 kcal · 1.3 P · 27 C · 0.4 G
+    //   200ml leche descremada:      66 kcal · 6.2 P · 9.6 C · 0.2 G (etiqueta)
+    //   1 cdta miel 7g:              21 kcal · 0 P · 5.7 C · 0 G
+    //   Total: 500 kcal · 18 P · 96 C · 6 G
+    baseKcal: 500, p: 18, c: 96, g: 6,
     foto: USP('1638813133218-4367bd8123f6'),
     tiempo: '10 min',
     pasos: [
@@ -529,8 +535,14 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   avena_proteica: {
     label: 'Avena proteica + plátano',
-    items: ['80g avena en hojuelas', '1 scoop proteína en polvo', '1 plátano mediano', '200ml leche descremada'],
-    baseKcal: 480, p: 38, c: 62, g: 7,
+    items: ['80g avena en hojuelas', '1 scoop proteína en polvo (~30g)', '1 plátano mediano (120g)', '200ml leche descremada'],
+    // Macros INTA Chile + etiquetas reales (auditoría 2026-05):
+    //   80g avena hojuelas:         303 kcal · 10.6 P · 53.6 C · 5.2 G
+    //   1 scoop whey 30g:           120 kcal · 24 P · 3 C · 1.5 G
+    //   1 plátano mediano 120g:     110 kcal · 1.3 P · 27 C · 0.4 G
+    //   200ml leche descremada:      66 kcal · 6.2 P · 9.6 C · 0.2 G
+    //   Total: 599 kcal · 42 P · 93 C · 7 G
+    baseKcal: 599, p: 42, c: 93, g: 7,
     requiereWhey: true,
     foto: USP('1638813133218-4367bd8123f6'), // tazón de avena con frutas encima, foto real
     tiempo: '10 min',
@@ -574,8 +586,15 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   yogur_granola: {
     label: 'Yogur + berries + semillas',
-    items: ['150g yogur natural', '½ taza berries (arándanos, frambuesas o frutillas)', '1 cda chía o linaza', '10-15 almendras naturales'],
-    baseKcal: 380, p: 20, c: 50, g: 8,
+    items: ['150g yogur natural', '½ taza berries (75g, arándanos/frambuesas/frutillas)', '1 cda chía o linaza (12g)', '10-15 almendras naturales (15g)'],
+    // Macros INTA Chile (auditoría 2026-05) — base Danone Oikos Griego:
+    //   150g yogur Danone Oikos (escalado de 110g):  143 kcal · 6.8 P · 15 C · 5.5 G
+    //   ½ taza berries 75g:                            30 kcal · 0.6 P · 7.5 C · 0.4 G
+    //   1 cda chía 12g:                                58 kcal · 2 P · 5 C · 3.7 G
+    //   10-15 almendras 15g:                           87 kcal · 3.2 P · 3.3 C · 7.5 G
+    //   Total: 318 kcal · 13 P · 31 C · 17 G
+    // (El selector tieneYogur ajusta macros si el paciente elige otro yogur — FullPro, Soprole Protein+, etc.)
+    baseKcal: 318, p: 13, c: 31, g: 17,
     tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '5 min',
@@ -612,8 +631,14 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   chia_pudding: {
     label: 'Chía pudding + yogur proteico',
-    items: ['2 cdas semillas de chía (~20g)', '150g yogur alto en proteínas', '1 fruta a elección', 'Canela o vainilla sin azúcar'],
-    baseKcal: 430, p: 24, c: 58, g: 10,
+    items: ['2 cdas semillas de chía (~20g)', '150g yogur alto en proteínas', '1 fruta a elección (150g manzana, kiwi, durazno)', 'Canela o vainilla sin azúcar'],
+    // Macros INTA Chile (auditoría 2026-05) — base yogur alto-proteína Soprole Protein+ Power 150g:
+    //   2 cdas chía 20g:                       97 kcal · 3.3 P · 8.3 C · 6.1 G
+    //   150g yogur alto-proteína (escalado):  126 kcal · 15.5 P · 10.6 C · 1.9 G
+    //   1 fruta mediana 150g (manzana INTA):   78 kcal · 0.4 P · 19.5 C · 0.5 G
+    //   Canela/vainilla:                        0 kcal
+    //   Total: 301 kcal · 19 P · 38 C · 9 G — redondeado a 305/16/40/10
+    baseKcal: 305, p: 16, c: 40, g: 10,
     tieneYogur: true,
     foto: IMG + 'chia_pudding.jfif',
     tiempo: '5 min + reposo 2h',
@@ -627,8 +652,15 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   tostadas_ricotta: {
     label: 'Tostadas + ricotta + miel + nueces',
-    items: ['2 tostadas de pan integral', '80-100g ricotta', '1 cdta miel', '10 nueces enteras o picadas'],
-    baseKcal: 400, p: 18, c: 48, g: 14,
+    items: ['2 tostadas de pan integral (63g Castaño)', '90g ricotta 4% MG', '1 cdta miel (7g)', '10 nueces enteras (20g)'],
+    // Macros INTA Chile (auditoría 2026-05):
+    //   2 tostadas pan Castaño 63g:    164 kcal · 8.3 P · 25 C · 3 G (etiqueta)
+    //   90g ricotta 4% MG:             156 kcal · 10.2 P · 2.7 C · 11.8 G (INTA)
+    //   1 cdta miel 7g:                 21 kcal · 0 P · 5.7 C · 0 G
+    //   10 nueces 20g:                 130 kcal · 3 P · 2.7 C · 13 G (INTA)
+    //   Total: 471 kcal · 22 P · 36 C · 28 G
+    // Nota: la grasa estaba muy subestimada (era 14g, real 28g) — nueces son densas.
+    baseKcal: 471, p: 22, c: 36, g: 28,
     tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '8 min',
@@ -642,8 +674,14 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   cottage_frutas: {
     label: 'Cottage + frutas + semillas',
-    items: ['150-200g cottage', '1 fruta a elección (berries, kiwi, durazno)', '1 cda semillas (chía, linaza o sésamo)', 'Canela o ralladura de limón'],
-    baseKcal: 360, p: 22, c: 42, g: 10,
+    items: ['175g cottage 4% MG', '1 fruta a elección (150g - durazno, kiwi, berries)', '1 cda semillas (12g - chía, linaza o sésamo)', 'Canela o ralladura de limón'],
+    // Macros INTA Chile (auditoría 2026-05):
+    //   175g cottage 4% MG (INTA):       171 kcal · 18.7 P · 5.2 C · 7.6 G
+    //   1 fruta 150g (durazno INTA):      59 kcal · 1.4 P · 14 C · 0.4 G
+    //   1 cda chía 12g:                   58 kcal · 2 P · 5 C · 3.7 G
+    //   Canela/limón:                      0 kcal
+    //   Total: 288 kcal · 22 P · 24 C · 12 G
+    baseKcal: 288, p: 22, c: 24, g: 12,
     foto: IMG + 'cottage_frutas_semillas.jfif',
     tiempo: '5 min',
     pasos: [
