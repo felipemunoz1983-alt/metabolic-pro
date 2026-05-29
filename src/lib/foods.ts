@@ -589,8 +589,16 @@ export const desayunosOpts: Record<string, MealOption> = {
   },
   batido_proteico: {
     label: 'Batido proteico + frutos secos',
-    items: ['1 scoop proteína en polvo', '1 plátano congelado', '200ml leche', '30g nueces o almendras', '1 cdta mantequilla de maní'],
-    baseKcal: 490, p: 35, c: 42, g: 18,
+    items: ['1 scoop proteína en polvo (~30g)', '1 plátano mediano congelado (120g)', '200ml leche descremada', '30g nueces o almendras', '1 cdta mantequilla de maní (5g)'],
+    // Macros recalculadas con datos INTA + etiquetas reales:
+    //   1 scoop whey 30g:               120 kcal · 24 P · 3 C · 1.5 G
+    //   1 plátano mediano INTA 120g:   110 kcal · 1.3 P · 27 C · 0.4 G
+    //   200ml leche descremada:         66 kcal · 6.2 P · 9.6 C · 0.2 G
+    //   30g nueces INTA:               198 kcal · 4.6 P · 4 C · 19.6 G
+    //   5g mantequilla maní:            29 kcal · 1.2 P · 1.1 C · 2.5 G
+    //   Total: 523 kcal · 37 P · 45 C · 24 G
+    baseKcal: 523, p: 37, c: 45, g: 24,
+    porcionFija: true, // porciones discretas: 1 scoop, 1 plátano, 30g nueces — no escalable
     requiereWhey: true,
     foto: USP('1622597468620-656aa1f981ea'), // batido proteico de frutilla en vaso transparente
     tiempo: '5 min',
@@ -666,10 +674,22 @@ export const colacionesOpts: Record<string, MealOption> = {
   },
   fruta_proteina: {
     label: 'Fruta + batido de proteína',
-    items: ['1 scoop proteína en polvo', '200ml agua o leche', '1 fruta mediana'],
-    baseKcal: 210, p: 26, c: 22, g: 2,
+    items: ['1 scoop proteína en polvo (~30g)', '200ml leche descremada o agua', '1 fruta mediana (manzana, naranja o pera)'],
+    // Macros recalculadas con datos oficiales (INTA + etiqueta producto):
+    //   1 scoop whey/proteína 30g:    120 kcal · 24 P · 3 C · 1.5 G  (Wild Protein / estándar)
+    //   200ml leche descremada:        66 kcal · 6.2 P · 9.6 C · 0.2 G (etiqueta verificada)
+    //   1 fruta mediana 150g (manzana INTA): 78 kcal · 0.4 P · 19.5 C · 0.5 G
+    //   Total con leche: 264 kcal · 31 P · 32 C · 2.2 G
+    //   Total con agua:  198 kcal · 24 P · 22 C · 2.0 G
+    // Usamos versión con leche (más nutricionalmente completa) como base.
+    baseKcal: 264, p: 31, c: 32, g: 2,
+    // porcionFija: los componentes son cantidades DISCRETAS (1 scoop, 1 fruta).
+    // Sin esto, el motor escalaba el plato al slot kcal del paciente (ej: 537 kcal
+    // implica 2.55 scoops = absurdo). Esta colación tiene macros fijos por receta.
+    porcionFija: true,
     foto: USP('1622597468620-656aa1f981ea'), // batido proteico en vaso, colación
     tiempo: '3 min',
+    requiereWhey: true,
     pasos: [
       'Mezclar el scoop de proteína con el agua o leche en una botella shaker.',
       'Agitar vigorosamente por 20-30 segundos hasta disolver bien.',
