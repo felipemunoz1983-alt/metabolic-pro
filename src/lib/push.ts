@@ -3,9 +3,12 @@
  * Uses web-push with VAPID authentication.
  *
  * Required env vars:
- *   VAPID_PUBLIC_KEY   — from `npx web-push generate-vapid-keys`
- *   VAPID_PRIVATE_KEY  — from `npx web-push generate-vapid-keys`
- *   VAPID_SUBJECT      — mailto:tu@email.com  (or https://centrometabolico.cl)
+ *   NEXT_PUBLIC_VAPID_PUBLIC_KEY  — from `npx web-push generate-vapid-keys`
+ *                                   (NEXT_PUBLIC_ porque el cliente la necesita
+ *                                    para suscribirse; la public key no es secreta)
+ *   VAPID_PUBLIC_KEY              — fallback server-only (legacy)
+ *   VAPID_PRIVATE_KEY             — from `npx web-push generate-vapid-keys` (SECRETA)
+ *   VAPID_SUBJECT                 — mailto:tu@email.com  (or https://centrometabolico.cl)
  */
 import webpush from 'web-push'
 
@@ -28,12 +31,16 @@ let vapidConfigured = false
 function ensureVapid() {
   if (vapidConfigured) return true
 
-  const pub  = process.env.VAPID_PUBLIC_KEY
+  // Fallback chain: el cliente y el servidor deben usar la MISMA public key.
+  // En Vercel está como NEXT_PUBLIC_VAPID_PUBLIC_KEY (visible en client + server).
+  // VAPID_PUBLIC_KEY queda como fallback legacy para entornos viejos.
+  const pub  = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY
   const priv = process.env.VAPID_PRIVATE_KEY
   const subj = process.env.VAPID_SUBJECT || 'mailto:no-reply@centrometabolico.cl'
 
   if (!pub || !priv) {
-    console.warn('[push] VAPID keys not configured — push notifications disabled')
+    console.warn('[push] VAPID keys not configured — push notifications disabled',
+      { hasPub: !!pub, hasPriv: !!priv })
     return false
   }
 
