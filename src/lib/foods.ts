@@ -1797,7 +1797,9 @@ export const ultraProcOpts: Record<string, UltraOption> = {
   chips_papas: {
     label: '🍟 Papas fritas snack',
     porcion: '1 paquete pequeño (28g)',
-    kcal: 536, p: 7, c: 53, g: 34,
+    // Auditoría INTA (2026-05): los valores eran por 100g (536/7/53/34).
+    // Escalados a la porción real de 28g (Lays/Marco Polo paquete individual).
+    kcal: 150, p: 2, c: 15, g: 9.5,
     sellos: ['Alto en grasas saturadas', 'Alto en sodio'],
   },
   galletas_dulces: {
@@ -1843,13 +1845,17 @@ export const ultraProcOpts: Record<string, UltraOption> = {
   gomitas: {
     label: '🍬 Gomitas/Dulces',
     porcion: '1 porción (30g)',
-    kcal: 320, p: 6, c: 74, g: 0,
+    // Auditoría INTA (2026-05): los valores eran por 100g (340/5/77/0).
+    // Escalados a porción real de 30g (puñado ~10 gomitas).
+    kcal: 102, p: 1.5, c: 23, g: 0,
     sellos: ['Alto en azúcares'],
   },
   barra_cereal_azucar: {
     label: '🍫 Barra de cereal azucarada',
     porcion: '1 barra (35g)',
-    kcal: 400, p: 4, c: 65, g: 14,
+    // Auditoría INTA (2026-05): los valores eran por 100g (400/4/65/14).
+    // Escalados a porción real de 35g (barra individual tipo Quaker/Nutry).
+    kcal: 140, p: 1.4, c: 23, g: 5,
     sellos: ['Alto en azúcares'],
   },
   nuggets: {
@@ -1866,9 +1872,12 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     alergenos: ['Almendras', 'Soya (lecitina)', 'Leche'],
   },
   donuts: {
-    label: '🍩 Donuts de chocolate',
-    porcion: '5 unidades (36g)',
-    kcal: 522, p: 5, c: 66, g: 27,
+    label: '🍩 Mini donuts de chocolate',
+    porcion: '5 mini donuts (36g)',
+    // Auditoría INTA (2026-05): los valores eran por 100g (522/5/66/27).
+    // Escalados a porción real de 36g (5 mini donuts tipo Bauducco/Doña Carlota).
+    // Si se desea representar 5 donuts NORMALES (~250g), crear plato aparte.
+    kcal: 188, p: 1.8, c: 24, g: 9.7,
     sellos: ['Alto en azúcares', 'Alto en grasas saturadas', 'Alto en calorías'],
     alergenos: ['Gluten', 'Leche', 'Soya', 'Huevo'],
   },
