@@ -220,36 +220,73 @@ function MealChips({
     )
   }
 
+  const selectedCount = selected.length
   return (
     <div>
-      <label className="block text-sm font-semibold text-[#0C3547] mb-2">{label}</label>
-      <div className="flex flex-wrap gap-2">
+      <div className="flex items-baseline justify-between mb-2">
+        <label className="text-sm font-semibold text-[#0C3547]">{label}</label>
+        <span className="text-[10px] font-bold text-[#29ABE2] uppercase tracking-wide">
+          {selectedCount} {selectedCount === 1 ? 'opción' : 'opciones'} · desliza →
+        </span>
+      </div>
+
+      {/* Carrusel horizontal — cada opción es una card cuadrada deslizable.
+          Reemplaza el chip-row con flex-wrap (no escalaba bien con 12+ opciones
+          y forzaba al usuario a leer todas las filas para encontrar lo que busca).
+          Snap-mandatory hace que cada swipe "ancle" en la siguiente card.
+          -mx-4 px-4: el padding negativo permite que el carrusel sangre hasta
+          el borde del viewport mobile sin romper la grid del formulario. */}
+      <div
+        className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 scroll-smooth"
+        style={{ scrollbarWidth: 'thin', scrollbarColor: '#D6E3ED transparent' }}
+      >
         {filteredEntries.map(([key, opt]) => {
           const active = selected.includes(key)
           return (
             <button
               key={key}
+              type="button"
               onClick={() => toggle(key)}
+              aria-pressed={active}
               className={cn(
-                'flex items-center gap-1.5 pr-3 rounded-full border-2 text-xs font-semibold transition-all overflow-hidden',
-                opt.foto ? 'pl-0 py-0' : 'px-3 py-1.5',
+                'snap-start flex-shrink-0 w-[112px] rounded-2xl border-2 overflow-hidden text-left transition-all',
+                'flex flex-col bg-white',
                 active
-                  ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
-                  : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2] hover:text-[#0C3547]'
+                  ? 'border-[#29ABE2] ring-2 ring-[#29ABE2]/30 shadow-md scale-[1.02]'
+                  : 'border-[#D6E3ED] hover:border-[#29ABE2]/60 active:scale-[0.98]'
               )}
             >
-              {opt.foto && (
-                <span className="w-8 h-8 flex-shrink-0 overflow-hidden rounded-full">
+              {/* Imagen cuadrada arriba (o placeholder con inicial) */}
+              <div className="relative w-full aspect-square bg-gradient-to-br from-[#E5F4FB] to-[#D6E3ED] overflow-hidden">
+                {opt.foto ? (
                   <img
                     src={opt.foto}
                     alt=""
-                    className="w-full h-full object-cover object-center"
+                    className="w-full h-full object-cover"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                   />
-                </span>
-              )}
-              <span className={opt.foto ? '' : ''}>{opt.label}</span>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-[#29ABE2] text-2xl font-bold">
+                    {opt.label.charAt(0)}
+                  </div>
+                )}
+                {/* Check overlay cuando seleccionado */}
+                {active && (
+                  <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#29ABE2] text-white flex items-center justify-center text-[11px] font-bold shadow">
+                    ✓
+                  </div>
+                )}
+              </div>
+              {/* Label abajo (2 líneas máx) */}
+              <div
+                className={cn(
+                  'px-2 py-1.5 text-[11px] font-semibold leading-tight line-clamp-2 min-h-[36px]',
+                  active ? 'text-[#0C3547] bg-[#29ABE2]/8' : 'text-[#4a6b80]'
+                )}
+              >
+                {opt.label}
+              </div>
             </button>
           )
         })}
