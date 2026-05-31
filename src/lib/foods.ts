@@ -1015,8 +1015,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   carne_papas: {
     label: 'Carne magra + papas cocidas + ensalada',
-    items: ['150g carne magra (posta, lomo o filete)', '1 papa mediana cocida con cáscara', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
-    baseKcal: 590, p: 46, c: 54, g: 16,
+    items: ['150g carne magra (posta, lomo o filete)', '250g papas cocidas con cáscara (~1 papa grande)', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    // Auditoría INTA (2026-05):
+    //   150g carne magra:        225 kcal · 39 P · 0 C · 7.5 G
+    //   250g papa cocida cáscara:218 kcal · 5 P · 50 C · 0.25 G (coincide con carboGramosBase=250)
+    //   Ensalada simple:          25 kcal · 1 P · 5 C · 0 G
+    //   1 cdta aceite oliva 5g:   45 kcal · 0 P · 0 C · 5 G
+    //   Total: 513 kcal · 45 P · 55 C · 13 G
+    baseKcal: 513, p: 45, c: 55, g: 13,
     porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
@@ -1056,7 +1062,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   salmon_quinoa: {
     label: 'Salmón al horno + quinoa + verduras',
     items: ['200g salmón fresco', '100g quinoa cocida', '150g verduras salteadas (zapallo, pimentón, espinaca)', '1 cdta aceite de oliva'],
-    baseKcal: 600, p: 48, c: 42, g: 20,
+    // Auditoría INTA (2026-05):
+    //   200g salmón fresco INTA: 400 kcal · 44 P · 0 C · 26 G (alto en omega 3)
+    //   100g quinoa cocida:      120 kcal · 4.4 P · 21 C · 1.9 G
+    //   150g verduras salteadas:  35 kcal · 2 P · 8 C · 0.3 G
+    //   1 cdta aceite oliva 5g:   45 kcal · 0 P · 0 C · 5 G
+    //   Total: 600 kcal · 50 P · 29 C · 33 G
+    //   (Versión anterior subestimaba la grasa del salmón y sobreestimaba CHO)
+    baseKcal: 600, p: 50, c: 29, g: 33,
     porcionFija: true,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
@@ -1101,8 +1114,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   arroz_huevo_saltado: {
     label: 'Arroz saltado con huevo y verduras',
-    items: ['160g arroz cocido (idealmente frío del día anterior)', '2-3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón', '1 cdta aceite + salsa de soya opcional'],
-    baseKcal: 550, p: 32, c: 70, g: 14, tieneHuevo: true, eggsDefault: 2,
+    items: ['160g arroz cocido (idealmente frío del día anterior)', '3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón (~100g)', '1 cdta aceite + salsa de soya light opcional'],
+    // Auditoría INTA (2026-05) — asumiendo 3 huevos (default):
+    //   160g arroz blanco cocido: 208 kcal · 4.3 P · 45 C · 0.5 G
+    //   3 huevos enteros 150g:    234 kcal · 18 P · 1.8 C · 15 G
+    //   ~100g verduras salteadas:  35 kcal · 1.5 P · 7 C · 0.3 G
+    //   1 cdta aceite + soya:      55 kcal · 1 P · 0 C · 5 G
+    //   Total: 532 kcal · 25 P · 54 C · 21 G
+    baseKcal: 532, p: 25, c: 54, g: 21, tieneHuevo: true, eggsDefault: 3,
     porcionFija: true,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['vegetariano'],
@@ -1118,8 +1137,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   legumbres_arroz: {
     label: 'Porotos / lentejas + arroz integral',
-    items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo', 'Ensalada mixta'],
-    baseKcal: 550, p: 30, c: 80, g: 8,
+    items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo (1 cdta aceite)', 'Ensalada mixta (~100g)'],
+    // Auditoría INTA (2026-05) — promedio porotos/lentejas:
+    //   200g legumbres cocidas:  232 kcal · 17 P · 40 C · 0.9 G
+    //   100g arroz integral:     111 kcal · 2.6 P · 23 C · 0.9 G
+    //   Sofrito + 1 cdta aceite:  50 kcal · 1 P · 6 C · 5.5 G
+    //   Ensalada mixta 100g:      20 kcal · 1 P · 4 C · 0 G
+    //   Total: 413 kcal · 22 P · 73 C · 7 G
+    baseKcal: 413, p: 22, c: 73, g: 7,
     porcionFija: true,
     foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
     tendencia: ['vegetariano', 'vegano'],
@@ -1135,8 +1160,15 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   pavo_papas: {
     label: 'Pechuga de pavo + papas + ensalada',
-    items: ['200g pechuga pavo a la plancha', '150g papas cocidas con perejil', 'Ensalada de pepino y tomate', '1 cdta aceite de oliva'],
-    baseKcal: 560, p: 48, c: 52, g: 11,
+    items: ['200g pechuga pavo a la plancha', '150g papas cocidas con perejil', 'Ensalada de pepino y tomate (~100g)', '1 cdta aceite de oliva'],
+    // Auditoría INTA (2026-05):
+    //   200g pavo pechuga INTA: 270 kcal · 58 P · 0 C · 4 G (muy magro)
+    //   150g papas cocidas:    131 kcal · 3 P · 30 C · 0.2 G
+    //   Ensalada pepino+tomate: 20 kcal · 0.8 P · 4 C · 0.2 G
+    //   1 cdta aceite oliva 5g: 45 kcal · 0 P · 0 C · 5 G
+    //   Total: 466 kcal · 62 P · 34 C · 9 G
+    //   (Versión anterior subestimaba proteína — pavo es más magro que pollo)
+    baseKcal: 466, p: 62, c: 34, g: 9,
     porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
@@ -1154,7 +1186,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   tofu_quinoa: {
     label: 'Tofu salteado + quinoa + verduras',
     items: ['180g tofu firme', '100g quinoa cocida', '150g verduras salteadas (pimentón, zapallo, champiñones)', '1 cdta aceite de oliva + salsa de soya reducida en sodio'],
-    baseKcal: 540, p: 34, c: 46, g: 18,
+    // Auditoría INTA (2026-05):
+    //   180g tofu firme INTA:    137 kcal · 14 P · 3.4 C · 8.6 G
+    //   100g quinoa cocida:      120 kcal · 4.4 P · 21 C · 1.9 G
+    //   150g verduras salteadas:  35 kcal · 2 P · 7 C · 0.4 G
+    //   1 cdta aceite + soya:     55 kcal · 1 P · 0 C · 5 G
+    //   Total: 347 kcal · 21 P · 31 C · 16 G
+    //   (Versión anterior MUY sobreestimada — el tofu es menos denso que la carne)
+    baseKcal: 347, p: 21, c: 31, g: 16,
     porcionFija: true,
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '25 min',
@@ -1170,8 +1209,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   bowl_garbanzos: {
     label: 'Bowl de garbanzos + vegetales asados',
-    items: ['200g garbanzos cocidos', '150g vegetales asados (zanahoria, berenjena, zapallo)', '1 cda tahini o aceite de oliva', '80g arroz integral o pan pita integral'],
-    baseKcal: 560, p: 28, c: 72, g: 12,
+    items: ['200g garbanzos cocidos', '150g vegetales asados (zanahoria, berenjena, zapallo)', '1 cda tahini (15g) o aceite de oliva', '80g arroz integral cocido o 1 pan pita integral'],
+    // Auditoría INTA (2026-05):
+    //   200g garbanzos cocidos: 328 kcal · 18 P · 54 C · 5.2 G
+    //   150g vegetales asados:   85 kcal · 2 P · 8 C · 5.3 G (incluye aceite del asado)
+    //   1 cda tahini 15g:        89 kcal · 2.5 P · 3 C · 8 G
+    //   80g arroz integral:      89 kcal · 2.1 P · 18 C · 0.7 G
+    //   Total: 591 kcal · 25 P · 83 C · 19 G
+    baseKcal: 591, p: 25, c: 83, g: 19,
     porcionFija: true,
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '30 min',
@@ -1190,7 +1235,15 @@ export const almuerzosOpts: Record<string, MealOption> = {
   curry_garbanzos: {
     label: 'Curry de garbanzos + arroz integral',
     items: ['200g garbanzos cocidos', '150g arroz integral cocido', 'Leche de coco 100ml + curry en polvo', '150g espinaca y tomate cherry', '1 cdta aceite de coco o de oliva'],
-    baseKcal: 560, p: 26, c: 74, g: 14,
+    // Auditoría INTA (2026-05) — plato denso por la leche de coco:
+    //   200g garbanzos cocidos: 328 kcal · 18 P · 54 C · 5.2 G
+    //   150g arroz integral:   167 kcal · 3.9 P · 35 C · 1.35 G
+    //   100ml leche de coco:   230 kcal · 2.3 P · 3.3 C · 24 G ← MUY graso
+    //   150g espinaca+tomate:   30 kcal · 2 P · 5 C · 0.4 G
+    //   1 cdta aceite + sofrito:65 kcal · 0.5 P · 4 C · 5.2 G
+    //   Total: 820 kcal · 27 P · 101 C · 36 G
+    //   (Versión anterior subestimaba MUCHO — la leche de coco pesa mucho en kcal y grasa)
+    baseKcal: 820, p: 27, c: 101, g: 36,
     porcionFija: true,
     foto: USP('1565557981-d9a55e1b9e6c'),
     tiempo: '25 min',
@@ -1207,8 +1260,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   vegetal_burger_abuelo: {
     label: 'Vegetal Burger Porotos Negros + papas',
-    items: ['100g medallón vegetal (porotos negros + zapallo italiano)', '200g papas cocidas con cáscara', '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón)', '1 cdta aceite de oliva + mostaza sin azúcar'],
-    baseKcal: 350, p: 13, c: 55, g: 10,
+    items: ['100g medallón vegetal (porotos negros + zapallo italiano)', '200g papas cocidas con cáscara', '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón) ~200g', '1 cdta aceite de oliva + mostaza sin azúcar'],
+    // Auditoría INTA (2026-05):
+    //   100g medallón vegetal:    150 kcal · 8 P · 18 C · 5 G (etiqueta porotos negros)
+    //   200g papas cocidas:       174 kcal · 4 P · 40 C · 0.2 G
+    //   2 tazas ensalada 200g:     30 kcal · 2 P · 6 C · 0.3 G
+    //   1 cdta aceite + mostaza:   45 kcal · 0 P · 0 C · 5 G
+    //   Total: 399 kcal · 14 P · 64 C · 10 G
+    baseKcal: 399, p: 14, c: 64, g: 10,
     porcionFija: true,
     foto: IMG + 'vegetal_burguer_abuelo.jpg',
     tiempo: '25 min',
@@ -1226,8 +1285,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   beyond_burger: {
     label: 'Beyond Burger + ensalada + papas',
-    items: ['85g Beyond Burger (1 medallón vegetal)', '2 tazas ensalada mixta (lechuga, tomate, pepino)', '150g papas cocidas o asadas', '1 cdta aceite de oliva + mostaza o ketchup sin azúcar'],
-    baseKcal: 560, p: 30, c: 54, g: 20,
+    items: ['85g Beyond Burger (1 medallón vegetal)', '2 tazas ensalada mixta (lechuga, tomate, pepino) ~200g', '150g papas cocidas o asadas', '1 cdta aceite de oliva + mostaza o ketchup sin azúcar'],
+    // Auditoría INTA + etiqueta Beyond (2026-05):
+    //   85g Beyond Burger (1 medallón): 230 kcal · 20 P · 7 C · 14 G (etiqueta oficial)
+    //   2 tazas ensalada 200g:           30 kcal · 2 P · 6 C · 0.3 G
+    //   150g papas cocidas/asadas:      131 kcal · 3 P · 30 C · 0.2 G
+    //   1 cdta aceite + mostaza:         45 kcal · 0 P · 0 C · 5 G
+    //   Total: 436 kcal · 25 P · 43 C · 19 G
+    baseKcal: 436, p: 25, c: 43, g: 19,
     porcionFija: true,
     foto: IMG + 'beyond_burguer.jpg',
     tiempo: '20 min',
