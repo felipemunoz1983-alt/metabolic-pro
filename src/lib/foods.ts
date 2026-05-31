@@ -1391,8 +1391,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
 export const cenasOpts: Record<string, MealOption> = {
   carne_arroz: {
     label: 'Carne magra + papas salteadas con romero + ensalada (porción cena)',
-    items: ['120g carne magra (posta, lomo o filete)', '180g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
-    baseKcal: 395, p: 33, c: 33, g: 13,
+    items: ['120g carne magra (posta, lomo o filete)', '180g papas salteadas con romero (incluye 1 cdta aceite del salteado)', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva (ensalada)'],
+    // Auditoría INTA (2026-05):
+    //   120g carne magra:     180 kcal · 31 P · 0 C · 6 G
+    //   180g papas + 1cdta aceite salteado: 202 kcal · 3.6 P · 36 C · 5.2 G
+    //   Ensalada simple:       25 kcal · 1 P · 5 C · 0 G
+    //   1 cdta aceite ensalada:45 kcal · 0 P · 0 C · 5 G
+    //   Total: 452 kcal · 36 P · 41 C · 16 G
+    baseKcal: 452, p: 36, c: 41, g: 16,
     porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
@@ -1433,7 +1439,13 @@ export const cenasOpts: Record<string, MealOption> = {
   huevos_ensalada: {
     label: 'Omelette de huevos + ensalada verde',
     items: ['3 huevos enteros', 'Espinacas, champiñones y tomate', 'Ensalada de hojas verdes', '1 cdta aceite de oliva'],
-    baseKcal: 310, p: 28, c: 10, g: 18, tieneHuevo: true, eggsDefault: 3,
+    // Auditoría INTA (2026-05):
+    //   3 huevos enteros:    234 kcal · 18 P · 1.8 C · 15 G
+    //   Veg salteadas ~100g:  25 kcal · 2 P · 4 C · 0.3 G
+    //   Ensalada hojas verdes:15 kcal · 1 P · 3 C · 0 G
+    //   1 cdta aceite oliva:  45 kcal · 0 P · 0 C · 5 G
+    //   Total: 319 kcal · 21 P · 9 C · 20 G
+    baseKcal: 319, p: 21, c: 9, g: 20, tieneHuevo: true, eggsDefault: 3,
     porcionFija: true,
     foto: IMG + 'omelette_pan_integral.jfif',
     tendencia: ['vegetariano'],
@@ -1449,8 +1461,14 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   atun_ensalada: {
     label: 'Ensalada proteica de atún + huevo + palta',
-    items: ['150g atún en agua escurrido', '1 huevo duro', '¼ palta', 'Lechuga, tomate cherry, pepino, zanahoria rallada'],
-    baseKcal: 330, p: 36, c: 12, g: 14, tieneHuevo: true, eggsDefault: 1,
+    items: ['150g atún en agua escurrido', '1 huevo duro', '¼ palta (40g)', 'Lechuga, tomate cherry, pepino, zanahoria rallada'],
+    // Auditoría INTA (2026-05):
+    //   150g atún en agua:   158 kcal · 39 P · 0 C · 1.5 G
+    //   1 huevo duro:         78 kcal · 6 P · 0.6 C · 5 G
+    //   ¼ palta (40g):        64 kcal · 0.8 P · 3.4 C · 5.9 G
+    //   Verduras 150g:        30 kcal · 1.5 P · 6 C · 0.3 G
+    //   Total: 330 kcal · 47 P · 10 C · 13 G  (P estaba subestimado: atún en agua es muy proteico)
+    baseKcal: 330, p: 47, c: 10, g: 13, tieneHuevo: true, eggsDefault: 1,
     porcionFija: true,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
@@ -1469,7 +1487,12 @@ export const cenasOpts: Record<string, MealOption> = {
   salmon_brocoli: {
     label: 'Salmón al horno + brócoli al vapor',
     items: ['150g salmón al horno', '200g brócoli al vapor', '1 cdta aceite de oliva', 'Ajo y limón al gusto'],
-    baseKcal: 340, p: 38, c: 8, g: 16,
+    // Auditoría INTA (2026-05):
+    //   150g salmón al horno: 300 kcal · 33 P · 0 C · 19.5 G
+    //   200g brócoli vapor:    70 kcal · 4.8 P · 14 C · 0.8 G
+    //   1 cdta aceite oliva:   45 kcal · 0 P · 0 C · 5 G
+    //   Total: 415 kcal · 38 P · 14 C · 25 G  (C +75%, G +56% — salmón es graso)
+    baseKcal: 415, p: 38, c: 14, g: 25,
     porcionFija: true,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
@@ -1486,8 +1509,13 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   carne_zapallo: {
     label: 'Carne magra + zapallo italiano + ensalada',
-    items: ['150g bistec magro a la plancha', '200g zapallo italiano salteado', 'Ensalada de hojas verdes', 'Sal, pimienta y ajo al gusto'],
-    baseKcal: 310, p: 35, c: 14, g: 11,
+    items: ['150g bistec magro a la plancha', '200g zapallo italiano salteado (1 cdta aceite)', 'Ensalada de hojas verdes', 'Sal, pimienta y ajo al gusto'],
+    // Auditoría INTA (2026-05):
+    //   150g carne magra:    225 kcal · 39 P · 0 C · 7.5 G
+    //   200g zapallo+aceite:  79 kcal · 2.4 P · 6 C · 5.6 G
+    //   Ensalada hojas:       15 kcal · 1 P · 3 C · 0 G
+    //   Total: 319 kcal · 42 P · 9 C · 13 G
+    baseKcal: 319, p: 42, c: 9, g: 13,
     porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
@@ -1527,8 +1555,14 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   sopa_lentejas: {
     label: 'Sopa de lentejas + verduras',
-    items: ['200g lentejas cocidas', 'Zanahoria, apio, tomate y espinaca', 'Caldo vegetal bajo en sodio', '1 rebanada pan integral'],
-    baseKcal: 310, p: 22, c: 38, g: 5,
+    items: ['200g lentejas cocidas', 'Zanahoria, apio, tomate y espinaca', 'Caldo vegetal bajo en sodio', 'Sofrito (cebolla, ajo, 1 cdta aceite)', '1 rebanada pan integral Castaño'],
+    // Auditoría INTA (2026-05):
+    //   200g lentejas cocidas: 232 kcal · 18 P · 40 C · 0.8 G
+    //   Verduras 100g:          25 kcal · 1.5 P · 5 C · 0.2 G
+    //   Sofrito + 1 cdta aceite:50 kcal · 1 P · 4 C · 5 G
+    //   1 reb pan integral 31.5g:82 kcal · 4.2 P · 12.5 C · 1.5 G
+    //   Total: 389 kcal · 25 P · 62 C · 7.5 G  (C estaba muy subestimado)
+    baseKcal: 389, p: 25, c: 62, g: 8,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1547592166-9a59b8dddb7f'),
@@ -1547,8 +1581,15 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   ensalada_garbanzos: {
     label: 'Ensalada de garbanzos + palta + huevo',
-    items: ['150g garbanzos cocidos', '½ palta en láminas', '2 huevos duros', 'Lechuga, tomate cherry, pepino y zanahoria rallada', '1 cdta aceite de oliva + limón'],
-    baseKcal: 390, p: 26, c: 32, g: 18,
+    items: ['150g garbanzos cocidos', '½ palta en láminas (80g)', '2 huevos duros', 'Lechuga, tomate cherry, pepino y zanahoria rallada', '1 cdta aceite de oliva + limón'],
+    // Auditoría INTA (2026-05):
+    //   150g garbanzos cocidos:246 kcal · 14 P · 40 C · 3.9 G
+    //   ½ palta (80g):         130 kcal · 1.5 P · 7 C · 12 G
+    //   2 huevos duros:        156 kcal · 12 P · 1.2 C · 10 G
+    //   Verduras 150g:          30 kcal · 1.5 P · 6 C · 0.3 G
+    //   1 cdta aceite oliva:    45 kcal · 0 P · 0 C · 5 G
+    //   Total: 607 kcal · 29 P · 54 C · 31 G  (estaba muy subestimado, +56%)
+    baseKcal: 607, p: 29, c: 54, g: 31,
     porcionFija: true,
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '15 min',
@@ -1567,7 +1608,13 @@ export const cenasOpts: Record<string, MealOption> = {
   wok_tofu_vegano: {
     label: 'Wok de tofu + verduras + fideos integrales',
     items: ['180g tofu firme en cubos', '100g fideos integrales o de arroz cocidos', '150g verduras (brócoli, pimentón, zanahoria, champiñones)', '1 cdta aceite de sésamo + salsa de soya'],
-    baseKcal: 320, p: 24, c: 34, g: 10,
+    // Auditoría INTA (2026-05):
+    //   180g tofu firme:     137 kcal · 14 P · 3.4 C · 8.6 G
+    //   100g fideos integ.:  130 kcal · 5 P · 25 C · 1.1 G
+    //   150g verduras wok:    50 kcal · 3 P · 10 C · 0.5 G
+    //   1 cdta sésamo + soya: 55 kcal · 1 P · 0 C · 5 G
+    //   Total: 372 kcal · 23 P · 38 C · 15 G
+    baseKcal: 372, p: 23, c: 38, g: 15,
     porcionFija: true,
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '20 min',
@@ -1583,8 +1630,14 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   bowl_lentejas_aguacate: {
     label: 'Bowl de lentejas + aguacate + tomate',
-    items: ['200g lentejas cocidas', '½ aguacate en láminas', 'Tomate cherry, pepino y rúcula', '1 cdta aceite de oliva + limón + cúrcuma'],
-    baseKcal: 360, p: 22, c: 34, g: 14,
+    items: ['200g lentejas cocidas', '½ aguacate en láminas (80g)', 'Tomate cherry, pepino y rúcula', '1 cdta aceite de oliva + limón + cúrcuma'],
+    // Auditoría INTA (2026-05):
+    //   200g lentejas cocidas: 232 kcal · 18 P · 40 C · 0.8 G
+    //   ½ palta (80g):         130 kcal · 1.5 P · 7 C · 12 G
+    //   Verduras ~100g:         20 kcal · 1 P · 4 C · 0.2 G
+    //   1 cdta aceite oliva:    45 kcal · 0 P · 0 C · 5 G
+    //   Total: 427 kcal · 21 P · 51 C · 18 G
+    baseKcal: 427, p: 21, c: 51, g: 18,
     porcionFija: true,
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '10 min',
