@@ -698,8 +698,14 @@ export const desayunosOpts: Record<string, MealOption> = {
 export const colacionesOpts: Record<string, MealOption> = {
   yogur_frutossecos_am: {
     label: 'Yogur + frutos secos',
-    items: ['150g yogur sin azúcar', '20g mix frutos secos (nueces, almendras)', '1 fruta pequeña'],
-    baseKcal: 230, p: 14, c: 22, g: 10,
+    items: ['150g yogur natural sin azúcar', '20g mix frutos secos (nueces, almendras)', '1 fruta pequeña (manzana, pera o naranja ~100g)'],
+    // Auditoría INTA (2026-05):
+    //   150g yogur natural sin azúcar: 90 kcal · 6 P · 7.5 C · 4.5 G
+    //   20g mix nueces+almendras:     130 kcal · 4 P · 4 C · 12 G
+    //   1 fruta pequeña 100g (manzana):52 kcal · 0.3 P · 14 C · 0.2 G
+    //   Total: 272 kcal · 10 P · 26 C · 17 G  (G subestimado: frutos secos)
+    baseKcal: 272, p: 10, c: 26, g: 17,
+    porcionFija: true,
     tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '3 min',
@@ -737,8 +743,14 @@ export const colacionesOpts: Record<string, MealOption> = {
   },
   cottage_nueces: {
     label: 'Queso cottage + nueces',
-    items: ['150g queso cottage', '20g nueces', '½ taza frutillas o arándanos'],
-    baseKcal: 200, p: 18, c: 8, g: 11,
+    items: ['150g queso cottage', '20g nueces', '½ taza frutillas o arándanos (75g)'],
+    // Auditoría INTA (2026-05):
+    //   150g queso cottage Soprole:147 kcal · 17 P · 5 C · 6 G
+    //   20g nueces:               130 kcal · 3 P · 3 C · 13 G
+    //   ½ taza frutillas (75g):    24 kcal · 0.5 P · 5.7 C · 0.2 G
+    //   Total: 301 kcal · 20 P · 14 C · 19 G  (kcal +50%, G +73%)
+    baseKcal: 301, p: 20, c: 14, g: 19,
+    porcionFija: true,
     foto: IMG + 'cottage_frutas_semillas.jfif',
     tiempo: '4 min',
     pasos: [
@@ -750,8 +762,15 @@ export const colacionesOpts: Record<string, MealOption> = {
   },
   tostadas_ricotta_col: {
     label: 'Tostada integral + ricotta',
-    items: ['1 rebanada pan integral', '40g ricotta', '1 cdta miel', '5 nueces'],
-    baseKcal: 190, p: 8, c: 24, g: 7,
+    items: ['1 rebanada pan integral Castaño (31.5g)', '40g ricotta', '1 cdta miel (7g)', '5 nueces (~15g)'],
+    // Auditoría INTA (2026-05):
+    //   1 reb pan integral 31.5g: 82 kcal · 4.2 P · 12.5 C · 1.5 G
+    //   40g ricotta:              68 kcal · 4.5 P · 1.2 C · 5 G
+    //   1 cdta miel 7g:           21 kcal · 0 P · 5.8 C · 0 G
+    //   5 nueces (~15g):          98 kcal · 2.3 P · 2 C · 9.7 G
+    //   Total: 269 kcal · 11 P · 22 C · 16 G  (kcal +42%, G +130% — nueces densas)
+    baseKcal: 269, p: 11, c: 22, g: 16,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '5 min',
@@ -765,7 +784,13 @@ export const colacionesOpts: Record<string, MealOption> = {
   barra_fruta: {
     label: 'Barra de cereal + fruta',
     items: ['1 barra de cereal integral sin azúcar añadida', '1 fruta mediana', 'Té o infusión sin azúcar'],
-    baseKcal: 180, p: 5, c: 36, g: 4,
+    // Auditoría INTA (2026-05):
+    //   1 barra cereal integral 25g: 90 kcal · 3 P · 15 C · 2.5 G
+    //   1 fruta mediana 150g (manzana):78 kcal · 0.4 P · 19.5 C · 0.5 G
+    //   Té/infusión sin azúcar:       0 kcal
+    //   Total: 168 kcal · 3.4 P · 34.5 C · 3 G  (delta <10% — OK, solo redondeo)
+    baseKcal: 168, p: 3, c: 35, g: 3,
+    porcionFija: true,
     foto: USP('1504708706948-13d6cbba4062'), // mix de berries y frutos secos, snack saludable
     tiempo: '2 min',
     pasos: [
@@ -783,7 +808,14 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 hoja de lechuga',
       '1 rodaja de tomate',
     ],
-    baseKcal: 248, p: 16, c: 20, g: 11,
+    // Auditoría INTA (2026-05):
+    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    //   30g jamón pavo:          35 kcal · 6 P · 0.5 C · 0.9 G
+    //   30g queso gauda:        113 kcal · 8 P · 0.3 C · 9 G
+    //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
+    //   Total: 260 kcal · 20 P · 19 C · 12 G  (P estaba subestimado)
+    baseKcal: 260, p: 20, c: 19, g: 12,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1528735602780-2552fd46c7af'),
     tiempo: '5 min',
@@ -808,7 +840,12 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 hoja de lechuga',
       '1 rodaja de tomate',
     ],
-    baseKcal: 319, p: 22, c: 20, g: 16,
+    // Auditoría INTA (2026-05): base sándwich + 1 huevo
+    //   Base sándwich (pan+jamón+queso+veg):260 kcal · 20 P · 19 C · 12 G
+    //   1 huevo duro:                        78 kcal · 6 P · 0.6 C · 5 G
+    //   Total: 338 kcal · 26 P · 20 C · 17 G
+    baseKcal: 338, p: 26, c: 20, g: 17,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1525351484163-7529414344d8'),
     tiempo: '12 min',
@@ -834,7 +871,14 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 rodaja de tomate',
       'Sal y pimienta a gusto',
     ],
-    baseKcal: 279, p: 12, c: 22, g: 16,
+    // Auditoría INTA (2026-05):
+    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    //   30g queso gauda:        113 kcal · 8 P · 0.3 C · 9 G
+    //   40g palta:               64 kcal · 0.8 P · 3.4 C · 5.9 G
+    //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
+    //   Total: 289 kcal · 15 P · 22 C · 17 G  (P estaba subestimado)
+    baseKcal: 289, p: 15, c: 22, g: 17,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1539252554935-80c8cb01a76d'),
     tiempo: '4 min',
@@ -858,7 +902,14 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 rodaja de tomate',
       'Mostaza Dijon o aceite de oliva a gusto',
     ],
-    baseKcal: 165, p: 12.5, c: 19, g: 3,
+    // Auditoría INTA (2026-05):
+    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    //   50g jamón pavo:          58 kcal · 10 P · 0.8 C · 1.5 G
+    //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
+    //   Mostaza Dijon ~5g:        3 kcal · 0 P · 0.3 C · 0.2 G
+    //   Total: 173 kcal · 16 P · 19 C · 4 G  (P estaba subestimado)
+    baseKcal: 173, p: 16, c: 19, g: 4,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1567234669003-dbbf01c4f7b5'),
     tiempo: '3 min',
@@ -934,7 +985,14 @@ export const colacionesOpts: Record<string, MealOption> = {
       '1 hoja de lechuga',
       '1 rodaja de tomate',
     ],
-    baseKcal: 328, p: 17.5, c: 36, g: 11,
+    // Auditoría INTA (2026-05):
+    //   1 marraqueta 60g (pan blanco): 168 kcal · 5.4 P · 33.6 C · 0.6 G
+    //   30g jamón pavo:                 35 kcal · 6 P · 0.5 C · 0.9 G
+    //   30g queso gauda:               113 kcal · 8 P · 0.3 C · 9 G
+    //   Lechuga + tomate:                8 kcal · 0.4 P · 2 C · 0 G
+    //   Total: 324 kcal · 20 P · 36 C · 11 G  (P estaba subestimado)
+    baseKcal: 324, p: 20, c: 36, g: 11,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'marraqueta',
     foto: USP('1509440159596-0249088772ff'),
     tiempo: '4 min',
@@ -969,8 +1027,14 @@ export const colacionesOpts: Record<string, MealOption> = {
 
   hummus_verduras: {
     label: 'Hummus + bastones de verdura',
-    items: ['80g hummus', 'Bastones de zanahoria, apio y pepino', '5 galletas integrales'],
-    baseKcal: 215, p: 8, c: 26, g: 9,
+    items: ['80g hummus', 'Bastones de zanahoria, apio y pepino (~150g)', '5 galletas integrales (~25g)'],
+    // Auditoría INTA (2026-05):
+    //   80g hummus comercial:    134 kcal · 5.5 P · 12 C · 8 G
+    //   150g verduras bastones:   35 kcal · 2 P · 8 C · 0.3 G
+    //   5 galletas integrales 25g:105 kcal · 3 P · 17 C · 3.5 G
+    //   Total: 274 kcal · 11 P · 37 C · 12 G  (+27% kcal vs anterior)
+    baseKcal: 274, p: 11, c: 37, g: 12,
+    porcionFija: true,
     foto: USP('1637949385162-e416fb15b2ce'), // bowl de hummus con garnish de aceite, foto real
     tiempo: '5 min',
     pasos: [
