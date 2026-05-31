@@ -67,6 +67,26 @@ export function Evaluaciones() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch al montar (legítimo)
   useEffect(() => { fetchInformes() }, [fetchInformes])
 
+  // Deep-link desde push notification: /paciente?tab=evaluaciones&informe=<id>
+  // Cuando la lista termina de cargar, si la URL trae ?informe=, abrimos ese PDF.
+  // El parámetro se consume una sola vez (cleanup con replaceState) para evitar
+  // reapertura al cambiar de tab y volver.
+  useEffect(() => {
+    if (loading || informes.length === 0 || viewer) return
+    const params = new URLSearchParams(window.location.search)
+    const target = params.get('informe')
+    if (!target) return
+    const inf = informes.find(i => i.id === target)
+    if (!inf) return
+    // Limpia el query param para que no se reabra al re-renderizar
+    params.delete('informe')
+    const newSearch = params.toString()
+    const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash
+    window.history.replaceState({}, '', newUrl)
+    handleOpen(inf)
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleOpen no es estable y queremos disparar solo cuando llegan los informes
+  }, [loading, informes, viewer])
+
   async function handleOpen(inf: InformeAntropometrico) {
     setOpening(inf.id)
     try {

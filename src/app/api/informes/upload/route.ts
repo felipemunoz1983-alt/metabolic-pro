@@ -26,9 +26,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase-server'
 import { getAuthUser } from '@/lib/auth-server'
+import { sendPushToUser } from '@/lib/push'
 import {
   buildStoragePath,
   MAX_FILE_SIZE_BYTES,
+  TIPO_INFORME_LABELS,
   type TipoInforme,
 } from '@/lib/informes-antropometricos'
 
@@ -124,6 +126,22 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch { /* rollback best-effort */ }
     console.error('[informes/upload] DB insert error:', insertErr)
     return NextResponse.json({ error: 'db_insert_failed', detail: insertErr.message }, { status: 500 })
+  }
+
+  // 7. Push notification al paciente (best-effort, no bloquea respuesta)
+  //    Deep-link directo a la tab Evaluaciones para que abra el informe nuevo.
+  try {
+    const tipoMeta = TIPO_INFORME_LABELS[tipo as TipoInforme]
+    const pushRes = await sendPushToUser(supabase, pacienteId, {
+      title: `${tipoMeta.emoji} Nuevo informe: ${tipoMeta.label}`,
+      body:  `Tu profesional subió "${titulo}". Toca para revisarlo.`,
+      url:   `/paciente?tab=evaluaciones&informe=${encodeURIComponent(row.id)}`,
+      tag:   `informe-${row.id}`,
+    })
+    console.log('[informes/upload] push notif:', pushRes)
+  } catch (err) {
+    // Push falla → no rompe el upload, solo loguea
+    console.warn('[informes/upload] push notification failed:', err)
   }
 
   return NextResponse.json({ ok: true, id: row.id, storage_path: row.storage_path, created_at: row.created_at })
