@@ -1017,6 +1017,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Carne magra + papas cocidas + ensalada',
     items: ['150g carne magra (posta, lomo o filete)', '1 papa mediana cocida con cáscara', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 590, p: 46, c: 54, g: 16,
+    porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1035,6 +1036,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Carne magra + papas salteadas con romero + ensalada',
     items: ['150g carne magra (posta, lomo o filete)', '250g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 565, p: 44, c: 50, g: 16,
+    porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1055,6 +1057,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Salmón al horno + quinoa + verduras',
     items: ['200g salmón fresco', '100g quinoa cocida', '150g verduras salteadas (zapallo, pimentón, espinaca)', '1 cdta aceite de oliva'],
     baseKcal: 600, p: 48, c: 42, g: 20,
+    porcionFija: true,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1080,6 +1083,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // Total ≈ 612 kcal · 42 P · 40 C · 32 G
     items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', '100g quinoa cocida', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria', '1 cda aceite de oliva'],
     baseKcal: 612, p: 42, c: 40, g: 32, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
@@ -1099,6 +1103,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Arroz saltado con huevo y verduras',
     items: ['160g arroz cocido (idealmente frío del día anterior)', '2-3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón', '1 cdta aceite + salsa de soya opcional'],
     baseKcal: 550, p: 32, c: 70, g: 14, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['vegetariano'],
     contiene: ['huevo', 'soya'],   // salsa de soya
@@ -1115,6 +1120,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Porotos / lentejas + arroz integral',
     items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo', 'Ensalada mixta'],
     baseKcal: 550, p: 30, c: 80, g: 8,
+    porcionFija: true,
     foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'cebolla_ajo'],
@@ -1131,6 +1137,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Pechuga de pavo + papas + ensalada',
     items: ['200g pechuga pavo a la plancha', '150g papas cocidas con perejil', 'Ensalada de pepino y tomate', '1 cdta aceite de oliva'],
     baseKcal: 560, p: 48, c: 52, g: 11,
+    porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1148,6 +1155,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Tofu salteado + quinoa + verduras',
     items: ['180g tofu firme', '100g quinoa cocida', '150g verduras salteadas (pimentón, zapallo, champiñones)', '1 cdta aceite de oliva + salsa de soya reducida en sodio'],
     baseKcal: 540, p: 34, c: 46, g: 18,
+    porcionFija: true,
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1164,6 +1172,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Bowl de garbanzos + vegetales asados',
     items: ['200g garbanzos cocidos', '150g vegetales asados (zanahoria, berenjena, zapallo)', '1 cda tahini o aceite de oliva', '80g arroz integral o pan pita integral'],
     baseKcal: 560, p: 28, c: 72, g: 12,
+    porcionFija: true,
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1182,6 +1191,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Curry de garbanzos + arroz integral',
     items: ['200g garbanzos cocidos', '150g arroz integral cocido', 'Leche de coco 100ml + curry en polvo', '150g espinaca y tomate cherry', '1 cdta aceite de coco o de oliva'],
     baseKcal: 560, p: 26, c: 74, g: 14,
+    porcionFija: true,
     foto: USP('1565557981-d9a55e1b9e6c'),
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1199,6 +1209,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Vegetal Burger Porotos Negros + papas',
     items: ['100g medallón vegetal (porotos negros + zapallo italiano)', '200g papas cocidas con cáscara', '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón)', '1 cdta aceite de oliva + mostaza sin azúcar'],
     baseKcal: 350, p: 13, c: 55, g: 10,
+    porcionFija: true,
     foto: IMG + 'vegetal_burguer_abuelo.jpg',
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1217,6 +1228,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     label: 'Beyond Burger + ensalada + papas',
     items: ['85g Beyond Burger (1 medallón vegetal)', '2 tazas ensalada mixta (lechuga, tomate, pepino)', '150g papas cocidas o asadas', '1 cdta aceite de oliva + mostaza o ketchup sin azúcar'],
     baseKcal: 560, p: 30, c: 54, g: 20,
+    porcionFija: true,
     foto: IMG + 'beyond_burguer.jpg',
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1243,6 +1255,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // + 1 cda aceite oliva (90 kcal · 0 P · 0 C · 10 G)
     // Total ≈ 540 kcal · 44 P · 48 C · 18 G
     baseKcal: 540, p: 44, c: 48, g: 18,
+    porcionFija: true,
     foto: IMG + '100GRSDEARROZ_150GRSDEALBONDIGAS.jpg',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1268,6 +1281,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // + ensalada (40 kcal · 2 P · 8 C · 0.5 G)
     // Total ≈ 467 kcal · 21 P · 62 C · 15 G
     baseKcal: 467, p: 21, c: 62, g: 15, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
     foto: USP('1568901346375-23c9450c58cd'),  // puré con huevo y ensalada
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
@@ -1292,6 +1306,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // + salsa soya 5ml (5 kcal · 1 P · 0 C · 0 G)
     // Total ≈ 451 kcal · 19 P · 53 C · 16 G
     baseKcal: 451, p: 19, c: 53, g: 16, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'cebolla_ajo', 'soya'],
@@ -1313,6 +1328,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Carne magra + papas salteadas con romero + ensalada (porción cena)',
     items: ['120g carne magra (posta, lomo o filete)', '180g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 395, p: 33, c: 33, g: 13,
+    porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1335,6 +1351,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // + 1 cdta aceite oliva (40 kcal · 0 P · 0 C · 4.5 G) + limón/ajo (~0)
     // Total ≈ 244 kcal · 33 P · 12 C · 8 G — porción cena moderada con alto contenido proteico
     baseKcal: 244, p: 33, c: 12, g: 8,
+    porcionFija: true,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
@@ -1352,6 +1369,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Omelette de huevos + ensalada verde',
     items: ['3 huevos enteros', 'Espinacas, champiñones y tomate', 'Ensalada de hojas verdes', '1 cdta aceite de oliva'],
     baseKcal: 310, p: 28, c: 10, g: 18, tieneHuevo: true, eggsDefault: 3,
+    porcionFija: true,
     foto: IMG + 'omelette_pan_integral.jfif',
     tendencia: ['vegetariano'],
     contiene: ['huevo'],
@@ -1368,6 +1386,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Ensalada proteica de atún + huevo + palta',
     items: ['150g atún en agua escurrido', '1 huevo duro', '¼ palta', 'Lechuga, tomate cherry, pepino, zanahoria rallada'],
     baseKcal: 330, p: 36, c: 12, g: 14, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
@@ -1386,6 +1405,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Salmón al horno + brócoli al vapor',
     items: ['150g salmón al horno', '200g brócoli al vapor', '1 cdta aceite de oliva', 'Ajo y limón al gusto'],
     baseKcal: 340, p: 38, c: 8, g: 16,
+    porcionFija: true,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],
@@ -1403,6 +1423,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Carne magra + zapallo italiano + ensalada',
     items: ['150g bistec magro a la plancha', '200g zapallo italiano salteado', 'Ensalada de hojas verdes', 'Sal, pimienta y ajo al gusto'],
     baseKcal: 310, p: 35, c: 14, g: 11,
+    porcionFija: true,
     foto: IMG + 'carne_con_papas..webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1424,6 +1445,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // + caldo bajo en sodio (~3 kcal) + perejil (~0)
     // Total ≈ 187 kcal · 30 P · 9 C · 3 G — sopa ligera proteica
     baseKcal: 187, p: 30, c: 9, g: 3,
+    porcionFija: true,
     foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1442,6 +1464,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Sopa de lentejas + verduras',
     items: ['200g lentejas cocidas', 'Zanahoria, apio, tomate y espinaca', 'Caldo vegetal bajo en sodio', '1 rebanada pan integral'],
     baseKcal: 310, p: 22, c: 38, g: 5,
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '30 min',
@@ -1461,6 +1484,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Ensalada de garbanzos + palta + huevo',
     items: ['150g garbanzos cocidos', '½ palta en láminas', '2 huevos duros', 'Lechuga, tomate cherry, pepino y zanahoria rallada', '1 cdta aceite de oliva + limón'],
     baseKcal: 390, p: 26, c: 32, g: 18,
+    porcionFija: true,
     foto: USP('1512621776951-a52572ce91c9'),
     tiempo: '15 min',
     tendencia: ['vegetariano'],
@@ -1479,6 +1503,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Wok de tofu + verduras + fideos integrales',
     items: ['180g tofu firme en cubos', '100g fideos integrales o de arroz cocidos', '150g verduras (brócoli, pimentón, zanahoria, champiñones)', '1 cdta aceite de sésamo + salsa de soya'],
     baseKcal: 320, p: 24, c: 34, g: 10,
+    porcionFija: true,
     foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1495,6 +1520,7 @@ export const cenasOpts: Record<string, MealOption> = {
     label: 'Bowl de lentejas + aguacate + tomate',
     items: ['200g lentejas cocidas', '½ aguacate en láminas', 'Tomate cherry, pepino y rúcula', '1 cdta aceite de oliva + limón + cúrcuma'],
     baseKcal: 360, p: 22, c: 34, g: 14,
+    porcionFija: true,
     foto: USP('1547592166-9a59b8dddb7f'),
     tiempo: '10 min',
     tendencia: ['vegetariano', 'vegano'],
@@ -1519,6 +1545,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // + 1 cdta aceite (45 kcal · 0 P · 0 C · 5 G)
     // Total ≈ 385 kcal · 35 P · 34 C · 11 G
     baseKcal: 385, p: 35, c: 34, g: 11,
+    porcionFija: true,
     foto: IMG + '100GRSDEARROZ_150GRSDEALBONDIGAS.jpg',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
@@ -1543,6 +1570,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // + ensalada simple (30 kcal · 1 P · 6 C · 0 G)
     // Total ≈ 311 kcal · 12 P · 44 C · 9 G
     baseKcal: 311, p: 12, c: 44, g: 9, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
     foto: USP('1568901346375-23c9450c58cd'),
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
@@ -1566,6 +1594,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // + verduras (50 kcal · 2 P · 10 C · 0 G)
     // Total ≈ 303 kcal · 11 P · 39 C · 10 G
     baseKcal: 303, p: 11, c: 39, g: 10, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
     foto: IMG + 'arroz_con_huevo_app.webp',
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'cebolla_ajo'],
