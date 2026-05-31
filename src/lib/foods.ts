@@ -987,11 +987,18 @@ export const almuerzosOpts: Record<string, MealOption> = {
   pollo_arroz: {
     label: 'Pollo a la plancha + arroz integral + ensalada',
     items: ['200g pechuga pollo a la plancha', '150g arroz integral cocido', 'Ensalada de tomate, pepino y lechuga', '1 cda aceite de oliva'],
-    // Macros recalculadas con pollo Super Pollo (96 kcal · 19.6gP · 1.7gG por 100g):
-    // 200g pollo (192 kcal · 39.2 P · 3.4 G) + 150g arroz integral cocido (167 kcal · 4 P · 35 C · 1.5 G)
-    // + ensalada (~30 kcal · 1 P · 6 C · 0 G) + 1 cda aceite oliva (~90 kcal · 0 P · 0 C · 10 G)
-    // Total ≈ 479 kcal · 44 P · 41 C · 15 G. Redondeo a:
-    baseKcal: 480, p: 44, c: 41, g: 15,
+    // Macros INTA + Super Pollo (auditoría 2026-05):
+    //   200g pollo Super Pollo:           192 kcal · 39.2 P · 0 C · 3.4 G
+    //   150g arroz integral cocido INTA:  167 kcal · 4 P · 35 C · 1.35 G
+    //   Ensalada tomate/pepino/lechuga 150g: 25 kcal · 1 P · 5 C · 0 G
+    //   1 cda aceite oliva 10g:            90 kcal · 0 P · 0 C · 10 G
+    //   Total: 474 kcal · 44 P · 40 C · 15 G
+    baseKcal: 474, p: 44, c: 40, g: 15,
+    // porcionFija: los componentes son discretos (200g pollo, 150g arroz, 1 cda aceite).
+    // Sin esto, el motor escalaba al slot del paciente (caso visto: 939 kcal = 2.2× lo real)
+    // dejando los items diciendo "200g pollo" pero con macros de 440g virtuales — inconsistente.
+    // Si el paciente requiere más kcal en almuerzo, el profesional ajusta gramaje via selector.
+    porcionFija: true,
     foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
