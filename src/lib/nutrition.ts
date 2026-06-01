@@ -3,6 +3,7 @@
 // Harris-Benedict conservado solo como referencia comparativa (@deprecated)
 
 import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo } from './foods'
+import { proteinaBariatricaOverride } from './bariatrica'
 
 export type Objetivo = 'perdida grasa' | 'mantenimiento' | 'hipertrofia'
 export type Sexo = 'masculino' | 'femenino'
@@ -287,7 +288,8 @@ export function calcMacros(kcal: number, peso: number, obj: Objetivo): Macros {
 //   • Mifflin-St Jeor  → todos los demás casos (default)
 export function calcularNutricion(form: Pick<FormData,
   'peso' | 'talla' | 'edad' | 'sexo' | 'objetivo' |
-  'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa'
+  'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa' |
+  'digCirugiaBariatrica' | 'digFasePostBariatrica'
 >): NutritionResult {
   const formula = seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
 
@@ -299,6 +301,25 @@ export function calcularNutricion(form: Pick<FormData,
   const tdee   = bmr * pal
   const kcal   = kcalObjetivo(tdee, form.objetivo)
   const macros = calcMacros(kcal, form.peso, form.objetivo)
+
+  // Override post-bariátrico: el cálculo estándar usa peso × 1.9-2.1 que para
+  // pacientes con sobrepeso da 200g+ — imposible con capacidad gástrica reducida.
+  // Mechanick 2019: proteína post-bariátrica es valor ABSOLUTO según tipo de
+  // cirugía (60-100g/día), NO por kg. Ver src/lib/bariatrica.ts.
+  const protOverride = proteinaBariatricaOverride(
+    form.digCirugiaBariatrica,
+    form.digFasePostBariatrica,
+    macros.p,
+  )
+  if (protOverride !== null && protOverride !== macros.p) {
+    // Re-calcular carbohidratos para que cuadre con el nuevo total proteico.
+    const newP = protOverride
+    const remainingKcal = kcal - (newP * 4) - (macros.g * 9)
+    const newC = Math.max(50, Math.round(remainingKcal / 4))  // piso 50g (cetosis-evitar)
+    macros.p = newP
+    macros.c = newC
+    macros.nota = `Proteína ajustada a ${newP}g/día por cirugía bariátrica (Mechanick 2019).`
+  }
 
   return {
     bmr:          Math.round(bmr),

@@ -145,3 +145,51 @@ export function estimarVolumenPlatoMl(
 ): number {
   return (carneGramos ?? 0) + (carboGramos ?? 0) + verdurasGramos
 }
+
+/** Override de proteína objetivo según tipo de cirugía y fase post-op.
+ *  El cálculo estándar usa peso × 1.9-2.1, lo cual genera 200g+ para pacientes
+ *  con sobrepeso — IMPOSIBLE de cubrir con capacidad gástrica reducida.
+ *
+ *  Mechanick 2019 + Sherf Dagan 2017: la proteína post-bariátrica se calcula
+ *  por valor ABSOLUTO según tipo de cirugía, NO por kg de peso.
+ *
+ *  Regla:
+ *   - Fases 1-5 (post-op activo): forzar al MAX del rango (prioridad
+ *     absoluta de proteína para preservar masa magra durante pérdida acelerada).
+ *   - Mantenimiento (>2 meses): usar MIN del rango como piso. Si el cálculo
+ *     estándar daba más, se respeta (paciente puede tolerar más volumen).
+ *
+ *  Returns: proteína objetivo en gramos/día, o null si no aplica
+ *  (paciente sin cirugía o sin fase declarada).
+ */
+export function proteinaBariatricaOverride(
+  cirugia: CirugiaBariatricaTipo | undefined,
+  fase: FasePostBariatrica | undefined,
+  calculadaEstandar: number,
+): number | null {
+  if (!cirugia || cirugia === 'ninguna') return null
+  if (!fase || fase === 'no_aplica') return null
+  const target = PROTEINA_OBJETIVO_G_DIA[cirugia]
+  if (!target || target.max === 0) return null
+
+  if (fase === 'mantenimiento') {
+    // Piso: nunca menos que el min Mechanick. Techo: el calculado estándar.
+    return Math.max(calculadaEstandar, target.min)
+  }
+  // Fases 1-5: forzar al MAX del rango como objetivo (paciente debe alcanzarlo).
+  return target.max
+}
+
+/** Texturas alimentarias permitidas por fase. Usado para alertar al paciente
+ *  que en fases muy tempranas (1-3) el catálogo estándar de Centro Metabólico
+ *  NO es apropiado (son liquidos/purés terapéuticos que arma el equipo médico).
+ *
+ *  Returns: true si el catálogo regular es apropiado, false si requiere plan
+ *  especializado del cirujano/nutricionista. */
+export function faseAceptaCatalogoEstandar(fase: FasePostBariatrica | undefined): boolean {
+  if (!fase || fase === 'no_aplica' || fase === 'mantenimiento') return true
+  // fase_5 (sólidos blandos, semanas 7-8): catálogo OK con gramajes escalados
+  // fase_4 (blandos, semanas 5-6): catálogo parcialmente OK (desayunos y colaciones)
+  // fase_1/2/3 (líquidos y purés): NO apto, requiere plan especializado
+  return fase === 'fase_5' || fase === 'fase_4'
+}

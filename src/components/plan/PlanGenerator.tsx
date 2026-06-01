@@ -8,6 +8,8 @@ import {
   CIRUGIA_BARIATRICA_LABELS,
   FASE_POST_LABELS,
   VOLUMEN_MAX_POR_COMIDA_ML,
+  PROTEINA_OBJETIVO_G_DIA,
+  faseAceptaCatalogoEstandar,
   type CirugiaBariatricaTipo,
   type FasePostBariatrica,
 } from '@/lib/bariatrica'
@@ -2204,28 +2206,49 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                         }))
                     }
                   />
-                  <div className="flex gap-2 items-start bg-amber-50 border border-amber-300 rounded-xl p-3">
-                    <span className="text-base flex-shrink-0">⚠️</span>
-                    <div className="text-xs text-amber-900 space-y-1.5">
-                      <p className="font-bold">Plan adaptado a tu fase post-bariátrica</p>
-                      <p>
-                        Los volúmenes de alimento se ajustarán automáticamente para no exceder
-                        la capacidad gástrica de tu fase (
-                        {form.digFasePostBariatrica && form.digFasePostBariatrica !== 'no_aplica' ? (
-                          <>
-                            máx. <strong>{VOLUMEN_MAX_POR_COMIDA_ML[form.digFasePostBariatrica]} ml/comida</strong> ·{' '}
-                            {FASE_POST_LABELS[form.digFasePostBariatrica].textura}
-                          </>
-                        ) : 'según fase'}
-                        ).
-                      </p>
-                      <p className="text-amber-800">
-                        <strong>Importante:</strong> esta adaptación es una sugerencia. Tu cirujano
-                        o nutricionista a cargo siempre tiene la palabra final sobre tu evolución
-                        post-operatoria.
-                      </p>
+                  {/* Fases 1-3 (líquidos/purés) = catálogo NO apto. Mostramos
+                      banner rojo bloqueante con explicación. El paciente puede
+                      seguir generando un plan pero queda claramente advertido. */}
+                  {!faseAceptaCatalogoEstandar(form.digFasePostBariatrica) ? (
+                    <div className="flex gap-2 items-start bg-rose-50 border-2 border-rose-300 rounded-xl p-3">
+                      <span className="text-lg flex-shrink-0">🚨</span>
+                      <div className="text-xs text-rose-900 space-y-1.5">
+                        <p className="font-bold text-sm">Esta fase requiere plan especializado</p>
+                        <p>
+                          En <strong>{FASE_POST_LABELS[form.digFasePostBariatrica!].label.toLowerCase()}</strong> tu
+                          alimentación debe ser <strong>{FASE_POST_LABELS[form.digFasePostBariatrica!].textura.toLowerCase()}</strong>.
+                          El catálogo de Centro Metabólico (platos sólidos) NO es apropiado para esta fase.
+                        </p>
+                        <p>
+                          Continúa con el plan armado por tu <strong>cirujano o nutricionista bariátrico</strong> a cargo.
+                          Vuelve a esta app cuando llegues a <strong>fase de sólidos blandos</strong> (semana 7-8)
+                          o <strong>mantenimiento</strong> (2+ meses post-op).
+                        </p>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="flex gap-2 items-start bg-amber-50 border border-amber-300 rounded-xl p-3">
+                      <span className="text-base flex-shrink-0">⚠️</span>
+                      <div className="text-xs text-amber-900 space-y-1.5">
+                        <p className="font-bold">Plan adaptado a tu fase post-bariátrica</p>
+                        <p>
+                          Volúmenes ajustados: <strong>máx. {VOLUMEN_MAX_POR_COMIDA_ML[form.digFasePostBariatrica!]} ml/comida</strong> ·{' '}
+                          {FASE_POST_LABELS[form.digFasePostBariatrica!].textura}.
+                        </p>
+                        {form.digCirugiaBariatrica && (
+                          <p>
+                            Proteína objetivo: <strong>{PROTEINA_OBJETIVO_G_DIA[form.digCirugiaBariatrica].min}–{PROTEINA_OBJETIVO_G_DIA[form.digCirugiaBariatrica].max} g/día</strong>{' '}
+                            (Mechanick 2019 · {CIRUGIA_BARIATRICA_LABELS[form.digCirugiaBariatrica].toLowerCase()}).
+                          </p>
+                        )}
+                        <p className="text-amber-800">
+                          <strong>Importante:</strong> esta adaptación es una sugerencia. Tu cirujano
+                          o nutricionista a cargo siempre tiene la palabra final sobre tu evolución
+                          post-operatoria.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
