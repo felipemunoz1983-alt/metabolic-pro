@@ -38,8 +38,8 @@ import { WelcomePostRegister } from '@/components/onboarding/WelcomePostRegister
 // Lazy load: el banco hace fetch propio y no es above-the-fold inmediato.
 // Sacarlo del bundle inicial ahorra ~40KB JS en el primer paint.
 import dynamic from 'next/dynamic'
-const YogurComparativo = dynamic(
-  () => import('@/components/educacion/YogurComparativo').then(m => ({ default: m.YogurComparativo })),
+const EducacionHub = dynamic(
+  () => import('@/components/educacion/EducacionHub').then(m => ({ default: m.EducacionHub })),
   { ssr: false, loading: () => null },
 )
 const BancoPaciente = dynamic(
@@ -177,6 +177,7 @@ function TopBar({
     chat:       { title: 'Asistente IA',   subtitle: 'Consulta clínica inteligente' },
     historial:    { title: 'Historial',     subtitle: 'Planes y seguimiento anteriores' },
     evaluaciones: { title: 'Evaluaciones',  subtitle: 'Informes antropométricos de tu profesional' },
+    educacion:    { title: 'Educación',     subtitle: 'Guías y comparadores personalizados' },
     pacientes:  { title: 'Mis Pacientes',  subtitle: 'Panel profesional — gestión y seguimiento' },
     perfil:     { title: 'Mi Perfil',      subtitle: 'Cuenta, suscripción y ajustes' },
   }
@@ -253,7 +254,7 @@ function TopBar({
 }
 
 // Valid tabs that can be deep-linked via ?tab=
-const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'evaluaciones', 'pacientes', 'perfil']
+const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'evaluaciones', 'educacion', 'pacientes', 'perfil']
 
 /** Read ?tab= from the URL without useSearchParams (avoids Suspense requirement). */
 function getTabFromUrl(): Tab {
@@ -681,13 +682,22 @@ export default function PacientePage() {
                           <BancoPaciente />
                         </div>
                       )}
-                      {/* Comparador de lácteos proteicos — TODOS los roles, no solo patient.
-                          Antes excluía profesionales+individuales viendo su plan personal,
-                          y solo aparecía aquí (tab Plan). Ahora lo replicamos también en
-                          el Dashboard para máxima descubribilidad. */}
-                      <div className="mt-5">
-                        <YogurComparativo form={formData ?? {}} defaultOpen />
-                      </div>
+                      {/* Link sutil al tab Educación — antes el comparador de yogures vivía
+                          inline aquí, ahora se movió a su tab dedicado 📚 Educación para
+                          centralizar contenido educativo y permitir más guías futuras. */}
+                      <button
+                        onClick={() => setActiveTab('educacion')}
+                        className="mt-5 w-full flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[#EAF4FB] to-[#F8FBFD] border border-[#29ABE2]/20 rounded-xl hover:border-[#29ABE2]/50 transition group"
+                      >
+                        <div className="flex items-center gap-3 text-left">
+                          <div className="w-9 h-9 rounded-xl bg-[#29ABE2] flex items-center justify-center text-white text-base">📚</div>
+                          <div>
+                            <p className="text-sm font-black text-[#0C3547]">Tus guías nutricionales</p>
+                            <p className="text-[11px] text-[#6B8FA8]">Comparadores · recomendaciones personalizadas</p>
+                          </div>
+                        </div>
+                        <span className="text-[#29ABE2] text-lg group-hover:translate-x-0.5 transition">→</span>
+                      </button>
                     </>
                   ) : profile?.role === 'patient' ? (
                     /* Paciente vinculado sin plan aún */
@@ -721,9 +731,21 @@ export default function PacientePage() {
                       {/* Banco de opciones — empty-state amigable mientras espera */}
                       <div className="mt-8 w-full max-w-xl text-left space-y-5">
                         <BancoPaciente />
-                        {/* Comparador de yogures — útil incluso sin plan generado.
-                            El paciente puede explorar opciones mientras espera. */}
-                        <YogurComparativo form={{}} defaultOpen />
+                        {/* Link al tab Educación — útil incluso sin plan generado.
+                            El paciente puede explorar guías mientras espera. */}
+                        <button
+                          onClick={() => setActiveTab('educacion')}
+                          className="w-full flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[#EAF4FB] to-[#F8FBFD] border border-[#29ABE2]/20 rounded-xl hover:border-[#29ABE2]/50 transition group"
+                        >
+                          <div className="flex items-center gap-3 text-left">
+                            <div className="w-9 h-9 rounded-xl bg-[#29ABE2] flex items-center justify-center text-white text-base">📚</div>
+                            <div>
+                              <p className="text-sm font-black text-[#0C3547]">Explora las guías</p>
+                              <p className="text-[11px] text-[#6B8FA8]">Comparadores de productos nutricionales</p>
+                            </div>
+                          </div>
+                          <span className="text-[#29ABE2] text-lg group-hover:translate-x-0.5 transition">→</span>
+                        </button>
                       </div>
 
                       {/* Noticias mientras esperan el plan */}
@@ -775,13 +797,31 @@ export default function PacientePage() {
                     macros={result?.macros}
                     form={formData ?? undefined}
                   />
-                  {/* Comparador de lácteos proteicos — replicado en Dashboard
-                      para que el paciente lo encuentre sin tener que ir al tab
-                      Plan + scroll. Default abierto para máxima descubribilidad. */}
-                  <div className="mt-5">
-                    <YogurComparativo form={formData ?? {}} defaultOpen />
-                  </div>
+                  {/* CTA al tab Educación — el comparador de yogures y futuras
+                      guías viven ahí ahora. Antes estaba inline en Dashboard,
+                      pero al tener su propio tab es más limpio y descubrible. */}
+                  <button
+                    onClick={() => setActiveTab('educacion')}
+                    className="mt-5 w-full flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[#EAF4FB] to-[#F8FBFD] border border-[#29ABE2]/20 rounded-xl hover:border-[#29ABE2]/50 transition group"
+                  >
+                    <div className="flex items-center gap-3 text-left">
+                      <div className="w-9 h-9 rounded-xl bg-[#29ABE2] flex items-center justify-center text-white text-base">📚</div>
+                      <div>
+                        <p className="text-sm font-black text-[#0C3547]">Tus guías nutricionales</p>
+                        <p className="text-[11px] text-[#6B8FA8]">Comparador de yogures · bebidas proteicas · más</p>
+                      </div>
+                    </div>
+                    <span className="text-[#29ABE2] text-lg group-hover:translate-x-0.5 transition">→</span>
+                  </button>
                 </div>
+              )}
+
+              {/* ── Educación: hub de guías y comparadores ──
+                  Tab dedicada para contenido educativo personalizado por perfil.
+                  Antes el comparador de yogures vivía disperso en Dashboard/Plan,
+                  ahora se centraliza aquí + permite agregar guías futuras. */}
+              {activeTab === 'educacion' && (
+                <EducacionHub form={formData ?? {}} nombre={profile?.nombre} />
               )}
 
               {/* ── Chat IA ── */}

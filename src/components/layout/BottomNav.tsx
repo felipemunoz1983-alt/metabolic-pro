@@ -4,13 +4,14 @@ import { cn } from '@/lib/utils'
 import type { Profile } from '@/types'
 import type { Tab } from './types'
 import {
-  LayoutDashboard, ClipboardList, Bot, History, Users, UserCircle, Lock, FileText,
+  LayoutDashboard, ClipboardList, Bot, History, Users, UserCircle, Lock, FileText, BookOpen,
 } from 'lucide-react'
 import { hasAccess } from '@/types'
 
 const NAV_BASE: { id: Tab; icon: React.ElementType; label: string }[] = [
   { id: 'dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
   { id: 'plan',         icon: ClipboardList,   label: 'Nutrición' },
+  { id: 'educacion',    icon: BookOpen,        label: 'Educación' },
   { id: 'chat',         icon: Bot,             label: 'Asistente' },
   { id: 'evaluaciones', icon: FileText,        label: 'Evaluaciones' },
   { id: 'historial',    icon: History,         label: 'Historial' },

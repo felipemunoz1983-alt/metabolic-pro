@@ -18,12 +18,14 @@ import {
   Lock,
   UserCircle,
   FileText,
+  BookOpen,
 } from 'lucide-react'
 import { isOnTrial, trialDaysLeft, hasAccess, isPlanExpired } from '@/types'
 
 const NAV_BASE: { id: Tab; label: string; icon: React.ElementType; sublabel: string }[] = [
   { id: 'dashboard',    label: 'Dashboard',    icon: LayoutDashboard, sublabel: 'Registro diario' },
   { id: 'plan',         label: 'Nutrición',    icon: ClipboardList,   sublabel: 'Plan alimentario' },
+  { id: 'educacion',    label: 'Educación',    icon: BookOpen,        sublabel: 'Guías y comparativos' },
   { id: 'chat',         label: 'Asistente IA', icon: Bot,             sublabel: 'Consulta clínica' },
   { id: 'evaluaciones', label: 'Evaluaciones', icon: FileText,        sublabel: 'Informes antropométricos' },
   { id: 'historial',    label: 'Historial',    icon: History,         sublabel: 'Planes anteriores' },
