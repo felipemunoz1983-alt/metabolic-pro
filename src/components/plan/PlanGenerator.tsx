@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
@@ -211,6 +211,27 @@ function MealChips({
     }
   }, [intolerancias.join(','), bloquearSIBO, bloquearAltaGrasa])  // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Ref al contenedor scrollable para que los botones "←/→" puedan
+  // disparar scrollBy programáticamente. Imprescindible en desktop
+  // (sin swipe táctil) y útil en mobile como CTA descubrible.
+  // IMPORTANTE: estos hooks DEBEN ir antes del early return de abajo
+  // (filteredEntries.length === 0) para respetar la regla de orden de hooks.
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const [atStart, setAtStart] = useState(true)
+  const [atEnd, setAtEnd]     = useState(false)
+
+  const updateEdges = useCallback(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    setAtStart(el.scrollLeft <= 4)
+    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4)
+  }, [])
+
+  useEffect(() => {
+    // Inicializar edges tras el primer paint y al cambiar el set de opciones.
+    updateEdges()
+  }, [filteredEntries.length, updateEdges])
+
   if (filteredEntries.length === 0) {
     return (
       <div>
@@ -221,25 +242,68 @@ function MealChips({
   }
 
   const selectedCount = selected.length
+
+  function scrollByCards(direction: 1 | -1) {
+    const el = scrollerRef.current
+    if (!el) return
+    // Avanza ~3 cards de ancho. 112px card + 10px gap ≈ 122px × 3.
+    el.scrollBy({ left: direction * 360, behavior: 'smooth' })
+  }
+
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
         <label className="text-sm font-semibold text-[#0C3547]">{label}</label>
-        <span className="text-[10px] font-bold text-[#29ABE2] uppercase tracking-wide">
-          {selectedCount} {selectedCount === 1 ? 'opción' : 'opciones'} · desliza →
-        </span>
+        <button
+          type="button"
+          onClick={() => scrollByCards(1)}
+          disabled={atEnd}
+          className={cn(
+            'text-[10px] font-bold uppercase tracking-wide transition-colors',
+            atEnd ? 'text-[#B8C7D4] cursor-default' : 'text-[#29ABE2] hover:text-[#1a6fa0]'
+          )}
+          aria-label="Avanzar opciones"
+        >
+          {selectedCount} {selectedCount === 1 ? 'opción' : 'opciones'} · {atEnd ? 'fin' : 'desliza →'}
+        </button>
       </div>
 
-      {/* Carrusel horizontal — cada opción es una card cuadrada deslizable.
-          Reemplaza el chip-row con flex-wrap (no escalaba bien con 12+ opciones
-          y forzaba al usuario a leer todas las filas para encontrar lo que busca).
-          Snap-mandatory hace que cada swipe "ancle" en la siguiente card.
-          -mx-4 px-4: el padding negativo permite que el carrusel sangre hasta
-          el borde del viewport mobile sin romper la grid del formulario. */}
-      <div
-        className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 scroll-smooth"
-        style={{ scrollbarWidth: 'thin', scrollbarColor: '#D6E3ED transparent' }}
-      >
+      {/* Carrusel horizontal con flechas laterales para desktop.
+          - Container relativo para anclar las flechas absolutas a los costados.
+          - El padding negativo -mx-4 px-4 hace que el carrusel sangre hasta el
+            borde del viewport mobile sin romper la grid del formulario.
+          - Snap-mandatory ancla cada card al hacer swipe.
+          - Las flechas solo aparecen cuando hay scroll disponible en esa
+            dirección (atStart/atEnd controlan visibilidad). */}
+      <div className="relative">
+        {/* Flecha izquierda — visible cuando NO estamos al inicio */}
+        {!atStart && (
+          <button
+            type="button"
+            onClick={() => scrollByCards(-1)}
+            className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-[#D6E3ED] shadow-md items-center justify-center text-[#29ABE2] hover:bg-[#29ABE2] hover:text-white transition-all"
+            aria-label="Opciones anteriores"
+          >
+            <span className="text-lg leading-none">‹</span>
+          </button>
+        )}
+        {/* Flecha derecha — visible cuando NO estamos al final */}
+        {!atEnd && (
+          <button
+            type="button"
+            onClick={() => scrollByCards(1)}
+            className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/95 backdrop-blur border border-[#D6E3ED] shadow-md items-center justify-center text-[#29ABE2] hover:bg-[#29ABE2] hover:text-white transition-all"
+            aria-label="Más opciones"
+          >
+            <span className="text-lg leading-none">›</span>
+          </button>
+        )}
+        <div
+          ref={scrollerRef}
+          onScroll={updateEdges}
+          className="flex gap-2.5 overflow-x-auto snap-x snap-mandatory pb-3 -mx-4 px-4 scroll-smooth"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: '#D6E3ED transparent' }}
+        >
         {filteredEntries.map(([key, opt]) => {
           const active = selected.includes(key)
           return (
@@ -290,6 +354,7 @@ function MealChips({
             </button>
           )
         })}
+        </div>
       </div>
     </div>
   )
