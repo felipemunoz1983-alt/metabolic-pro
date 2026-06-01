@@ -66,13 +66,18 @@ function ProductCard({
         isMatch ? 'border-[#29ABE2]/40 shadow-md shadow-[#29ABE2]/10' : 'border-[#E2ECF4]'
       )}
     >
-      {/* Foto del producto */}
-      <div className="relative h-52 bg-[#F0F7FC] overflow-hidden">
+      {/* Foto del producto — feedback Felipe: agrandar para que el envase sea
+          el protagonista visual. Antes h-52 (208px) fija; ahora aspect-[4/5]
+          que escala según ancho de la card (mobile típico 360px → ~290px alto,
+          desktop card 320px → ~256px alto). El padding bajó de p-3 a p-2 para
+          que la foto ocupe más espacio. object-contain mantiene el envase
+          completo sin recortar. */}
+      <div className="relative aspect-[4/5] bg-[#F0F7FC] overflow-hidden">
         {product.foto ? (
           <img
             src={product.foto}
             alt={product.nombre}
-            className="w-full h-full object-contain object-center p-3 drop-shadow-sm"
+            className="w-full h-full object-contain object-center p-2 drop-shadow-md"
             loading="lazy"
             referrerPolicy="no-referrer"
             onError={(e) => {
@@ -87,7 +92,7 @@ function ProductCard({
           className="w-full h-full items-center justify-center"
           style={{ display: product.foto ? 'none' : 'flex' }}
         >
-          <ShoppingBag size={40} className="text-[#C8D8E4]" />
+          <ShoppingBag size={56} className="text-[#C8D8E4]" />
         </div>
 
         {/* Badge "Para tu objetivo" */}
