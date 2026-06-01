@@ -62,9 +62,9 @@ export function YogurComparativo({ form = {} }: Props) {
             🥛
           </div>
           <div className="text-left">
-            <p className="text-sm font-black text-[#0C3547]">Comparador de yogures</p>
+            <p className="text-sm font-black text-[#0C3547]">Comparador de lácteos proteicos</p>
             <p className="text-[11px] text-[#8BA5BE] leading-tight">
-              {ranking.length} opciones · recomendación personalizada
+              {ranking.length} opciones · yogures + bebidas · recomendación personalizada
             </p>
           </div>
         </div>
@@ -180,9 +180,14 @@ function YogurCard({
         {/* Info */}
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2 mb-1">
-            <p className="text-[13px] font-black text-[#0C3547] leading-tight line-clamp-2">
-              {y.label}
-            </p>
+            <div className="min-w-0">
+              <p className="text-[13px] font-black text-[#0C3547] leading-tight line-clamp-2">
+                {y.label}
+              </p>
+              <span className="text-[9px] font-bold uppercase tracking-wide text-[#8BA5BE]">
+                {('categoria' in y && y.categoria === 'bebida_proteica') ? 'Bebida proteica' : 'Yogur'}
+              </span>
+            </div>
             {isTop && (
               <span className="flex-shrink-0 text-[9px] font-bold bg-[#29ABE2] text-white px-1.5 py-0.5 rounded-md uppercase tracking-wide">
                 ⭐ Top

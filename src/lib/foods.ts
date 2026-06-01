@@ -139,6 +139,7 @@ export const YOGUR_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/361284-900-900?width=900&height=900&aspect=true',
     vegano: false, vegetariano: true,
     contiene: ['lactosa', 'frutos_secos', 'soya', 'gluten'] as string[],
+    categoria: 'yogur' as const,
   },
   fullpro: {
     label: 'FullPro Protein Loncoleche',
@@ -151,6 +152,7 @@ export const YOGUR_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/485106-900-900?width=900&height=900&aspect=true',
     vegano: false, vegetariano: true,
     contiene: ['frutos_secos', 'soya', 'gluten'] as string[],
+    categoria: 'yogur' as const,
   },
   soprole_power: {
     label: 'Soprole Protein+ Power',
@@ -163,6 +165,7 @@ export const YOGUR_TIPOS = {
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202604011757power%20frutilla.png',
     vegano: false, vegetariano: true,
     contiene: ['frutos_secos'] as string[],
+    categoria: 'yogur' as const,
   },
   soprole_protein: {
     label: 'Soprole Protein+ Frutilla',
@@ -175,6 +178,7 @@ export const YOGUR_TIPOS = {
     foto: 'https://www.soprole.cl/public/storage/imagenes/banners/202304051741batido-frutilla.png',
     vegano: false, vegetariano: true,
     contiene: [] as string[],
+    categoria: 'yogur' as const,
   },
   colun_protein: {
     label: 'Colun Protein Plus Vainilla',
@@ -199,6 +203,25 @@ export const YOGUR_TIPOS = {
     foto: 'https://jumbocl.vtexassets.com/arquivos/ids/325169-900-900?width=900&height=900&aspect=true',
     vegano: true, vegetariano: true,
     contiene: ['soya'] as string[],
+    categoria: 'yogur' as const,
+  },
+  // ─── Bebidas lácteas proteicas (no son yogur estrictamente, pero comparten
+  //     uso clínico: snack proteico líquido, pre/post-entreno, colación). ───
+  milo_protein: {
+    label: 'Milo Protein Up',
+    emoji: '🥤',
+    item: 'Bebida láctea Milo Protein Up 330ml (1 botella)',
+    // Fuente: etiqueta oficial Nestlé Chile · 330ml = 1 porción individual
+    //   201.3 kcal · 20.1g prot · 23.1g CH (de los cuales 15.5g azúcares) · 3g grasa · 198mg sodio
+    //   Sin sellos chilenos (azúcar viene del cacao + leche, dentro del límite)
+    //   Foto oficial descargada desde Jumbo (vtexassets)
+    kcal: 201, p: 20, c: 23, g: 3,
+    badge: '20g prot · Bebida lista para llevar · Sabor chocolate',
+    alergenosNota: '⚠️ Nestlé Milo Protein Up · Contiene leche y soya · CON lactosa · 15.5g de azúcares por porción (no es bajo en azúcar). Sin sellos chilenos por el momento, pero el azúcar agregado es relevante en plan de pérdida de grasa. Útil como post-entreno listo para llevar.',
+    foto: '/img/milo_protein_up.jpg',
+    vegano: false, vegetariano: true,
+    contiene: ['lactosa', 'soya'] as string[],
+    categoria: 'bebida_proteica' as const,
   },
 } as const
 
