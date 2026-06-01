@@ -303,6 +303,26 @@ function TrendPill({ trend, sub }: { trend?: 'up' | 'down' | 'flat'; sub?: strin
   )
 }
 
+// Mapper tailwind-class → hex real para SVG. Critico porque Sparkline aplica
+// el valor directamente en stroke/fill del path. Pasar "text-green-600" o
+// "text-[#29ABE2]" daba "green-600"/"[#29ABE2]" (despues del .replace), ambos
+// INVALIDOS como atributo SVG → browser caia a fill default = NEGRO. Resultado:
+// manchas negras triangulares en las cards Consumido/Adherencia (bug reportado).
+const TAILWIND_TO_HEX: Record<string, string> = {
+  'text-[#0C3547]': '#0C3547',
+  'text-[#29ABE2]': '#29ABE2',
+  'text-green-600': '#16A34A',
+  'text-red-500':   '#EF4444',
+  'text-amber-500': '#F59E0B',
+}
+function classToHex(tailwindClass: string): string {
+  // Match explícito en el mapa, o intentar extraer hex inline ej. 'text-[#XXXXXX]'.
+  if (TAILWIND_TO_HEX[tailwindClass]) return TAILWIND_TO_HEX[tailwindClass]
+  const inlineMatch = tailwindClass.match(/\[#([0-9A-Fa-f]{6})\]/)
+  if (inlineMatch) return `#${inlineMatch[1]}`
+  return '#29ABE2'   // fallback cyan corporativo
+}
+
 // ── Metric card ───────────────────────────────────────────────────────────────
 // Reskin alineado al diseño del landing: etiqueta uppercase tracking-wider,
 // valor 2xl + unidad, y una fila inferior con píldora de tendencia a la izquierda
@@ -318,6 +338,11 @@ function MetricCard({
   chart?: number[]
   trend?: 'up' | 'down' | 'flat'
 }) {
+  // Convertir clase tailwind a hex SOLO para el Sparkline (el JSX sigue usando
+  // la clase directamente, que es válido para text-* en HTML).
+  const hex = classToHex(color)
+  // Fill semi-transparente: agregar "33" (20% alpha) al hex de 6 chars.
+  const fillHex = `${hex}33`
   return (
     <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)] hover:shadow-md transition-shadow">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8BA5BE]">{label}</p>
@@ -328,7 +353,7 @@ function MetricCard({
       <div className="mt-3 flex items-center justify-between gap-2">
         <TrendPill trend={trend} sub={sub} />
         {chart && chart.length > 1 && (
-          <Sparkline data={chart} width={88} height={32} color={color.replace('text-', '')} fill={`${color.replace('text-', '')}18`} />
+          <Sparkline data={chart} width={88} height={32} color={hex} fill={fillHex} />
         )}
       </div>
     </div>

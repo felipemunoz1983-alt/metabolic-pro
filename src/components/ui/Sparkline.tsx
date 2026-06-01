@@ -9,6 +9,19 @@ interface SparklineProps {
   strokeWidth?: number
 }
 
+/** Sanitiza un valor de color para SVG. Si no es hex/rgb/named-color válido,
+ *  cae a un fallback seguro en lugar de dejar que el browser use NEGRO default
+ *  (bug histórico: clases tailwind tipo "text-green-600" llegaban aquí y
+ *  generaban manchas negras en las cards del dashboard). */
+function safeSvgColor(value: string | undefined, fallback: string): string {
+  if (!value) return fallback
+  // hex (#fff, #ffffff, #ffffffff con alpha) o rgb/rgba/named valid
+  if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6}|[0-9A-Fa-f]{8})$/.test(value)) return value
+  if (/^(rgb|rgba|hsl|hsla)\(/i.test(value)) return value
+  if (/^[a-z]+$/i.test(value)) return value  // 'red', 'blue', 'currentColor', etc.
+  return fallback
+}
+
 export function Sparkline({
   data,
   width = 120,
@@ -18,6 +31,9 @@ export function Sparkline({
   strokeWidth = 2,
 }: SparklineProps) {
   if (data.length < 2) return null
+
+  const safeColor = safeSvgColor(color, '#29ABE2')
+  const safeFill  = fill ? safeSvgColor(fill, 'transparent') : undefined
 
   const min = Math.min(...data)
   const max = Math.max(...data)
@@ -37,15 +53,15 @@ export function Sparkline({
 
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-      {fill && (
-        <path d={fillPath} fill={fill} />
+      {safeFill && safeFill !== 'transparent' && (
+        <path d={fillPath} fill={safeFill} />
       )}
-      <path d={pathD} stroke={color} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={pathD} stroke={safeColor} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       {/* Last point dot */}
       {(() => {
         const last = points[points.length - 1].split(',')
         return (
-          <circle cx={last[0]} cy={last[1]} r={3} fill={color} />
+          <circle cx={last[0]} cy={last[1]} r={3} fill={safeColor} />
         )
       })()}
     </svg>
