@@ -1,0 +1,82 @@
+name: Auto-merge nextjs → main
+
+# Filosofía: nextjs es el branch de trabajo diario. main es lo que Vercel
+# deploya a producción. Esta automatización elimina el paso manual de
+# "merge nextjs → main" después de cada push, que ya nos costó un día de
+# commits estancados sin llegar a prod (auditoría INTA, carrusel UI,
+# fix VAPID — todo invisible al usuario hasta el merge manual).
+#
+# CÓMO FUNCIONA:
+#  1. Pusheas a nextjs.
+#  2. El workflow CI corre tipos + tests + lint en nextjs.
+#  3. Si CI termina verde Y la rama era nextjs → este workflow dispara.
+#  4. Hace fast-forward merge a main y push.
+#  5. Vercel detecta cambio en main y deploya producción automáticamente.
+#
+# GARANTÍAS:
+#  - Solo mergea si CI pasó verde (workflow_run con conclusion == success).
+#  - Fast-forward only: si main y nextjs divergieron (alguien commiteó a
+#    main directo), el merge falla y queda visible en GitHub. Esto fuerza
+#    a Felipe a resolver manualmente en vez de generar merge commits raros.
+#  - Concurrency: si se pushean 2 commits seguidos, el segundo cancela el
+#    primer auto-merge en cola para evitar races.
+#
+# SI FALLA:
+#  - Recibirás email de GitHub Actions.
+#  - Causa típica: alguien commiteó a main sin pasar por nextjs.
+#  - Solución: en local → git checkout main && git pull && git merge nextjs
+#    (resolver conflictos) → git push origin main.
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [nextjs]
+
+concurrency:
+  group: auto-merge-main
+  cancel-in-progress: true
+
+jobs:
+  merge:
+    name: Fast-forward merge a main
+    # Solo correr si el workflow CI terminó OK.
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    # Permisos necesarios para que el GITHUB_TOKEN pueda hacer push a main.
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout main (full history)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0  # full history necesario para detectar fast-forward
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configurar identidad git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Fetch nextjs
+        run: git fetch origin nextjs
+
+      - name: Fast-forward merge nextjs → main
+        run: |
+          # --ff-only falla si main no es ancestro directo de nextjs.
+          # Eso es DESEADO: previene merges raros con merge commits.
+          git merge --ff-only origin/nextjs
+
+      - name: Push a main
+        # Sin --force. Si falla por alguien que pusheó concurrent a main,
+        # el siguiente push a nextjs disparará otro intento.
+        run: git push origin main
+
+      - name: Resumen
+        run: |
+          echo "✅ main actualizada al SHA: $(git rev-parse HEAD)"
+          echo "Vercel debería detectar el cambio y deployar producción en ~1min."
