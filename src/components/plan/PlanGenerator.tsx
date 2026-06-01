@@ -255,8 +255,8 @@ function MealChips({
   function scrollByCards(direction: 1 | -1) {
     const el = scrollerRef.current
     if (!el) return
-    // Avanza ~3 cards de ancho. 112px card + 10px gap ≈ 122px × 3.
-    el.scrollBy({ left: direction * 360, behavior: 'smooth' })
+    // Avanza ~3 cards de ancho. 128px card + 10px gap ≈ 138px × 3 ≈ 414px.
+    el.scrollBy({ left: direction * 414, behavior: 'smooth' })
   }
 
   return (
@@ -322,7 +322,9 @@ function MealChips({
               onClick={() => toggle(key)}
               aria-pressed={active}
               className={cn(
-                'snap-start flex-shrink-0 w-[112px] rounded-2xl border-2 overflow-hidden text-left transition-all',
+                // Ampliada de 112px a 128px para que textos largos quepan en menos
+                // líneas (ej. "Carne magra + papas salteadas..." ya no se parte feo).
+                'snap-start flex-shrink-0 w-[128px] rounded-2xl border-2 overflow-hidden text-left transition-all',
                 'flex flex-col bg-white',
                 active
                   ? 'border-[#29ABE2] ring-2 ring-[#29ABE2]/30 shadow-md scale-[1.02]'
@@ -357,13 +359,22 @@ function MealChips({
                   </div>
                 )}
               </div>
-              {/* Label abajo (3 líneas máx — antes era 2 y cortaba textos largos
-                  tipo "Pollo a la plancha + arroz integral + ensalada" generando
-                  "..." en medio de la palabra). min-h ajustado para que la card
-                  no salte de alto cuando algunas opciones son cortas. */}
+              {/* Label abajo. Ajustes de legibilidad (feedback Felipe):
+                  - text-[11px] → text-[12px]: bumpear fuente 1pt = mucho más legible
+                    en mobile sin reventar el layout.
+                  - leading-snug → leading-[1.25]: aire suficiente entre líneas a 12px.
+                  - min-h-[48px] → min-h-[58px]: 3 líneas a 12px necesitan ~58px;
+                    antes con 48px el texto se cortaba con "..." en mitad de palabra.
+                  - QUITAR break-words: era la causa principal del feo "salteada... s con"
+                    porque partía palabras dentro de la línea. Sin esto, las palabras
+                    enteras saltan a la siguiente línea (overflow-wrap normal).
+                  - hyphens-none: refuerza que NO se separen palabras con guión.
+                  - font-bold (antes semibold): mejor contraste a tamaños chicos.
+                  - line-clamp-3: tope si el plato tiene 4+ líneas, agrega "..." al final. */}
               <div
                 className={cn(
-                  'px-2 py-1.5 text-[11px] font-semibold leading-snug line-clamp-3 min-h-[48px] break-words',
+                  'px-2.5 py-2 text-[12px] font-bold leading-[1.25] line-clamp-3 min-h-[58px]',
+                  '[hyphens:none] [overflow-wrap:normal]',
                   active ? 'text-[#0C3547] bg-[#29ABE2]/8' : 'text-[#4a6b80]'
                 )}
               >
