@@ -677,14 +677,17 @@ export default function PacientePage() {
                           Solo para pacientes (no para profesionales viendo su propio plan).
                           Aparece debajo del PlanResult tradicional. */}
                       {profile?.role === 'patient' && (
-                        <div className="mt-8 space-y-5">
+                        <div className="mt-8">
                           <BancoPaciente />
-                          {/* Comparador de yogures personalizado por objetivo + restricciones.
-                              Recibe el form real para que la recomendación top sea relevante
-                              (ej: paciente vegano ve top el Loncoleche Vegetal). */}
-                          <YogurComparativo form={formData ?? {}} />
                         </div>
                       )}
+                      {/* Comparador de lácteos proteicos — TODOS los roles, no solo patient.
+                          Antes excluía profesionales+individuales viendo su plan personal,
+                          y solo aparecía aquí (tab Plan). Ahora lo replicamos también en
+                          el Dashboard para máxima descubribilidad. */}
+                      <div className="mt-5">
+                        <YogurComparativo form={formData ?? {}} defaultOpen />
+                      </div>
                     </>
                   ) : profile?.role === 'patient' ? (
                     /* Paciente vinculado sin plan aún */
@@ -720,7 +723,7 @@ export default function PacientePage() {
                         <BancoPaciente />
                         {/* Comparador de yogures — útil incluso sin plan generado.
                             El paciente puede explorar opciones mientras espera. */}
-                        <YogurComparativo form={{}} />
+                        <YogurComparativo form={{}} defaultOpen />
                       </div>
 
                       {/* Noticias mientras esperan el plan */}
@@ -772,6 +775,12 @@ export default function PacientePage() {
                     macros={result?.macros}
                     form={formData ?? undefined}
                   />
+                  {/* Comparador de lácteos proteicos — replicado en Dashboard
+                      para que el paciente lo encuentre sin tener que ir al tab
+                      Plan + scroll. Default abierto para máxima descubribilidad. */}
+                  <div className="mt-5">
+                    <YogurComparativo form={formData ?? {}} defaultOpen />
+                  </div>
                 </div>
               )}
 

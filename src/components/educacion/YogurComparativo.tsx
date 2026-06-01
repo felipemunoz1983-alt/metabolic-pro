@@ -40,10 +40,13 @@ interface Props {
   /** Perfil del paciente para personalizar la recomendación. Si no hay form
    *  (paciente sin plan generado), se muestra ranking neutral. */
   form?: Partial<FormData>
+  /** Default open en el primer render. Útil para máxima descubribilidad en
+   *  Dashboard y tab Plan donde el comparador debe ser inmediatamente visible. */
+  defaultOpen?: boolean
 }
 
-export function YogurComparativo({ form = {} }: Props) {
-  const [open, setOpen] = useState(false)
+export function YogurComparativo({ form = {}, defaultOpen = false }: Props) {
+  const [open, setOpen] = useState(defaultOpen)
 
   const ranking = useMemo(() => rankYoguresParaPaciente(form), [form])
   const topPick = ranking[0]
