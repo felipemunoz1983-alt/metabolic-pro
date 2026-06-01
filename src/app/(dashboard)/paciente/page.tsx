@@ -256,10 +256,14 @@ function TopBar({
 // Valid tabs that can be deep-linked via ?tab=
 const VALID_TABS: Tab[] = ['plan', 'dashboard', 'chat', 'historial', 'evaluaciones', 'educacion', 'pacientes', 'perfil']
 
-/** Read ?tab= from the URL without useSearchParams (avoids Suspense requirement). */
+/** Read ?tab= from the URL without useSearchParams (avoids Suspense requirement).
+ *  REDIRECCIÓN: 'evaluaciones' fue migrado a widget dentro del Dashboard.
+ *  Deep-links viejos (push de informe antropométrico) preservan ?informe= y
+ *  el componente Evaluaciones embebido lo recoge automáticamente. */
 function getTabFromUrl(): Tab {
   if (typeof window === 'undefined') return 'dashboard'
   const p = new URLSearchParams(window.location.search).get('tab') as Tab | null
+  if (p === 'evaluaciones') return 'dashboard'   // redirect legacy
   return p && VALID_TABS.includes(p) ? p : 'dashboard'
 }
 
@@ -797,6 +801,19 @@ export default function PacientePage() {
                     macros={result?.macros}
                     form={formData ?? undefined}
                   />
+
+                  {/* Evaluaciones (informes antropométricos) — movido desde su
+                      propio tab al Dashboard. Reduce el clutter del BottomNav
+                      (5 → 4 tabs) y consolida toda la info clínica/seguimiento
+                      en un solo lugar. El componente Evaluaciones internamente
+                      maneja su propio empty state si el paciente no tiene
+                      informes subidos por su profesional. */}
+                  {profile?.role !== 'professional' && (
+                    <div className="mt-5">
+                      <Evaluaciones />
+                    </div>
+                  )}
+
                   {/* CTA al tab Educación — el comparador de yogures y futuras
                       guías viven ahí ahora. Antes estaba inline en Dashboard,
                       pero al tener su propio tab es más limpio y descubrible. */}
@@ -844,10 +861,9 @@ export default function PacientePage() {
                 <Historial userId={userId} />
               )}
 
-              {/* ── Evaluaciones (informes antropométricos del profesional) ── */}
-              {activeTab === 'evaluaciones' && userId && (
-                <Evaluaciones />
-              )}
+              {/* Evaluaciones ya NO es un tab independiente — se movió como
+                  widget embebido dentro del Dashboard. El redirect en
+                  getTabFromUrl() preserva los deep-links viejos. */}
 
               {/* ── Panel Profesional ── */}
               {activeTab === 'pacientes' && userId && (

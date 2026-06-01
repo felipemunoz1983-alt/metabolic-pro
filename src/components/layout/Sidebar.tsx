@@ -46,13 +46,13 @@ export function Sidebar({ profile, activeTab, onTabChange }: Props) {
   const [collapsed, setCollapsed] = useState(false)
 
   const isPro = profile?.role === 'professional'
-  // Profesional: oculta 'evaluaciones' (la gestiona desde panel Pacientes) y agrega NAV_PRO.
-  //   Mantiene 'historial' porque puede revisarlo en su propio plan.
-  // Paciente / Individual: oculta 'historial' del nav — vive como sub-vista
-  //   DENTRO del tab "Nutrición" (toggle "Mi plan actual" / "Historial").
+  // Profesional: oculta 'evaluaciones' (la gestiona desde panel Pacientes), 'educacion'
+  //   (es para pacientes), y agrega NAV_PRO. Mantiene 'historial' para su propio plan.
+  // Paciente / Individual: oculta 'historial' (vive dentro de Nutrición) y 'evaluaciones'
+  //   (ahora embebido en el Dashboard como widget).
   const navItems = isPro
-    ? [...NAV_BASE.filter(i => i.id !== 'evaluaciones'), NAV_PRO]
-    : NAV_BASE.filter(i => i.id !== 'historial')
+    ? [...NAV_BASE.filter(i => i.id !== 'evaluaciones' && i.id !== 'educacion'), NAV_PRO]
+    : NAV_BASE.filter(i => i.id !== 'historial' && i.id !== 'evaluaciones')
 
   return (
     <aside

@@ -135,7 +135,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const pushRes = await sendPushToUser(supabase, pacienteId, {
       title: `${tipoMeta.emoji} Nuevo informe: ${tipoMeta.label}`,
       body:  `Tu profesional subió "${titulo}". Toca para revisarlo.`,
-      url:   `/paciente?tab=evaluaciones&informe=${encodeURIComponent(row.id)}`,
+      // tab=dashboard porque Evaluaciones es widget embebido en Dashboard (no tab propio).
+      // El query param ?informe= lo recoge el componente Evaluaciones para auto-abrir el PDF.
+      url:   `/paciente?tab=dashboard&informe=${encodeURIComponent(row.id)}`,
       tag:   `informe-${row.id}`,
     })
     console.log('[informes/upload] push notif:', pushRes)

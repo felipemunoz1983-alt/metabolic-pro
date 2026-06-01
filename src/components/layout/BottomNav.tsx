@@ -40,8 +40,11 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
   // Profesional: dashboard · plan · chat · pacientes (4 items, perfil → avatar arriba)
   //   sin 'evaluaciones' (lo gestiona desde Mis Pacientes)
   //   sin 'historial' (lo ve dentro del detalle de cada paciente)
-  // Paciente / Individual: dashboard · plan · chat · evaluaciones (4 items, perfil → avatar arriba)
+  //   sin 'educacion' (es para pacientes)
+  // Paciente / Individual: dashboard · plan · educacion · chat (4 items, perfil → avatar arriba)
   //   sin 'historial' — vive como sub-vista DENTRO del tab "Nutrición" (toggle interno)
+  //   sin 'evaluaciones' — se MUEVE al interior del Dashboard como widget embebido
+  //     (consolida info clínica + reduce clutter del bottom nav)
   const navItems = isPro
     ? [
         NAV_BASE.find(i => i.id === 'dashboard')!,
@@ -49,7 +52,11 @@ export function BottomNav({ profile, activeTab, onTabChange }: Props) {
         NAV_BASE.find(i => i.id === 'chat')!,
         NAV_PRO,
       ]
-    : NAV_BASE.filter(i => i.id !== 'historial' && i.id !== 'perfil')
+    : NAV_BASE.filter(i =>
+        i.id !== 'historial'
+        && i.id !== 'perfil'
+        && i.id !== 'evaluaciones'  // ahora embebido en Dashboard
+      )
 
   const userHasAccess = profile ? hasAccess(profile) : false
 
