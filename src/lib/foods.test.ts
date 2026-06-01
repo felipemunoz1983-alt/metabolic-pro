@@ -117,7 +117,10 @@ describe('Catálogos — integridad estructural', () => {
         expect(info.item, `${key}.item`).toBeTruthy()
         expect(info.kcal, `${key}.kcal`).toBeGreaterThan(0)
         expect(info.p, `${key}.p`).toBeGreaterThanOrEqual(0)
-        expect(info.foto, `${key}.foto`).toMatch(/^https?:\/\//)
+        // Foto puede ser URL externa (CDN del fabricante: jumbocl, soprole, etc.)
+        // o path local en /img/ (productos con foto bajada al repo para evitar
+        // dependencia de CDN externa que puede cambiar el ID y romper la imagen).
+        expect(info.foto, `${key}.foto`).toMatch(/^(https?:\/\/|\/img\/)/)
         expect(typeof info.vegano, `${key}.vegano`).toBe('boolean')
         expect(typeof info.vegetariano, `${key}.vegetariano`).toBe('boolean')
         expect(Array.isArray(info.contiene), `${key}.contiene`).toBe(true)
