@@ -1015,9 +1015,9 @@ export const colacionesOpts: Record<string, MealOption> = {
     items: ['1 galletón Quaker Casero Chips Chocolate (40 g)'],
     baseKcal: 173, p: 2.8, c: 22, g: 7.6,
     porcionFija: true, // 40g unidad — no escalable al slot
-    // Etiqueta original del producto: envase Quaker Casero Chips Chocolate con sellos.
-    // Si el archivo aún no está subido, fallback automático al placeholder (onError).
-    foto: IMG + 'galleton_quaker_casero.webp',
+    // Etiqueta original del producto: envase Quaker Casero Avena + Chips Chocolate 40g
+    // con sellos chilenos. Descargada desde jumbo.cl (vtexassets 900x900).
+    foto: IMG + 'galleton_quaker_casero.jpg',
     tiempo: '1 min',
     pasos: [
       'Abrir el envase y consumir directamente.',
