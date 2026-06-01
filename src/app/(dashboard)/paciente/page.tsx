@@ -814,22 +814,9 @@ export default function PacientePage() {
                     </div>
                   )}
 
-                  {/* CTA al tab Educación — el comparador de yogures y futuras
-                      guías viven ahí ahora. Antes estaba inline en Dashboard,
-                      pero al tener su propio tab es más limpio y descubrible. */}
-                  <button
-                    onClick={() => setActiveTab('educacion')}
-                    className="mt-5 w-full flex items-center justify-between gap-3 px-4 py-3 bg-gradient-to-r from-[#EAF4FB] to-[#F8FBFD] border border-[#29ABE2]/20 rounded-xl hover:border-[#29ABE2]/50 transition group"
-                  >
-                    <div className="flex items-center gap-3 text-left">
-                      <div className="w-9 h-9 rounded-xl bg-[#29ABE2] flex items-center justify-center text-white text-base">📚</div>
-                      <div>
-                        <p className="text-sm font-black text-[#0C3547]">Tus guías nutricionales</p>
-                        <p className="text-[11px] text-[#6B8FA8]">Comparador de yogures · bebidas proteicas · más</p>
-                      </div>
-                    </div>
-                    <span className="text-[#29ABE2] text-lg group-hover:translate-x-0.5 transition">→</span>
-                  </button>
+                  {/* CTA "Tus guías nutricionales" removido del Dashboard
+                      (feedback Felipe). El paciente ya tiene el tab 📚 Educación
+                      en el BottomNav, el CTA era redundante. */}
                 </div>
               )}
 
