@@ -966,9 +966,10 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 98, p: 10, c: 10, g: 2,
     porcionFija: true, // 115g pote — no escalable al slot
     // Etiqueta original del producto: foto del envase real con marca Goodnes Protein,
-    // sabor caramelo y sellos chilenos. Si el archivo aún no está, el componente
-    // hace fallback al placeholder (gradiente cyan + inicial) gracias al onError.
-    foto: IMG + 'goodnes_protein_caramelo.webp',
+    // sabor caramelo y sellos chilenos. Descargada desde jumbo.cl (vtexassets 900x900).
+    // Si el archivo aún no está, el componente hace fallback al placeholder (gradiente
+    // cyan + inicial) gracias al onError.
+    foto: IMG + 'goodnes_protein_caramelo.jpg',
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'],
     alergenosNota: 'Producto industrial — contiene lácteos. 7 g de azúcares totales por porción (no es "sin azúcar"). Bajo en grasa y sodio. Verifica contraindicaciones si tienes intolerancia a la lactosa.',
