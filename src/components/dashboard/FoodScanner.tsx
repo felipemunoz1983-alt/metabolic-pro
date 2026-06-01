@@ -213,6 +213,20 @@ export function FoodScanner({ userId, onLogAdded }: Props) {
       }
       setLogged(true)
       onLogAdded?.()
+      // CustomEvent global para que el CalorieDashboard (u otros componentes
+      // hermanos) se enteren del escaneo sin necesidad de prop drilling.
+      // El payload trae los macros agregados para que el listener pueda
+      // hacer una actualización optimista sin re-fetch a la DB.
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('food-scan:added', {
+          detail: {
+            kcal: result.total.kcal,
+            p:    result.total.proteina,
+            c:    result.total.carbohidratos,
+            g:    result.total.grasa,
+          },
+        }))
+      }
     } catch (err) {
       console.error('[FoodScanner] addToLog error:', err)
       setError('No se pudo guardar el registro. Intenta de nuevo.')

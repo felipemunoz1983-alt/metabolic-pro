@@ -34,6 +34,7 @@ import {
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
   FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
   MessageSquare, Smartphone, Loader2, Trash2,
+  Camera,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -51,6 +52,13 @@ interface DailyLog {
   digestivo?: string
   animo?: string
   nota?: string
+  // Escaneos con FoodScanner: el paciente toma foto, IA estima macros, se
+  // guarda como overlay del plan. Útil para que el profesional vea qué comió
+  // "fuera del plan" — caramelos, comidas sociales, snacks improvisados.
+  scan_kcal?: number
+  scan_proteina?: number
+  scan_carbohidrato?: number
+  scan_grasa?: number
 }
 
 interface PatientRow extends Profile {
@@ -299,6 +307,86 @@ function ModalMensaje({
           )}
         </div>
       </motion.div>
+    </div>
+  )
+}
+
+// ─── Escaneos del paciente (FoodScanner) ─────────────────────────────────────
+// Resumen de los últimos 7 días de fotos analizadas por IA. Útil para que el
+// profesional vea qué comió el paciente FUERA de su plan (improvisaciones,
+// snacks no planeados, comidas sociales). Antes esta data se grababa pero
+// nunca se mostraba — feature invisible para el profesional.
+function EscaneosPanel({ logs }: { logs: DailyLog[] }) {
+  // Tomar últimos 7 días con al menos algo de scan_kcal
+  const ultimos7 = logs.slice(0, 7)
+  const conEscaneos = ultimos7.filter(l => (l.scan_kcal ?? 0) > 0)
+
+  // Si en 7 días no hay un solo escaneo, no mostramos nada (cero ruido visual).
+  if (conEscaneos.length === 0) return null
+
+  const totalKcal = conEscaneos.reduce((s, l) => s + (l.scan_kcal ?? 0), 0)
+  const totalP    = conEscaneos.reduce((s, l) => s + (l.scan_proteina ?? 0), 0)
+  const totalC    = conEscaneos.reduce((s, l) => s + (l.scan_carbohidrato ?? 0), 0)
+  const totalG    = conEscaneos.reduce((s, l) => s + (l.scan_grasa ?? 0), 0)
+  const diasConEscaneo = conEscaneos.length
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#E2D5FB] p-5 shadow-sm mb-5">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[#8B5CF6] flex items-center justify-center">
+            <Camera size={15} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm font-black text-[#0C1F2C]">Escaneos con cámara</p>
+            <p className="text-[10px] text-[#8BA5BE]">
+              Fotos analizadas por IA — últimos 7 días · {diasConEscaneo} día{diasConEscaneo === 1 ? '' : 's'} con registros
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Totales agregados */}
+      <div className="grid grid-cols-4 gap-2 mb-4">
+        <div className="bg-[#F5F0FF] rounded-xl p-2.5 text-center">
+          <p className="text-base font-black text-[#0C3547]">{totalKcal}</p>
+          <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">kcal total</p>
+        </div>
+        <div className="bg-violet-50 rounded-xl p-2.5 text-center">
+          <p className="text-base font-black text-violet-700">{totalP}<span className="text-[9px] font-normal">g</span></p>
+          <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">Prot</p>
+        </div>
+        <div className="bg-amber-50 rounded-xl p-2.5 text-center">
+          <p className="text-base font-black text-amber-700">{totalC}<span className="text-[9px] font-normal">g</span></p>
+          <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">CH</p>
+        </div>
+        <div className="bg-rose-50 rounded-xl p-2.5 text-center">
+          <p className="text-base font-black text-rose-700">{totalG}<span className="text-[9px] font-normal">g</span></p>
+          <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">Grasa</p>
+        </div>
+      </div>
+
+      {/* Desglose por día */}
+      <div className="space-y-1.5">
+        {conEscaneos.map(l => (
+          <div key={l.fecha} className="flex items-center justify-between text-xs bg-[#F8FBFD] rounded-lg px-3 py-2">
+            <span className="font-bold text-[#0C3547]">
+              {new Date(l.fecha + 'T12:00:00').toLocaleDateString('es-CL', { weekday: 'short', day: 'numeric', month: 'short' })}
+            </span>
+            <div className="flex items-center gap-3 text-[10px] text-[#4a6b80]">
+              <span><strong className="text-[#0C3547]">{l.scan_kcal}</strong> kcal</span>
+              <span>{l.scan_proteina}g P</span>
+              <span>{l.scan_carbohidrato}g C</span>
+              <span>{l.scan_grasa}g G</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[10px] text-[#8BA5BE] italic mt-3">
+        Los escaneos son estimaciones de IA, no medición exacta. Útiles para
+        identificar patrones de consumo fuera del plan asignado.
+      </p>
     </div>
   )
 }
@@ -854,6 +942,12 @@ Cualquier duda, escríbeme 😊`
       <div className="mb-5">
         <AdherenciaPaciente patientId={patient.id} />
       </div>
+
+      {/* ── Escaneos con cámara del paciente (FoodScanner) ──
+          Resumen de últimos 7 días de fotos analizadas por IA. Muestra qué
+          comió el paciente FUERA del plan (snacks, comidas sociales, etc.).
+          Útil para conversar en próxima sesión sobre patrones reales. */}
+      <EscaneosPanel logs={logs} />
 
       {/* ── Informes antropométricos (Bloque 2) ──
           El profesional sube PDFs (InBody, ISAK, DEXA…) y el paciente

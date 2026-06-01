@@ -8,7 +8,7 @@ import { Sparkline, Ring } from '@/components/ui/Sparkline'
 import type { Macros, FormData } from '@/lib/nutrition'
 import { generarPlan } from '@/lib/planGenerator'
 import { getTodayCL, getDateCLDaysAgo } from '@/lib/date-cl'
-import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Trophy } from 'lucide-react'
+import { TrendingUp, TrendingDown, Minus, Scale, CheckCircle2, Circle, ChevronDown, ChevronUp, Flame, Trophy, Camera, RotateCcw } from 'lucide-react'
 
 interface DayLog {
   fecha: string
@@ -423,6 +423,15 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
   const [animo, setAnimo] = useState('')
   const [nota, setNota] = useState('')
 
+  // Escaneos de FoodScanner: kcal/macros estimados con IA a partir de fotos.
+  // Antes se guardaban en registros_diarios.scan_* pero NUNCA se leían — la
+  // feature era invisible al paciente. Ahora se cargan, se muestran en un
+  // widget propio y se suman al progreso del día.
+  const [scanTotals, setScanTotals] = useState<{ kcal: number; p: number; c: number; g: number }>({
+    kcal: 0, p: 0, c: 0, g: 0,
+  })
+  const [scanResetting, setScanResetting] = useState(false)
+
   // ── Loaders (declarados antes del useEffect que los llama: evita TDZ) ─────
   async function loadToday() {
     const { data, error } = await supabase
@@ -448,6 +457,28 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
       if (data.digestivo) setDigestivo(data.digestivo)
       if (data.animo)     setAnimo(data.animo)
       if (data.nota)      setNota(data.nota)
+      // Escaneos del FoodScanner — antes ignorados, ahora se cargan al estado.
+      setScanTotals({
+        kcal: Number(data.scan_kcal)         || 0,
+        p:    Number(data.scan_proteina)     || 0,
+        c:    Number(data.scan_carbohidrato) || 0,
+        g:    Number(data.scan_grasa)        || 0,
+      })
+    }
+  }
+
+  // Resetear los escaneos del día (botón en el widget). Útil si el paciente
+  // se equivocó tomando una foto y quiere empezar de cero el conteo.
+  async function resetScans() {
+    setScanResetting(true)
+    try {
+      await supabase
+        .from('registros_diarios')
+        .update({ scan_kcal: 0, scan_proteina: 0, scan_carbohidrato: 0, scan_grasa: 0 })
+        .eq('user_id', userId).eq('fecha', today)
+      setScanTotals({ kcal: 0, p: 0, c: 0, g: 0 })
+    } finally {
+      setScanResetting(false)
     }
   }
 
@@ -472,11 +503,31 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
     loadMonth().catch(console.error)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Escuchar escaneos del FoodScanner para refrescar los totales sin re-fetch
+  // completo. Actualización optimista con el payload del CustomEvent.
+  useEffect(() => {
+    function onScanAdded(e: Event) {
+      const detail = (e as CustomEvent<{ kcal: number; p: number; c: number; g: number }>).detail
+      if (!detail) return
+      setScanTotals(prev => ({
+        kcal: prev.kcal + detail.kcal,
+        p:    prev.p    + detail.p,
+        c:    prev.c    + detail.c,
+        g:    prev.g    + detail.g,
+      }))
+    }
+    window.addEventListener('food-scan:added', onScanAdded)
+    return () => window.removeEventListener('food-scan:added', onScanAdded)
+  }, [])
+
   // Solo contamos comidas REALES del plan (no las claves legacy que ya migramos)
   const completedCount = MEALS.reduce((n, m) => n + (checkedMeals[m.id] ? 1 : 0), 0)
   const adherencia = MEALS.length > 0 ? Math.round((completedCount / MEALS.length) * 100) : 0
-  // kcalEstimada usa las kcal REALES de cada slot del plan, no porcentajes teóricos
-  const kcalEstimada = MEALS.reduce((s, m) => checkedMeals[m.id] ? s + m.kcal : s, 0)
+  // kcal del PLAN: checkboxes de comidas marcadas como hechas (usa kcal reales del slot).
+  const kcalPlan = MEALS.reduce((s, m) => checkedMeals[m.id] ? s + m.kcal : s, 0)
+  // kcal TOTAL: suma plan + escaneos del FoodScanner. Esto es lo que el paciente
+  // realmente consumió hoy. Antes solo se mostraba kcalPlan → escaneos invisibles.
+  const kcalEstimada = kcalPlan + scanTotals.kcal
   const deficit = targetKcal - kcalEstimada
   const progressPct = Math.min((kcalEstimada / targetKcal) * 100, 100)
 
@@ -577,20 +628,83 @@ export function CalorieDashboard({ userId, targetKcal = 2000, macros, form }: Pr
             </span>
           </div>
 
-          {/* Progress bar */}
+          {/* Progress bar — barra apilada visualiza plan (azul) + escaneos (violeta).
+              El paciente entiende qué viene del plan checkeado vs de las fotos
+              que tomó con el FoodScanner. */}
           <div className="mb-4">
             <div className="flex justify-between text-[10px] sm:text-xs text-[#8BA5BE] mb-1.5">
-              <span>{kcalEstimada} kcal consumidas</span>
+              <span>
+                <strong className="text-[#0C3547]">{kcalEstimada}</strong> kcal consumidas
+                {scanTotals.kcal > 0 && (
+                  <span className="text-[#8B5CF6]"> · 📷 {scanTotals.kcal} de fotos</span>
+                )}
+              </span>
               <span>Meta: {targetKcal.toLocaleString()} kcal</span>
             </div>
-            <div className="h-2 bg-[#F0F6FA] rounded-full overflow-hidden">
+            <div className="h-2 bg-[#F0F6FA] rounded-full overflow-hidden flex">
               <motion.div
-                animate={{ width: `${progressPct}%` }}
+                animate={{ width: `${Math.min((kcalPlan / targetKcal) * 100, 100)}%` }}
                 transition={{ duration: 0.6 }}
-                className={cn('h-full rounded-full', progressPct > 100 ? 'bg-red-400' : progressPct >= 80 ? 'bg-green-400' : 'bg-[#29ABE2]')}
+                className={cn(
+                  'h-full',
+                  progressPct > 100 ? 'bg-red-400' : progressPct >= 80 ? 'bg-green-400' : 'bg-[#29ABE2]'
+                )}
               />
+              {scanTotals.kcal > 0 && (
+                <motion.div
+                  animate={{ width: `${Math.min((scanTotals.kcal / targetKcal) * 100, 100 - (kcalPlan / targetKcal) * 100)}%` }}
+                  transition={{ duration: 0.6 }}
+                  className="h-full bg-[#8B5CF6]"
+                  title="Escaneos con cámara"
+                />
+              )}
             </div>
           </div>
+
+          {/* Widget de escaneos del día — solo visible si hay al menos 1 escaneo.
+              Antes los datos se guardaban en registros_diarios.scan_* pero
+              NUNCA se mostraban — feature invisible al paciente. */}
+          {scanTotals.kcal > 0 && (
+            <div className="mb-4 rounded-xl border border-[#E2D5FB] bg-gradient-to-br from-[#F5F0FF] to-[#FAFBFF] p-3">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#8B5CF6] flex items-center justify-center">
+                    <Camera size={13} className="text-white" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black text-[#0C3547]">📷 Escaneos de hoy</p>
+                    <p className="text-[9px] text-[#8BA5BE]">Estimación con IA desde tus fotos</p>
+                  </div>
+                </div>
+                <button
+                  onClick={resetScans}
+                  disabled={scanResetting}
+                  className="text-[10px] font-bold text-[#8B5CF6] hover:bg-white/60 px-2 py-1 rounded-md flex items-center gap-1 transition"
+                  title="Borrar todos los escaneos del día (empezar de cero)"
+                >
+                  <RotateCcw size={11} /> {scanResetting ? '...' : 'Resetear'}
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="text-sm font-black text-[#0C3547]">{scanTotals.kcal}</p>
+                  <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">kcal</p>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-violet-700">{scanTotals.p}<span className="text-[9px] font-normal">g</span></p>
+                  <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">Prot</p>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-amber-700">{scanTotals.c}<span className="text-[9px] font-normal">g</span></p>
+                  <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">CH</p>
+                </div>
+                <div>
+                  <p className="text-sm font-black text-rose-700">{scanTotals.g}<span className="text-[9px] font-normal">g</span></p>
+                  <p className="text-[9px] text-[#8BA5BE] font-bold uppercase">Grasa</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             {MEALS.map((meal, i) => {
