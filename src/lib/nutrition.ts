@@ -10,6 +10,18 @@ export type TipoEjercicio = 'fuerza' | 'cardio' | 'mixto' | 'ninguno'
 export type Crono = 'matutino' | 'vespertino' | 'neutro'
 export type FormulaUsada = 'mifflin_st_jeor' | 'cunningham' | 'harris_benedict_legacy'
 
+/** Momentos del dia donde el paciente incorpora whey/proteina en polvo.
+ *  Multi-select: un mismo paciente puede consumirla en desayuno + post-entreno.
+ *  Si wheyIndicado=true y wheyMomentos undefined => default ['desayuno', 'colacion_am', 'colacion_pm']. */
+export type WheyMomento = 'desayuno' | 'colacion_am' | 'colacion_pm' | 'post_entreno'
+
+export const WHEY_MOMENTO_LABELS: Record<WheyMomento, { label: string; emoji: string; desc: string }> = {
+  desayuno:      { label: 'Desayuno',       emoji: '☀️', desc: 'Avena proteica / batido en ayunas' },
+  colacion_am:   { label: 'Colación AM',    emoji: '☕', desc: 'Batido + fruta a media mañana' },
+  colacion_pm:   { label: 'Colación PM',    emoji: '🍵', desc: 'Once / batido a media tarde' },
+  post_entreno:  { label: 'Post-entreno',   emoji: '🏋️', desc: 'Ventana anabólica 30-60 min post' },
+}
+
 export interface FormData {
   nombre: string
   edad: number
@@ -66,6 +78,14 @@ export interface FormData {
   // ── Suplementación indicada ──
   /** true = el profesional indicó proteína en polvo (whey u otra). Habilita opciones con scoop en el plan. */
   wheyIndicado?: boolean
+  /** Momentos del día donde se incorpora el scoop de whey. Default si wheyIndicado y este
+   *  campo no se setea: ['desayuno', 'colacion_am', 'colacion_pm'] (mantiene comportamiento
+   *  legacy + extiende a colaciones donde tambien hay opciones con whey).
+   *  - 'desayuno': permite avena proteica, avena platano+whey, etc.
+   *  - 'colacion_am' / 'colacion_pm': permite "Fruta + batido de proteína" y similares.
+   *  - 'post_entreno': inyecta el batido en la colacion post-entreno automaticamente
+   *    (segun horarioEntrenamiento AM/PM/noche). Util para hipertrofia/recuperacion. */
+  wheyMomentos?: WheyMomento[]
   /** Tipo de yogur seleccionado por el paciente. Se extiende automáticamente con YOGUR_TIPOS en foods.ts. */
   yogurtTipo?: YogurTipo
   /** Tipo de pan preferido por el paciente. Aplica a TODAS las preparaciones con `tienePan: true`

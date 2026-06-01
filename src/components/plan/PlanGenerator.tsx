@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham } from '@/lib/nutrition'
-import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio } from '@/lib/nutrition'
+import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS } from '@/lib/nutrition'
+import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento } from '@/lib/nutrition'
 import type { MealOption, UltraOption, YogurTipo, PanTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
 import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
@@ -1089,10 +1089,17 @@ export function PlanGenerator({ onResult, initialData }: Props) {
       setForm(prev => ({
         ...prev,
         wheyIndicado: false,
+        wheyMomentos: undefined,  // limpiar selección al desactivar
         desayunos: validDes.length > 0 ? validDes : ['avena_platano'],
       }))
     } else {
-      set('wheyIndicado', true)
+      // Al activar: default a los 3 momentos legacy (desayuno + ambas colaciones)
+      // para que el paciente vea explicitamente cuales estan activos.
+      setForm(prev => ({
+        ...prev,
+        wheyIndicado: true,
+        wheyMomentos: prev.wheyMomentos ?? ['desayuno', 'colacion_am', 'colacion_pm'],
+      }))
     }
   }
 
@@ -1582,12 +1589,65 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                   </button>
                 </div>
                 {wheyActivo && tendenciaActual !== 'vegano' && (
-                  <div className="mt-3 flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
-                    <span className="text-sm flex-shrink-0">ℹ️</span>
-                    <p className="text-xs text-blue-800">
-                      Opciones con proteína en polvo activadas. Asegúrate de tener el producto disponible antes de incluirlas en el plan.
-                    </p>
-                  </div>
+                  <>
+                    {/* Multi-select de momentos donde incorporar el whey.
+                        Si el paciente no marca ninguno, el motor defaultea a
+                        ['desayuno', 'colacion_am', 'colacion_pm'] para mantener
+                        compat con planes anteriores. Aviso si selected esta vacio. */}
+                    <div className="mt-3">
+                      <p className="text-xs font-semibold text-[#0C3547] mb-2">
+                        ¿En qué momentos lo incorporas?
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {(Object.keys(WHEY_MOMENTO_LABELS) as WheyMomento[]).map(m => {
+                          const meta = WHEY_MOMENTO_LABELS[m]
+                          // Por compat: si wheyMomentos undefined y whey activo, mostramos los 3 legacy "activos".
+                          const currentList = form.wheyMomentos ?? (['desayuno', 'colacion_am', 'colacion_pm'] as WheyMomento[])
+                          const active = currentList.includes(m)
+                          return (
+                            <button
+                              key={m}
+                              type="button"
+                              onClick={() => {
+                                const next = active
+                                  ? currentList.filter(x => x !== m)
+                                  : [...currentList, m]
+                                set('wheyMomentos', next)
+                              }}
+                              aria-pressed={active}
+                              title={meta.desc}
+                              className={cn(
+                                'flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
+                                active
+                                  ? 'bg-[#29ABE2] border-[#29ABE2] text-white shadow-sm'
+                                  : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2] hover:text-[#0C3547]'
+                              )}
+                            >
+                              <span>{meta.emoji}</span>
+                              <span>{meta.label}</span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Aviso si el paciente desmarcó todos los momentos */}
+                    {form.wheyMomentos && form.wheyMomentos.length === 0 && (
+                      <div className="mt-2 flex gap-2 bg-amber-50 border border-amber-300 rounded-lg p-2.5">
+                        <span className="text-sm flex-shrink-0">⚠️</span>
+                        <p className="text-xs text-amber-900">
+                          No marcaste ningún momento. Selecciona al menos uno o desactiva el toggle para que el plan use opciones sin whey.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="mt-3 flex gap-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5">
+                      <span className="text-sm flex-shrink-0">ℹ️</span>
+                      <p className="text-xs text-blue-800">
+                        Opciones con proteína en polvo activadas en los momentos seleccionados. Asegúrate de tener el producto disponible.
+                      </p>
+                    </div>
+                  </>
                 )}
                 {wheyActivo && tendenciaActual === 'vegano' && (
                   <div className="mt-3 flex gap-2 bg-rose-50 border border-rose-300 rounded-lg p-2.5">

@@ -76,15 +76,32 @@ const MEAL_ICONS: Record<DayMeal['tipo'], string> = {
 }
 
 // ─── Filtrar pool por indicación profesional de whey ─────────────────────────
+// Tres reglas combinadas:
+//   1. wheyIndicado=false  -> SIEMPRE excluir opciones con requiereWhey.
+//   2. wheyIndicado=true Y momentoIncluido=true  -> incluir TODAS las opciones.
+//   3. wheyIndicado=true Y momentoIncluido=false -> excluir opciones con requiereWhey
+//      (paciente tiene whey pero NO en este slot).
+// Si tras filtrar quedan 0 opciones, devolvemos el pool original para no romper la rotacion.
 function filtrarPorWhey<T extends { requiereWhey?: boolean }>(
   pool: Record<string, T>,
-  wheyIndicado?: boolean
+  wheyIndicado?: boolean,
+  momentoIncluido: boolean = true,
 ): Record<string, T> {
-  if (wheyIndicado) return pool
+  if (wheyIndicado && momentoIncluido) return pool
   const filtered = Object.fromEntries(
     Object.entries(pool).filter(([, opt]) => !opt.requiereWhey)
   )
   return Object.keys(filtered).length > 0 ? filtered : pool
+}
+
+/** Default backward-compatible: si wheyIndicado=true pero wheyMomentos vacio,
+ *  asumimos los 3 momentos legacy (desayuno + ambas colaciones). */
+function wheyMomentosResolved(form: { wheyIndicado?: boolean; wheyMomentos?: import('./nutrition').WheyMomento[] }): Set<import('./nutrition').WheyMomento> {
+  if (!form.wheyIndicado) return new Set()
+  if (!form.wheyMomentos || form.wheyMomentos.length === 0) {
+    return new Set(['desayuno', 'colacion_am', 'colacion_pm'])
+  }
+  return new Set(form.wheyMomentos)
 }
 
 // ─── Filtrar pool por tiempo disponible para cocinar ─────────────────────────
@@ -202,11 +219,17 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const intol = form.digIntolerancias ?? []
   const bloquearSIBO = form.digDiag === 'si_sibo' || form.digDiag === 'si_sii' || form.digHinchazon === 'diaria'
   const bloquearAltaGrasaCena = form.digReflujo === 'frecuente'
+  // Resolver momentos donde el paciente incorpora whey. Si esta indicado pero no
+  // selecciono momentos -> default ['desayuno', 'colacion_am', 'colacion_pm'].
+  const wheyMomentos = wheyMomentosResolved(form)
 
   const desayunosPool = priorizarPorEstacion(
     filtrarPorHabilidad(
       filtrarPorTiempo(
-        filtrarClinico(filtrarPorWhey(desayunosOpts, form.wheyIndicado), intol, bloquearSIBO, false),
+        filtrarClinico(
+          filtrarPorWhey(desayunosOpts, form.wheyIndicado, wheyMomentos.has('desayuno')),
+          intol, bloquearSIBO, false
+        ),
         tiempo
       ),
       habilidad
@@ -614,9 +637,18 @@ function buildColacionPool(
   form: Partial<FormData>,
   slot: 'AM' | 'PM',
 ): MealOption[] {
+  // Filtro de whey aplicado al slot correspondiente. Si el paciente NO indico
+  // whey, o lo indico pero NO marco este slot ('colacion_am' / 'colacion_pm') ni
+  // 'post_entreno' coincidente, las opciones requiereWhey se excluyen.
+  const wheySet = wheyMomentosResolved(form)
+  const incluirWheyAqui =
+    (slot === 'AM' && (wheySet.has('colacion_am') || (form.horarioEntrenamiento === 'AM' && wheySet.has('post_entreno')))) ||
+    (slot === 'PM' && (wheySet.has('colacion_pm') || ((form.horarioEntrenamiento === 'PM' || form.horarioEntrenamiento === 'noche') && wheySet.has('post_entreno'))))
+
   const naturalOpts = (userKeys ?? [])
     .map(k => colacionesOpts[k])
     .filter((o): o is MealOption => Boolean(o))
+    .filter(opt => incluirWheyAqui ? true : !opt.requiereWhey)
 
   const extras: MealOption[] = []
 
