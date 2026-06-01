@@ -1923,11 +1923,27 @@ export function PlanGenerator({ onResult, initialData }: Props) {
                         />
                       )}
                       {(form.cenas ?? []).some(k => cenasOpts[k]?.tieneCarboPrincipal) && (
-                        <CarboQtyPicker
-                          label="Gramos de carbohidrato principal en cena"
-                          value={form.carboGramosCena ?? 100}
-                          onChange={n => set('carboGramosCena', n)}
-                        />
+                        <>
+                          <CarboQtyPicker
+                            label="Gramos de carbohidrato principal en cena"
+                            value={form.carboGramosCena ?? 150}
+                            onChange={n => set('carboGramosCena', n)}
+                          />
+                          {/* Nota clinica Centro Metabolico: NO reducimos carbos en cena por
+                              objetivo. El mito "carbos de noche engordan" no tiene sustento:
+                              el carbo nocturno favorece sintesis de glucogeno post-entreno,
+                              precursor de serotonina (calidad de sueno) y NO impacta el
+                              deficit total del dia si la ingesta diaria esta calculada.
+                              Por eso default de cena = default de almuerzo (150g). */}
+                          <div className="mt-2 flex gap-2 items-start bg-[#E5F4FB] border border-[#29ABE2]/30 rounded-lg p-2.5">
+                            <span className="text-base flex-shrink-0 leading-none mt-0.5">🌙</span>
+                            <p className="text-[11px] text-[#0C3547] leading-relaxed">
+                              <strong>No reducimos carbohidratos en la cena</strong> — sin importar el objetivo.
+                              El carbo nocturno favorece la recuperación, la síntesis de glucógeno y la calidad
+                              del sueño, sin impactar el déficit total si la ingesta diaria está calculada.
+                            </p>
+                          </div>
+                        </>
                       )}
                     </div>
                   </>

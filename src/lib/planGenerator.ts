@@ -280,7 +280,14 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'cena') {
         const cena = getMealOption(cenasPool, form.cenas, d)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, form.carboGramosCena, form.panTipo))
+        // Default clinico: carbo cena = 150g si el paciente no especifico (paridad con almuerzo).
+        // Politica Centro Metabolico: NO reducir carbos en cena por objetivo — el carbo nocturno
+        // favorece sintesis de glucogeno post-entreno, precursor de serotonina y calidad de sueno
+        // sin impactar el deficit total del dia si la ingesta diaria esta calculada. Sin este
+        // fallback explicito, el motor usaba carboGramosBase de cada plato (variable: 100/180/250)
+        // generando inconsistencia con la UI que muestra "150g" como default.
+        const carboCenaFinal = form.carboGramosCena ?? (cena.tieneCarboPrincipal ? 150 : undefined)
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, carboCenaFinal, form.panTipo))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
