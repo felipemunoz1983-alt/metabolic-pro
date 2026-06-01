@@ -38,6 +38,10 @@ import { WelcomePostRegister } from '@/components/onboarding/WelcomePostRegister
 // Lazy load: el banco hace fetch propio y no es above-the-fold inmediato.
 // Sacarlo del bundle inicial ahorra ~40KB JS en el primer paint.
 import dynamic from 'next/dynamic'
+const YogurComparativo = dynamic(
+  () => import('@/components/educacion/YogurComparativo').then(m => ({ default: m.YogurComparativo })),
+  { ssr: false, loading: () => null },
+)
 const BancoPaciente = dynamic(
   () => import('@/components/banco/BancoPaciente').then(m => ({ default: m.BancoPaciente })),
   { ssr: false, loading: () => null },
@@ -673,8 +677,12 @@ export default function PacientePage() {
                           Solo para pacientes (no para profesionales viendo su propio plan).
                           Aparece debajo del PlanResult tradicional. */}
                       {profile?.role === 'patient' && (
-                        <div className="mt-8">
+                        <div className="mt-8 space-y-5">
                           <BancoPaciente />
+                          {/* Comparador de yogures personalizado por objetivo + restricciones.
+                              Recibe el form real para que la recomendación top sea relevante
+                              (ej: paciente vegano ve top el Loncoleche Vegetal). */}
+                          <YogurComparativo form={formData ?? {}} />
                         </div>
                       )}
                     </>
@@ -708,8 +716,11 @@ export default function PacientePage() {
                         Tu nutricionista recibe una notificación + email para activar tu plan.
                       </p>
                       {/* Banco de opciones — empty-state amigable mientras espera */}
-                      <div className="mt-8 w-full max-w-xl text-left">
+                      <div className="mt-8 w-full max-w-xl text-left space-y-5">
                         <BancoPaciente />
+                        {/* Comparador de yogures — útil incluso sin plan generado.
+                            El paciente puede explorar opciones mientras espera. */}
+                        <YogurComparativo form={{}} />
                       </div>
 
                       {/* Noticias mientras esperan el plan */}
