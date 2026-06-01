@@ -550,6 +550,11 @@ Cualquier duda, escríbeme 😊`
             </div>
             <PlanGenerator
               onResult={handlePlanResult}
+              // patientId namespacea el draft de sessionStorage. Sin esto,
+              // cambiar de paciente A a paciente B reusaba datos clínicos
+              // de A (digestivo, suplementación, embarazo) en el wizard de B.
+              // Riesgo clínico real arreglado.
+              patientId={patient.id}
               // Hidrata el wizard con:
               //   1. Datos del paciente (nombre, email) — para no retipearlos
               //   2. Datos antropométricos del último plan (peso/talla/edad/sexo)
@@ -726,11 +731,16 @@ Cualquier duda, escríbeme 😊`
           >
             <MessageSquare size={14} /> <span className="hidden sm:inline">Mensaje</span>
           </button>
-          {/* Eliminar de lista */}
+          {/* Eliminar de lista — separador visual + estilo destructivo SIEMPRE visible
+              (no solo en hover). Antes el botón vivía pegado a "Mensaje" con el mismo
+              estilo neutro y solo se diferenciaba en hover → riesgo alto de tap accidental
+              en mobile (el span "Eliminar" se ocultaba, dejando solo el ícono Trash). */}
+          <div className="w-px h-6 bg-[#E2ECF4] mx-1" aria-hidden="true" />
           <button
             onClick={() => setShowUnlink(true)}
-            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-red-400 hover:text-red-500 transition"
-            title="Eliminar paciente de la lista"
+            className="flex items-center gap-2 bg-white border border-red-200 text-red-500 text-sm font-bold px-3 py-2 rounded-xl hover:bg-red-50 hover:border-red-400 transition"
+            title="Eliminar paciente de la lista (pide confirmación)"
+            aria-label="Eliminar paciente"
           >
             <Trash2 size={14} /> <span className="hidden sm:inline">Eliminar</span>
           </button>
@@ -1417,8 +1427,36 @@ Cualquier duda, escríbeme 😊`
                       </div>
                     )}
                     {inviteEmailStatus === 'error' && (
-                      <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 font-medium text-center">
-                        No se pudo enviar el email. Comparte el link manualmente.
+                      <div className="space-y-2">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-600 font-medium text-center">
+                          No se pudo enviar el email. Compárte el link manualmente.
+                        </div>
+                        {/* Fallback en línea: mostrar el link + botón Copiar para que
+                            el profesional NO tenga que cerrar el modal y reabrir en
+                            el tab "link". Resuelve el dead-end de UX detectado en audit. */}
+                        <div className="bg-[#F8FBFD] border border-[#E2ECF4] rounded-xl p-3">
+                          <p className="text-[10px] font-bold text-[#8BA5BE] uppercase tracking-wide mb-1.5">Link de invitación</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              readOnly
+                              value={personalizedLink}
+                              onClick={e => (e.target as HTMLInputElement).select()}
+                              className="flex-1 bg-white border border-[#E2ECF4] rounded-lg px-2.5 py-2 text-[11px] text-[#0C3547] font-mono truncate focus:outline-none focus:ring-2 focus:ring-[#29ABE2]/40"
+                            />
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(personalizedLink)
+                                  .then(() => setCopied(true))
+                                  .catch(() => { /* clipboard puede fallar en contextos sin HTTPS */ })
+                                setTimeout(() => setCopied(false), 2000)
+                              }}
+                              className="flex items-center gap-1 bg-[#0C3547] hover:bg-[#1a4660] text-white text-[11px] font-bold px-2.5 py-2 rounded-lg transition"
+                            >
+                              {copied ? <CheckCircle size={12} /> : <Copy size={12} />}
+                              {copied ? 'OK' : 'Copiar'}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </motion.div>

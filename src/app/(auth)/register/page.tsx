@@ -333,13 +333,21 @@ function RegisterForm() {
   // ── Form ──
   return (
     <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-      {/* Patient invite badge */}
+      {/* Patient invite badge — comunica explícitamente el trial 21d
+          que se otorga al vincularse con un código profesional (vs 7d
+          del registro libre). Antes el copy "7 días gratis" del trust
+          strip generaba expectativa rota cuando recibían 21d. */}
       {isLinked && (
-        <div className="mb-5 flex items-center gap-2.5 bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl px-3.5 py-2.5">
-          <ShieldCheck size={14} className="text-[#29ABE2] flex-shrink-0" />
-          <p className="text-xs text-[#0C3547]">
-            Registrándote con un <span className="font-bold text-[#29ABE2]">código profesional</span> — quedarás vinculado automáticamente.
-          </p>
+        <div className="mb-5 flex items-start gap-2.5 bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-xl px-3.5 py-3">
+          <ShieldCheck size={15} className="text-[#29ABE2] flex-shrink-0 mt-0.5" />
+          <div className="text-xs text-[#0C3547] space-y-1">
+            <p>
+              Registrándote con un <span className="font-bold text-[#29ABE2]">código profesional</span> — quedarás vinculado automáticamente.
+            </p>
+            <p className="text-[#4a6b80]">
+              <span className="font-bold">21 días de prueba premium</span> incluidos por cortesía de tu nutricionista.
+            </p>
+          </div>
         </div>
       )}
 

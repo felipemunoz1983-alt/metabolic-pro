@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
+import { readPendingInvite, clearPendingInvite } from '@/lib/pendingInvite'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Activity, Mail, Lock, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react'
 
@@ -49,27 +50,13 @@ export default function LoginPage() {
           .maybeSingle()
 
         if (!profile) {
-          // Check for pending invite — prefer localStorage (cross-tab safe), fall back to sessionStorage
-          let pendingPro: string | null = null
-          let pendingRole: string = 'individual'
-          let pendingNombre: string = ''
-          let pendingInviteToken: string | null = null
-          try {
-            pendingPro    = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
-            pendingRole   = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
-            pendingNombre = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
-            pendingInviteToken = localStorage.getItem('pendingInviteToken') ?? sessionStorage.getItem('pendingInviteToken')
-            if (pendingPro || pendingInviteToken) {
-              localStorage.removeItem('pendingProfessionalId')
-              localStorage.removeItem('pendingRole')
-              localStorage.removeItem('pendingNombre')
-              localStorage.removeItem('pendingInviteToken')
-              sessionStorage.removeItem('pendingProfessionalId')
-              sessionStorage.removeItem('pendingRole')
-              sessionStorage.removeItem('pendingNombre')
-              sessionStorage.removeItem('pendingInviteToken')
-            }
-          } catch { /* storage unavailable */ }
+          // Helper unificado: URL ?invite=... + localStorage + sessionStorage.
+          // Cubre el caso cross-device del registro/confirmación cuando el paciente
+          // alterna entre dispositivos (email en celular, login en laptop).
+          const { token: pendingInviteToken, pro: pendingPro, role: pendingRole, nombre: pendingNombre } = readPendingInvite()
+          if (pendingPro || pendingInviteToken) {
+            clearPendingInvite()
+          }
 
           // Auth exists but no profile → INSERT only, never overwrite existing role
           const { error: createErr } = await supabase.from('profiles').insert({

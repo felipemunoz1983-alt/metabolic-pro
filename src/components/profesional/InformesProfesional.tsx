@@ -11,7 +11,7 @@
  * Backend: usa /api/informes/upload, /list, /[id]/url, DELETE /[id]
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Upload, Eye, Trash2, X, Loader2, AlertCircle,
@@ -48,6 +48,24 @@ export function InformesProfesional({ pacienteId, pacienteNombre }: Props) {
   const [error, setError]       = useState<string | null>(null)
   const [showUpload, setShowUpload] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  // Modal de confirmación in-app reemplazando confirm() nativo del browser.
+  // El confirm() bloqueaba el thread, se veía como del SO (no premium) y no
+  // ofrecía cancelar elegante.
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; titulo: string } | null>(null)
+  // Toast in-app reemplazando alert(). Auto-hide 3.5s.
+  // Counter incremental para el id (vs Date.now() que viola react-hooks/purity).
+  const toastIdRef = useRef(0)
+  const [toast, setToast] = useState<{ msg: string; kind: 'error' | 'info'; id: number } | null>(null)
+  function showToast(msg: string, kind: 'error' | 'info' = 'info') {
+    toastIdRef.current++
+    setToast({ msg, kind, id: toastIdRef.current })
+  }
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const fetchInformes = useCallback(async () => {
     setLoading(true)
@@ -74,20 +92,27 @@ export function InformesProfesional({ pacienteId, pacienteNombre }: Props) {
       const data = await res.json()
       window.open(data.url, '_blank', 'noopener,noreferrer')
     } catch (e) {
-      alert(`No se pudo abrir el informe: ${e instanceof Error ? e.message : 'error'}`)
+      showToast(`No se pudo abrir el informe: ${e instanceof Error ? e.message : 'error'}`, 'error')
     }
   }
 
-  async function handleDelete(id: string, titulo: string) {
-    const confirmed = confirm(`¿Borrar definitivamente el informe "${titulo}"?\n\nEsta acción NO se puede deshacer. El paciente dejará de verlo.`)
-    if (!confirmed) return
+  // handleDelete ahora dispara el modal de confirmación in-app en vez de confirm() nativo.
+  function handleDelete(id: string, titulo: string) {
+    setConfirmDelete({ id, titulo })
+  }
+
+  async function executeDelete() {
+    if (!confirmDelete) return
+    const { id } = confirmDelete
+    setConfirmDelete(null)
     setDeletingId(id)
     try {
       const res = await fetch(`/api/informes/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       setInformes(prev => prev.filter(i => i.id !== id))
+      showToast('Informe eliminado', 'info')
     } catch (e) {
-      alert(`No se pudo borrar: ${e instanceof Error ? e.message : 'error'}`)
+      showToast(`No se pudo borrar: ${e instanceof Error ? e.message : 'error'}`, 'error')
     } finally {
       setDeletingId(null)
     }
@@ -207,6 +232,77 @@ export function InformesProfesional({ pacienteId, pacienteNombre }: Props) {
               fetchInformes()
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Modal de confirmación de borrado (reemplaza confirm() nativo).
+          Coherente visualmente con showUnlink de PanelProfesional. */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4"
+            onClick={() => setConfirmDelete(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={e => e.stopPropagation()}
+              className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6"
+              role="alertdialog"
+              aria-labelledby="confirm-delete-title"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center">
+                  <Trash2 size={18} className="text-rose-600" />
+                </div>
+                <h3 id="confirm-delete-title" className="text-base font-black text-[#0C1F2C]">Borrar informe</h3>
+              </div>
+              <p className="text-sm text-[#4A6070] leading-relaxed mb-1">
+                ¿Borrar definitivamente <strong>&ldquo;{confirmDelete.titulo}&rdquo;</strong>?
+              </p>
+              <p className="text-xs text-[#8BA5BE] mb-5">
+                Esta acción no se puede deshacer. El paciente dejará de verlo en su app.
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setConfirmDelete(null)}
+                  className="flex-1 py-2.5 text-sm font-bold rounded-xl border border-[#E2ECF4] text-[#6B7C93] hover:bg-[#F8FBFD]"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={executeDelete}
+                  className="flex-1 py-2.5 text-sm font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white"
+                >
+                  Borrar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toast in-app (reemplaza alert()) */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            role="status"
+            aria-live="polite"
+            className={cn(
+              'fixed bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold max-w-[90vw]',
+              toast.kind === 'error' ? 'bg-rose-600 text-white' : 'bg-[#0C3547] text-white'
+            )}
+          >
+            {toast.msg}
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

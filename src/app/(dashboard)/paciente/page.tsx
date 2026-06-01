@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { createClient, getUserSafe } from '@/lib/supabase'
+import { readPendingInvite, clearPendingInvite } from '@/lib/pendingInvite'
 import { Sidebar } from '@/components/layout/Sidebar'
 import type { Tab } from '@/components/layout/types'
 import { PlanGenerator } from '@/components/plan/PlanGenerator'
@@ -91,6 +92,75 @@ interface TopBarProps {
   onAvatarClick: () => void
 }
 
+/** Botón "Avisar a mi nutricionista" del empty state. Dispara push + email al pro.
+ *  Rate limit suave 24h via localStorage (el endpoint NO bloquea — esto evita spam
+ *  desde el cliente y comunica claridad: "ya avisaste, espera"). */
+function PingProfessionalButton() {
+  const LS_KEY = 'last-pinged-professional-at'
+  // Lazy initializer del useState lee directo de localStorage para no
+  // necesitar un useEffect que setee 'rate-limited' (eslint react-hooks/
+  // set-state-in-effect prohibe ese patrón). Más limpio y evita un render
+  // extra para mostrar el estado correcto desde el primer paint.
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error' | 'rate-limited'>(() => {
+    if (typeof window === 'undefined') return 'idle'
+    try {
+      const raw = window.localStorage.getItem(LS_KEY)
+      if (!raw) return 'idle'
+      const last = Number(raw)
+      if (!Number.isFinite(last)) return 'idle'
+      const elapsed = Date.now() - last
+      return elapsed < 24 * 60 * 60 * 1000 ? 'rate-limited' : 'idle'
+    } catch { return 'idle' }
+  })
+  const [errorMsg, setErrorMsg] = useState<string>('')
+
+  async function handlePing() {
+    setState('sending')
+    setErrorMsg('')
+    try {
+      const res = await fetch('/api/notify/professional/ping', { method: 'POST' })
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({})) as { error?: string }
+        throw new Error(j.error ?? `HTTP ${res.status}`)
+      }
+      window.localStorage.setItem(LS_KEY, String(Date.now()))
+      setState('sent')
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : 'error')
+      setState('error')
+    }
+  }
+
+  if (state === 'sent') {
+    return (
+      <div className="bg-green-50 border border-green-200 text-green-700 text-sm font-bold px-5 py-2.5 rounded-xl">
+        ✅ Tu nutricionista fue notificado
+      </div>
+    )
+  }
+  if (state === 'rate-limited') {
+    return (
+      <div className="bg-[#F8FBFD] border border-[#E2ECF4] text-[#8BA5BE] text-xs font-medium px-4 py-2.5 rounded-xl">
+        Ya avisaste a tu nutricionista hace poco. Vuelve a intentar mañana.
+      </div>
+    )
+  }
+  return (
+    <>
+      <button
+        onClick={handlePing}
+        disabled={state === 'sending'}
+        className="flex items-center gap-2 bg-[#29ABE2] hover:bg-[#1a8fc2] disabled:bg-[#B8E3F4] text-white text-sm font-bold px-5 py-2.5 rounded-xl transition shadow"
+      >
+        {state === 'sending' ? '⏳ Enviando...' : '👋 Avisar a mi nutricionista'}
+      </button>
+      {state === 'error' && (
+        <p className="text-xs text-rose-600 mt-2">No se pudo enviar: {errorMsg}</p>
+      )}
+    </>
+  )
+}
+
 function TopBar({
   activeTab, profile,
   notifications, readIds, loadingNotifs,
@@ -158,11 +228,19 @@ function TopBar({
             onClick={onAvatarClick}
             title="Mi perfil"
             aria-label="Abrir mi perfil"
-            className={`w-8 h-8 rounded-full bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] flex items-center justify-center text-white text-[11px] font-bold shadow hover:scale-105 transition-transform ${
+            // Tap target 44x44 (Apple/Google guideline) en lugar de 32x32 anterior.
+            // El avatar es la ÚNICA forma de llegar al perfil en mobile (BottomNav
+            // no lo incluye); con 32px era invisible/inalcanzable para mucho paciente.
+            // Avatar visual de 36px adentro de un padding-clickeable más grande.
+            className={`w-11 h-11 -mr-1 rounded-full flex items-center justify-center transition-transform hover:scale-105 ${
               activeTab === 'perfil' ? 'ring-2 ring-[#29ABE2] ring-offset-2' : ''
             }`}
           >
-            {profile.nombre?.charAt(0).toUpperCase() || 'U'}
+            <span
+              className="w-9 h-9 rounded-full bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] flex items-center justify-center text-white text-[12px] font-bold shadow"
+            >
+              {profile.nombre?.charAt(0).toUpperCase() || 'U'}
+            </span>
           </button>
         )}
       </div>
@@ -246,27 +324,14 @@ export default function PacientePage() {
         // Auth user exists but no profile → create minimal profile (INSERT only, never overwrite)
         if (!profileData) {
           // Check for pending invite from email-confirmation flow (set by register/page.tsx)
-          let pendingPro: string | null = null
-          let pendingRole = 'individual'
-          let pendingNombre = ''
-          let pendingInviteToken: string | null = null
-          try {
-            // Check localStorage first (cross-tab safe), fall back to sessionStorage (legacy)
-            pendingPro          = localStorage.getItem('pendingProfessionalId') ?? sessionStorage.getItem('pendingProfessionalId')
-            pendingRole         = localStorage.getItem('pendingRole') ?? sessionStorage.getItem('pendingRole') ?? 'individual'
-            pendingNombre       = localStorage.getItem('pendingNombre') ?? sessionStorage.getItem('pendingNombre') ?? ''
-            pendingInviteToken  = localStorage.getItem('pendingInviteToken') ?? sessionStorage.getItem('pendingInviteToken')
-            if (pendingPro) {
-              localStorage.removeItem('pendingProfessionalId')
-              localStorage.removeItem('pendingRole')
-              localStorage.removeItem('pendingNombre')
-              localStorage.removeItem('pendingInviteToken')
-              sessionStorage.removeItem('pendingProfessionalId')
-              sessionStorage.removeItem('pendingRole')
-              sessionStorage.removeItem('pendingNombre')
-              sessionStorage.removeItem('pendingInviteToken')
-            }
-          } catch { /* storage unavailable */ }
+          // Helper unificado: lee invite desde URL ?invite=... + localStorage + sessionStorage.
+          // Cubre el caso cross-device: paciente abre email de invitación en celular pero
+          // se registra/confirma en otro dispositivo → URL preserva el token aunque
+          // localStorage no.
+          const { token: pendingInviteToken, pro: pendingPro, role: pendingRole, nombre: pendingNombre } = readPendingInvite()
+          if (pendingPro || pendingInviteToken) {
+            clearPendingInvite()
+          }
 
           const { data: created, error: createErr } = await supabase
             .from('profiles')
@@ -627,13 +692,21 @@ export default function PacientePage() {
                       <p className="text-sm text-[#8BA5BE] max-w-xs leading-relaxed mb-6">
                         Tu nutricionista está preparando tu plan alimentario personalizado. Aparecerá aquí en cuanto esté listo.
                       </p>
-                      <div className="bg-white border border-[#E2ECF4] rounded-2xl p-4 text-left max-w-xs w-full space-y-2">
+                      <div className="bg-white border border-[#E2ECF4] rounded-2xl p-4 text-left max-w-xs w-full space-y-2 mb-5">
                         {['Plan semanal detallado', 'Lista de compras automática', 'Seguimiento de adherencia'].map(f => (
                           <div key={f} className="flex items-center gap-2.5 text-xs text-[#6B7C93]">
                             <span className="text-[#29ABE2]">✓</span> {f}
                           </div>
                         ))}
                       </div>
+                      {/* Botón "Avisar a mi nutricionista" — dispara push+email al profesional.
+                          Detectado en auditoría como fricción ALTA: paciente quedaba en empty
+                          state sin acción → abandono del trial. Rate limit 24h en localStorage
+                          para evitar spam (el endpoint NO bloquea, confía en el cliente). */}
+                      <PingProfessionalButton />
+                      <p className="text-[10px] text-[#8BA5BE] mt-2 max-w-xs">
+                        Tu nutricionista recibe una notificación + email para activar tu plan.
+                      </p>
                       {/* Banco de opciones — empty-state amigable mientras espera */}
                       <div className="mt-8 w-full max-w-xl text-left">
                         <BancoPaciente />

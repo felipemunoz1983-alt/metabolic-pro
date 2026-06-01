@@ -11,7 +11,7 @@
  * - Empty state amigable cuando no hay informes
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, Calendar, Loader2, AlertCircle, X, ExternalLink, Download,
@@ -48,6 +48,11 @@ export function Evaluaciones() {
   const [filterTipo, setFilterTipo] = useState<TipoInforme | 'todos'>('todos')
   const [viewer, setViewer]     = useState<ViewerState | null>(null)
   const [opening, setOpening]   = useState<string | null>(null)
+  // Toast in-app reemplazando alert() nativo del browser, que rompía la
+  // estética premium de la app. Auto-hide a los 3.5s.
+  // Counter incremental para id (vs Date.now() que viola react-hooks/purity).
+  const toastIdRef              = useRef(0)
+  const [toast, setToast]       = useState<{ msg: string; kind: 'error' | 'info'; id: number } | null>(null)
 
   const fetchInformes = useCallback(async () => {
     setLoading(true)
@@ -69,22 +74,26 @@ export function Evaluaciones() {
 
   // Deep-link desde push notification: /paciente?tab=evaluaciones&informe=<id>
   // Cuando la lista termina de cargar, si la URL trae ?informe=, abrimos ese PDF.
-  // El parámetro se consume una sola vez (cleanup con replaceState) para evitar
-  // reapertura al cambiar de tab y volver.
+  // GARANTÍA one-shot: useRef bloquea reapertura aunque el useEffect se reevalúe
+  // por cambio de viewer/informes. Sin esto, cerrar el viewer y volver al tab
+  // podía reabrir el PDF al re-evaluar las deps.
+  const informeAutoOpenedRef = useRef(false)
   useEffect(() => {
+    if (informeAutoOpenedRef.current) return
     if (loading || informes.length === 0 || viewer) return
     const params = new URLSearchParams(window.location.search)
     const target = params.get('informe')
     if (!target) return
     const inf = informes.find(i => i.id === target)
     if (!inf) return
-    // Limpia el query param para que no se reabra al re-renderizar
+    // Marcar como consumido ANTES de abrir, por si el handler dispara re-render.
+    informeAutoOpenedRef.current = true
+    // Limpia el query param también, para que no se reabra al refrescar la página.
     params.delete('informe')
     const newSearch = params.toString()
     const newUrl = window.location.pathname + (newSearch ? `?${newSearch}` : '') + window.location.hash
     window.history.replaceState({}, '', newUrl)
     handleOpen(inf)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleOpen no es estable y queremos disparar solo cuando llegan los informes
   }, [loading, informes, viewer])
 
   async function handleOpen(inf: InformeAntropometrico) {
@@ -101,11 +110,23 @@ export function Evaluaciones() {
           : i,
       ))
     } catch (e) {
-      alert(`No se pudo abrir: ${e instanceof Error ? e.message : 'error'}`)
+      toastIdRef.current++
+      setToast({
+        msg: `No se pudo abrir: ${e instanceof Error ? e.message : 'error'}`,
+        kind: 'error',
+        id: toastIdRef.current,
+      })
     } finally {
       setOpening(null)
     }
   }
+
+  // Auto-hide del toast a los 3.5s
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 3500)
+    return () => clearTimeout(t)
+  }, [toast])
 
   // Filtrar + agrupar por mes
   const grouped = useMemo(() => {
@@ -305,6 +326,29 @@ export function Evaluaciones() {
       {/* Visor inline modal */}
       <AnimatePresence>
         {viewer && <PdfViewerModal viewer={viewer} onClose={() => setViewer(null)} />}
+      </AnimatePresence>
+
+      {/* Toast in-app reemplazando alert() nativo. Patrón consistente con
+          PlanGenerator. role="status" + aria-live para accesibilidad. */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={toast.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            role="status"
+            aria-live="polite"
+            className={cn(
+              'fixed bottom-20 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-semibold max-w-[90vw]',
+              toast.kind === 'error'
+                ? 'bg-rose-600 text-white'
+                : 'bg-[#0C3547] text-white'
+            )}
+          >
+            {toast.msg}
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   )

@@ -920,35 +920,47 @@ function CatalogPicker<K extends string>({
 interface Props {
   onResult: (result: NutritionResult, form: FormData) => void
   initialData?: Partial<FormData>
+  /** ID del paciente (cuando el profesional crea/edita plan para alguien).
+   *  Se usa para namespacear el draft de sessionStorage y evitar contaminación
+   *  cruzada entre pacientes. Si undefined → key 'self' (paciente individual).
+   *  CRÍTICO clínicamente: sin esto, datos digestivos/suplementación de paciente A
+   *  quedaban hidratados al abrir plan de paciente B. */
+  patientId?: string
 }
 
-// Key para persistir el form en sessionStorage. Sobrevive a remounts del
-// componente (por ej. cambios de pestaña o reroute de Next.js App Router) y
-// a refreshes accidentales. Se limpia cuando handleGenerate completa.
-const FORM_DRAFT_KEY = 'plan-generator-draft-v1'
-const STEP_DRAFT_KEY = 'plan-generator-step-v1'
+// Keys para persistir el form/step en sessionStorage. Sobreviven a remounts
+// (cambios de tab o reroute App Router) y a refreshes accidentales.
+// IMPORTANTE: namespaceadas por patientId para evitar contaminación cruzada.
+// Bug previo: una key global hacía que datos clínicos de paciente A quedaran
+// hidratados al abrir el wizard para paciente B (riesgo clínico real).
+function formDraftKey(patientId?: string): string {
+  return `plan-generator-draft-v1:${patientId ?? 'self'}`
+}
+function stepDraftKey(patientId?: string): string {
+  return `plan-generator-step-v1:${patientId ?? 'self'}`
+}
 
-function readDraftForm(): Partial<FormData> | null {
+function readDraftForm(patientId?: string): Partial<FormData> | null {
   if (typeof window === 'undefined') return null
   try {
-    const raw = window.sessionStorage.getItem(FORM_DRAFT_KEY)
+    const raw = window.sessionStorage.getItem(formDraftKey(patientId))
     return raw ? (JSON.parse(raw) as Partial<FormData>) : null
   } catch { return null }
 }
-function readDraftStep(): number | null {
+function readDraftStep(patientId?: string): number | null {
   if (typeof window === 'undefined') return null
-  const raw = window.sessionStorage.getItem(STEP_DRAFT_KEY)
+  const raw = window.sessionStorage.getItem(stepDraftKey(patientId))
   const n = raw ? Number(raw) : NaN
   return Number.isFinite(n) ? n : null
 }
 
-export function PlanGenerator({ onResult, initialData }: Props) {
-  // Lazy initializer: si hay un draft previo en sessionStorage (porque el
-  // componente se remontó o el usuario refrescó), lo restauramos antes de
-  // mezclar con initialData. Así NO se pierden los datos del usuario.
-  const [step, setStep] = useState<number>(() => readDraftStep() ?? 0)
+export function PlanGenerator({ onResult, initialData, patientId }: Props) {
+  // Lazy initializer: si hay un draft previo en sessionStorage PARA ESTE PACIENTE,
+  // lo restauramos antes de mezclar con initialData. Así NO se pierden los datos
+  // del usuario, pero tampoco se cruzan entre pacientes distintos.
+  const [step, setStep] = useState<number>(() => readDraftStep(patientId) ?? 0)
   const [form, setForm] = useState<Partial<FormData>>(() => {
-    const draft = readDraftForm()
+    const draft = readDraftForm(patientId)
     return { ...defaultForm, ...initialData, ...(draft ?? {}) }
   })
   const [toast, setToast] = useState<{ msg: string; id: number } | null>(null)
@@ -958,18 +970,18 @@ export function PlanGenerator({ onResult, initialData }: Props) {
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      window.sessionStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(form))
+      window.sessionStorage.setItem(formDraftKey(patientId), JSON.stringify(form))
     } catch { /* quota exceeded o storage deshabilitado: degradar silencioso */ }
-  }, [form])
+  }, [form, patientId])
 
   // Persistir step también, para que un remount no devuelva al paciente
   // al paso 0 cuando ya iba avanzado.
   useEffect(() => {
     if (typeof window === 'undefined') return
     try {
-      window.sessionStorage.setItem(STEP_DRAFT_KEY, String(step))
+      window.sessionStorage.setItem(stepDraftKey(patientId), String(step))
     } catch { /* idem */ }
-  }, [step])
+  }, [step, patientId])
 
   // Mensajes humanos por campo para el toast de confirmación visual
   const TOAST_LABELS: Partial<Record<keyof FormData, (v: unknown) => string>> = {
@@ -1049,8 +1061,8 @@ export function PlanGenerator({ onResult, initialData }: Props) {
     const result = calcularNutricion(f)
     // Plan generado con éxito → limpiar draft del wizard (ya no se necesita)
     try {
-      window.sessionStorage.removeItem(FORM_DRAFT_KEY)
-      window.sessionStorage.removeItem(STEP_DRAFT_KEY)
+      window.sessionStorage.removeItem(formDraftKey(patientId))
+      window.sessionStorage.removeItem(stepDraftKey(patientId))
     } catch { /* noop */ }
     onResult(result, f)
   }
