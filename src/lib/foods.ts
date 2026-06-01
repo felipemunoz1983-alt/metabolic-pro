@@ -965,7 +965,10 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Colesterol:     11,5 mg
     baseKcal: 98, p: 10, c: 10, g: 2,
     porcionFija: true, // 115g pote — no escalable al slot
-    foto: USP('1488477181946-6428a0291777'),
+    // Etiqueta original del producto: foto del envase real con marca Goodnes Protein,
+    // sabor caramelo y sellos chilenos. Si el archivo aún no está, el componente
+    // hace fallback al placeholder (gradiente cyan + inicial) gracias al onError.
+    foto: IMG + 'goodnes_protein_caramelo.webp',
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'],
     alergenosNota: 'Producto industrial — contiene lácteos. 7 g de azúcares totales por porción (no es "sin azúcar"). Bajo en grasa y sodio. Verifica contraindicaciones si tienes intolerancia a la lactosa.',
@@ -1011,7 +1014,9 @@ export const colacionesOpts: Record<string, MealOption> = {
     items: ['1 galletón Quaker Casero Chips Chocolate (40 g)'],
     baseKcal: 173, p: 2.8, c: 22, g: 7.6,
     porcionFija: true, // 40g unidad — no escalable al slot
-    foto: USP('1499636136210-6f4ee915583e'), // placeholder: chocolate chip cookies — reemplazar con foto real del producto Quaker
+    // Etiqueta original del producto: envase Quaker Casero Chips Chocolate con sellos.
+    // Si el archivo aún no está subido, fallback automático al placeholder (onError).
+    foto: IMG + 'galleton_quaker_casero.webp',
     tiempo: '1 min',
     pasos: [
       'Abrir el envase y consumir directamente.',

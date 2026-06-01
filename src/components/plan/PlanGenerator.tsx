@@ -320,32 +320,41 @@ function MealChips({
                   : 'border-[#D6E3ED] hover:border-[#29ABE2]/60 active:scale-[0.98]'
               )}
             >
-              {/* Imagen cuadrada arriba (o placeholder con inicial) */}
+              {/* Imagen cuadrada arriba (o placeholder con inicial).
+                  onError: si la URL falla (ej. archivo aún no subido a /public/img/),
+                  ocultamos la <img> y cae el placeholder de fondo (gradiente + inicial). */}
               <div className="relative w-full aspect-square bg-gradient-to-br from-[#E5F4FB] to-[#D6E3ED] overflow-hidden">
-                {opt.foto ? (
+                {/* Placeholder con inicial — siempre presente como capa de fondo */}
+                <div className="absolute inset-0 flex items-center justify-center text-[#29ABE2] text-2xl font-bold pointer-events-none">
+                  {opt.label.replace(/^[^\p{L}]+/u, '').charAt(0).toUpperCase() || '?'}
+                </div>
+                {opt.foto && (
                   <img
                     src={opt.foto}
                     alt=""
-                    className="w-full h-full object-cover"
+                    className="relative w-full h-full object-cover"
                     loading="lazy"
                     referrerPolicy="no-referrer"
+                    onError={e => {
+                      // Falla de carga → ocultamos la img para que se vea el placeholder.
+                      ;(e.currentTarget as HTMLImageElement).style.display = 'none'
+                    }}
                   />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[#29ABE2] text-2xl font-bold">
-                    {opt.label.charAt(0)}
-                  </div>
                 )}
                 {/* Check overlay cuando seleccionado */}
                 {active && (
-                  <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#29ABE2] text-white flex items-center justify-center text-[11px] font-bold shadow">
+                  <div className="absolute top-1 right-1 w-5 h-5 rounded-full bg-[#29ABE2] text-white flex items-center justify-center text-[11px] font-bold shadow z-10">
                     ✓
                   </div>
                 )}
               </div>
-              {/* Label abajo (2 líneas máx) */}
+              {/* Label abajo (3 líneas máx — antes era 2 y cortaba textos largos
+                  tipo "Pollo a la plancha + arroz integral + ensalada" generando
+                  "..." en medio de la palabra). min-h ajustado para que la card
+                  no salte de alto cuando algunas opciones son cortas. */}
               <div
                 className={cn(
-                  'px-2 py-1.5 text-[11px] font-semibold leading-tight line-clamp-2 min-h-[36px]',
+                  'px-2 py-1.5 text-[11px] font-semibold leading-snug line-clamp-3 min-h-[48px] break-words',
                   active ? 'text-[#0C3547] bg-[#29ABE2]/8' : 'text-[#4a6b80]'
                 )}
               >
