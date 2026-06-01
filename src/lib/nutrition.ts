@@ -62,6 +62,17 @@ export interface FormData {
   digIntolerancias: string[]
   digDiag: 'no' | 'si_sibo' | 'si_sii' | 'sospecha'
   digHorario: string[]
+  /** Cirugía bariátrica previa. Default 'ninguna'.
+   *  Si != 'ninguna' Y digFasePostBariatrica != 'no_aplica', el motor:
+   *   - Reduce volumenes de comida segun fase (Mechanick 2019)
+   *   - Recomienda 4-6 comidas pequeñas (no 2-3 grandes)
+   *   - Ajusta proteina objetivo (60-80g sleeve, 80-100g bypass)
+   *  Referencias completas en src/lib/bariatrica.ts */
+  digCirugiaBariatrica?: import('./bariatrica').CirugiaBariatricaTipo
+  /** Fase post-operatoria actual. Default 'no_aplica'.
+   *  Las fases 1-5 son progresivas (días 1-2 a semanas 7-8).
+   *  'mantenimiento' aplica a >2 meses post-op (capacidad gástrica estable). */
+  digFasePostBariatrica?: import('./bariatrica').FasePostBariatrica
   // ── Suplementación segura ──
   supEmbarazo: 'no' | 'embarazo' | 'lactancia' | 'planificando'
   supCronicas: string[]

@@ -4,6 +4,13 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento } from '@/lib/nutrition'
+import {
+  CIRUGIA_BARIATRICA_LABELS,
+  FASE_POST_LABELS,
+  VOLUMEN_MAX_POR_COMIDA_ML,
+  type CirugiaBariatricaTipo,
+  type FasePostBariatrica,
+} from '@/lib/bariatrica'
 import type { MealOption, UltraOption, YogurTipo, PanTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
 import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
@@ -2167,6 +2174,60 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                   { value: 'no_aplica',     label: '✅ No tengo molestias' },
                 ]}
               />
+
+              {/* Cirugía bariátrica: dispara escalado de volúmenes según fase post-op.
+                  Referencias clínicas en src/lib/bariatrica.ts (Mechanick 2019, ASMBS 2016). */}
+              <RadioChips
+                label="🏥 ¿Cirugía bariátrica previa?"
+                value={(form.digCirugiaBariatrica ?? 'ninguna') as CirugiaBariatricaTipo}
+                onChange={v => {
+                  set('digCirugiaBariatrica', v as CirugiaBariatricaTipo)
+                  // Si eligió "ninguna", también resetear la fase
+                  if (v === 'ninguna') set('digFasePostBariatrica', 'no_aplica' as FasePostBariatrica)
+                }}
+                options={(Object.entries(CIRUGIA_BARIATRICA_LABELS) as [CirugiaBariatricaTipo, string][]).map(([value, label]) => ({ value, label }))}
+              />
+
+              {/* Fase post-op solo si hay cirugía declarada */}
+              {form.digCirugiaBariatrica && form.digCirugiaBariatrica !== 'ninguna' && (
+                <>
+                  <RadioChips
+                    label="📅 Tiempo desde la cirugía / fase actual"
+                    value={(form.digFasePostBariatrica ?? 'mantenimiento') as FasePostBariatrica}
+                    onChange={v => set('digFasePostBariatrica', v as FasePostBariatrica)}
+                    options={
+                      (Object.entries(FASE_POST_LABELS) as [FasePostBariatrica, typeof FASE_POST_LABELS[FasePostBariatrica]][])
+                        .filter(([k]) => k !== 'no_aplica')
+                        .map(([value, meta]) => ({
+                          value,
+                          label: `${meta.label} · ${meta.periodo}`,
+                        }))
+                    }
+                  />
+                  <div className="flex gap-2 items-start bg-amber-50 border border-amber-300 rounded-xl p-3">
+                    <span className="text-base flex-shrink-0">⚠️</span>
+                    <div className="text-xs text-amber-900 space-y-1.5">
+                      <p className="font-bold">Plan adaptado a tu fase post-bariátrica</p>
+                      <p>
+                        Los volúmenes de alimento se ajustarán automáticamente para no exceder
+                        la capacidad gástrica de tu fase (
+                        {form.digFasePostBariatrica && form.digFasePostBariatrica !== 'no_aplica' ? (
+                          <>
+                            máx. <strong>{VOLUMEN_MAX_POR_COMIDA_ML[form.digFasePostBariatrica]} ml/comida</strong> ·{' '}
+                            {FASE_POST_LABELS[form.digFasePostBariatrica].textura}
+                          </>
+                        ) : 'según fase'}
+                        ).
+                      </p>
+                      <p className="text-amber-800">
+                        <strong>Importante:</strong> esta adaptación es una sugerencia. Tu cirujano
+                        o nutricionista a cargo siempre tiene la palabra final sobre tu evolución
+                        post-operatoria.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
 

@@ -2,6 +2,7 @@
 
 import type { FormData } from './nutrition'
 import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo } from './foods'
+import { factorEscalaBariatrica, estimarVolumenPlatoMl } from './bariatrica'
 import {
   desayunosOpts,
   colacionesOpts,
@@ -219,6 +220,25 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   const intol = form.digIntolerancias ?? []
   const bloquearSIBO = form.digDiag === 'si_sibo' || form.digDiag === 'si_sii' || form.digHinchazon === 'diaria'
   const bloquearAltaGrasaCena = form.digReflujo === 'frecuente'
+  // Post-bariátrica: si paciente tuvo cirugía Y declaró fase, escalamos los
+  // gramajes de cada plato para no exceder el volumen máximo gástrico de su fase.
+  // Referencias en src/lib/bariatrica.ts (Mechanick 2019, ASMBS 2016, BOMSS 2020).
+  const aplicaBariatrica = !!(
+    form.digCirugiaBariatrica
+    && form.digCirugiaBariatrica !== 'ninguna'
+    && form.digFasePostBariatrica
+    && form.digFasePostBariatrica !== 'no_aplica'
+  )
+  const escalarBariatrica = (carneG?: number, carboG?: number): { carne?: number; carbo?: number } => {
+    if (!aplicaBariatrica) return { carne: carneG, carbo: carboG }
+    const volEst = estimarVolumenPlatoMl(carneG, carboG, 100)
+    const factor = factorEscalaBariatrica(form.digCirugiaBariatrica, form.digFasePostBariatrica, volEst)
+    if (factor >= 1) return { carne: carneG, carbo: carboG }
+    return {
+      carne: carneG !== undefined ? Math.round(carneG * factor) : undefined,
+      carbo: carboG !== undefined ? Math.round(carboG * factor) : undefined,
+    }
+  }
   // Resolver momentos donde el paciente incorpora whey. Si esta indicado pero no
   // selecciono momentos -> default ['desayuno', 'colacion_am', 'colacion_pm'].
   const wheyMomentos = wheyMomentosResolved(form)
@@ -293,7 +313,8 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, form.carneGramosAlmuerzo, form.carboGramosAlmuerzo, form.panTipo))
+        const { carne: carneAlm, carbo: carboAlm } = escalarBariatrica(form.carneGramosAlmuerzo, form.carboGramosAlmuerzo)
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, carneAlm, carboAlm, form.panTipo))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
@@ -310,7 +331,8 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         // fallback explicito, el motor usaba carboGramosBase de cada plato (variable: 100/180/250)
         // generando inconsistencia con la UI que muestra "150g" como default.
         const carboCenaFinal = form.carboGramosCena ?? (cena.tieneCarboPrincipal ? 150 : undefined)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, form.carneGramosCena, carboCenaFinal, form.panTipo))
+        const { carne: carneCen, carbo: carboCen } = escalarBariatrica(form.carneGramosCena, carboCenaFinal)
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
