@@ -134,24 +134,24 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
   },
   hidrolizado: {
     // Optimum Nutrition Platinum HydroWhey — datos VERIFICADOS contra
-    // allnutrition.cl (Chile 2026). Formato 3.5 lb (1.6 kg, 40 servings),
-    // sabor Chocolate. El whey hidrolizado más prestigioso del mercado.
+    // etiqueta oficial chilena (foto enviada por Felipe). Formato 3.5 lb
+    // (1.6 kg, 40 servings), sabor Chocolate.
     id: 'hidrolizado',
     label: 'ON Platinum HydroWhey',
     emoji: '🛡️',
     marca: 'Optimum Nutrition Platinum HydroWhey · 3.5 lb (1.6 kg) · Chocolate',
-    porcionG: 39, // 1 scoop tipico
+    porcionG: 41, // etiqueta oficial: 1 medida dosificadora = 41g
     kcal: 140,
     p: 30,
-    c: 2,
-    g: 1,
+    c: 2.1, // hidratos disponibles (1g azúcar + 0.9g fibra)
+    g: 1,   // grasa total (0.5g saturada · 35mg colesterol)
     lactosaG: 0, // hidrolizado + isolate = lactosa residual mínima/no detectable
     diaas: 1.09,
     absorcionMin: 20, // hidrólisis enzimática acelera al máximo
     precioCLP: 123990, // allnutrition.cl 2026, 3.5lb Chocolate
-    badge: '30g prot · Pre-digerido · 40 servings · Absorción 20min',
+    badge: '30g prot · Pre-digerido · 1.86g BCAAs añadidos',
     nota:
-      '🏥 ON Platinum HydroWhey — péptidos pre-digeridos por hidrólisis enzimática + enzimas digestivas + BCAAs añadidos. Por scoop 39g: 140 kcal · 30g proteína · 2g CH (1g azúcar) · 1g grasa · 210mg sodio. 40 servings en envase de 3.5lb. Absorción más rápida del catálogo (~20 min) — ideal post-entreno premium. Tolerado por la mayoría de SIBO/SII y alergia leve a leche. Sabor más amargo que el isolate puro por la hidrólisis. ⚠️ Contiene leche y soya (lecitina). Precio premium ($124k).',
+      '🏥 ON Platinum HydroWhey — Aislado de proteína de suero HIDROLIZADO (1er ingrediente etiqueta) + BCAAs añadidos (L-leucina + L-isoleucina + L-valina) + crema cremante. Por scoop 41g: 140 kcal · 30g proteína · 2.1g CH (1g azúcar + 0.9g fibra) · 1g grasa (0.5g saturada · 35mg colesterol) · 150mg sodio · 160mg calcio (20% DDR) · 0.8mg hierro (6% DDR) · 270mg potasio. BCAA específicos: 840mg leucina + 200mg isoleucina + 820mg valina = 1.86g total. 40 servings en envase de 3.5lb. Absorción más rápida del catálogo (~20 min). Tolerado por la mayoría de SIBO/SII. Edulcorantes: sucralosa (60mg) + acesulfamo K (40mg). ⚠️ Contiene leche, soya (lecitina) y fenilalanina.',
     foto: '/img/whey_hidrolizado.jpg',
     vegano: false,
     contiene: ['soya'],
