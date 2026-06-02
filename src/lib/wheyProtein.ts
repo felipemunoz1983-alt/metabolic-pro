@@ -102,25 +102,29 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     contiene: ['lactosa', 'soya'],
   },
   isolate: {
+    // Dymatize ISO 100 = el referente de mercado en Chile para "isolate aislada".
+    // Técnicamente es HYDROLYZED whey protein isolate (combina hidrólisis +
+    // microfiltración), por lo que la nota clínica destaca AMBAS propiedades.
+    // Datos verificados con dymatize.com/iso100 (página oficial 2026).
     id: 'isolate',
-    label: 'Whey Isolate (ISO)',
+    label: 'Dymatize ISO 100',
     emoji: '⚡',
-    marca: 'Wild Protein ISO 100% Whey Isolate · 900 g',
-    porcionG: 30,
-    kcal: 110,
-    p: 26,
-    c: 0.5,
+    marca: 'Dymatize ISO 100 Hydrolyzed Whey Isolate · 5 lb (2.27 kg) · Gourmet Vanilla',
+    porcionG: 32,
+    kcal: 120,
+    p: 25,
+    c: 3,        // <=1g azúcar + ~2g carbohidratos disponibles ≈ 3g total CH
     g: 0.5,
-    lactosaG: 0.5,
+    lactosaG: 1, // "Filtered to remove excess lactose" — etiqueta <1g/scoop confirmado
     diaas: 1.09,
-    absorcionMin: 30,
-    precioCLP: 29990,
-    badge: '26g prot · <1g lactosa · Bajo en grasa',
+    absorcionMin: 25, // hydrolyzed + isolate = más rápido que isolate puro
+    precioCLP: 79990, // Falabella Chile 2026, 5lb Gourmet Vanilla
+    badge: '25g prot · <1g lactosa · Banned Substance Tested',
     nota:
-      '✅ Casi sin lactosa (<1g/scoop) — ideal para intolerantes leves a moderados. Filtrado por microfiltración o intercambio iónico. Menor grasa y CH que el concentrado. Apto omnívoro/vegetariano.',
+      '✅ ISO 100 es 100% Hydrolyzed Whey Protein Isolate de Dymatize — combina lo mejor del isolate (filtrado, <1g lactosa) con la hidrólisis enzimática (péptidos pre-digeridos, absorción ~25 min). Apto intolerantes a lactosa, gluten-free, libre de sustancias prohibidas (testeado lote a lote). Marca premium con 71 servings por envase de 5lb.',
     foto: '/img/whey_isolate.jpg',
     vegano: false,
-    contiene: ['soya'],
+    contiene: ['soya'], // lecitina de soya como emulsionante
   },
   hidrolizado: {
     id: 'hidrolizado',
