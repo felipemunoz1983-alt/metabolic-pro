@@ -15,6 +15,7 @@
 import { motion } from 'framer-motion'
 import { BookOpen, Sparkles } from 'lucide-react'
 import { YogurComparativo } from './YogurComparativo'
+import { WheyComparativo } from './WheyComparativo'
 import type { FormData } from '@/lib/nutrition'
 
 interface Props {
@@ -53,13 +54,22 @@ export function EducacionHub({ form = {}, nombre }: Props) {
         </div>
       </motion.div>
 
-      {/* Guía: Comparador de lácteos proteicos */}
+      {/* Guía: Comparador de lácteos proteicos (yogures + bebidas) */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
       >
         <YogurComparativo form={form} defaultOpen />
+      </motion.div>
+
+      {/* Guía: Comparador de proteínas en polvo (whey + plant) */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.08 }}
+      >
+        <WheyComparativo form={form} defaultOpen />
       </motion.div>
 
       {/* Placeholder para futuras guías — visible para que el paciente sepa que

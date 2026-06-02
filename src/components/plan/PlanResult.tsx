@@ -10,6 +10,7 @@ import { WeeklyPlan } from './WeeklyPlan'
 import { MenuHoy } from './MenuHoy'
 import { ShoppingList } from './ShoppingList'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
+import { WheyComparativo } from '@/components/educacion/WheyComparativo'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -257,6 +258,18 @@ export function PlanResult({ result, form, onReset, userId }: Props) {
 
       {/* Productos Nutrevo recomendados según objetivo */}
       <NutrievoPanel objetivo={form.objetivo} />
+
+      {/* Comparador de proteína en polvo — solo si el profesional indicó whey
+          en el wizard. 4 opciones (concentrado / isolate / hidrolizado / vegana)
+          rankeadas según las condiciones digestivas del paciente:
+          intolerancia lactosa → ISO o hidrolizado · SIBO/SII → hidrolizado o
+          vegana · vegano → plant-based · sin restricción → concentrado.
+          El paciente decide cuál comprar con info clínica completa. */}
+      {form.wheyIndicado && (
+        <div className="mt-6">
+          <WheyComparativo form={form} defaultOpen />
+        </div>
+      )}
     </motion.div>
   )
 }
