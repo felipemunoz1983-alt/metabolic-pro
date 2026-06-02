@@ -153,25 +153,30 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     contiene: ['soya'],
   },
   vegana: {
+    // Optimum Nutrition Gold Standard 100% Plant Protein — la versión vegana
+    // del Gold Standard, blend triple: arveja + arroz integral + sacha inchi
+    // (este último es un superfood peruano rico en omega-3 y aminoácidos).
+    // Certificada USDA Organic + Non-GMO + sin gluten/lácteos/soya.
+    // Datos verificados con onelastrep.cl (Chile, 2026).
     id: 'vegana',
-    label: 'Proteína Vegana (Blend)',
+    label: 'ON Gold Standard 100% Plant',
     emoji: '🌱',
-    marca: 'Wild Protein Vegan · Arveja + Arroz · 900 g',
-    porcionG: 30,
-    kcal: 110,
-    p: 22,
-    c: 4,
-    g: 1.5,
+    marca: 'Optimum Nutrition Gold Standard 100% Plant Protein · 1.5 lb (680 g) · Rich Chocolate Fudge',
+    porcionG: 34,
+    kcal: 150,
+    p: 24,
+    c: 11,    // 4g azúcar + ~7g CH complejos (incluye fibra)
+    g: 3,     // 1g saturada
     lactosaG: 0,
-    diaas: 0.92, // blend pea+rice eleva el DIAAS vs pea solo (0.82)
+    diaas: 0.95, // blend triple pea+rice+sacha inchi eleva DIAAS vs pea solo (0.82)
     absorcionMin: 60,
-    precioCLP: 27990,
-    badge: '22g prot · 100% vegetal · Sin lactosa',
+    precioCLP: 48990, // OneLastRep CL 2026, 1.5lb (20 servings)
+    badge: '24g prot · USDA Organic · Sin lactosa/gluten/soya',
     nota:
-      '🌿 Combinación de proteína de arveja (rica en lisina) + arroz (rica en metionina) cubre todos los aminoácidos esenciales. Cero lactosa, cero derivados animales. Apto vegano, alergia a leche, SIBO severo. Sabor más herbal.',
+      '🌿 Gold Standard versión Plant: blend de arveja (lisina) + arroz integral (metionina) + sacha inchi (omega-3 + aminoácidos esenciales) cubre todos los EAA. 4g BCAAs naturales por scoop. Certificada USDA Organic + Non-GMO. Apto vegano, alergia a leche, SIBO severo. Cero gluten, cero lácteos, cero soya, sin sabores/edulcorantes artificiales. Sabores: Rich Chocolate Fudge, Creamy Vanilla.',
     foto: '/img/whey_vegana.jpg',
     vegano: true,
-    contiene: [],
+    contiene: [], // libre de los 8 alérgenos principales — el más limpio del catálogo
   },
 }
 
