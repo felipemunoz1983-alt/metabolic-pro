@@ -37,7 +37,7 @@
  * Datos de productos chilenos disponibles a 2026.
  */
 
-export type WheyTipo = 'concentrado' | 'isolate' | 'hidrolizado' | 'vegana'
+export type WheyTipo = 'concentrado' | 'isolate' | 'hidrolizado' | 'vegana' | 'vegetariana'
 
 export interface WheyProductInfo {
   /** Slug interno usado en form.wheyProductoElegido (futuro) */
@@ -178,6 +178,32 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     vegano: true,
     contiene: [], // libre de los 8 alérgenos principales — el más limpio del catálogo
   },
+  vegetariana: {
+    // Ultimate Nutrition Protein Isolate — etiquetada en Chile como "vegetariana"
+    // por el retailer (allnutrition.cl), técnicamente es VEGANA (sin lácteos
+    // ni huevo). Distinción clave vs ON Plant: blend trigo + arveja CONTIENE
+    // GLUTEN, pero incluye enzimas digestivas (protease, bromelase, papaína)
+    // para mejorar la asimilación proteica. Datos verificados allnutrition.cl 2026.
+    id: 'vegetariana',
+    label: 'Ultimate Nutrition Protein Isolate',
+    emoji: '🥗',
+    marca: 'Ultimate Nutrition Protein Isolate · 2 lb (838 g) · Chocolate',
+    porcionG: 28,
+    kcal: 120,
+    p: 20,
+    c: 2,
+    g: 2.5,
+    lactosaG: 0,
+    diaas: 0.85, // blend wheat+pea, menor que pea+rice+sacha inchi de ON Plant
+    absorcionMin: 55,
+    precioCLP: 48990, // allnutrition.cl 2026, 2lb (30 servings)
+    badge: '20g prot · Sin lactosa · Con enzimas digestivas',
+    nota:
+      '🥗 Blend vegetal de trigo + arveja con enzimas digestivas añadidas (protease + bromelase + papaína) para mejorar absorción proteica. Sin lactosa, sin colesterol, sin azúcar. ⚠️ CONTIENE GLUTEN (trigo) — NO apta para celíacos. Distinta a ON Plant que es gluten-free. 30 servings en envase de 2lb. Aunque el retailer la etiqueta "vegetariana", técnicamente es vegana (sin animales).',
+    foto: '/img/whey_vegetariana.png',
+    vegano: true, // técnicamente lo es, aunque retailer la etiquete "vegetariana"
+    contiene: ['gluten'], // ⚠️ contiene trigo
+  },
 }
 
 // ─── Matcher por perfil del paciente ─────────────────────────────────────────
@@ -206,7 +232,11 @@ export function tagsDeWhey(tipo: WheyTipo): WheyUso[] {
   const tags: WheyUso[] = []
   if (w.lactosaG < 1) tags.push('sin_lactosa')
   if (w.vegano) tags.push('apto_vegano')
-  if (tipo === 'hidrolizado' || tipo === 'vegana') tags.push('apta_sibo')
+  // apta_sibo: solo si NO contiene gluten ni lactosa (Ultimate Nutrition
+  // vegetariana tiene gluten → puede empeorar SIBO/SII).
+  if ((tipo === 'hidrolizado' || tipo === 'vegana') && !w.contiene.includes('gluten')) {
+    tags.push('apta_sibo')
+  }
   if (w.absorcionMin <= 30) tags.push('post_entreno_rapido')
   if (tipo === 'concentrado') tags.push('mejor_precio', 'mejor_sabor')
   if (tipo === 'hidrolizado') tags.push('premium')
@@ -231,19 +261,28 @@ export function scoreWhey(tipo: WheyTipo, p: PerfilParaWhey): number {
   const w = WHEY_TIPOS[tipo]
   let s = 50
 
-  // Vegano: solo plant califica, resto a 0
+  // Vegano: solo opciones plant califican, el resto a 0.
+  // Si paciente es vegano + celíaco/sensible al gluten, la vegetariana
+  // (que contiene trigo) queda en 50 — sigue siendo vegana técnicamente
+  // pero mucho peor que la ON Plant gluten-free para ese perfil.
   if (p.tendencia === 'vegano') {
-    return w.vegano ? 100 : 0
+    if (!w.vegano) return 0
+    const tieneGluten = (p.digIntolerancias ?? []).includes('gluten')
+    if (tieneGluten && w.contiene.includes('gluten')) return 40
+    return 100
   }
 
   const intol = p.digIntolerancias ?? []
   const tieneLactosa = intol.includes('lactosa')
+  const tieneGluten = intol.includes('gluten')
   const sibo = p.digDiag === 'si_sibo' || p.digDiag === 'si_sii'
 
   // Reglas duras
   if (tieneLactosa && w.lactosaG > 1) s -= 50   // hunde concentrado
+  if (tieneGluten && w.contiene.includes('gluten')) s -= 60  // celíaco/sensible: hunde la vegetariana wheat-blend
   if (sibo && tipo === 'concentrado') s -= 35   // SIBO + concentrado = mala combo
   if (sibo && tipo === 'isolate')     s -= 10   // ISO mejor que concentrado pero hidrolizado/plant gana
+  if (sibo && w.contiene.includes('gluten')) s -= 20  // SIBO + gluten = NO
 
   // Bonificaciones
   if (sibo && (tipo === 'hidrolizado' || tipo === 'vegana')) s += 30

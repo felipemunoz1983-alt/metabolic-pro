@@ -208,7 +208,13 @@ function WheyCard({
       )}
     >
       <div className="flex gap-3 p-3">
-        {/* Imagen / placeholder */}
+        {/* Imagen del producto.
+            object-contain (no cover) + padding 1.5: los envases de whey son
+            VERTICALES (ej. ISO 100 = 540x678, casi 4:5). Con object-cover el
+            container 80x80 cuadrado recortaba arriba y abajo, dejando solo
+            la mitad del envase visible. Con object-contain el envase entero
+            se ve, centrado, con bandas del gradiente violeta a los lados.
+            Feedback Felipe: "encuadrar bien la foto del ISO 100". */}
         <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-violet-100 to-violet-50 relative">
           <div className="absolute inset-0 flex items-center justify-center text-violet-600 text-3xl font-bold pointer-events-none">
             {w.emoji}
@@ -217,7 +223,7 @@ function WheyCard({
             <img
               src={w.foto}
               alt=""
-              className="relative w-full h-full object-cover"
+              className="relative w-full h-full object-contain p-1 drop-shadow-sm"
               loading="lazy"
               referrerPolicy="no-referrer"
               onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
