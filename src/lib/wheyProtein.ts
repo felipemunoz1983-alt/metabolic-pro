@@ -81,27 +81,27 @@ export interface WheyProductInfo {
 
 export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
   concentrado: {
-    // Optimum Nutrition Gold Standard 100% Whey = la #1 mundial en whey.
+    // Optimum Nutrition Gold Standard 100% Whey — datos VERIFICADOS contra
+    // etiqueta oficial chilena (foto enviada por Felipe).
     // Es BLEND: primer ingrediente whey isolate, luego concentrado, luego
     // hidrolizado (mezcla de los 3 tipos para lograr mejor sabor + perfil
     // de aminoácidos). Por eso lactosa es BAJA (~1g) vs concentrado puro.
-    // Datos verificados con optimumnutrition.com (página oficial 2026).
     id: 'concentrado',
     label: 'ON Gold Standard 100% Whey',
     emoji: '🥛',
     marca: 'Optimum Nutrition Gold Standard 100% Whey · 5 lb (2.27 kg) · Chocolate',
-    porcionG: 30,
-    kcal: 112,
+    porcionG: 31, // etiqueta oficial: 1 medida dosificadora = 31g
+    kcal: 120,
     p: 24,
-    c: 1.6, // de los cuales 1g azúcar
-    g: 1.2,
-    lactosaG: 1, // bajo por ser blend con isolate primer ingrediente
+    c: 2.7, // hidratos disponibles totales (de los cuales 1g azúcar, 0.3g fibra)
+    g: 1.5, // grasa total (1g saturada · 55mg colesterol)
+    lactosaG: 1, // bajo por ser blend con isolate como primer ingrediente
     diaas: 1.07,
     absorcionMin: 40, // blend: isolate rápido + concentrado + hidrolizado
     precioCLP: 64990, // Falabella Chile 2026, 5lb Chocolate
-    badge: '24g prot · 1g lactosa · Blend isolate+concentrado+hidrolizado',
+    badge: '24g prot · 1g lactosa · 74 servings',
     nota:
-      '🥇 Gold Standard de Optimum Nutrition es el whey #1 mundial. Blend de 3 tipos: whey isolate (1er ingrediente), whey concentrate y hydrolyzed whey isolate. Por eso tiene MENOS lactosa (~1g) que un concentrado puro (3-5g). 5.5g BCAAs + 4g glutamina por scoop. 71 servings en 5lb. Contiene leche y soya. Trazas: gluten, huevo, nueces, maní.',
+      '🥇 Gold Standard de Optimum Nutrition: el whey #1 mundial. Blend triple verificado etiqueta: proteína de suero AISLADA (1er ingrediente) + concentrada + hidrolizada + cacao álcali + lecitina de girasol/soya + acesulfamo de potasio. Por scoop 31g: 120 kcal · 24g prot · 2.7g CH (1g azúcar) · 1.5g grasa · 130mg sodio · 130mg calcio (16% DDR) · 0.7mg hierro (5% DDR). 74 servings en envase de 5lb. ⚠️ Contiene leche, soya y fenilalanina. Edulcorante: acesulfamo K (21mg/porción).',
     foto: '/img/whey_concentrado.jpg',
     vegano: false,
     contiene: ['lactosa', 'soya'],
