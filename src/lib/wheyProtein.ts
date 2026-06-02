@@ -107,26 +107,27 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     contiene: ['lactosa', 'soya'],
   },
   isolate: {
-    // Dymatize ISO 100 = el referente de mercado en Chile para "isolate aislada".
-    // Técnicamente es HYDROLYZED whey protein isolate (combina hidrólisis +
-    // microfiltración), por lo que la nota clínica destaca AMBAS propiedades.
-    // Datos verificados con dymatize.com/iso100 (página oficial 2026).
+    // Dymatize ISO 100 — datos VERIFICADOS contra etiqueta oficial chilena
+    // (foto enviada por Felipe). Formato 1.5 lb (608 g) con 20 porciones,
+    // el más vendido en retail CL.
+    // Es 100% Hydrolyzed Whey Protein Isolate: combina hidrólisis enzimática
+    // + microfiltración para máxima pureza y absorción rápida.
     id: 'isolate',
     label: 'Dymatize ISO 100',
     emoji: '⚡',
-    marca: 'Dymatize ISO 100 Hydrolyzed Whey Isolate · 5 lb (2.27 kg) · Gourmet Vanilla',
-    porcionG: 32,
+    marca: 'Dymatize ISO 100 Hydrolyzed Whey Isolate · 1.5 lb (608 g) · Chocolate',
+    porcionG: 32, // etiqueta: 1 medida dosificadora = 32g
     kcal: 120,
     p: 25,
-    c: 3,        // <=1g azúcar + ~2g carbohidratos disponibles ≈ 3g total CH
-    g: 0.5,
-    lactosaG: 1, // "Filtered to remove excess lactose" — etiqueta <1g/scoop confirmado
+    c: 2, // hidratos disponibles (1g azúcar + 0.9g fibra)
+    g: 1, // grasa total (saturada 0g · trans 0g · colesterol 10mg)
+    lactosaG: 1, // hidrolizado + aislado = <1g (etiqueta no especifica exacto, típicamente 0.5g)
     diaas: 1.09,
     absorcionMin: 25, // hydrolyzed + isolate = más rápido que isolate puro
-    precioCLP: 79990, // Falabella Chile 2026, 5lb Gourmet Vanilla
-    badge: '25g prot · <1g lactosa · Banned Substance Tested',
+    precioCLP: 49990, // Sportlife / Falabella Chile 2026, 1.5 lb Chocolate
+    badge: '25g prot · <1g lactosa · 20 servings',
     nota:
-      '✅ ISO 100 es 100% Hydrolyzed Whey Protein Isolate de Dymatize — combina lo mejor del isolate (filtrado, <1g lactosa) con la hidrólisis enzimática (péptidos pre-digeridos, absorción ~25 min). Apto intolerantes a lactosa, gluten-free, libre de sustancias prohibidas (testeado lote a lote). Marca premium con 71 servings por envase de 5lb.',
+      '⚡ Dymatize ISO 100 — Aislado de proteína de suero HIDROLIZADO (1er ingrediente etiqueta) + proteína aislada. Por scoop 32g: 120 kcal · 25g prot · 2g CH (1g azúcar + 0.9g fibra) · 1g grasa (0g saturada/trans) · 180mg sodio · 120mg calcio (15% DDR) · 0.8mg hierro (6% DDR) · 230mg potasio. 20 servings en envase de 1.5lb. Edulcorantes: sucralosa (730mg/porción) + acesulfamo K (150mg) + estevia (glicósidos de esteviol). ⚠️ Contiene soya (lecitina). Apto intolerantes a lactosa.',
     foto: '/img/whey_isolate.jpg',
     vegano: false,
     contiene: ['soya'], // lecitina de soya como emulsionante
