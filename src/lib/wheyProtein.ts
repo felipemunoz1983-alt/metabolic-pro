@@ -157,27 +157,27 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     contiene: ['soya'],
   },
   vegana: {
-    // Optimum Nutrition Gold Standard 100% Plant Protein — la versión vegana
-    // del Gold Standard, blend triple: arveja + arroz integral + sacha inchi
-    // (este último es un superfood peruano rico en omega-3 y aminoácidos).
-    // Certificada USDA Organic + Non-GMO + sin gluten/lácteos/soya.
-    // Datos verificados con onelastrep.cl (Chile, 2026).
+    // Optimum Nutrition Gold Standard 100% Plant Protein — datos VERIFICADOS
+    // contra etiqueta oficial Nutrition Facts (foto enviada por Felipe, sabor
+    // Creamy Vanilla). Blend triple: pea + fava bean + rice protein (NO sacha
+    // inchi como decía info preliminar de retailer — la etiqueta oficial
+    // muestra "Pea + Fava Bean + Rice Protein Concentrate").
     id: 'vegana',
     label: 'ON Gold Standard 100% Plant',
     emoji: '🌱',
-    marca: 'Optimum Nutrition Gold Standard 100% Plant Protein · 1.5 lb (680 g) · Rich Chocolate Fudge',
-    porcionG: 34,
+    marca: 'Optimum Nutrition Gold Standard 100% Plant Protein · 1.5 lb (680 g) · Creamy Vanilla',
+    porcionG: 37, // etiqueta: serving size 37g (about 1 scoop)
     kcal: 150,
+    c: 5, // total carbohydrate 5g (azúcares totales 0g)
     p: 24,
-    c: 11,    // 4g azúcar + ~7g CH complejos (incluye fibra)
-    g: 3,     // 1g saturada
+    g: 3.5, // total fat 3.5g (1.5g saturada · 0g trans)
     lactosaG: 0,
-    diaas: 0.95, // blend triple pea+rice+sacha inchi eleva DIAAS vs pea solo (0.82)
+    diaas: 0.92, // blend pea+fava+rice (cubre todos EAA, mejor que solo pea)
     absorcionMin: 60,
     precioCLP: 48990, // OneLastRep CL 2026, 1.5lb (20 servings)
-    badge: '24g prot · USDA Organic · Sin lactosa/gluten/soya',
+    badge: '24g prot · 0g azúcar · Plant blend triple',
     nota:
-      '🌿 Gold Standard versión Plant: blend de arveja (lisina) + arroz integral (metionina) + sacha inchi (omega-3 + aminoácidos esenciales) cubre todos los EAA. 4g BCAAs naturales por scoop. Certificada USDA Organic + Non-GMO. Apto vegano, alergia a leche, SIBO severo. Cero gluten, cero lácteos, cero soya, sin sabores/edulcorantes artificiales. Sabores: Rich Chocolate Fudge, Creamy Vanilla.',
+      '🌿 ON Gold Standard 100% Plant — Blend triple verificado etiqueta: Pea Protein + Fava Bean Protein Isolate + Rice Protein Concentrate. Por scoop 37g: 150 kcal · 24g proteína · 5g CH (0g azúcar) · 3.5g grasa (1.5g saturada · 0g trans) · 480mg sodio (21% DDR) · 50mg calcio (4% DDR) · 7.2mg hierro (40% DDR — destacable). 20 servings en envase de 1.5lb. Mezclar 37g en 300ml de agua o leche de almendras (30 segundos). Endulzada con steviol glycosides (estevia, 0g azúcar). Cero gluten, cero lácteos, cero soya. Aceite cremante de coco/girasol. ⚠️ Sodio relativamente alto (480mg = 21% DDR).',
     foto: '/img/whey_vegana.jpg',
     vegano: true,
     contiene: [], // libre de los 8 alérgenos principales — el más limpio del catálogo
