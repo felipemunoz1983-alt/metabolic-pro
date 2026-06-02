@@ -115,7 +115,7 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     id: 'isolate',
     label: 'Dymatize ISO 100',
     emoji: '⚡',
-    marca: 'Dymatize ISO 100 Hydrolyzed Whey Isolate · 1.5 lb (608 g) · Chocolate',
+    marca: 'Dymatize ISO 100 Hydrolyzed Whey Isolate · 5 lb (2.27 kg) · Chocolate',
     porcionG: 32, // etiqueta: 1 medida dosificadora = 32g
     kcal: 120,
     p: 25,
@@ -124,8 +124,8 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     lactosaG: 1, // hidrolizado + aislado = <1g (etiqueta no especifica exacto, típicamente 0.5g)
     diaas: 1.09,
     absorcionMin: 25, // hydrolyzed + isolate = más rápido que isolate puro
-    precioCLP: 49990, // Sportlife / Falabella Chile 2026, 1.5 lb Chocolate
-    badge: '25g prot · <1g lactosa · 20 servings',
+    precioCLP: 142990, // allnutrition.cl Chile 2026, 5 lb (2.27kg) Chocolate
+    badge: '25g prot · <1g lactosa · 71 servings · 5lb',
     nota:
       '⚡ Dymatize ISO 100 — Aislado de proteína de suero HIDROLIZADO (1er ingrediente etiqueta) + proteína aislada. Por scoop 32g: 120 kcal · 25g prot · 2g CH (1g azúcar + 0.9g fibra) · 1g grasa (0g saturada/trans) · 180mg sodio · 120mg calcio (15% DDR) · 0.8mg hierro (6% DDR) · 230mg potasio. 20 servings en envase de 1.5lb. Edulcorantes: sucralosa (730mg/porción) + acesulfamo K (150mg) + estevia (glicósidos de esteviol). ⚠️ Contiene soya (lecitina). Apto intolerantes a lactosa.',
     foto: '/img/whey_isolate.jpg',
@@ -133,22 +133,25 @@ export const WHEY_TIPOS: Record<WheyTipo, WheyProductInfo> = {
     contiene: ['soya'], // lecitina de soya como emulsionante
   },
   hidrolizado: {
+    // Optimum Nutrition Platinum HydroWhey — datos VERIFICADOS contra
+    // allnutrition.cl (Chile 2026). Formato 3.5 lb (1.6 kg, 40 servings),
+    // sabor Chocolate. El whey hidrolizado más prestigioso del mercado.
     id: 'hidrolizado',
-    label: 'Whey Hidrolizado',
+    label: 'ON Platinum HydroWhey',
     emoji: '🛡️',
-    marca: 'Optimum Nutrition Platinum HydroWhey · 1.6 kg',
-    porcionG: 39,
+    marca: 'Optimum Nutrition Platinum HydroWhey · 3.5 lb (1.6 kg) · Chocolate',
+    porcionG: 39, // 1 scoop tipico
     kcal: 140,
     p: 30,
     c: 2,
     g: 1,
-    lactosaG: 0,
+    lactosaG: 0, // hidrolizado + isolate = lactosa residual mínima/no detectable
     diaas: 1.09,
-    absorcionMin: 20,
-    precioCLP: 64990,
-    badge: '30g prot · Pre-digerido · Absorción 20min',
+    absorcionMin: 20, // hidrólisis enzimática acelera al máximo
+    precioCLP: 123990, // allnutrition.cl 2026, 3.5lb Chocolate
+    badge: '30g prot · Pre-digerido · 40 servings · Absorción 20min',
     nota:
-      '🏥 Péptidos pre-digeridos por hidrólisis enzimática — tolerado por la mayoría de SIBO/SII y alergia leve a leche. Absorción más rápida (~20 min). Sabor más amargo, precio más alto. Apto omnívoro/vegetariano.',
+      '🏥 ON Platinum HydroWhey — péptidos pre-digeridos por hidrólisis enzimática + enzimas digestivas + BCAAs añadidos. Por scoop 39g: 140 kcal · 30g proteína · 2g CH (1g azúcar) · 1g grasa · 210mg sodio. 40 servings en envase de 3.5lb. Absorción más rápida del catálogo (~20 min) — ideal post-entreno premium. Tolerado por la mayoría de SIBO/SII y alergia leve a leche. Sabor más amargo que el isolate puro por la hidrólisis. ⚠️ Contiene leche y soya (lecitina). Precio premium ($124k).',
     foto: '/img/whey_hidrolizado.jpg',
     vegano: false,
     contiene: ['soya'],
