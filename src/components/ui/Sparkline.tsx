@@ -52,16 +52,31 @@ export function Sparkline({
   const fillPath = `M ${points[0]} L ${points.join(' L ')} L ${width - pad},${height - pad} L ${pad},${height - pad} Z`
 
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      // overflow-hidden: las lineas y el dot del ultimo punto NUNCA pueden
+      // salirse del SVG (antes overflow-visible las dejaba sobresalir hasta
+      // el borde de la card padre — bug reportado: lineas amarillas y celestes
+      // saliendose del recuadro).
+      // flex-shrink-0 + block + style explicito: en contenedores flex, los
+      // atributos HTML width/height del SVG se ignoraban y el SVG se estiraba
+      // para llenar el espacio disponible. style fuerza dimensiones exactas.
+      className="overflow-hidden flex-shrink-0 block"
+      style={{ width: `${width}px`, height: `${height}px` }}
+    >
       {safeFill && safeFill !== 'transparent' && (
         <path d={fillPath} fill={safeFill} />
       )}
       <path d={pathD} stroke={safeColor} strokeWidth={strokeWidth} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      {/* Last point dot */}
+      {/* Last point dot — pad=2 mas r=3 = el centro se ubica a width-2 del
+          borde, por lo que el dot llega hasta width+1. Reducimos r de 3 a 2.5
+          para garantizar que cabe completo dentro del viewBox con overflow-hidden. */}
       {(() => {
         const last = points[points.length - 1].split(',')
         return (
-          <circle cx={last[0]} cy={last[1]} r={3} fill={safeColor} />
+          <circle cx={last[0]} cy={last[1]} r={2.5} fill={safeColor} />
         )
       })()}
     </svg>

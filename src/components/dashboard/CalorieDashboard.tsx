@@ -344,7 +344,7 @@ function MetricCard({
   // Fill semi-transparente: agregar "33" (20% alpha) al hex de 6 chars.
   const fillHex = `${hex}33`
   return (
-    <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)] hover:shadow-md transition-shadow">
+    <div className="bg-white rounded-2xl border border-[#E2ECF4] p-5 shadow-[0_1px_2px_rgba(11,42,58,0.04)] hover:shadow-md transition-shadow overflow-hidden">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[#8BA5BE]">{label}</p>
       <div className="mt-2 flex items-end gap-1.5">
         <span className={cn('text-2xl font-bold tracking-tight leading-none', color)}>{value}</span>
@@ -352,6 +352,8 @@ function MetricCard({
       </div>
       <div className="mt-3 flex items-center justify-between gap-2">
         <TrendPill trend={trend} sub={sub} />
+        {/* min-w-0 evita que el TrendPill empuje al Sparkline fuera; el Sparkline
+            tiene flex-shrink-0 + width fijo asi que mantiene 88x32 garantizado. */}
         {chart && chart.length > 1 && (
           <Sparkline data={chart} width={88} height={32} color={hex} fill={fillHex} />
         )}
