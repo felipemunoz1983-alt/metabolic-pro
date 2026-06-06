@@ -1759,17 +1759,25 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                   </p>
                 </div>
 
-                {/* Comidas por día */}
+                {/* Comidas por día — atajo rápido cuando el profesional NO quiere
+                    elegir tiempos uno por uno. Si elige tiempos manuales abajo,
+                    este selector queda como info histórica. */}
                 <div>
                   <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">🍽️ Comidas reales por día</p>
                   <div className="grid grid-cols-4 gap-1.5">
                     {([3, 4, 5, 6] as const).map(n => (
                       <button
                         key={n}
-                        onClick={() => set('comidasPorDia', n)}
+                        onClick={() => {
+                          set('comidasPorDia', n)
+                          // Limpiar tiemposComida manual cuando el profesional usa el atajo numérico,
+                          // así el motor vuelve a derivar slots desde el numero (UX clara: una fuente
+                          // de verdad a la vez).
+                          set('tiemposComida', undefined as never)
+                        }}
                         className={cn(
                           'py-1.5 rounded-lg border-2 text-xs font-bold transition-all',
-                          (form.comidasPorDia ?? 5) === n
+                          (form.comidasPorDia ?? 5) === n && !form.tiemposComida?.length
                             ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
                             : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
                         )}
@@ -1778,6 +1786,64 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Selector explícito de tiempos de comida — feedback Felipe:
+                    el profesional puede decidir EXACTAMENTE qué tiempos
+                    ejecutar (ej. desayuno + cena para paciente intermitente,
+                    o desayuno + almuerzo + cena sin colaciones). Override
+                    sobre `comidasPorDia` si tiene al menos 1 elemento. */}
+                <div>
+                  <p className="text-[11px] font-semibold text-[#4A6070] mb-1.5">
+                    ⏰ Tiempos de comida específicos
+                    <span className="ml-1.5 text-[10px] font-normal text-[#8BA5BE]">(opcional · override avanzado)</span>
+                  </p>
+                  <p className="text-[10px] text-[#8BA5BE] mb-2">
+                    Marca SOLO los tiempos que vas a ejecutar para este paciente. Si dejas todos
+                    sin marcar, se usa el atajo numérico de arriba ({form.comidasPorDia ?? 5} comidas/día).
+                  </p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {([
+                      { v: 'desayuno',         l: '☀️ Desayuno' },
+                      { v: 'colacion_manana',  l: '☕ Colación AM' },
+                      { v: 'almuerzo',         l: '🍽️ Almuerzo' },
+                      { v: 'once',             l: '🍵 Once / PM' },
+                      { v: 'cena',             l: '🌙 Cena' },
+                      { v: 'ultra_extra',      l: '🍿 Snack extra' },
+                    ] as const).map(opt => {
+                      const tiempos = form.tiemposComida ?? []
+                      const checked = tiempos.includes(opt.v)
+                      return (
+                        <button
+                          key={opt.v}
+                          onClick={() => {
+                            const next = checked
+                              ? tiempos.filter(t => t !== opt.v)
+                              : [...tiempos, opt.v]
+                            set('tiemposComida', next.length > 0 ? next : undefined as never)
+                          }}
+                          className={cn(
+                            'py-1.5 px-2 rounded-lg border-2 text-[11px] font-bold transition-all text-left',
+                            checked
+                              ? 'bg-[#0C3547] border-[#0C3547] text-white'
+                              : 'border-[#D6E3ED] text-[#6B7C93] hover:border-[#29ABE2]'
+                          )}
+                          aria-pressed={checked}
+                        >
+                          {checked && <span className="mr-1">✓</span>}{opt.l}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {form.tiemposComida && form.tiemposComida.length > 0 && (
+                    <div className="mt-2 flex gap-2 items-start bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-lg p-2">
+                      <span className="text-base flex-shrink-0">ℹ️</span>
+                      <p className="text-[10px] text-[#0C3547]">
+                        <strong>Override activo:</strong> {form.tiemposComida.length} tiempo{form.tiemposComida.length !== 1 ? 's' : ''} de comida.
+                        El motor ignora el atajo numérico mientras tengas al menos 1 marcado.
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Tiempo para cocinar */}

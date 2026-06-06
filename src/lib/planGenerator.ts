@@ -275,8 +275,15 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
     )
   )
 
-  // Slots dinámicos según comidasPorDia (3/4/5/6)
-  const slots = buildMealSlots(form.comidasPorDia ?? 5, form.horarioEntrenamiento)
+  // Slots dinámicos: prioridad a tiemposComida explicito (decision profesional),
+  // sino fallback a derivacion automatica desde comidasPorDia + horarioEntrenamiento.
+  // Sin el override, todos los pacientes con comidasPorDia=5 reciben los mismos
+  // slots; con override el profesional puede armar combinaciones inusuales
+  // (ej. solo desayuno + almuerzo + cena, sin colaciones, para un paciente
+  // intermitente; o desayuno + cena para un paciente OMAD-like).
+  const slots = (form.tiemposComida && form.tiemposComida.length > 0)
+    ? form.tiemposComida
+    : buildMealSlots(form.comidasPorDia ?? 5, form.horarioEntrenamiento)
 
   // Recalcular % kcal por comida para que sume ~100% según slots presentes
   // Pesos base: desayuno 25, colacion 10, almuerzo 35, once 15, cena 15, ultra_extra 5

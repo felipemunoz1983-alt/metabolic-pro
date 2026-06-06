@@ -123,8 +123,23 @@ export interface FormData {
   /** Horario habitual de entrenamiento — define timing peri-entreno de snack/barra */
   horarioEntrenamiento?: 'AM' | 'PM' | 'noche' | 'sin_entreno'
   // ── Contexto operativo del paciente (skill nutriapp-pro: variables obligatorias) ──
-  /** Cantidad de comidas reales por día — usado para distribución de macros y rotación */
+  /** Cantidad de comidas reales por día — usado para distribución de macros y rotación.
+   *  NOTA: si `tiemposComida` esta definido y no vacio, se usa ESE como fuente de
+   *  verdad y este campo solo se mantiene para compat con planes anteriores. */
   comidasPorDia?: 3 | 4 | 5 | 6
+  /** Tiempos de comida ESPECIFICOS elegidos por el profesional para este paciente.
+   *  Si esta definido y tiene al menos 1 elemento, el motor lo usa directamente
+   *  ignorando la derivacion automatica de `comidasPorDia`. Si es undefined o
+   *  vacio, el motor usa buildMealSlots(comidasPorDia, horarioEntrenamiento)
+   *  como fallback (backward compat con planes existentes).
+   *
+   *  Permite combinaciones flexibles que la derivacion automatica no permitia:
+   *   - 'desayuno + almuerzo' (paciente intermitente, 2 comidas)
+   *   - 'desayuno + cena' (sin almuerzo, dieta inusual)
+   *   - 'almuerzo + cena' (paciente que ayuna mañanas)
+   *   - 'desayuno + once + cena' (sin almuerzo formal)
+   *   - Cualquier subconjunto que tenga sentido clinico para el paciente. */
+  tiemposComida?: Array<'desayuno' | 'colacion_manana' | 'almuerzo' | 'once' | 'cena' | 'ultra_extra'>
   /** Presupuesto semanal aproximado (CLP) — filtra productos premium si es bajo */
   presupuestoSemanal?: 'bajo' | 'medio' | 'alto'
   /** Tiempo disponible para cocinar en cada comida principal */
