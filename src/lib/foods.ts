@@ -833,19 +833,20 @@ export const colacionesOpts: Record<string, MealOption> = {
   sandwich_jamonqueso: {
     label: 'Sándwich de jamón queso',
     items: [
-      '1 rebanada de pan integral (40g)',
+      '2 rebanadas de pan integral (80g)',
       '30g de jamón de pavo (cuello)',
       '30g de queso laminado tipo gauda o mantecoso',
       '1 hoja de lechuga',
       '1 rodaja de tomate',
     ],
-    // Auditoría INTA (2026-05):
-    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    // Auditoría INTA + feedback Felipe 2026-06: el sándwich clásico lleva DOS
+    // rebanadas de pan (1 base + 1 tapa), no una. Corregido item y macros.
+    //   2 reb pan integral 80g: 208 kcal · 10.6 P · 31.6 C · 3.8 G  (+104/5.3/15.8/1.9)
     //   30g jamón pavo:          35 kcal · 6 P · 0.5 C · 0.9 G
     //   30g queso gauda:        113 kcal · 8 P · 0.3 C · 9 G
     //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
-    //   Total: 260 kcal · 20 P · 19 C · 12 G  (P estaba subestimado)
-    baseKcal: 260, p: 20, c: 19, g: 12,
+    //   Total: 364 kcal · 25 P · 34 C · 14 G
+    baseKcal: 364, p: 25, c: 34, g: 14,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1528735602780-2552fd46c7af'),
@@ -853,29 +854,29 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     alergenosNota: 'Contiene gluten (pan) y lácteos (queso). Si tienes intolerancia a alguno, sustituye por pan sin gluten o queso vegetal.',
     pasos: [
-      'Tostar la rebanada de pan integral (sartén seca o tostadora) hasta dorar.',
-      'Sobre el pan tibio, colocar el jamón de pavo cubriendo toda la superficie.',
+      'Tostar las 2 rebanadas de pan integral (sartén seca o tostadora) hasta dorar.',
+      'Sobre la rebanada base tibia, colocar el jamón de pavo cubriendo toda la superficie.',
       'Agregar el queso laminado encima del jamón.',
       'Si tienes microondas: 15-20 s para que el queso funda apenas. Opcional.',
       'Coronar con la hoja de lechuga y la rodaja de tomate.',
-      'Consumir inmediatamente como sándwich abierto, o cubrir con otra rebanada si se duplica la porción.',
+      'Tapar con la segunda rebanada y consumir inmediatamente para aprovechar el crocante.',
     ],
   },
   sandwich_jamonqueso_huevo: {
     label: 'Sándwich de jamón queso + huevo duro',
     items: [
-      '1 rebanada de pan integral (40g)',
+      '2 rebanadas de pan integral (80g)',
       '30g de jamón de pavo (cuello)',
       '30g de queso laminado tipo gauda',
       '1 huevo duro en rodajas',
       '1 hoja de lechuga',
       '1 rodaja de tomate',
     ],
-    // Auditoría INTA (2026-05): base sándwich + 1 huevo
-    //   Base sándwich (pan+jamón+queso+veg):260 kcal · 20 P · 19 C · 12 G
-    //   1 huevo duro:                        78 kcal · 6 P · 0.6 C · 5 G
-    //   Total: 338 kcal · 26 P · 20 C · 17 G
-    baseKcal: 338, p: 26, c: 20, g: 17,
+    // Auditoría INTA + feedback Felipe 2026-06 (2 rebanadas):
+    //   Base sándwich con 2 panes: 364 kcal · 25 P · 34 C · 14 G
+    //   1 huevo duro:               78 kcal · 6 P · 0.6 C · 5 G
+    //   Total: 442 kcal · 31 P · 35 C · 19 G
+    baseKcal: 442, p: 31, c: 35, g: 19,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1525351484163-7529414344d8'),
@@ -886,29 +887,29 @@ export const colacionesOpts: Record<string, MealOption> = {
     alergenosNota: 'Contiene gluten (pan), lácteos (queso) y huevo. Versión más alta en proteína — ideal post-entreno.',
     pasos: [
       'Poner el huevo en agua hirviendo 9 minutos (huevo duro). Pasarlo a agua fría y pelar.',
-      'Tostar la rebanada de pan integral.',
+      'Tostar las 2 rebanadas de pan integral.',
       'Cortar el huevo en rodajas de 0,5 cm.',
-      'Armar: pan tostado + jamón + queso + huevo en rodajas + lechuga + tomate.',
+      'Armar: pan tostado + jamón + queso + huevo en rodajas + lechuga + tomate + segunda rebanada encima.',
       'Sazonar con un toque de sal y pimienta. Consumir inmediatamente.',
     ],
   },
   sandwich_vegetariano_palta: {
     label: 'Sándwich vegetariano (queso + palta)',
     items: [
-      '1 rebanada de pan integral (40g)',
+      '2 rebanadas de pan integral (80g)',
       '30g de queso laminado tipo gauda',
       '40g de palta (1/4)',
       '1 hoja de lechuga',
       '1 rodaja de tomate',
       'Sal y pimienta a gusto',
     ],
-    // Auditoría INTA (2026-05):
-    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    // Auditoría INTA + feedback Felipe 2026-06 (2 rebanadas):
+    //   2 reb pan integral 80g: 208 kcal · 10.6 P · 31.6 C · 3.8 G
     //   30g queso gauda:        113 kcal · 8 P · 0.3 C · 9 G
     //   40g palta:               64 kcal · 0.8 P · 3.4 C · 5.9 G
     //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
-    //   Total: 289 kcal · 15 P · 22 C · 17 G  (P estaba subestimado)
-    baseKcal: 289, p: 15, c: 22, g: 17,
+    //   Total: 393 kcal · 20 P · 38 C · 19 G
+    baseKcal: 393, p: 20, c: 38, g: 19,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1539252554935-80c8cb01a76d'),
@@ -916,30 +917,30 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro', 'vegetariano'],
     alergenosNota: 'Contiene gluten (pan) y lácteos (queso). Apto vegetariano. Para vegano: reemplazar queso por hummus o queso vegetal.',
     pasos: [
-      'Tostar la rebanada de pan integral hasta dorar.',
-      'Aplastar la palta con un tenedor sobre la tostada caliente.',
+      'Tostar las 2 rebanadas de pan integral hasta dorar.',
+      'Aplastar la palta con un tenedor sobre una de las tostadas calientes.',
       'Sazonar la palta con sal y pimienta.',
       'Colocar el queso laminado encima.',
       'Coronar con lechuga y rodaja de tomate.',
-      'Consumir inmediatamente para aprovechar la textura crujiente del pan.',
+      'Tapar con la segunda rebanada y consumir inmediatamente para aprovechar la textura crujiente del pan.',
     ],
   },
   sandwich_jamonpavo_light: {
     label: 'Sándwich de jamón light (sin queso)',
     items: [
-      '1 rebanada de pan integral (40g)',
+      '2 rebanadas de pan integral (80g)',
       '50g de jamón de pavo (cuello)',
       '1 hoja de lechuga',
       '1 rodaja de tomate',
       'Mostaza Dijon o aceite de oliva a gusto',
     ],
-    // Auditoría INTA (2026-05):
-    //   1 reb pan integral 40g: 104 kcal · 5.3 P · 15.8 C · 1.9 G
+    // Auditoría INTA + feedback Felipe 2026-06 (2 rebanadas):
+    //   2 reb pan integral 80g: 208 kcal · 10.6 P · 31.6 C · 3.8 G
     //   50g jamón pavo:          58 kcal · 10 P · 0.8 C · 1.5 G
     //   Lechuga + tomate:         8 kcal · 0.4 P · 2 C · 0 G
     //   Mostaza Dijon ~5g:        3 kcal · 0 P · 0.3 C · 0.2 G
-    //   Total: 173 kcal · 16 P · 19 C · 4 G  (P estaba subestimado)
-    baseKcal: 173, p: 16, c: 19, g: 4,
+    //   Total: 277 kcal · 21 P · 35 C · 6 G
+    baseKcal: 277, p: 21, c: 35, g: 6,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: USP('1567234669003-dbbf01c4f7b5'),
@@ -947,11 +948,11 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     alergenosNota: 'Contiene gluten (pan). Sin lácteos. Versión más liviana del clásico — ideal para tarde si necesitas economizar calorías.',
     pasos: [
-      'Tostar levemente la rebanada de pan integral.',
-      'Untar mostaza Dijon o un toque de aceite de oliva.',
+      'Tostar levemente las 2 rebanadas de pan integral.',
+      'Untar mostaza Dijon o un toque de aceite de oliva en una de las rebanadas.',
       'Disponer el jamón de pavo en capas sobre el pan.',
       'Agregar la hoja de lechuga y la rodaja de tomate.',
-      'Consumir como sándwich abierto. Sin queso para mantener bajo el aporte de grasa.',
+      'Tapar con la segunda rebanada. Sin queso para mantener bajo el aporte de grasa.',
     ],
   },
   costa_mini_chips: {
