@@ -973,6 +973,36 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Aviso clínico: por sus 3 sellos chilenos (Alto en azúcar, grasa saturada, calorías) conviene espaciarlo — máximo 1-2 veces por semana si el plan es de pérdida de grasa.',
     ],
   },
+  colun_mi_leche_chocolate: {
+    label: 'Colun Mi Leche Chocolate (cajita)',
+    items: [
+      '1 cajita Colun Mi Leche Semidescremada Chocolate (200 ml)',
+      '(Opcional) Acompañar con 1 fruta para sumar fibra',
+    ],
+    // Datos validados contra etiqueta nutricional del envase (200 ml = 1 porción):
+    //   Energía:             94 kcal
+    //   Proteínas:           6.4 g
+    //   Grasas totales:      2.6 g  (saturadas 1.7 g · monoinsat 0.8 g · poliinsat 0.1 g · trans 0.1 g)
+    //   Colesterol:          8 mg
+    //   H. de C. disp.:      11.2 g  (de los cuales azúcares totales: 10 g)
+    //   Sodio:               178 mg
+    //   Vitaminas A · D · E (fortificación)
+    //   Sin reconstituir · Leche grass-fed · Libre de gluten
+    baseKcal: 94, p: 6, c: 11, g: 3,
+    porcionFija: true, // 200ml cajita individual — no escalable al slot
+    foto: IMG + 'colun_mi_leche_chocolate.jpg',
+    tiempo: '1 min',
+    tendencia: ['omnivoro', 'vegetariano'],
+    alergenosNota:
+      'Contiene lácteos (leche semidescremada Colun) — NO apto intolerantes a lactosa. 10 g de azúcares totales por cajita (azúcar añadido del chocolate). Aporta calcio y vitaminas A/D/E. Libre de gluten. Útil como colación post-entreno por su perfil 6g prot + 11g CH, pero el azúcar (10g) lo hace menos óptimo si el paciente está en déficit estricto.',
+    pasos: [
+      'Tomar la cajita Colun Mi Leche Chocolate del refrigerador (mejor fría).',
+      'Agitar suavemente y abrir.',
+      'Beber directamente o servir en vaso.',
+      'Combinación post-entrenamiento práctica: 6.4 g proteína + 11.2 g CH disponibles en formato listo para llevar.',
+      'Tip clínico: si estás en déficit estricto, prefiere la versión Sin Lactosa Sin Azúcar de Colun (también 200ml) para reducir kcal y carga glicémica.',
+    ],
+  },
   goodnes_protein_caramelo: {
     label: 'Postre Goodnes Protein (caramelo)',
     items: [
