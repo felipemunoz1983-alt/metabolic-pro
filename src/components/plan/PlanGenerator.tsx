@@ -133,6 +133,9 @@ function CheckChips({
 }
 
 // ─── Ultra-processed chip selector (multi-toggle, min 0) ─────────────────────
+// Agrupado por marca (feedback Felipe): el selector se organiza en secciones
+// por fabricante (Nestlé, Costa, Savory, etc.) con 'Genérico' al final como
+// catch-all. Cada sección tiene su propio header con count de opciones.
 function UltraChips({
   pool,
   selected,
@@ -149,22 +152,67 @@ function UltraChips({
       onChange([...selected, key])
     }
   }
+
+  // Agrupar entries por marca. Productos sin campo marca van a 'Sin marca'.
+  // Map preserva orden de inserción → el orden del catálogo se respeta dentro
+  // de cada grupo.
+  const grupos = new Map<string, [string, UltraOption][]>()
+  for (const [key, opt] of Object.entries(pool)) {
+    const m = opt.marca ?? 'Sin marca'
+    if (!grupos.has(m)) grupos.set(m, [])
+    grupos.get(m)!.push([key, opt])
+  }
+  // Orden: marcas reales en orden alfabético, 'Genérico' y 'Sin marca' al final
+  const marcasOrdenadas = Array.from(grupos.keys()).sort((a, b) => {
+    const aEsGenerico = a === 'Genérico' || a === 'Sin marca'
+    const bEsGenerico = b === 'Genérico' || b === 'Sin marca'
+    if (aEsGenerico && !bEsGenerico) return 1
+    if (!aEsGenerico && bEsGenerico) return -1
+    return a.localeCompare(b, 'es')
+  })
+
   return (
-    <div className="flex flex-wrap gap-2">
-      {Object.entries(pool).map(([key, opt]) => (
-        <button
-          key={key}
-          onClick={() => toggle(key)}
-          className={cn(
-            'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
-            selected.includes(key)
-              ? 'bg-red-500 border-red-500 text-white'
-              : 'border-[#D6E3ED] text-[#6B7C93] hover:border-red-400 hover:text-red-600'
-          )}
-        >
-          {opt.label}
-        </button>
-      ))}
+    <div className="space-y-4">
+      {marcasOrdenadas.map(marca => {
+        const items = grupos.get(marca)!
+        const seleccionadosEnGrupo = items.filter(([k]) => selected.includes(k)).length
+        return (
+          <div key={marca}>
+            {/* Header de la sección con nombre de marca + count total y seleccionados */}
+            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#E2ECF4]">
+              <p className="text-[11px] font-bold text-[#0C3547] uppercase tracking-wide flex items-center gap-1.5">
+                <span className="text-sm">🏷️</span>
+                {marca}
+                <span className="text-[10px] font-medium text-[#8BA5BE] normal-case tracking-normal">
+                  ({items.length} {items.length === 1 ? 'opción' : 'opciones'})
+                </span>
+              </p>
+              {seleccionadosEnGrupo > 0 && (
+                <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                  {seleccionadosEnGrupo} seleccionado{seleccionadosEnGrupo !== 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            {/* Chips de productos de esa marca */}
+            <div className="flex flex-wrap gap-2">
+              {items.map(([key, opt]) => (
+                <button
+                  key={key}
+                  onClick={() => toggle(key)}
+                  className={cn(
+                    'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
+                    selected.includes(key)
+                      ? 'bg-red-500 border-red-500 text-white'
+                      : 'border-[#D6E3ED] text-[#6B7C93] hover:border-red-400 hover:text-red-600'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
