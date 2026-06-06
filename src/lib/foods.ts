@@ -525,6 +525,35 @@ export const QUESO_TIPOS = {
     contiene: ['lactosa'] as string[],
     vegetariano: true,
   },
+  quesillo_quillayes: {
+    // Quillayes Quesillo Sano y Natural 150g — quesillo premium artesanal
+    // chileno. Datos VERIFICADOS contra etiqueta oficial (foto enviada por
+    // Felipe + Jumbo CL id 303273):
+    //   Por porción 30g (1 rebanada): 40.5 kcal · 4.1 P · 0.3 C · 2.5 G · 82 mg sodio
+    //                                  (1.5 sat · 0.8 mono · 0.1 poli · 0 trans · 8.2 mg colesterol)
+    //   Por 100g:                    135 kcal · 13 P · 1 C · 8 G · 274 mg sodio
+    //   Azúcares totales: 2g/100g = lactosa residual (es quesillo CON lactosa).
+    //   Envase: 150g · 5 porciones de 30g · ~$1.390 CLP (Jumbo).
+    //   Sellos chilenos: sin sellos visibles en etiqueta (perfil limpio).
+    //   Marca: Quillayes (grupo Quillayes-Surlat).
+    //   Foto Jumbo (cuadrada 900x900, 55KB webp).
+    //
+    // Posicionamiento clínico: el QUESILLO MÁS EFICIENTE EN PROTEÍNA POR KCAL
+    // del catálogo (4.1g/40.5kcal = ratio 0.10). Supera al quesillo genérico
+    // (4.5/63 = 0.071) y al Zero Lacto (3.9/42 = 0.093). Trade-off: tiene
+    // lactosa. Sodio intermedio (82mg) entre quesillo genérico (60mg) y
+    // Zero Lacto (107mg). Apto para paciente sin intolerancia que busca
+    // déficit + alta proteína sin pagar el premium del zero lacto.
+    label: 'Quesillo Quillayes Sano y Natural',
+    emoji: '⚪',
+    item: '30g de Quesillo Quillayes Sano y Natural (1 rebanada)',
+    kcal: 41, p: 4.1, c: 0.3, g: 2.5, sodioMg: 82,
+    badge: '4.1g prot · 41 kcal · Premium artesanal',
+    descripcion: 'Quesillo premium chileno (Quillayes). Envase 150g · 5 rebanadas. Mejor ratio proteína/kcal del catálogo en quesillos: -35% kcal vs quesillo genérico con CASI la misma proteína. Sodio moderado (82mg). Contiene lactosa (apto solo si tolera). Sin sellos chilenos. Apto vegetariano.',
+    contiene: ['lactosa'] as string[],
+    vegetariano: true,
+    foto: '/img/quesillo_quillayes.webp',
+  },
   quesillo_zerolacto: {
     // Soprole Quesillo Zero Lacto — quesillo fresco SIN LACTOSA. Datos
     // VERIFICADOS contra etiqueta oficial (foto enviada por Felipe):

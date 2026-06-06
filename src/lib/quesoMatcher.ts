@@ -1,7 +1,7 @@
 /**
  * quesoMatcher.ts — Ranking de quesos según perfil clínico del paciente.
  *
- * 7 opciones del catálogo QUESO_TIPOS — ranking basado en:
+ * 8 opciones del catálogo QUESO_TIPOS — ranking basado en:
  *   - Intolerancia a lactosa (3 quesos sin lactosa: surlat, chanco, quesillo_zerolacto)
  *   - Objetivo (déficit → bajo en kcal · hipertrofia → alta proteína)
  *   - Sodio (HTA inferida desde reflujo frecuente o SIBO)
