@@ -73,7 +73,7 @@ export interface MealOption {
   tieneQueso?: boolean
   /** Tipo de queso que usa la receta por defecto. Casi todos los sándwich del
    *  catálogo usan gauda como base; el selector lo deja cambiar.  */
-  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo'
+  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo' | 'surlat_protein'
   /** Gramaje base del queso en la receta (típicamente 30g por lámina). Usado
    *  para escalar macros si el paciente cambia el tipo. */
   quesoGramosBase?: number
@@ -504,6 +504,26 @@ export const QUESO_TIPOS = {
     descripcion: 'Queso fresco artesanal chileno, muy bajo en sodio (-71% vs gauda). Apto para hipertensión, embarazo y cardiopatía. Sabor neutro, textura húmeda. Apto vegetariano.',
     contiene: ['lactosa'] as string[],
     vegetariano: true,
+  },
+  surlat_protein: {
+    // Surlat Sin Lactosa Proteína — laminado fortificado SIN LACTOSA + SIN GLUTEN.
+    // Datos VERIFICADOS contra etiqueta oficial (foto enviada por Felipe):
+    //   Por porción 2 láminas 34g: 87.7 kcal · 10.3 P · 1 C · 4.7 G · 148.6 mg sodio
+    //   Por 100g equivalente:    258 kcal · 30 P · 2 C · 13 G · 437 mg sodio
+    //   Escalado a 30g (para coincidir con el resto del catálogo):
+    //     77 kcal · 9 P · 0.6 C · 3.9 G · 131 mg sodio
+    //   Sellos chilenos: Alto en sodio (1 solo sello, no triple).
+    //   Envase: 200g · 6 porciones aprox (de 2 láminas c/u).
+    //   Foto oficial Surlat (cuadrada 411x411, 20KB webp).
+    label: 'Surlat Proteína (sin lactosa)',
+    emoji: '💪',
+    item: '30g de queso Surlat Sin Lactosa Proteína (~2 láminas pequeñas)',
+    kcal: 77, p: 9, c: 0.6, g: 3.9, sodioMg: 131,
+    badge: '9g prot · Sin lactosa · Sin gluten',
+    descripcion: 'Queso laminado fortificado con proteína — el más PROTEICO del catálogo (9g/30g, +12% vs light). Sin lactosa y sin gluten (apto intolerantes). Apto vegetariano. Único sello chileno: alto en sodio (intermedio, menos que gauda/light). Marca Surlat 200g · 6 porciones.',
+    contiene: [] as string[],   // sin lactosa, sin gluten — el más limpio
+    vegetariano: true,
+    foto: '/img/queso_surlat_protein.webp',
   },
 } as const
 
