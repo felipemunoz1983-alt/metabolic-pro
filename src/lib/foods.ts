@@ -202,6 +202,26 @@ export const YOGUR_TIPOS = {
     vegano: false, vegetariano: true,
     contiene: [] as string[],   // el más limpio del catálogo: libre de 9 alérgenos comunes
   },
+  loncoleche_protein: {
+    label: 'Loncoleche Proteína Natural',
+    emoji: '🥛',
+    item: 'Yogur Loncoleche Proteína Natural Endulzado 140g (pote individual)',
+    // Fuente: ficha nutricional Jumbo CL 2026 (idsku=73012) — pote 140g completo:
+    //   84 kcal · 12.3 P · 8.3 C (5.5g azúcar) · 0.1 G · 56 mg sodio
+    //   Por 100g: 60 kcal · 8.8 P · 5.9 C · 0.07 G
+    //   Sin lactosa (deslactosado con enzima lactasa) · 0% grasa · libre de gluten.
+    //   Sellos chilenos: NO aparecen (perfil nutricional limpio).
+    //   Endulzado con sucralosa + estevia. Precio: $750 CLP / 140g.
+    //   Foto Jumbo (cuadrada 900x900, 55KB webp).
+    //   Mejor ratio prot/kcal del catalogo: 12.3g/84kcal = 0.146 (vs Colun 11/120 = 0.092).
+    kcal: 84, p: 12, c: 8, g: 0,
+    badge: '12.3g prot · 84 kcal · Sin lactosa · 0% grasa',
+    alergenosNota: '⚠️ Loncoleche Proteína · Pote 140g individual · Sin lactosa (con enzima lactasa). Endulzado con sucralosa + estevia. Trazas posibles de almendra, pasas, nueces, soya y gluten (avena). Libre de huevo, peces, mariscos, maní, sulfitos y trigo.',
+    foto: '/img/yogur_loncoleche_protein.webp',
+    vegano: false, vegetariano: true,
+    contiene: [] as string[],   // sin lactosa, sin gluten (solo posibles trazas, no contenido directo)
+    categoria: 'yogur' as const,
+  },
   loncoleche_vegetal: {
     label: 'Loncoleche Vegetal Soya',
     emoji: '🌱',
