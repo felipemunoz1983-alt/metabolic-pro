@@ -73,7 +73,7 @@ export interface MealOption {
   tieneQueso?: boolean
   /** Tipo de queso que usa la receta por defecto. Casi todos los sándwich del
    *  catálogo usan gauda como base; el selector lo deja cambiar.  */
-  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo' | 'surlat_protein' | 'parcelas_chanco'
+  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo' | 'quesillo_zerolacto' | 'surlat_protein' | 'parcelas_chanco'
   /** Gramaje base del queso en la receta (típicamente 30g por lámina). Usado
    *  para escalar macros si el paciente cambia el tipo. */
   quesoGramosBase?: number
@@ -504,6 +504,24 @@ export const QUESO_TIPOS = {
     descripcion: 'Queso fresco artesanal chileno, muy bajo en sodio (-71% vs gauda). Apto para hipertensión, embarazo y cardiopatía. Sabor neutro, textura húmeda. Apto vegetariano.',
     contiene: ['lactosa'] as string[],
     vegetariano: true,
+  },
+  quesillo_zerolacto: {
+    // Soprole Quesillo Zero Lacto — quesillo fresco SIN LACTOSA. Datos
+    // VERIFICADOS contra etiqueta oficial (foto enviada por Felipe):
+    //   Por porción 30g (1 rebanada): 41.7 kcal · 3.9 P · 1.4 C · 2.3 G · 106.8 mg sodio
+    //   Por 100g:                    139 kcal · 13 P · 4 C · 7 G · 356 mg sodio
+    //   Sin sellos chilenos (perfil nutricional limpio: -34% kcal vs quesillo regular).
+    //   Envase: Pote 300g · 10 porciones aprox.
+    //   Foto oficial Soprole (cuadrada 570x570, 17KB webp).
+    label: 'Quesillo Zero Lacto (Soprole)',
+    emoji: '⚪',
+    item: '30g de Quesillo Soprole Zero Lacto (~1 rebanada)',
+    kcal: 42, p: 3.9, c: 1.4, g: 2.3, sodioMg: 107,
+    badge: '3.9g prot · Sin lactosa · -34% kcal',
+    descripcion: 'Versión deslactosada del quesillo fresco. Soprole pote 300g con 10 porciones. Sin lactosa (apto intolerantes). El más bajo en calorías del catálogo: -34% vs quesillo regular, -50% vs gauda. Más bajo en grasa pero más alto en sodio que el quesillo artesanal (107mg vs 60mg). Ideal déficit estricto + intolerancia lactosa simultáneo.',
+    contiene: [] as string[],   // sin lactosa
+    vegetariano: true,
+    foto: '/img/quesillo_soprole_zerolacto.webp',
   },
   parcelas_chanco: {
     // Las Parcelas de Valdivia — Queso Chanco Laminado SIN LACTOSA.
