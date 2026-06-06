@@ -990,7 +990,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Sin reconstituir · Leche grass-fed · Libre de gluten
     baseKcal: 94, p: 6, c: 11, g: 3,
     porcionFija: true, // 200ml cajita individual — no escalable al slot
-    foto: IMG + 'colun_mi_leche_chocolate.jpg',
+    foto: IMG + 'colun_mi_leche_chocolate.webp',
     tiempo: '1 min',
     tendencia: ['omnivoro', 'vegetariano'],
     alergenosNota:
