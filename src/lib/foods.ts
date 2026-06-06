@@ -73,7 +73,7 @@ export interface MealOption {
   tieneQueso?: boolean
   /** Tipo de queso que usa la receta por defecto. Casi todos los sándwich del
    *  catálogo usan gauda como base; el selector lo deja cambiar.  */
-  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo' | 'surlat_protein'
+  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo' | 'surlat_protein' | 'parcelas_chanco'
   /** Gramaje base del queso en la receta (típicamente 30g por lámina). Usado
    *  para escalar macros si el paciente cambia el tipo. */
   quesoGramosBase?: number
@@ -504,6 +504,28 @@ export const QUESO_TIPOS = {
     descripcion: 'Queso fresco artesanal chileno, muy bajo en sodio (-71% vs gauda). Apto para hipertensión, embarazo y cardiopatía. Sabor neutro, textura húmeda. Apto vegetariano.',
     contiene: ['lactosa'] as string[],
     vegetariano: true,
+  },
+  parcelas_chanco: {
+    // Las Parcelas de Valdivia — Queso Chanco Laminado SIN LACTOSA.
+    // Queso chanco tradicional chileno (sur de Chile, Valdivia), curado y
+    // de sabor más intenso que el gauda. Datos VERIFICADOS contra etiqueta
+    // oficial (foto enviada por Felipe):
+    //   Por porción 2 rebanadas 33g: 113.9 kcal · 8.4 P · 0 C · 8.9 G · 165 mg sodio
+    //                                 (6.3 sat · 2.3 mono · 0.3 poli · 0.2 trans · 22.1 mg colesterol)
+    //   Por 100g:                    345 kcal · 25 P · 0 C · 26 G · 500 mg sodio
+    //   Escalado a 30g:              104 kcal · 7.5 P · 0 C · 7.8 G · 150 mg sodio
+    //   Sellos chilenos: Alto en sodio (1 solo sello).
+    //   Envase: 233g · 14 láminas · 7 porciones aprox.
+    //   Foto oficial Las Parcelas (cuadrada 401x401, 46KB webp).
+    label: 'Chanco Las Parcelas (sin lactosa)',
+    emoji: '🟠',
+    item: '30g de queso Chanco Las Parcelas Sin Lactosa (~2 rebanadas)',
+    kcal: 104, p: 7.5, c: 0, g: 7.8, sodioMg: 150,
+    badge: '7.5g prot · Sin lactosa · Sabor intenso',
+    descripcion: 'Queso chanco tradicional del sur de Chile (Valdivia), curado y de sabor más intenso que el gauda. Sin lactosa (apto intolerantes). Sodio intermedio (150mg, menor que gauda y light). Trazas de grasas trans (0.2g/porción). Marca Las Parcelas de Valdivia 233g · 14 láminas.',
+    contiene: [] as string[],   // sin lactosa
+    vegetariano: true,
+    foto: '/img/queso_parcelas_chanco.webp',
   },
   surlat_protein: {
     // Surlat Sin Lactosa Proteína — laminado fortificado SIN LACTOSA + SIN GLUTEN.
