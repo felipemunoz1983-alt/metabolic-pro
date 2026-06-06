@@ -1871,6 +1871,21 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     marca: 'Genérico',
     categoriaProducto: 'snack_salado',
   },
+  rolls_crocante_costa: {
+    label: '🍫 Rolls Crocante Costa',
+    porcion: '1 porción (26g) · 4 porciones por envase de 100g',
+    // Datos validados contra ficha nutricional jumbo.cl (2026-06):
+    //   Por porción 26g: 132 kcal · 1.1 P · 18.4 C (14.2g azúcar) · 6 G (3.7 sat) · 30.8 mg sodio
+    //   Por 100g equivalente: 507 kcal · 4.2 P · 70.8 C (54.6g azúcar) · 23.1 G (14.2 sat)
+    //   Triple sello chileno: azúcares + grasas saturadas + calorías superan los thresholds INTA.
+    //   Foto: jumbocl.vtexassets.com/arquivos/ids/380460-900-900 (cuadrada 900x900, 72KB webp).
+    kcal: 132, p: 1, c: 18, g: 6,
+    sellos: ['Alto en azúcares (14.2g)', 'Alto en grasas saturadas (3.7g)', 'Alto en calorías'],
+    alergenos: ['Gluten', 'Leche', 'Soya', 'Almendras', 'Maní', 'Avellanas', 'Puede contener trazas de huevo, sésamo, sulfitos'],
+    foto: IMG + 'rolls_crocante_costa.webp',
+    marca: 'Costa',
+    categoriaProducto: 'chocolate',
+  },
   galletas_dulces: {
     label: '🍪 Galletitas Mini Costa Limón',
     porcion: '1 bolsa (35g)',
