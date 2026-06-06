@@ -330,9 +330,34 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
         // sin impactar el deficit total del dia si la ingesta diaria esta calculada. Sin este
         // fallback explicito, el motor usaba carboGramosBase de cada plato (variable: 100/180/250)
         // generando inconsistencia con la UI que muestra "150g" como default.
-        const carboCenaFinal = form.carboGramosCena ?? (cena.tieneCarboPrincipal ? 150 : undefined)
+        const carboCenaSeleccionado = form.carboGramosCena ?? 150
+        // Para platos CON carbo principal: pasar el gramaje al buildMeal para escalar.
+        // Para platos SIN carbo principal: NO pasar (buildMeal lo ignoraria), pero
+        // mas abajo agregamos arroz blanco como guarnicion (fix bug reportado).
+        const carboCenaFinal = cena.tieneCarboPrincipal ? carboCenaSeleccionado : undefined
         const { carne: carneCen, carbo: carboCen } = escalarBariatrica(form.carneGramosCena, carboCenaFinal)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo))
+        const cenaMeal = buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo)
+
+        // ─── FIX bug feedback Felipe: respetar carbo en cenas SIN carbo principal ──
+        // Cenas como pollo+verduras, salmon+brocoli, atun+ensalada, omelette+ensalada,
+        // carne+zapallo, sopas, etc. NO tienen tieneCarboPrincipal = true. Antes el
+        // slider de carboGramosCena se ignoraba en estos platos, dejando al paciente
+        // sin el gramaje que pidio. Ahora si selecciono > 0g de carbo cena, agregamos
+        // arroz blanco como GUARNICION al plato (politica: no reducir carbos en cena).
+        // Si el plato YA tiene carbo principal, el escalado lo hizo buildMeal arriba.
+        if (!cena.tieneCarboPrincipal && carboCenaSeleccionado > 0) {
+          const arrozMacros = CARBO_MACROS_POR_GRAMO.arroz_blanco
+          const g = carboCenaSeleccionado
+          cenaMeal.kcal += Math.round(g * arrozMacros.kcal)
+          cenaMeal.c    += Math.round(g * arrozMacros.c)
+          cenaMeal.p    += Math.round(g * arrozMacros.p)
+          cenaMeal.g    += Math.round(g * arrozMacros.g)
+          cenaMeal.items = [
+            ...cenaMeal.items,
+            `+ ${g}g de arroz blanco cocido como guarnición (política Centro Metabólico: no reducir carbos en la noche)`,
+          ]
+        }
+        meals.push(cenaMeal)
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
