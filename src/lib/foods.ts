@@ -533,6 +533,14 @@ export interface UltraOption {
   foto?: string
   sellos?: string[]
   alergenos?: string[]
+  /** Marca comercial del producto. Permite agrupar/filtrar en la UI por
+   *  fabricante (Nestle, Costa, Savory, Frito-Lay, etc.). Usar 'Genérico'
+   *  para productos sin marca especifica (papas fritas genericas, gomitas,
+   *  kuchen casero, etc.) que aplican a multiples fabricantes. */
+  marca?: string
+  /** Categoria de producto para agrupacion adicional (snack salado,
+   *  chocolate, helado, gaseosa, panaderia, etc.). */
+  categoriaProducto?: 'snack_salado' | 'chocolate' | 'helado' | 'galleta_dulce' | 'gaseosa' | 'panaderia' | 'golosina' | 'cereal' | 'frito'
 }
 
 // ─── DESAYUNOS ────────────────────────────────────────────────────────────────
@@ -1860,12 +1868,16 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     // Escalados a la porción real de 28g (Lays/Marco Polo paquete individual).
     kcal: 150, p: 2, c: 15, g: 9.5,
     sellos: ['Alto en grasas saturadas', 'Alto en sodio'],
+    marca: 'Genérico',
+    categoriaProducto: 'snack_salado',
   },
   galletas_dulces: {
     label: '🍪 Galletitas Mini Costa Limón',
     porcion: '1 bolsa (35g)',
     kcal: 173, p: 1.8, c: 25.8, g: 6.9,
     sellos: ['Alto en azúcares (8.8g)', 'Alto en grasas saturadas (3.8g)', 'Alto en calorías', 'Contiene grasas trans (0.1g)', 'Alto en sodio (137.6mg)'],
+    marca: 'Costa',
+    categoriaProducto: 'galleta_dulce',
   },
   chocolate_leche: {
     label: '🍫 Chocolate Trencito Nestlé',
@@ -1873,12 +1885,16 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 137, p: 2.1, c: 15, g: 7.6,
     sellos: ['Alto en azúcares (13.1g)', 'Alto en grasas saturadas (4.8g)', 'Contiene grasas trans (0.15g)'],
     alergenos: ['Leche', 'Soya', 'Puede contener nueces y derivados'],
+    marca: 'Nestlé',
+    categoriaProducto: 'chocolate',
   },
   bebida_cola: {
     label: '🥤 Bebida cola/gaseosa',
     porcion: '1 lata (355ml)',
     kcal: 150, p: 0, c: 40, g: 0,
     sellos: ['Alto en azúcares'],
+    marca: 'Genérico',
+    categoriaProducto: 'gaseosa',
   },
   helado: {
     label: '🍦 Sandwich Helado Vainilla (Great Value)',
@@ -1886,6 +1902,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 100, p: 2, c: 17, g: 3.5,
     sellos: ['Alto en azúcares (8g)', 'Alto en sodio (70mg)', 'Alto en calorías'],
     alergenos: ['Leche'],
+    marca: 'Great Value',
+    categoriaProducto: 'helado',
   },
   doritos: {
     label: '🌽 Doritos Sabor Queso',
@@ -1893,6 +1911,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 128, p: 1.5, c: 16, g: 6.3,
     sellos: ['Alto en sodio (197mg por porción)', 'Alto en carbohidratos (16g)', 'Grasas saturadas (0.7g)'],
     alergenos: ['Leche (queso, sólidos de leche)'],
+    marca: 'Frito-Lay (PepsiCo)',
+    categoriaProducto: 'snack_salado',
   },
   kuchen: {
     label: '🎂 Kuchen/Pastel',
@@ -1900,6 +1920,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 350, p: 5, c: 40, g: 19,
     sellos: ['Alto en azúcares', 'Alto en grasas saturadas'],
     alergenos: ['Gluten', 'Huevo', 'Leche'],
+    marca: 'Genérico',
+    categoriaProducto: 'panaderia',
   },
   gomitas: {
     label: '🍬 Gomitas/Dulces',
@@ -1908,6 +1930,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     // Escalados a porción real de 30g (puñado ~10 gomitas).
     kcal: 102, p: 1.5, c: 23, g: 0,
     sellos: ['Alto en azúcares'],
+    marca: 'Genérico',
+    categoriaProducto: 'golosina',
   },
   barra_cereal_azucar: {
     label: '🍫 Barra de cereal azucarada',
@@ -1916,12 +1940,16 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     // Escalados a porción real de 35g (barra individual tipo Quaker/Nutry).
     kcal: 140, p: 1.4, c: 23, g: 5,
     sellos: ['Alto en azúcares'],
+    marca: 'Genérico',
+    categoriaProducto: 'cereal',
   },
   nuggets: {
     label: '🍗 Nuggets fritos',
     porcion: '6 unidades (100g)',
     kcal: 297, p: 15, c: 17, g: 18,
     sellos: ['Alto en sodio', 'Alto en grasas saturadas'],
+    marca: 'Genérico',
+    categoriaProducto: 'frito',
   },
   chocolate_sahne_nuss: {
     label: '🍫 Chocolate Sahne-Nuss con Almendras',
@@ -1929,6 +1957,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 173, p: 3.5, c: 14.5, g: 11.2,
     sellos: ['Alto en azúcares (13.6g)', 'Alto en grasas saturadas (4.8g)', 'Contiene colesterol (5mg)'],
     alergenos: ['Almendras', 'Soya (lecitina)', 'Leche'],
+    marca: 'Nestlé',
+    categoriaProducto: 'chocolate',
   },
   donuts: {
     label: '🍩 Mini donuts de chocolate',
@@ -1939,6 +1969,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 188, p: 1.8, c: 24, g: 9.7,
     sellos: ['Alto en azúcares', 'Alto en grasas saturadas', 'Alto en calorías'],
     alergenos: ['Gluten', 'Leche', 'Soya', 'Huevo'],
+    marca: 'Genérico',
+    categoriaProducto: 'panaderia',
   },
   chomp_bombon: {
     label: '🍦 Bombón Helado Chomp Frambuesa (Savory)',
@@ -1946,6 +1978,8 @@ export const ultraProcOpts: Record<string, UltraOption> = {
     kcal: 213, p: 0.8, c: 18.8, g: 15,
     sellos: ['Alto en azúcares (16.5g)', 'Alto en grasas saturadas (11.3g)', 'Alto en calorías', 'Contiene grasas trans (0.1g)'],
     alergenos: ['Leche'],
+    marca: 'Savory',
+    categoriaProducto: 'helado',
   },
 }
 
