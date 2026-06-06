@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * QuesoComparativo — Comparador educativo de los 7 quesos del catálogo.
+ * QuesoComparativo — Comparador educativo de los 8 quesos del catálogo.
  *
  * Muestra cada queso con foto + macros + sodio + tags clínicos (sin lactosa,
  * bajo en sodio, déficit, alta proteína, sabor tradicional, premium).
@@ -57,7 +57,7 @@ export function QuesoComparativo({ form = {}, defaultOpen = false }: Props) {
           <div className="text-left">
             <p className="text-sm font-black text-[#0C3547]">Comparador de quesos</p>
             <p className="text-[11px] text-[#8BA5BE] leading-tight">
-              7 opciones · matcheo por intolerancia + objetivo
+              8 opciones · matcheo por intolerancia + objetivo
             </p>
           </div>
         </div>
@@ -158,6 +158,36 @@ export function QuesoComparativo({ form = {}, defaultOpen = false }: Props) {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Highlights del catálogo — datos curiosos para educar al paciente */}
+              <div className="mt-4 p-3 rounded-lg bg-yellow-50/60 border border-yellow-200">
+                <p className="text-[10px] font-bold text-yellow-900 uppercase tracking-wide mb-1.5">
+                  💡 Datos curiosos del catálogo
+                </p>
+                <ul className="text-[10px] text-[#4a6b80] leading-relaxed space-y-1">
+                  <li>
+                    <strong className="text-[#0C3547]">Menor sodio:</strong> Quesillo fresco artesanal
+                    (60mg/30g — apto HTA · −71% vs gauda).
+                  </li>
+                  <li>
+                    <strong className="text-[#0C3547]">Mejor ratio proteína/kcal en quesillos:</strong>{' '}
+                    Quillayes Sano y Natural (4.1g prot / 41 kcal — premium artesanal,
+                    contiene lactosa).
+                  </li>
+                  <li>
+                    <strong className="text-[#0C3547]">Menor kcal sin lactosa:</strong> Soprole Quesillo
+                    Zero Lacto (42 kcal/30g — déficit estricto + intolerancia).
+                  </li>
+                  <li>
+                    <strong className="text-[#0C3547]">Mayor proteína:</strong> Surlat Sin Lactosa
+                    Proteína (8.5g/30g — déficit + hipertrofia sin lactosa).
+                  </li>
+                  <li>
+                    <strong className="text-[#0C3547]">Sabor tradicional sin lactosa:</strong> Chanco
+                    Las Parcelas de Valdivia (curado intenso — apto intolerantes).
+                  </li>
+                </ul>
               </div>
 
               <p className="mt-4 text-[10px] text-[#8BA5BE] leading-relaxed italic">
