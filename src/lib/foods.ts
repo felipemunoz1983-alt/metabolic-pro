@@ -67,6 +67,16 @@ export interface MealOption {
   /** Tipo de pan que usa la receta por defecto. Se usa para calcular el delta
    *  cuando el paciente elige otro tipo en el wizard. */
   panTipoDefault?: 'integral' | 'blanco' | 'marraqueta' | 'multicereal' | 'molde_integral' | 'pita_integral' | 'masa_madre' | 'sin_gluten' | 'proteico' | 'clean_label' | 'hallulla'
+  /** true = la preparación incluye queso (sándwich, tostada con queso, etc.).
+   *  Activa el selector de tipo de queso en el wizard. El paciente puede elegir
+   *  entre gauda (default), mantecoso, laminado light o quesillo fresco. */
+  tieneQueso?: boolean
+  /** Tipo de queso que usa la receta por defecto. Casi todos los sándwich del
+   *  catálogo usan gauda como base; el selector lo deja cambiar.  */
+  quesoTipoDefault?: 'gauda' | 'mantecoso' | 'light' | 'quesillo'
+  /** Gramaje base del queso en la receta (típicamente 30g por lámina). Usado
+   *  para escalar macros si el paciente cambia el tipo. */
+  quesoGramosBase?: number
 }
 
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
@@ -439,6 +449,66 @@ export const PAN_TIPOS = {
 
 export type PanTipo = keyof typeof PAN_TIPOS
 
+// ─── Tipos de queso laminado disponibles (4 opciones) ────────────────────────
+// Datos por 30g (1 lámina típica de sandwich). Macros INTA Chile + etiquetas
+// oficiales productores chilenos (Soprole, Colun, Chilean Goat, etc.).
+// Diferenciación clínica: cada opción cubre un escenario distinto:
+//   - gauda:      default sabor, alto sodio (clásico mercado)
+//   - mantecoso:  más graso, más sabor (clásico chileno premium)
+//   - light:      bajo en grasa (déficit, hipertensión)
+//   - quesillo:   fresco bajo en sodio (cardiacos, embarazo)
+export const QUESO_TIPOS = {
+  gauda: {
+    label: 'Gauda clásico',
+    emoji: '🧀',
+    item: '30g de queso gauda laminado',
+    // Soprole Gauda — etiqueta: 113 kcal · 8 P · 0.3 C · 9 G · 210 mg sodio
+    kcal: 113, p: 8, c: 0.3, g: 9, sodioMg: 210,
+    badge: '8g prot · Clásico · Mejor sabor',
+    descripcion: 'El estándar del mercado chileno. Mejor sabor y cremosidad, pero alto en sodio. Apto vegetariano.',
+    contiene: ['lactosa'] as string[],
+    vegetariano: true,
+  },
+  mantecoso: {
+    label: 'Mantecoso',
+    emoji: '🟡',
+    item: '30g de queso mantecoso laminado',
+    // Colun Mantecoso — etiqueta: 95 kcal · 6.5 P · 0.5 C · 7.5 G · 195 mg sodio
+    // Menor densidad calórica que gauda por mayor humedad.
+    kcal: 95, p: 6.5, c: 0.5, g: 7.5, sodioMg: 195,
+    badge: '6.5g prot · Menos calórico · Tradicional',
+    descripcion: 'Queso fresco tradicional chileno, más blando y húmedo que el gauda. Menos kcal y grasa por mayor contenido de agua. Apto vegetariano.',
+    contiene: ['lactosa'] as string[],
+    vegetariano: true,
+  },
+  light: {
+    label: 'Laminado Light',
+    emoji: '🥬',
+    item: '30g de queso laminado light (bajo en grasa)',
+    // Soprole Laminado Light — etiqueta: 63 kcal · 8.5 P · 0.6 C · 3 G · 240 mg sodio
+    // -44% kcal vs gauda, -67% grasa, +6% proteína. Para déficit estricto.
+    kcal: 63, p: 8.5, c: 0.6, g: 3, sodioMg: 240,
+    badge: '8.5g prot · -44% kcal · Ideal déficit',
+    descripcion: 'Versión reducida en grasa. -44% kcal vs gauda con MÁS proteína. Ideal para déficit calórico estricto. Sigue alto en sodio. Apto vegetariano.',
+    contiene: ['lactosa'] as string[],
+    vegetariano: true,
+  },
+  quesillo: {
+    label: 'Quesillo fresco',
+    emoji: '⚪',
+    item: '30g de quesillo fresco chileno',
+    // Quesillo nacional — etiqueta promedio: 63 kcal · 4.5 P · 1 C · 4.8 G · 60 mg sodio
+    // El más bajo en sodio del catálogo — apto cardiopatía e hipertensión.
+    kcal: 63, p: 4.5, c: 1, g: 4.8, sodioMg: 60,
+    badge: '4.5g prot · -71% sodio · Apto HTA',
+    descripcion: 'Queso fresco artesanal chileno, muy bajo en sodio (-71% vs gauda). Apto para hipertensión, embarazo y cardiopatía. Sabor neutro, textura húmeda. Apto vegetariano.',
+    contiene: ['lactosa'] as string[],
+    vegetariano: true,
+  },
+} as const
+
+export type QuesoTipo = keyof typeof QUESO_TIPOS
+
 // ─── Snacks saludables Nutrevo ────────────────────────────────────────────────
 export const SNACK_NUTREVO_TIPOS = {
   alfajor_activa2: {
@@ -792,22 +862,22 @@ export const colacionesOpts: Record<string, MealOption> = {
     ],
   },
   tostadas_ricotta_col: {
-    label: 'Tostada integral + ricotta',
-    items: ['1 rebanada pan integral Castaño (31.5g)', '40g ricotta', '1 cdta miel (7g)', '5 nueces (~15g)'],
-    // Auditoría INTA (2026-05):
-    //   1 reb pan integral 31.5g: 82 kcal · 4.2 P · 12.5 C · 1.5 G
+    label: 'Tostadas integrales + ricotta',
+    items: ['2 rebanadas pan integral Castaño (63g)', '40g ricotta', '1 cdta miel (7g)', '5 nueces (~15g)'],
+    // Auditoría INTA + feedback Felipe 2026-06 (2 rebanadas):
+    //   2 reb pan integral 63g:  164 kcal · 8.4 P · 25 C · 3 G
     //   40g ricotta:              68 kcal · 4.5 P · 1.2 C · 5 G
     //   1 cdta miel 7g:           21 kcal · 0 P · 5.8 C · 0 G
     //   5 nueces (~15g):          98 kcal · 2.3 P · 2 C · 9.7 G
-    //   Total: 269 kcal · 11 P · 22 C · 16 G  (kcal +42%, G +130% — nueces densas)
-    baseKcal: 269, p: 11, c: 22, g: 16,
+    //   Total: 351 kcal · 15 P · 34 C · 18 G
+    baseKcal: 351, p: 15, c: 34, g: 18,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '5 min',
     pasos: [
-      'Tostar 1 rebanada de pan integral.',
-      'Esparcir la ricotta sobre la tostada caliente.',
+      'Tostar 2 rebanadas de pan integral hasta dorar.',
+      'Esparcir la ricotta sobre las tostadas calientes.',
       'Agregar la miel y las nueces encima.',
       'Consumir inmediatamente para aprovechar la textura crujiente.',
     ],
@@ -849,6 +919,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 364, p: 25, c: 34, g: 14,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
+    tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
     foto: USP('1528735602780-2552fd46c7af'),
     tiempo: '5 min',
     tendencia: ['omnivoro'],
@@ -879,6 +950,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 442, p: 31, c: 35, g: 19,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
+    tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
     foto: USP('1525351484163-7529414344d8'),
     tiempo: '12 min',
     tendencia: ['omnivoro'],
@@ -912,6 +984,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 393, p: 20, c: 38, g: 19,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
+    tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
     foto: USP('1539252554935-80c8cb01a76d'),
     tiempo: '4 min',
     tendencia: ['omnivoro', 'vegetariano'],
@@ -1060,6 +1133,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 324, p: 20, c: 36, g: 11,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'marraqueta',
+    tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
     foto: USP('1509440159596-0249088772ff'),
     tiempo: '4 min',
     tendencia: ['omnivoro'],

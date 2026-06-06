@@ -13,8 +13,8 @@ import {
   type CirugiaBariatricaTipo,
   type FasePostBariatrica,
 } from '@/lib/bariatrica'
-import type { MealOption, UltraOption, YogurTipo, PanTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
-import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
+import type { MealOption, UltraOption, YogurTipo, PanTipo, QuesoTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
+import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, QUESO_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
 import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
@@ -44,6 +44,7 @@ const defaultForm: Partial<FormData> = {
   wheyIndicado: false,
   yogurtTipo: 'griego' as YogurTipo,
   panTipo: 'integral' as PanTipo,
+  quesoTipo: 'gauda' as QuesoTipo,
   snackNutrevoTipo: 'alfajor_activa2' as SnackNutrevoTipo,
   barraProteinaTipo: 'wild_protein' as BarraProteinaTipo,
   incluirSnackEnPlan: false,      // opt-in: el paciente decide explícitamente
@@ -837,6 +838,70 @@ function PanTypePicker({
   )
 }
 
+// ─── Queso Type Picker (4 opciones: gauda · mantecoso · light · quesillo) ────
+// Aplica a TODAS las preparaciones con tieneQueso=true (sándwiches con queso,
+// marraqueta jamón queso, tostadas con queso). Selector visual con badge y
+// detalle clínico bajo cada tarjeta.
+function QuesoTypePicker({
+  value,
+  onChange,
+}: {
+  value: QuesoTipo
+  onChange: (t: QuesoTipo) => void
+}) {
+  const entries = Object.entries(QUESO_TIPOS) as [QuesoTipo, typeof QUESO_TIPOS[QuesoTipo]][]
+  const selected = QUESO_TIPOS[value]
+
+  return (
+    <div className="mt-3 p-3 bg-yellow-50/60 border border-yellow-200 rounded-xl space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-xs font-bold text-yellow-900">🧀 Tipo de queso favorito</p>
+        <p className="text-[10px] text-yellow-700">
+          Aplica a sándwich de jamón queso, marraqueta y otros con queso
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {entries.map(([key, info]) => {
+          const isSelected = value === key
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              className={cn(
+                'flex flex-col items-center rounded-xl border-2 overflow-hidden text-left transition-all p-2.5',
+                isSelected
+                  ? 'bg-yellow-500 border-yellow-500 text-white shadow-md scale-[1.02]'
+                  : 'border-yellow-200 text-yellow-900 hover:border-yellow-400 bg-white'
+              )}
+            >
+              <span className="text-2xl mb-1">{info.emoji}</span>
+              <span className="text-[10px] sm:text-xs font-bold leading-tight text-center">{info.label}</span>
+              <span className={cn('text-[9px] mt-0.5 font-semibold leading-tight', isSelected ? 'text-yellow-50' : 'text-yellow-700')}>
+                {info.kcal} kcal · 30g
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Detalle del queso seleccionado */}
+      <div className="bg-white border border-yellow-200 rounded-lg p-2.5 text-[10px] space-y-1">
+        <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+          <span className="text-yellow-900"><strong>{selected.label}:</strong></span>
+          <span className="text-[#6B7C93]">{selected.kcal} kcal</span>
+          <span className="text-[#6B7C93]">{selected.p}g P</span>
+          <span className="text-[#6B7C93]">{selected.g}g G</span>
+          <span className={cn('font-bold', selected.sodioMg > 200 ? 'text-red-600' : 'text-green-600')}>
+            {selected.sodioMg}mg sodio
+          </span>
+        </div>
+        <p className="text-[#6B7C93] italic leading-relaxed">{selected.descripcion}</p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Catalog Picker genérico (snacks + barras) ────────────────────────────────
 type CatalogItem = {
   label: string
@@ -1055,6 +1120,7 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
   const TOAST_LABELS: Partial<Record<keyof FormData, (v: unknown) => string>> = {
     yogurtTipo: v => `Yogur: ${YOGUR_TIPOS[v as YogurTipo]?.label ?? v}`,
     panTipo:    v => `Pan: ${PAN_TIPOS[v as PanTipo]?.label ?? v}`,
+    quesoTipo:  v => `Queso: ${QUESO_TIPOS[v as QuesoTipo]?.label ?? v}`,
     snackNutrevoTipo: v => `Snack Nutrevo: ${SNACK_NUTREVO_TIPOS[v as SnackNutrevoTipo]?.label ?? v}`,
     barraProteinaTipo: v => `Barra: ${BARRA_PROTEINA_TIPOS[v as BarraProteinaTipo]?.label ?? v}`,
     incluirSnackEnPlan: v => v ? 'Snack incluido en tu plan ✅' : 'Snack removido del plan',
@@ -1977,6 +2043,12 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                 value={(form.panTipo ?? 'integral') as PanTipo}
                 onChange={t => set('panTipo', t)}
                 intolerancias={form.digIntolerancias ?? []}
+              />
+
+              {/* 3️⃣C Selector tipo queso — aplica a sándwiches con queso, marraqueta jamón queso */}
+              <QuesoTypePicker
+                value={(form.quesoTipo ?? 'gauda') as QuesoTipo}
+                onChange={t => set('quesoTipo', t)}
               />
 
               {/* 4️⃣ Selector snack saludable Nutrevo — opt-in al plan */}

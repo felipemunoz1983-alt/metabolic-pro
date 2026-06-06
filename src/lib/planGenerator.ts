@@ -1,7 +1,7 @@
 // ── Generador de plan semanal · Centro Metabólico Pro ──
 
 import type { FormData } from './nutrition'
-import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo } from './foods'
+import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo } from './foods'
 import { factorEscalaBariatrica, estimarVolumenPlatoMl } from './bariatrica'
 import {
   desayunosOpts,
@@ -12,6 +12,7 @@ import {
   getMealOption,
   YOGUR_TIPOS,
   PAN_TIPOS,
+  QUESO_TIPOS,
   SNACK_NUTREVO_TIPOS,
   BARRA_PROTEINA_TIPOS,
   getCurrentSeason,
@@ -311,21 +312,21 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
       if (slot === 'desayuno') {
         const desayuno = getMealOption(desayunosPool, form.desayunos, d)
-        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo, undefined, undefined, form.panTipo))
+        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo))
       } else if (slot === 'colacion_manana') {
         const pool = buildColacionPool(form.colacionManana, form, 'AM')
         const opt = pool[d % pool.length]
-        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo)
+        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo)
         if (form.horarioEntrenamiento === 'AM') m.timingEntreno = 'post_entreno'
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
         const { carne: carneAlm, carbo: carboAlm } = escalarBariatrica(form.carneGramosAlmuerzo, form.carboGramosAlmuerzo)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, carneAlm, carboAlm, form.panTipo))
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, carneAlm, carboAlm, form.panTipo, form.quesoTipo))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
-        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo, undefined, undefined, form.panTipo)
+        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo)
         if (form.horarioEntrenamiento === 'PM') m.timingEntreno = 'post_entreno'
         else if (form.horarioEntrenamiento === 'noche') m.timingEntreno = 'pre_entreno'
         meals.push(m)
@@ -348,12 +349,12 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
           ? (form.carboGramosCena ?? 150)
           : undefined
         const { carne: carneCen, carbo: carboCen } = escalarBariatrica(form.carneGramosCena, carboCenaFinal)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo))
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo, form.quesoTipo))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
         const opt = extraPool[(d + 2) % extraPool.length]
-        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo))
+        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo))
       }
     }
 
@@ -414,6 +415,7 @@ function buildMeal(
   carneGramos?: number,
   carboGramos?: number,
   panTipo?: PanTipo,
+  quesoTipo?: QuesoTipo,
 ): DayMeal {
   // Productos en porción fija (barras, snacks envasados, postres individuales)
   // NO se escalan al kcal del slot — vienen en envase con macros definidos por etiqueta.
@@ -591,6 +593,40 @@ function buildMeal(
         ? `${alergenosNota}\n${newPan.alergenosNota}`
         : newPan.alergenosNota
     }
+  }
+
+  // Sustituir tipo de queso si la opción usa queso y el paciente eligió uno
+  // distinto al default (típicamente gauda). 4 opciones disponibles:
+  // gauda / mantecoso / light / quesillo (ver QUESO_TIPOS en foods.ts).
+  if (option.tieneQueso && option.quesoTipoDefault && quesoTipo && quesoTipo !== option.quesoTipoDefault) {
+    const oldQueso = QUESO_TIPOS[option.quesoTipoDefault]
+    const newQueso = QUESO_TIPOS[quesoTipo]
+    const gramos = option.quesoGramosBase ?? 30
+
+    // Reemplazar el texto del queso en items. Patrones detectados:
+    // "30g de queso gauda laminado", "30g de queso laminado tipo gauda",
+    // "30g queso gauda", "30g queso laminado tipo gauda", etc.
+    const quesoRegex = /\b(\d+g\s+(?:de\s+)?queso[^,]*?)(?=,|$|\s+(?:o\s|tipo|laminado))/i
+    let replaced = false
+    items = items.map(item => {
+      if (replaced) return item
+      if (/\bqueso\b/i.test(item)) {
+        replaced = true
+        return `${gramos}g de ${newQueso.label.toLowerCase()} laminado`
+      }
+      return item
+    })
+    void quesoRegex  // reservado para refinamientos futuros
+
+    // Ajuste de macros: delta = (newQueso - oldQueso) × gramos
+    // Macros por gramo del queso × diferencia
+    const factor = gramos / 30  // escala si quesoGramosBase != 30
+    const deltaKcal = (newQueso.kcal - oldQueso.kcal) * factor
+    const deltaP    = (newQueso.p    - oldQueso.p)    * factor
+    const deltaG    = (newQueso.g    - oldQueso.g)    * factor
+    p = Math.max(0, Math.round(p + deltaP * scale))
+    g = Math.max(0, Math.round(g + deltaG * scale))
+    void deltaKcal  // total kcal slot ya fijo
   }
 
   return {

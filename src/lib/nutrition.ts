@@ -2,7 +2,7 @@
 // Fórmula activa: Mifflin-St Jeor (1990) — estándar actual (Frankenfield et al. 2005)
 // Harris-Benedict conservado solo como referencia comparativa (@deprecated)
 
-import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo } from './foods'
+import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo } from './foods'
 import { proteinaBariatricaOverride } from './bariatrica'
 
 export type Objetivo = 'perdida grasa' | 'mantenimiento' | 'hipertrofia'
@@ -104,6 +104,12 @@ export interface FormData {
    *  (sándwiches, tostadas, sopa con pan). Si no se elige, cada receta usa su `panTipoDefault`.
    *  Se extiende automáticamente con PAN_TIPOS en foods.ts. */
   panTipo?: PanTipo
+  /** Tipo de queso seleccionado por el paciente. Aplica a TODAS las preparaciones
+   *  con `tieneQueso: true` (sándwiches con queso, marraqueta jamón queso, etc.).
+   *  Si no se elige, cada receta usa su `quesoTipoDefault` (gauda). Se extiende
+   *  automáticamente con QUESO_TIPOS en foods.ts (4 opciones: gauda / mantecoso /
+   *  light / quesillo). */
+  quesoTipo?: QuesoTipo
   /** Snack saludable favorito de Nutrevo. Se extiende automáticamente con SNACK_NUTREVO_TIPOS en foods.ts. */
   snackNutrevoTipo?: SnackNutrevoTipo
   /** Barra de proteína favorita. Se extiende automáticamente con BARRA_PROTEINA_TIPOS en foods.ts. */
