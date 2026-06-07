@@ -920,7 +920,10 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 272, p: 10, c: 26, g: 17,
     porcionFija: true,
     tieneYogur: true,
-    foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
+    // foto: bowl de yogur griego con almendras y nueces, sin berries
+    // (generada con OpenAI gpt-image-1) — diferencia la colacion de
+    // frutos secos de la version desayuno con berries.
+    foto: '/img/recetas/yogur_frutos_secos.webp',
     tiempo: '3 min',
     pasos: [
       'Verter el yogur en un bowl o tazón.',
@@ -964,7 +967,10 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Total: 301 kcal · 20 P · 14 C · 19 G  (kcal +50%, G +73%)
     baseKcal: 301, p: 20, c: 14, g: 19,
     porcionFija: true,
-    foto: IMG + 'cottage_frutas_semillas.jfif',
+    // foto: bowl de cottage cheese con nueces, sin frutas
+    // (generada con OpenAI gpt-image-1) — diferencia la colacion de
+    // cottage+nueces de la version desayuno con frutas y semillas.
+    foto: '/img/recetas/cottage_nueces.webp',
     tiempo: '4 min',
     pasos: [
       'Colocar el cottage en un bowl pequeño.',
@@ -1803,7 +1809,11 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 330 kcal · 47 P · 10 C · 13 G  (P estaba subestimado: atún en agua es muy proteico)
     baseKcal: 330, p: 47, c: 10, g: 13, tieneHuevo: true, eggsDefault: 1,
     porcionFija: true,
-    foto: IMG + 'ensalada_proteica.webp',
+    // foto: ensalada chilena de atun de lata + huevo duro + palta + lechuga
+    // (generada con OpenAI gpt-image-1) — diferencia de la version pollo
+    // del almuerzo (ensalada_proteica.webp) y evita confusion con poke
+    // bowl de atun crudo.
+    foto: '/img/recetas/ensalada_atun.webp',
     tendencia: ['omnivoro'],
     contiene: ['huevo'],
     estacional: 'calor',
