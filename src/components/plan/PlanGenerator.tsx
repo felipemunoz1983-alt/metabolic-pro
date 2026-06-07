@@ -138,18 +138,28 @@ function CheckChips({
 // El gradiente se usa solo en el bloque cuando está cerrado/peek para diferenciar
 // la marca de un vistazo. Si una marca nueva aparece en el catálogo sin entrada
 // aquí, cae al default neutral (sin romper la UI).
-// `logo` (opcional): si existe, se renderiza una <img> dentro del badge en
-// lugar del emoji. Path relativo a /public — para reemplazar el placeholder
-// solo hay que sobrescribir el archivo en /public/img/marcas/{marca}.svg|png.
-const MARCA_INFO: Record<string, { emoji: string; logo?: string; gradient: string; border: string; tag: string }> = {
-  'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.webp', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
-  'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
-  'Great Value':        { emoji: '🛒', logo: '/img/marcas/great_value.webp', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
-  'Nestlé':             { emoji: '🍫', logo: '/img/marcas/nestle.webp', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
-  'Savory':             { emoji: '🍦', logo: '/img/marcas/savory.webp', gradient: 'from-pink-50 to-rose-100',      border: 'border-pink-200',      tag: 'text-pink-800' },
-  'Soprole':            { emoji: '🥛', logo: '/img/marcas/soprole.webp', gradient: 'from-sky-50 to-cyan-100',       border: 'border-sky-200',       tag: 'text-sky-800' },
-  'Genérico':           { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
-  'Sin marca':          { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
+// Estetica Dymatize-style: cards en fondo oscuro premium, acento de color
+// por marca via stripe lateral y hex puro (no gradiente). Tipografia
+// uppercase con tracking marcado, border-radius bajo, sombras definidas.
+//
+// `accent`  -> color hex del stripe lateral y de los chips seleccionados.
+// `chip`    -> clase tailwind del hover de los chips no seleccionados.
+// `selected`-> clase tailwind del fondo del chip seleccionado.
+const MARCA_INFO: Record<string, {
+  emoji: string
+  logo?: string
+  accent: string
+  chipHover: string
+  chipSelected: string
+}> = {
+  'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.webp',       accent: '#E11D2A', chipHover: 'hover:border-red-500 hover:text-red-300',         chipSelected: 'bg-red-600 border-red-600' },
+  'Frito-Lay (PepsiCo)':{ emoji: '🌶️',                                       accent: '#F97316', chipHover: 'hover:border-orange-500 hover:text-orange-300',   chipSelected: 'bg-orange-600 border-orange-600' },
+  'Great Value':        { emoji: '🛒', logo: '/img/marcas/great_value.webp', accent: '#1D4ED8', chipHover: 'hover:border-blue-500 hover:text-blue-300',       chipSelected: 'bg-blue-600 border-blue-600' },
+  'Nestlé':             { emoji: '🍫', logo: '/img/marcas/nestle.webp',      accent: '#D97706', chipHover: 'hover:border-amber-500 hover:text-amber-300',     chipSelected: 'bg-amber-600 border-amber-600' },
+  'Savory':             { emoji: '🍦', logo: '/img/marcas/savory.webp',      accent: '#DB2777', chipHover: 'hover:border-pink-500 hover:text-pink-300',       chipSelected: 'bg-pink-600 border-pink-600' },
+  'Soprole':            { emoji: '🥛', logo: '/img/marcas/soprole.webp',     accent: '#0891B2', chipHover: 'hover:border-cyan-500 hover:text-cyan-300',       chipSelected: 'bg-cyan-600 border-cyan-600' },
+  'Genérico':           { emoji: '🏷️',                                       accent: '#64748B', chipHover: 'hover:border-slate-400 hover:text-slate-200',     chipSelected: 'bg-slate-500 border-slate-500' },
+  'Sin marca':          { emoji: '🏷️',                                       accent: '#64748B', chipHover: 'hover:border-slate-400 hover:text-slate-200',     chipSelected: 'bg-slate-500 border-slate-500' },
 }
 const MARCA_DEFAULT = MARCA_INFO['Sin marca']
 
@@ -221,33 +231,31 @@ function UltraChips({
           <div
             key={marca}
             className={cn(
-              'rounded-2xl border-2 overflow-hidden transition-all',
-              info.border,
-              isOpen ? 'sm:col-span-2 shadow-sm' : 'hover:shadow-sm',
+              'group relative rounded-lg overflow-hidden transition-all',
+              'bg-[#0F141A] ring-1 ring-white/5',
+              'shadow-[0_6px_20px_-12px_rgba(0,0,0,0.45)]',
+              'hover:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] hover:-translate-y-[1px]',
+              isOpen && 'sm:col-span-2 ring-white/10 -translate-y-[1px]',
             )}
+            style={{ borderLeft: `4px solid ${info.accent}` }}
           >
             {/* Botón-bloque de la marca (logo + nombre + count + chevron) */}
             <button
               type="button"
               onClick={() => toggleMarca(marca)}
               aria-expanded={isOpen}
-              className={cn(
-                'w-full flex items-center gap-3 px-3.5 py-3 text-left bg-gradient-to-br transition-colors',
-                info.gradient,
-                'hover:brightness-[0.98]',
-              )}
+              className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left"
             >
-              {/* Logo: imagen oficial si esta disponible, sino fallback emoji */}
-              <div className="w-12 h-12 rounded-xl bg-white border border-white shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
+              {/* Logo: card blanca crisp, imagen oficial o emoji de fallback */}
+              <div className="w-14 h-14 rounded-md bg-white flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
                 {info.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={info.logo}
                     alt={marca}
-                    className="w-full h-full object-contain p-1"
+                    className="w-full h-full object-contain p-1.5"
                     loading="lazy"
                     onError={e => {
-                      // Si el archivo no carga, oculta la img y muestra el emoji de fallback
                       const target = e.currentTarget as HTMLImageElement
                       target.style.display = 'none'
                       const fb = target.nextElementSibling as HTMLElement | null
@@ -262,23 +270,33 @@ function UltraChips({
                   {info.emoji}
                 </span>
               </div>
+
               {/* Texto marca + contadores */}
               <div className="flex-1 min-w-0">
-                <p className={cn('text-sm font-black uppercase tracking-wide leading-tight truncate', info.tag)}>
+                <p
+                  className="text-[13px] font-black uppercase tracking-[0.14em] leading-tight truncate text-white"
+                  style={{ textShadow: '0 1px 0 rgba(0,0,0,0.4)' }}
+                >
                   {marca}
                 </p>
-                <p className="text-[10px] text-[#4a6b80]/80 font-medium leading-tight mt-0.5">
-                  {items.length} {items.length === 1 ? 'opción' : 'opciones'}
+                <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold leading-tight mt-1 flex items-center gap-1.5">
+                  <span>
+                    {items.length} {items.length === 1 ? 'opción' : 'opciones'}
+                  </span>
                   {seleccionadosEnGrupo > 0 && (
-                    <span className="ml-1.5 inline-flex items-center font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full text-[9px]">
+                    <span
+                      className="inline-flex items-center text-white px-1.5 py-0.5 rounded-sm text-[9px] font-black tracking-wider"
+                      style={{ backgroundColor: info.accent }}
+                    >
                       {seleccionadosEnGrupo} ✓
                     </span>
                   )}
                 </p>
               </div>
+
               {/* Chevron */}
               <svg
-                className={cn('w-4 h-4 text-[#4a6b80] flex-shrink-0 transition-transform', isOpen && 'rotate-180')}
+                className={cn('w-4 h-4 flex-shrink-0 transition-transform text-zinc-400 group-hover:text-white', isOpen && 'rotate-180')}
                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
@@ -293,24 +311,27 @@ function UltraChips({
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.2 }}
-                  className="overflow-hidden bg-white"
+                  className="overflow-hidden bg-[#0A0E13] border-t border-white/5"
                 >
-                  <div className="flex flex-wrap gap-2 p-3.5">
-                    {items.map(([key, opt]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => toggle(key)}
-                        className={cn(
-                          'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
-                          selected.includes(key)
-                            ? 'bg-red-500 border-red-500 text-white'
-                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-red-400 hover:text-red-600'
-                        )}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                  <div className="flex flex-wrap gap-2 p-4">
+                    {items.map(([key, opt]) => {
+                      const isSelected = selected.includes(key)
+                      return (
+                        <button
+                          key={key}
+                          type="button"
+                          onClick={() => toggle(key)}
+                          className={cn(
+                            'px-3 py-1.5 rounded-sm border text-[11px] font-bold uppercase tracking-wider transition-all',
+                            isSelected
+                              ? cn('text-white shadow-md', info.chipSelected)
+                              : cn('border-zinc-700 text-zinc-300 bg-zinc-900/40', info.chipHover),
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      )
+                    })}
                   </div>
                 </motion.div>
               )}
