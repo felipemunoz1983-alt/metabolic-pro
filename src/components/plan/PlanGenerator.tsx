@@ -138,8 +138,11 @@ function CheckChips({
 // El gradiente se usa solo en el bloque cuando está cerrado/peek para diferenciar
 // la marca de un vistazo. Si una marca nueva aparece en el catálogo sin entrada
 // aquí, cae al default neutral (sin romper la UI).
-const MARCA_INFO: Record<string, { emoji: string; gradient: string; border: string; tag: string }> = {
-  'Costa':              { emoji: '🍪', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
+// `logo` (opcional): si existe, se renderiza una <img> dentro del badge en
+// lugar del emoji. Path relativo a /public — para reemplazar el placeholder
+// solo hay que sobrescribir el archivo en /public/img/marcas/{marca}.svg|png.
+const MARCA_INFO: Record<string, { emoji: string; logo?: string; gradient: string; border: string; tag: string }> = {
+  'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.svg', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
   'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
   'Great Value':        { emoji: '🛒', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
   'Nestlé':             { emoji: '🍫', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
@@ -234,9 +237,30 @@ function UltraChips({
                 'hover:brightness-[0.98]',
               )}
             >
-              {/* Logo */}
-              <div className="w-12 h-12 rounded-xl bg-white/80 border border-white shadow-sm flex items-center justify-center text-2xl flex-shrink-0">
-                {info.emoji}
+              {/* Logo: imagen oficial si esta disponible, sino fallback emoji */}
+              <div className="w-12 h-12 rounded-xl bg-white border border-white shadow-sm flex items-center justify-center flex-shrink-0 overflow-hidden">
+                {info.logo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={info.logo}
+                    alt={marca}
+                    className="w-full h-full object-contain p-1"
+                    loading="lazy"
+                    onError={e => {
+                      // Si el archivo no carga, oculta la img y muestra el emoji de fallback
+                      const target = e.currentTarget as HTMLImageElement
+                      target.style.display = 'none'
+                      const fb = target.nextElementSibling as HTMLElement | null
+                      if (fb) fb.style.display = 'flex'
+                    }}
+                  />
+                ) : null}
+                <span
+                  className={cn('text-2xl items-center justify-center w-full h-full', info.logo ? 'hidden' : 'flex')}
+                  aria-hidden={!!info.logo}
+                >
+                  {info.emoji}
+                </span>
               </div>
               {/* Texto marca + contadores */}
               <div className="flex-1 min-w-0">
