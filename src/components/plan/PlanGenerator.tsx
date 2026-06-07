@@ -134,9 +134,27 @@ function CheckChips({
 }
 
 // ─── Ultra-processed chip selector (multi-toggle, min 0) ─────────────────────
-// Agrupado por marca (feedback Felipe): el selector se organiza en secciones
-// por fabricante (Nestlé, Costa, Savory, etc.) con 'Genérico' al final como
-// catch-all. Cada sección tiene su propio header con count de opciones.
+// Identidad visual por marca: emoji-logo + gradiente del botón colapsable.
+// El gradiente se usa solo en el bloque cuando está cerrado/peek para diferenciar
+// la marca de un vistazo. Si una marca nueva aparece en el catálogo sin entrada
+// aquí, cae al default neutral (sin romper la UI).
+const MARCA_INFO: Record<string, { emoji: string; gradient: string; border: string; tag: string }> = {
+  'Costa':              { emoji: '🍪', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
+  'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
+  'Great Value':        { emoji: '🛒', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
+  'Nestlé':             { emoji: '🍫', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
+  'Savory':             { emoji: '🍦', gradient: 'from-pink-50 to-rose-100',      border: 'border-pink-200',      tag: 'text-pink-800' },
+  'Soprole':            { emoji: '🥛', gradient: 'from-sky-50 to-cyan-100',       border: 'border-sky-200',       tag: 'text-sky-800' },
+  'Genérico':           { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
+  'Sin marca':          { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
+}
+const MARCA_DEFAULT = MARCA_INFO['Sin marca']
+
+// Agrupado por marca (feedback Felipe): el selector se organiza en BLOQUES
+// colapsables por fabricante (Nestlé, Costa, Savory, etc.) con 'Genérico' al
+// final como catch-all. Cada bloque arranca con un botón grande con el logo
+// de la marca; el click expande los productos. Bloques con items ya
+// seleccionados se abren automaticamente al montar.
 function UltraChips({
   pool,
   selected,
@@ -155,8 +173,6 @@ function UltraChips({
   }
 
   // Agrupar entries por marca. Productos sin campo marca van a 'Sin marca'.
-  // Map preserva orden de inserción → el orden del catálogo se respeta dentro
-  // de cada grupo.
   const grupos = new Map<string, [string, UltraOption][]>()
   for (const [key, opt] of Object.entries(pool)) {
     const m = opt.marca ?? 'Sin marca'
@@ -172,45 +188,109 @@ function UltraChips({
     return a.localeCompare(b, 'es')
   })
 
+  // Estado de bloques abiertos. Auto-incluye marcas con items ya seleccionados
+  // al primer render para que el profesional vea de un vistazo qué ya picó.
+  const [abiertas, setAbiertas] = useState<Set<string>>(() => {
+    const initial = new Set<string>()
+    for (const [marca, items] of grupos) {
+      if (items.some(([k]) => selected.includes(k))) initial.add(marca)
+    }
+    return initial
+  })
+
+  function toggleMarca(m: string) {
+    setAbiertas(prev => {
+      const next = new Set(prev)
+      if (next.has(m)) next.delete(m)
+      else next.add(m)
+      return next
+    })
+  }
+
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {marcasOrdenadas.map(marca => {
         const items = grupos.get(marca)!
         const seleccionadosEnGrupo = items.filter(([k]) => selected.includes(k)).length
+        const isOpen = abiertas.has(marca)
+        const info = MARCA_INFO[marca] ?? MARCA_DEFAULT
         return (
-          <div key={marca}>
-            {/* Header de la sección con nombre de marca + count total y seleccionados */}
-            <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-[#E2ECF4]">
-              <p className="text-[11px] font-bold text-[#0C3547] uppercase tracking-wide flex items-center gap-1.5">
-                <span className="text-sm">🏷️</span>
-                {marca}
-                <span className="text-[10px] font-medium text-[#8BA5BE] normal-case tracking-normal">
-                  ({items.length} {items.length === 1 ? 'opción' : 'opciones'})
-                </span>
-              </p>
-              {seleccionadosEnGrupo > 0 && (
-                <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
-                  {seleccionadosEnGrupo} seleccionado{seleccionadosEnGrupo !== 1 ? 's' : ''}
-                </span>
+          <div
+            key={marca}
+            className={cn(
+              'rounded-2xl border-2 overflow-hidden transition-all',
+              info.border,
+              isOpen ? 'sm:col-span-2 shadow-sm' : 'hover:shadow-sm',
+            )}
+          >
+            {/* Botón-bloque de la marca (logo + nombre + count + chevron) */}
+            <button
+              type="button"
+              onClick={() => toggleMarca(marca)}
+              aria-expanded={isOpen}
+              className={cn(
+                'w-full flex items-center gap-3 px-3.5 py-3 text-left bg-gradient-to-br transition-colors',
+                info.gradient,
+                'hover:brightness-[0.98]',
               )}
-            </div>
-            {/* Chips de productos de esa marca */}
-            <div className="flex flex-wrap gap-2">
-              {items.map(([key, opt]) => (
-                <button
-                  key={key}
-                  onClick={() => toggle(key)}
-                  className={cn(
-                    'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
-                    selected.includes(key)
-                      ? 'bg-red-500 border-red-500 text-white'
-                      : 'border-[#D6E3ED] text-[#6B7C93] hover:border-red-400 hover:text-red-600'
+            >
+              {/* Logo */}
+              <div className="w-12 h-12 rounded-xl bg-white/80 border border-white shadow-sm flex items-center justify-center text-2xl flex-shrink-0">
+                {info.emoji}
+              </div>
+              {/* Texto marca + contadores */}
+              <div className="flex-1 min-w-0">
+                <p className={cn('text-sm font-black uppercase tracking-wide leading-tight truncate', info.tag)}>
+                  {marca}
+                </p>
+                <p className="text-[10px] text-[#4a6b80]/80 font-medium leading-tight mt-0.5">
+                  {items.length} {items.length === 1 ? 'opción' : 'opciones'}
+                  {seleccionadosEnGrupo > 0 && (
+                    <span className="ml-1.5 inline-flex items-center font-bold bg-red-500 text-white px-1.5 py-0.5 rounded-full text-[9px]">
+                      {seleccionadosEnGrupo} ✓
+                    </span>
                   )}
+                </p>
+              </div>
+              {/* Chevron */}
+              <svg
+                className={cn('w-4 h-4 text-[#4a6b80] flex-shrink-0 transition-transform', isOpen && 'rotate-180')}
+                fill="none" stroke="currentColor" viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {/* Chips de productos — solo cuando el bloque está abierto */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="overflow-hidden bg-white"
                 >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+                  <div className="flex flex-wrap gap-2 p-3.5">
+                    {items.map(([key, opt]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => toggle(key)}
+                        className={cn(
+                          'px-3 py-1.5 rounded-full border-2 text-xs font-semibold transition-all',
+                          selected.includes(key)
+                            ? 'bg-red-500 border-red-500 text-white'
+                            : 'border-[#D6E3ED] text-[#6B7C93] hover:border-red-400 hover:text-red-600'
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )
       })}
