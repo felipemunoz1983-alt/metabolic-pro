@@ -1485,7 +1485,10 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   (Versión anterior subestimaba proteína — pavo es más magro que pollo)
     baseKcal: 466, p: 62, c: 34, g: 9,
     porcionFija: true,
-    foto: IMG + 'carne_con_papas..webp',
+    // foto: pavo asado con papas en plato blanco (Unsplash) — corrige
+    // mismatch previo donde se usaba la foto generica de "carne con papas"
+    // que mostraba carne roja en vez de pavo (carne blanca).
+    foto: USP('1642192429402-90e329af29a4'),
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'pavo', carneGramosBase: 200,
@@ -1738,7 +1741,10 @@ export const cenasOpts: Record<string, MealOption> = {
     // Total ≈ 244 kcal · 33 P · 12 C · 8 G — porción cena moderada con alto contenido proteico
     baseKcal: 244, p: 33, c: 12, g: 8,
     porcionFija: true,
-    foto: IMG + 'pollo_plancha_arroz_ensalada.jfif',
+    // foto: pollo a la plancha con verduras coloridas (Unsplash) — corrige
+    // mismatch previo donde se reusaba la foto del almuerzo con ARROZ que
+    // contradecia la receta de cena sin carbohidrato.
+    foto: USP('1633683789521-99cba8ec5d1b'),
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
@@ -1762,7 +1768,10 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 319 kcal · 21 P · 9 C · 20 G
     baseKcal: 319, p: 21, c: 9, g: 20, tieneHuevo: true, eggsDefault: 3,
     porcionFija: true,
-    foto: IMG + 'omelette_pan_integral.jfif',
+    // foto: omelette/tortilla con ensalada verde en plato blanco (Unsplash)
+    // — corrige mismatch previo donde se reusaba la foto del omelette de
+    // desayuno con PAN integral que no aplica a la version cena.
+    foto: USP('1625536059909-84924b9899ea'),
     tendencia: ['vegetariano'],
     contiene: ['huevo'],
     tiempo: '12 min',
@@ -1809,7 +1818,10 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 415 kcal · 38 P · 14 C · 25 G  (C +75%, G +56% — salmón es graso)
     baseKcal: 415, p: 38, c: 14, g: 25,
     porcionFija: true,
-    foto: IMG + 'salmon_quinoa.webp',
+    // foto: salmon al horno con brocoli en plato negro (Unsplash) — corrige
+    // mismatch previo donde se reusaba la foto del almuerzo con QUINOA que
+    // contradecia la receta de cena sin carbohidrato.
+    foto: USP('1675209705883-7aec595f5aa8'),
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],
     tieneCarne: true, carneTipo: 'salmon', carneGramosBase: 150,
@@ -1832,7 +1844,10 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 319 kcal · 42 P · 9 C · 13 G
     baseKcal: 319, p: 42, c: 9, g: 13,
     porcionFija: true,
-    foto: IMG + 'carne_con_papas..webp',
+    // foto: carne grillada con zapallo italiano en plato blanco (Unsplash)
+    // — corrige mismatch previo donde se reusaba la foto generica de
+    // "carne con PAPAS" que contradice la receta de cena (zapallo, no papa).
+    foto: USP('1627871852845-afb02c53b422'),
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
