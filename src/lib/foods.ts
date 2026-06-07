@@ -754,7 +754,10 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Total: 599 kcal · 42 P · 93 C · 7 G
     baseKcal: 599, p: 42, c: 93, g: 7,
     requiereWhey: true,
-    foto: USP('1638813133218-4367bd8123f6'), // tazón de avena con frutas encima, foto real
+    // foto: scoop de proteina sobre superficie (Unsplash) — diferencia
+    // visualmente la version proteica de la avena natural (avena_platano),
+    // que sigue usando la foto del tazon de avena con frutas.
+    foto: USP('1693996046865-19217d179161'),
     tiempo: '10 min',
     pasos: [
       'Calentar 200ml de leche en una olla a fuego medio.',
@@ -1358,7 +1361,11 @@ export const almuerzosOpts: Record<string, MealOption> = {
     items: ['150g carne magra (posta, lomo o filete)', '250g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
     baseKcal: 565, p: 44, c: 50, g: 16,
     porcionFija: true,
-    foto: IMG + 'carne_con_papas..webp',
+    // foto: bistec asado con papas doradas + zanahorias + romero/hierbas
+    // (Unsplash) — diferencia visualmente esta receta de la version con
+    // papas cocidas blancas planas (carne_papas_cocidas) que sigue usando
+    // carne_con_papas..webp.
+    foto: USP('1778784153322-9b20b164012c'),
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
@@ -1718,7 +1725,9 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 452 kcal · 36 P · 41 C · 16 G
     baseKcal: 452, p: 36, c: 41, g: 16,
     porcionFija: true,
-    foto: IMG + 'carne_con_papas..webp',
+    // foto: misma que la version almuerzo de papas salteadas con romero
+    // (Unsplash) — porcion cena reducida pero presentacion visual identica.
+    foto: USP('1778784153322-9b20b164012c'),
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 120,
