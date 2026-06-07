@@ -232,34 +232,37 @@ function UltraChips({
             key={marca}
             className={cn(
               'group relative rounded-lg overflow-hidden transition-all',
-              'bg-[#0F141A] ring-1 ring-white/5',
+              info.logo ? 'bg-white ring-1 ring-zinc-200' : 'bg-[#0F141A] ring-1 ring-white/5',
               'shadow-[0_6px_20px_-12px_rgba(0,0,0,0.45)]',
               'hover:shadow-[0_10px_28px_-12px_rgba(0,0,0,0.55)] hover:-translate-y-[1px]',
-              isOpen && 'sm:col-span-2 ring-white/10 -translate-y-[1px]',
+              isOpen && 'sm:col-span-2 -translate-y-[1px]',
+              isOpen && (info.logo ? 'ring-zinc-300' : 'ring-white/10'),
             )}
             style={{ borderLeft: `4px solid ${info.accent}` }}
           >
             {/* Botón-bloque de la marca:
-                - Si hay LOGO: el logo es el protagonista (zona blanca ancha,
-                  sin texto duplicado de nombre). Solo contador + chevron a
-                  la derecha sobre el fondo oscuro.
-                - Si NO hay logo: muestra emoji + nombre como antes. */}
+                - Con logo: card blanca con logo grande centrado + footer
+                  oscuro delgado con contador y chevron (la marca se ve
+                  COMPLETA, no recortada con panel negro al lado).
+                - Sin logo: card oscura con emoji + nombre + contador
+                  (fallback para marcas sin imagen). */}
             <button
               type="button"
               onClick={() => toggleMarca(marca)}
               aria-expanded={isOpen}
               aria-label={`${marca} — ${items.length} ${items.length === 1 ? 'opción' : 'opciones'}`}
-              className="w-full flex items-stretch text-left min-h-[68px]"
+              className="w-full flex flex-col text-left"
             >
               {info.logo ? (
                 <>
-                  {/* Zona del logo: bloque blanco ancho con logo centrado */}
-                  <div className="bg-white flex items-center justify-center px-5 py-2 flex-shrink-0 w-[44%] sm:w-[38%] overflow-hidden">
+                  {/* Zona del logo: card blanca completa, logo grande
+                      y centrado con padding generoso. */}
+                  <div className="flex items-center justify-center w-full px-6 py-6 min-h-[112px]">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={info.logo}
                       alt={marca}
-                      className="max-h-12 w-auto object-contain"
+                      className="max-h-16 w-auto object-contain"
                       loading="lazy"
                       onError={e => {
                         const target = e.currentTarget as HTMLImageElement
@@ -268,19 +271,19 @@ function UltraChips({
                         if (fb) fb.style.display = 'flex'
                       }}
                     />
-                    <span className="hidden text-3xl items-center justify-center" aria-hidden>
+                    <span className="hidden text-4xl items-center justify-center" aria-hidden>
                       {info.emoji}
                     </span>
                   </div>
-                  {/* Zona derecha oscura: contador + chevron */}
-                  <div className="flex-1 flex items-center justify-between gap-2 px-4 py-3">
-                    <div className="min-w-0">
-                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black leading-tight">
+                  {/* Footer slim oscuro: contador + chevron */}
+                  <div className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-[#0F141A]">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-400 font-black leading-tight">
                         {items.length} {items.length === 1 ? 'opción' : 'opciones'}
                       </p>
                       {seleccionadosEnGrupo > 0 && (
                         <span
-                          className="mt-1.5 inline-flex items-center text-white px-2 py-0.5 rounded-sm text-[10px] font-black tracking-wider"
+                          className="inline-flex items-center text-white px-1.5 py-0.5 rounded-sm text-[9px] font-black tracking-wider"
                           style={{ backgroundColor: info.accent }}
                         >
                           {seleccionadosEnGrupo} ✓
@@ -296,8 +299,8 @@ function UltraChips({
                   </div>
                 </>
               ) : (
-                /* Fallback sin logo: emoji + nombre + contador */
-                <div className="flex-1 flex items-center gap-3.5 px-4 py-3.5">
+                /* Fallback sin logo: card oscura con emoji + nombre + contador */
+                <div className="flex-1 w-full flex items-center gap-3.5 px-4 py-3.5">
                   <div className="w-14 h-14 rounded-md bg-white flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md text-3xl">
                     {info.emoji}
                   </div>
