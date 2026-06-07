@@ -142,7 +142,7 @@ function CheckChips({
 // lugar del emoji. Path relativo a /public — para reemplazar el placeholder
 // solo hay que sobrescribir el archivo en /public/img/marcas/{marca}.svg|png.
 const MARCA_INFO: Record<string, { emoji: string; logo?: string; gradient: string; border: string; tag: string }> = {
-  'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.svg', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
+  'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.webp', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
   'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
   'Great Value':        { emoji: '🛒', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
   'Nestlé':             { emoji: '🍫', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
