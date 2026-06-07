@@ -345,7 +345,7 @@ function UltraChips({
                   transition={{ duration: 0.2 }}
                   className="overflow-hidden bg-[#0A0E13] border-t border-white/5"
                 >
-                  <div className="flex flex-wrap gap-2 p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 p-4">
                     {items.map(([key, opt]) => {
                       const isSelected = selected.includes(key)
                       return (
@@ -354,13 +354,42 @@ function UltraChips({
                           type="button"
                           onClick={() => toggle(key)}
                           className={cn(
-                            'px-3 py-1.5 rounded-sm border text-[11px] font-bold uppercase tracking-wider transition-all',
+                            'group/chip flex flex-col items-stretch rounded-md border-2 overflow-hidden transition-all text-left',
                             isSelected
-                              ? cn('text-white shadow-md', info.chipSelected)
-                              : cn('border-zinc-700 text-zinc-300 bg-zinc-900/40', info.chipHover),
+                              ? cn('text-white shadow-md ring-2 ring-white/20', info.chipSelected)
+                              : cn('border-zinc-700 bg-zinc-900/60 hover:bg-zinc-900', info.chipHover),
                           )}
                         >
-                          {opt.label}
+                          {/* Zona de foto: card blanca si hay foto, banda
+                              alternativa con emoji grande si no la hay. */}
+                          {opt.foto ? (
+                            <div className="bg-white aspect-square flex items-center justify-center p-2 overflow-hidden">
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={opt.foto}
+                                alt={opt.label}
+                                className="max-w-full max-h-full object-contain"
+                                loading="lazy"
+                                onError={e => {
+                                  const t = e.currentTarget as HTMLImageElement
+                                  t.style.display = 'none'
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div className="bg-zinc-950/60 aspect-square flex items-center justify-center text-4xl">
+                              {opt.label.match(/^[\p{Emoji}]+/u)?.[0] ?? '📦'}
+                            </div>
+                          )}
+                          {/* Footer con label */}
+                          <span
+                            className={cn(
+                              'block px-2.5 py-2 text-[10px] font-bold leading-tight',
+                              isSelected ? 'text-white' : 'text-zinc-200',
+                            )}
+                          >
+                            {opt.label.replace(/^[\p{Emoji}]+\s*/u, '')}
+                          </span>
                         </button>
                       )
                     })}
