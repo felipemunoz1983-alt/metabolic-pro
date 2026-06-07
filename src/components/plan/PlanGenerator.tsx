@@ -239,68 +239,97 @@ function UltraChips({
             )}
             style={{ borderLeft: `4px solid ${info.accent}` }}
           >
-            {/* Botón-bloque de la marca (logo + nombre + count + chevron) */}
+            {/* Botón-bloque de la marca:
+                - Si hay LOGO: el logo es el protagonista (zona blanca ancha,
+                  sin texto duplicado de nombre). Solo contador + chevron a
+                  la derecha sobre el fondo oscuro.
+                - Si NO hay logo: muestra emoji + nombre como antes. */}
             <button
               type="button"
               onClick={() => toggleMarca(marca)}
               aria-expanded={isOpen}
-              className="w-full flex items-center gap-3.5 px-4 py-3.5 text-left"
+              aria-label={`${marca} — ${items.length} ${items.length === 1 ? 'opción' : 'opciones'}`}
+              className="w-full flex items-stretch text-left min-h-[68px]"
             >
-              {/* Logo: card blanca crisp, imagen oficial o emoji de fallback */}
-              <div className="w-14 h-14 rounded-md bg-white flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md">
-                {info.logo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={info.logo}
-                    alt={marca}
-                    className="w-full h-full object-contain p-1.5"
-                    loading="lazy"
-                    onError={e => {
-                      const target = e.currentTarget as HTMLImageElement
-                      target.style.display = 'none'
-                      const fb = target.nextElementSibling as HTMLElement | null
-                      if (fb) fb.style.display = 'flex'
-                    }}
-                  />
-                ) : null}
-                <span
-                  className={cn('text-2xl items-center justify-center w-full h-full', info.logo ? 'hidden' : 'flex')}
-                  aria-hidden={!!info.logo}
-                >
-                  {info.emoji}
-                </span>
-              </div>
-
-              {/* Texto marca + contadores */}
-              <div className="flex-1 min-w-0">
-                <p
-                  className="text-[13px] font-black uppercase tracking-[0.14em] leading-tight truncate text-white"
-                  style={{ textShadow: '0 1px 0 rgba(0,0,0,0.4)' }}
-                >
-                  {marca}
-                </p>
-                <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold leading-tight mt-1 flex items-center gap-1.5">
-                  <span>
-                    {items.length} {items.length === 1 ? 'opción' : 'opciones'}
-                  </span>
-                  {seleccionadosEnGrupo > 0 && (
-                    <span
-                      className="inline-flex items-center text-white px-1.5 py-0.5 rounded-sm text-[9px] font-black tracking-wider"
-                      style={{ backgroundColor: info.accent }}
-                    >
-                      {seleccionadosEnGrupo} ✓
+              {info.logo ? (
+                <>
+                  {/* Zona del logo: bloque blanco ancho con logo centrado */}
+                  <div className="bg-white flex items-center justify-center px-5 py-2 flex-shrink-0 w-[44%] sm:w-[38%] overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={info.logo}
+                      alt={marca}
+                      className="max-h-12 w-auto object-contain"
+                      loading="lazy"
+                      onError={e => {
+                        const target = e.currentTarget as HTMLImageElement
+                        target.style.display = 'none'
+                        const fb = target.nextElementSibling as HTMLElement | null
+                        if (fb) fb.style.display = 'flex'
+                      }}
+                    />
+                    <span className="hidden text-3xl items-center justify-center" aria-hidden>
+                      {info.emoji}
                     </span>
-                  )}
-                </p>
-              </div>
-
-              {/* Chevron */}
-              <svg
-                className={cn('w-4 h-4 flex-shrink-0 transition-transform text-zinc-400 group-hover:text-white', isOpen && 'rotate-180')}
-                fill="none" stroke="currentColor" viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-              </svg>
+                  </div>
+                  {/* Zona derecha oscura: contador + chevron */}
+                  <div className="flex-1 flex items-center justify-between gap-2 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500 font-black leading-tight">
+                        {items.length} {items.length === 1 ? 'opción' : 'opciones'}
+                      </p>
+                      {seleccionadosEnGrupo > 0 && (
+                        <span
+                          className="mt-1.5 inline-flex items-center text-white px-2 py-0.5 rounded-sm text-[10px] font-black tracking-wider"
+                          style={{ backgroundColor: info.accent }}
+                        >
+                          {seleccionadosEnGrupo} ✓
+                        </span>
+                      )}
+                    </div>
+                    <svg
+                      className={cn('w-4 h-4 flex-shrink-0 transition-transform text-zinc-400 group-hover:text-white', isOpen && 'rotate-180')}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </>
+              ) : (
+                /* Fallback sin logo: emoji + nombre + contador */
+                <div className="flex-1 flex items-center gap-3.5 px-4 py-3.5">
+                  <div className="w-14 h-14 rounded-md bg-white flex items-center justify-center flex-shrink-0 overflow-hidden shadow-md text-3xl">
+                    {info.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p
+                      className="text-[13px] font-black uppercase tracking-[0.14em] leading-tight truncate text-white"
+                      style={{ textShadow: '0 1px 0 rgba(0,0,0,0.4)' }}
+                    >
+                      {marca}
+                    </p>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-500 font-bold leading-tight mt-1 flex items-center gap-1.5">
+                      <span>
+                        {items.length} {items.length === 1 ? 'opción' : 'opciones'}
+                      </span>
+                      {seleccionadosEnGrupo > 0 && (
+                        <span
+                          className="inline-flex items-center text-white px-1.5 py-0.5 rounded-sm text-[9px] font-black tracking-wider"
+                          style={{ backgroundColor: info.accent }}
+                        >
+                          {seleccionadosEnGrupo} ✓
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <svg
+                    className={cn('w-4 h-4 flex-shrink-0 transition-transform text-zinc-400 group-hover:text-white', isOpen && 'rotate-180')}
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              )}
             </button>
 
             {/* Chips de productos — solo cuando el bloque está abierto */}
