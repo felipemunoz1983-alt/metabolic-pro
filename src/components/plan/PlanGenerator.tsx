@@ -146,7 +146,7 @@ const MARCA_INFO: Record<string, { emoji: string; logo?: string; gradient: strin
   'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
   'Great Value':        { emoji: '🛒', logo: '/img/marcas/great_value.webp', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
   'Nestlé':             { emoji: '🍫', logo: '/img/marcas/nestle.webp', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
-  'Savory':             { emoji: '🍦', gradient: 'from-pink-50 to-rose-100',      border: 'border-pink-200',      tag: 'text-pink-800' },
+  'Savory':             { emoji: '🍦', logo: '/img/marcas/savory.webp', gradient: 'from-pink-50 to-rose-100',      border: 'border-pink-200',      tag: 'text-pink-800' },
   'Soprole':            { emoji: '🥛', gradient: 'from-sky-50 to-cyan-100',       border: 'border-sky-200',       tag: 'text-sky-800' },
   'Genérico':           { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
   'Sin marca':          { emoji: '🏷️', gradient: 'from-slate-50 to-gray-100',     border: 'border-slate-200',     tag: 'text-slate-700' },
