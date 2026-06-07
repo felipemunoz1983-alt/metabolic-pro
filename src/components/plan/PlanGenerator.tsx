@@ -144,7 +144,7 @@ function CheckChips({
 const MARCA_INFO: Record<string, { emoji: string; logo?: string; gradient: string; border: string; tag: string }> = {
   'Costa':              { emoji: '🍪', logo: '/img/marcas/costa.webp', gradient: 'from-red-50 to-rose-100',       border: 'border-red-200',       tag: 'text-red-800' },
   'Frito-Lay (PepsiCo)':{ emoji: '🌶️', gradient: 'from-orange-50 to-amber-100',   border: 'border-orange-200',    tag: 'text-orange-800' },
-  'Great Value':        { emoji: '🛒', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
+  'Great Value':        { emoji: '🛒', logo: '/img/marcas/great_value.webp', gradient: 'from-blue-50 to-sky-100',       border: 'border-blue-200',      tag: 'text-blue-800' },
   'Nestlé':             { emoji: '🍫', gradient: 'from-amber-50 to-yellow-100',   border: 'border-amber-200',     tag: 'text-amber-800' },
   'Savory':             { emoji: '🍦', gradient: 'from-pink-50 to-rose-100',      border: 'border-pink-200',      tag: 'text-pink-800' },
   'Soprole':            { emoji: '🥛', gradient: 'from-sky-50 to-cyan-100',       border: 'border-sky-200',       tag: 'text-sky-800' },
