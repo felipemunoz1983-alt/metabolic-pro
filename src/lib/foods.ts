@@ -1310,7 +1310,13 @@ export const colacionesOpts: Record<string, MealOption> = {
 export const almuerzosOpts: Record<string, MealOption> = {
   pollo_arroz: {
     label: 'Pollo a la plancha + arroz integral + ensalada',
-    items: ['200g pechuga pollo a la plancha', '150g arroz integral cocido', 'Ensalada de tomate, pepino y lechuga', '1 cda aceite de oliva'],
+    items: [
+      '200g pechuga pollo a la plancha',
+      '150g arroz integral cocido',
+      'Ensalada de tomate, pepino y lechuga',
+      '1 cda aceite de oliva',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Macros INTA + Super Pollo (auditoría 2026-05):
     //   200g pollo Super Pollo:           192 kcal · 39.2 P · 0 C · 3.4 G
     //   150g arroz integral cocido INTA:  167 kcal · 4 P · 35 C · 1.35 G
@@ -1339,7 +1345,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   carne_papas: {
     label: 'Carne magra + papas cocidas + ensalada',
-    items: ['150g carne magra (posta, lomo o filete)', '250g papas cocidas con cáscara (~1 papa grande)', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    items: [
+      '150g carne magra (posta, lomo o filete)',
+      '250g papas cocidas con cáscara (~1 papa grande)',
+      'Ensalada de lechuga, tomate y pepino',
+      '1 cdta aceite de oliva',
+      '💡 Cambia las papas por: 150g arroz cocido · 130g fideos cocidos · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Auditoría INTA (2026-05):
     //   150g carne magra:        225 kcal · 39 P · 0 C · 7.5 G
     //   250g papa cocida cáscara:218 kcal · 5 P · 50 C · 0.25 G (coincide con carboGramosBase=250)
@@ -1364,7 +1376,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   carne_arroz: {
     label: 'Carne magra + papas salteadas con romero + ensalada',
-    items: ['150g carne magra (posta, lomo o filete)', '250g papas salteadas con romero', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    items: [
+      '150g carne magra (posta, lomo o filete)',
+      '250g papas salteadas con romero',
+      'Ensalada de lechuga, tomate y pepino',
+      '1 cdta aceite de oliva',
+      '💡 Cambia las papas por: 150g arroz cocido · 130g fideos cocidos · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     baseKcal: 565, p: 44, c: 50, g: 16,
     porcionFija: true,
     // foto: bistec asado con papas doradas + zanahorias + romero/hierbas
@@ -1389,7 +1407,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   salmon_quinoa: {
     label: 'Salmón al horno + quinoa + verduras',
-    items: ['200g salmón fresco', '100g quinoa cocida', '150g verduras salteadas (zapallo, pimentón, espinaca)', '1 cdta aceite de oliva'],
+    items: [
+      '200g salmón fresco',
+      '100g quinoa cocida',
+      '150g verduras salteadas (zapallo, pimentón, espinaca)',
+      '1 cdta aceite de oliva',
+      '💡 Cambia la quinoa por: 100g arroz cocido · 80g fideos cocidos · 150g papas cocidas · 100g fideos de arroz cocidos',
+    ],
     // Auditoría INTA (2026-05):
     //   200g salmón fresco INTA: 400 kcal · 44 P · 0 C · 26 G (alto en omega 3)
     //   100g quinoa cocida:      120 kcal · 4.4 P · 21 C · 1.9 G
@@ -1422,7 +1446,15 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // + 100g quinoa cocida (120kcal · 4P · 21C · 2G)
     // + 1 cda aceite oliva (90kcal · 0 · 0 · 10G)
     // Total ≈ 612 kcal · 42 P · 40 C · 32 G
-    items: ['150g pollo a la plancha en tiras', '1 huevo duro o pochado', '½ palta en láminas', '100g quinoa cocida', 'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria', '1 cda aceite de oliva'],
+    items: [
+      '150g pollo a la plancha en tiras',
+      '1 huevo duro o pochado',
+      '½ palta en láminas',
+      '100g quinoa cocida',
+      'Mix de verduras: lechuga, tomate cherry, pepino, zanahoria',
+      '1 cda aceite de oliva',
+      '💡 Cambia la quinoa por: 100g arroz cocido · 80g fideos cocidos · 150g papas cocidas · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     baseKcal: 612, p: 42, c: 40, g: 32, tieneHuevo: true, eggsDefault: 1,
     porcionFija: true,
     foto: IMG + 'ensalada_proteica.webp',
@@ -1442,7 +1474,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   arroz_huevo_saltado: {
     label: 'Arroz saltado con huevo y verduras',
-    items: ['160g arroz cocido (idealmente frío del día anterior)', '3 huevos enteros', 'Verduras a gusto: zanahoria, zapallo, pimentón (~100g)', '1 cdta aceite + salsa de soya light opcional'],
+    items: [
+      '160g arroz cocido (idealmente frío del día anterior)',
+      '3 huevos enteros',
+      'Verduras a gusto: zanahoria, zapallo, pimentón (~100g)',
+      '1 cdta aceite + salsa de soya light opcional',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Auditoría INTA (2026-05) — asumiendo 3 huevos (default):
     //   160g arroz blanco cocido: 208 kcal · 4.3 P · 45 C · 0.5 G
     //   3 huevos enteros 150g:    234 kcal · 18 P · 1.8 C · 15 G
@@ -1465,7 +1503,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   legumbres_arroz: {
     label: 'Porotos / lentejas + arroz integral',
-    items: ['200g porotos o lentejas cocidas', '100g arroz integral cocido', 'Sofrito de tomate, cebolla y ajo (1 cdta aceite)', 'Ensalada mixta (~100g)'],
+    items: [
+      '200g porotos o lentejas cocidas',
+      '100g arroz integral cocido',
+      'Sofrito de tomate, cebolla y ajo (1 cdta aceite)',
+      'Ensalada mixta (~100g)',
+      '💡 Cambia el arroz por: 100g quinoa cocida · 80g fideos cocidos · 100g fideos de arroz cocidos (granos enteros mantienen la complementación proteica con la legumbre)',
+    ],
     // Auditoría INTA (2026-05) — promedio porotos/lentejas:
     //   200g legumbres cocidas:  232 kcal · 17 P · 40 C · 0.9 G
     //   100g arroz integral:     111 kcal · 2.6 P · 23 C · 0.9 G
@@ -1488,7 +1532,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   pavo_papas: {
     label: 'Pechuga de pavo + papas + ensalada',
-    items: ['200g pechuga pavo a la plancha', '150g papas cocidas con perejil', 'Ensalada de pepino y tomate (~100g)', '1 cdta aceite de oliva'],
+    items: [
+      '200g pechuga pavo a la plancha',
+      '150g papas cocidas con perejil',
+      'Ensalada de pepino y tomate (~100g)',
+      '1 cdta aceite de oliva',
+      '💡 Cambia las papas por: 100g arroz cocido · 80g fideos cocidos · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     // Auditoría INTA (2026-05):
     //   200g pavo pechuga INTA: 270 kcal · 58 P · 0 C · 4 G (muy magro)
     //   150g papas cocidas:    131 kcal · 3 P · 30 C · 0.2 G
@@ -1516,7 +1566,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   tofu_quinoa: {
     label: 'Tofu salteado + quinoa + verduras',
-    items: ['180g tofu firme', '100g quinoa cocida', '150g verduras salteadas (pimentón, zapallo, champiñones)', '1 cdta aceite de oliva + salsa de soya reducida en sodio'],
+    items: [
+      '180g tofu firme',
+      '100g quinoa cocida',
+      '150g verduras salteadas (pimentón, zapallo, champiñones)',
+      '1 cdta aceite de oliva + salsa de soya reducida en sodio',
+      '💡 Cambia la quinoa por: 100g arroz cocido · 80g fideos cocidos · 150g papas cocidas · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     // Auditoría INTA (2026-05):
     //   180g tofu firme INTA:    137 kcal · 14 P · 3.4 C · 8.6 G
     //   100g quinoa cocida:      120 kcal · 4.4 P · 21 C · 1.9 G
@@ -1540,7 +1596,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   bowl_garbanzos: {
     label: 'Bowl de garbanzos + vegetales asados',
-    items: ['200g garbanzos cocidos', '150g vegetales asados (zanahoria, berenjena, zapallo)', '1 cda tahini (15g) o aceite de oliva', '80g arroz integral cocido o 1 pan pita integral'],
+    items: [
+      '200g garbanzos cocidos',
+      '150g vegetales asados (zanahoria, berenjena, zapallo)',
+      '1 cda tahini (15g) o aceite de oliva',
+      '80g arroz integral cocido o 1 pan pita integral',
+      '💡 Cambia el carbohidrato por: 80g arroz cocido · 65g fideos cocidos · 120g papas cocidas · 80g quinoa cocida · 80g fideos de arroz cocidos · 1 pan pita integral',
+    ],
     // Auditoría INTA (2026-05):
     //   200g garbanzos cocidos: 328 kcal · 18 P · 54 C · 5.2 G
     //   150g vegetales asados:   85 kcal · 2 P · 8 C · 5.3 G (incluye aceite del asado)
@@ -1565,7 +1627,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   curry_garbanzos: {
     label: 'Curry de garbanzos + arroz integral',
-    items: ['200g garbanzos cocidos', '150g arroz integral cocido', 'Leche de coco 100ml + curry en polvo', '150g espinaca y tomate cherry', '1 cdta aceite de coco o de oliva'],
+    items: [
+      '200g garbanzos cocidos',
+      '150g arroz integral cocido',
+      'Leche de coco 100ml + curry en polvo',
+      '150g espinaca y tomate cherry',
+      '1 cdta aceite de coco o de oliva',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Auditoría INTA (2026-05) — plato denso por la leche de coco:
     //   200g garbanzos cocidos: 328 kcal · 18 P · 54 C · 5.2 G
     //   150g arroz integral:   167 kcal · 3.9 P · 35 C · 1.35 G
@@ -1591,7 +1660,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   vegetal_burger_abuelo: {
     label: 'Vegetal Burger Porotos Negros + papas',
-    items: ['100g medallón vegetal (porotos negros + zapallo italiano)', '200g papas cocidas con cáscara', '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón) ~200g', '1 cdta aceite de oliva + mostaza sin azúcar'],
+    items: [
+      '100g medallón vegetal (porotos negros + zapallo italiano)',
+      '200g papas cocidas con cáscara',
+      '2 tazas ensalada mixta (lechuga, tomate, pepino, pimentón) ~200g',
+      '1 cdta aceite de oliva + mostaza sin azúcar',
+      '💡 Cambia las papas por: 130g arroz cocido · 110g fideos cocidos · 130g quinoa cocida · 130g fideos de arroz cocidos · 70g pan integral',
+    ],
     // Auditoría INTA (2026-05):
     //   100g medallón vegetal:    150 kcal · 8 P · 18 C · 5 G (etiqueta porotos negros)
     //   200g papas cocidas:       174 kcal · 4 P · 40 C · 0.2 G
@@ -1616,7 +1691,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   beyond_burger: {
     label: 'Beyond Burger + ensalada + papas',
-    items: ['85g Beyond Burger (1 medallón vegetal)', '2 tazas ensalada mixta (lechuga, tomate, pepino) ~200g', '150g papas cocidas o asadas', '1 cdta aceite de oliva + mostaza o ketchup sin azúcar'],
+    items: [
+      '85g Beyond Burger (1 medallón vegetal)',
+      '2 tazas ensalada mixta (lechuga, tomate, pepino) ~200g',
+      '150g papas cocidas o asadas',
+      '1 cdta aceite de oliva + mostaza o ketchup sin azúcar',
+      '💡 Cambia las papas por: 100g arroz cocido · 80g fideos cocidos · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     // Auditoría INTA + etiqueta Beyond (2026-05):
     //   85g Beyond Burger (1 medallón): 230 kcal · 20 P · 7 C · 14 G (etiqueta oficial)
     //   2 tazas ensalada 200g:           30 kcal · 2 P · 6 C · 0.3 G
@@ -1643,7 +1724,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   carne_arroz_clasico: {
     label: 'Carne con arroz + ensalada',
-    items: ['150g carne magra (posta, lomo o filete)', '150g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cda aceite de oliva'],
+    items: [
+      '150g carne magra (posta, lomo o filete)',
+      '150g arroz blanco cocido',
+      'Ensalada de lechuga, tomate y pepino',
+      '1 cda aceite de oliva',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Macros base por porción (almuerzo amplio):
     // 150g carne magra USDA (225 kcal · 39 P · 0 C · 7.5 G)
     // + 150g arroz blanco cocido (195 kcal · 4 P · 42 C · 0.5 G)
@@ -1668,7 +1755,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   pure_huevo: {
     label: 'Puré de papas + huevos + ensalada',
-    items: ['250g papas cocidas (puré)', '50ml leche descremada', '5g mantequilla', '2 huevos enteros (revueltos o pochados)', 'Ensalada de hojas verdes y tomate'],
+    items: [
+      '250g papas cocidas (puré)',
+      '50ml leche descremada',
+      '5g mantequilla',
+      '2 huevos enteros (revueltos o pochados)',
+      'Ensalada de hojas verdes y tomate',
+      '💡 Cambia el puré por: 150g arroz cocido · 130g fideos cocidos · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Macros base por porción (almuerzo):
     // 250g papas cocidas (218 kcal · 5 P · 50 C · 0.3 G)
     // + 50ml leche descremada (18 kcal · 1.8 P · 2.5 C · 0.2 G)
@@ -1693,7 +1787,14 @@ export const almuerzosOpts: Record<string, MealOption> = {
   },
   arroz_huevo: {
     label: 'Arroz salteado con huevos + verduras',
-    items: ['150g arroz blanco cocido', '2 huevos enteros', '1 cdta aceite vegetal', 'Verduras salteadas (zapallo italiano, zanahoria, cebollín)', 'Salsa de soya light (opcional)'],
+    items: [
+      '150g arroz blanco cocido',
+      '2 huevos enteros',
+      '1 cdta aceite vegetal',
+      'Verduras salteadas (zapallo italiano, zanahoria, cebollín)',
+      'Salsa de soya light (opcional)',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
     // Macros base por porción (almuerzo, estilo salteado oriental):
     // 150g arroz blanco cocido (195 kcal · 4 P · 42 C · 0.5 G)
     // + 2 huevos (156 kcal · 12 P · 1.2 C · 10 G)
@@ -1722,7 +1823,13 @@ export const almuerzosOpts: Record<string, MealOption> = {
 export const cenasOpts: Record<string, MealOption> = {
   carne_arroz: {
     label: 'Carne magra + papas salteadas con romero + ensalada (porción cena)',
-    items: ['120g carne magra (posta, lomo o filete)', '180g papas salteadas con romero (incluye 1 cdta aceite del salteado)', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva (ensalada)'],
+    items: [
+      '120g carne magra (posta, lomo o filete)',
+      '180g papas salteadas con romero (incluye 1 cdta aceite del salteado)',
+      'Ensalada de lechuga, tomate y pepino',
+      '1 cdta aceite de oliva (ensalada)',
+      '💡 Cambia las papas por: 120g arroz cocido · 100g fideos cocidos · 120g quinoa cocida · 120g fideos de arroz cocidos · 60g pan integral',
+    ],
     // Auditoría INTA (2026-05):
     //   120g carne magra:     180 kcal · 31 P · 0 C · 6 G
     //   180g papas + 1cdta aceite salteado: 202 kcal · 3.6 P · 36 C · 5.2 G
@@ -1956,7 +2063,13 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   wok_tofu_vegano: {
     label: 'Wok de tofu + verduras + fideos integrales',
-    items: ['180g tofu firme en cubos', '100g fideos integrales o de arroz cocidos', '150g verduras (brócoli, pimentón, zanahoria, champiñones)', '1 cdta aceite de sésamo + salsa de soya'],
+    items: [
+      '180g tofu firme en cubos',
+      '100g fideos integrales o de arroz cocidos',
+      '150g verduras (brócoli, pimentón, zanahoria, champiñones)',
+      '1 cdta aceite de sésamo + salsa de soya',
+      '💡 Cambia los fideos por: 100g arroz cocido · 150g papas cocidas · 100g quinoa cocida · 50g pan integral (1 rebanada)',
+    ],
     // Auditoría INTA (2026-05):
     //   180g tofu firme:     137 kcal · 14 P · 3.4 C · 8.6 G
     //   100g fideos integ.:  130 kcal · 5 P · 25 C · 1.1 G
@@ -2004,7 +2117,13 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   carne_arroz_clasico: {
     label: 'Carne con arroz + ensalada (porción cena)',
-    items: ['120g carne magra (posta, lomo o filete)', '100g arroz blanco cocido', 'Ensalada de lechuga, tomate y pepino', '1 cdta aceite de oliva'],
+    items: [
+      '120g carne magra (posta, lomo o filete)',
+      '100g arroz blanco cocido',
+      'Ensalada de lechuga, tomate y pepino',
+      '1 cdta aceite de oliva',
+      '💡 Cambia el arroz por: 80g fideos cocidos · 150g papas cocidas · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     // Macros base por porción cena (más liviana):
     // 120g carne magra (180 kcal · 31 P · 0 C · 6 G)
     // + 100g arroz blanco cocido (130 kcal · 2.7 P · 28 C · 0.3 G)
@@ -2028,7 +2147,14 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   pure_huevo: {
     label: 'Puré de papas + huevo + ensalada (porción cena)',
-    items: ['180g papas cocidas (puré)', '30ml leche descremada', '5g mantequilla', '1 huevo entero (pochado o duro)', 'Ensalada de hojas verdes'],
+    items: [
+      '180g papas cocidas (puré)',
+      '30ml leche descremada',
+      '5g mantequilla',
+      '1 huevo entero (pochado o duro)',
+      'Ensalada de hojas verdes',
+      '💡 Cambia el puré por: 120g arroz cocido · 100g fideos cocidos · 120g quinoa cocida · 120g fideos de arroz cocidos · 60g pan integral',
+    ],
     // Macros base por porción cena:
     // 180g papas cocidas (157 kcal · 3.6 P · 36 C · 0.2 G)
     // + 30ml leche descremada (11 kcal · 1 P · 1.5 C · 0.1 G)
@@ -2053,7 +2179,14 @@ export const cenasOpts: Record<string, MealOption> = {
   },
   arroz_huevo: {
     label: 'Arroz con huevo + verduras (porción cena)',
-    items: ['100g arroz blanco cocido', '1 huevo entero', '1 cdta aceite vegetal', 'Verduras salteadas (zapallo italiano, cebollín)', 'Limón y sal a gusto'],
+    items: [
+      '100g arroz blanco cocido',
+      '1 huevo entero',
+      '1 cdta aceite vegetal',
+      'Verduras salteadas (zapallo italiano, cebollín)',
+      'Limón y sal a gusto',
+      '💡 Cambia el arroz por: 80g fideos cocidos · 150g papas cocidas · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
     // Macros base por porción cena:
     // 100g arroz blanco cocido (130 kcal · 2.7 P · 28 C · 0.3 G)
     // + 1 huevo (78 kcal · 6 P · 0.6 C · 5 G)
