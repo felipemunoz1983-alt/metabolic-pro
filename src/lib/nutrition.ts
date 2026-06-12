@@ -23,6 +23,24 @@ export type FormulaUsada = 'mifflin_st_jeor' | 'cunningham' | 'harris_benedict_l
  *  macro respectivo sin importar el método base. */
 export type MetodoCalculo = 'bmr_pal' | 'kcal_kg_pal' | 'macros_directos'
 
+/** Método de evaluación de composición corporal del paciente.
+ *  Importante para trazabilidad clínica: cada método tiene supuestos distintos.
+ *
+ *  - 'bia'              → Bioimpedancia eléctrica (InBody, Tanita, etc.). Rápido pero
+ *                         depende de hidratación, electrodos, comida reciente.
+ *  - 'antropometria_5c' → Protocolo Kerr / ISAK 5 compartimentos (muscular, adiposo,
+ *                         óseo, residual, piel). Gold standard en ciencia del deporte.
+ *  - 'antropometria_2c' → Modelo 2 compartimentos clásico vía pliegues (Durnin-Womersley,
+ *                         Jackson-Pollock). Divide en masa grasa y masa libre de grasa.
+ */
+export type MetodoComposicion = 'bia' | 'antropometria_5c' | 'antropometria_2c'
+
+export const METODO_COMPOSICION_LABELS: Record<MetodoComposicion, { label: string; short: string; desc: string }> = {
+  bia:              { label: 'Bioimpedancia',      short: 'BIA / InBody', desc: 'BIA (InBody, Tanita, OMRON). Rápido; depende de hidratación y protocolo.' },
+  antropometria_5c: { label: 'Antropometría 5C',   short: 'ISAK / Kerr',  desc: 'Protocolo Kerr — ISAK 5 compartimentos (muscular, adiposo, óseo, residual, piel).' },
+  antropometria_2c: { label: 'Antropometría 2C',   short: 'Pliegues',     desc: 'Pliegues cutáneos (Durnin-Womersley / Jackson-Pollock) — masa grasa + masa libre de grasa.' },
+}
+
 /** Momentos del dia donde el paciente incorpora whey/proteina en polvo.
  *  Multi-select: un mismo paciente puede consumirla en desayuno + post-entreno.
  *  Si wheyIndicado=true y wheyMomentos undefined => default ['desayuno', 'colacion_am', 'colacion_pm']. */
@@ -93,6 +111,11 @@ export interface FormData {
   supMedicDetalle: string
   supActuales: string
   // ── Composición corporal (BIA/ISAK) — activa Cunningham en deportistas ──
+  /** Método con el que se midió la composición corporal. Opcional pero
+   *  recomendado para trazabilidad clínica: indica si los valores vienen de
+   *  BIA, ISAK 5C o pliegues 2C. Si no se especifica el algoritmo asume BIA
+   *  (más común en consultorios chilenos con InBody). */
+  metodoComposicion?: MetodoComposicion
   /** % grasa medido profesionalmente (BIA o ISAK). Opcional. Activa Cunningham si cumple criterios. */
   porcentajeGrasa?: number
   /** Masa muscular esquelética en kg (InBody / ISAK). Opcional. Alimenta el algoritmo de noticias y alertas clínicas. */

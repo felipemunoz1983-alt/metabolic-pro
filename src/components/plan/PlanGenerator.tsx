@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa, PAL_NIVELES_FAO } from '@/lib/nutrition'
-import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo } from '@/lib/nutrition'
+import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa, PAL_NIVELES_FAO, METODO_COMPOSICION_LABELS } from '@/lib/nutrition'
+import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo, MetodoComposicion } from '@/lib/nutrition'
 import { MODALIDAD_PLAN_LABELS, type ModalidadPlan } from '@/lib/porciones'
 import {
   CIRUGIA_BARIATRICA_LABELS,
@@ -2090,6 +2090,47 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                     Con estos datos el sistema personaliza las noticias y alertas clínicas según tu estado nutricional real.
                     El % de grasa activa la fórmula Cunningham si cumple los criterios.
                   </p>
+                </div>
+
+                {/* Método de evaluación — BIA / Antropometría 5C / Antropometría 2C */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-semibold text-[#4A6070]">Método de evaluación</p>
+                    {form.metodoComposicion && (
+                      <button
+                        type="button"
+                        onClick={() => set('metodoComposicion', undefined as unknown as MetodoComposicion)}
+                        className="text-[10px] text-[#29ABE2] font-semibold hover:underline"
+                      >
+                        Limpiar
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.entries(METODO_COMPOSICION_LABELS) as Array<[MetodoComposicion, typeof METODO_COMPOSICION_LABELS[MetodoComposicion]]>).map(([key, meta]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => set('metodoComposicion', key)}
+                        className={cn(
+                          'flex flex-col items-center justify-center py-2.5 px-2 rounded-xl border-2 transition text-center',
+                          form.metodoComposicion === key
+                            ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
+                            : 'bg-white border-[#D6E3ED] text-[#0C3547] hover:border-[#29ABE2]'
+                        )}
+                      >
+                        <span className="text-[11px] font-bold leading-tight">{meta.label}</span>
+                        <span className={cn('text-[9px] mt-0.5 leading-tight', form.metodoComposicion === key ? 'text-white/80' : 'text-[#8BA5BE]')}>
+                          {meta.short}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  {form.metodoComposicion && (
+                    <p className="text-[10px] text-[#6B7C93] mt-1.5 leading-relaxed italic">
+                      {METODO_COMPOSICION_LABELS[form.metodoComposicion].desc}
+                    </p>
+                  )}
                 </div>
 
                 {/* Fila: % grasa + badge Cunningham */}
