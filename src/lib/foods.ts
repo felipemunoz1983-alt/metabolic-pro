@@ -905,6 +905,121 @@ export const desayunosOpts: Record<string, MealOption> = {
       'Consumir de inmediato o refrigerar hasta 1 hora. Ideal para preparar rápido en la mañana.',
     ],
   },
+  huevos_revueltos_cremosos: {
+    label: 'Huevos revueltos cremosos + tostadas + tomate cherry',
+    items: [
+      '2 huevos enteros',
+      '30ml leche descremada (cremosidad)',
+      '2 rebanadas pan integral Castaño (63g)',
+      '5g aceite de oliva o mantequilla light',
+      '100g tomate cherry partido',
+      'Sal, pimienta, cebollín fresco',
+    ],
+    // Auditoría INTA Chile + etiqueta Castaño (2026-06):
+    //   2 huevos enteros (50g c/u):            156 kcal · 12.4 P · 1.2 C · 10 G
+    //   30ml leche descremada:                  10 kcal · 1 P · 1.5 C · 0 G
+    //   2 rebanadas pan Castaño 63g:           168 kcal · 6.6 P · 31 C · 2 G
+    //   5g aceite de oliva:                     45 kcal · 0 P · 0 C · 5 G
+    //   100g tomate cherry:                     18 kcal · 0.9 P · 3.9 C · 0.2 G
+    //   Total: 397 kcal · 21 P · 38 C · 17 G
+    baseKcal: 397, p: 21, c: 38, g: 17, tieneHuevo: true, eggsDefault: 2,
+    tienePan: true, panTipoDefault: 'integral',
+    tiempo: '10 min',
+    pasos: [
+      'Sartén fría: derretir la mantequilla o entibiar el aceite a fuego BAJO. El cuajado lento es la clave de la textura cremosa.',
+      'Batido: mezclar los 2 huevos con la leche descremada, sal y pimienta hasta homogeneizar.',
+      'Cocción lenta: verter sobre la sartén. Remover suavemente con espátula cada 20 seg, formando pliegues. Retirar del fuego cuando aún se vea ligeramente brillante (~3-4 min) — el calor residual termina la cocción.',
+      'Tostadas: tostar el pan integral hasta dorar levemente.',
+      'Plato: servir los huevos sobre las tostadas. Acompañar con tomate cherry partido y espolvorear cebollín fresco picado.',
+    ],
+  },
+  shakshuka_individual: {
+    label: 'Shakshuka individual (huevos al sartén con tomate)',
+    items: [
+      '2 huevos enteros (pochados en la salsa)',
+      '150g tomate triturado natural',
+      '60g pimiento rojo en cubos',
+      '30g cebolla picada',
+      '5g aceite de oliva',
+      'Comino, páprika dulce, ajo',
+      '1 rebanada pan integral Castaño (31g) para mojar',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   2 huevos enteros:                      156 kcal · 12.4 P · 1.2 C · 10 G
+    //   150g tomate triturado natural:          30 kcal · 1.5 P · 6 C · 0.3 G
+    //   60g pimiento rojo:                      19 kcal · 0.6 P · 4.5 C · 0.2 G
+    //   30g cebolla:                            12 kcal · 0.3 P · 2.8 C · 0 G
+    //   5g aceite de oliva:                     45 kcal · 0 P · 0 C · 5 G
+    //   1 rebanada pan Castaño 31g:             84 kcal · 3.3 P · 15.5 C · 1 G
+    //   Total: 346 kcal · 18 P · 30 C · 17 G
+    baseKcal: 346, p: 18, c: 30, g: 17, tieneHuevo: true, eggsDefault: 2,
+    tienePan: true, panTipoDefault: 'integral',
+    contiene: ['cebolla_ajo'] as string[],
+    estacional: 'frio',
+    tiempo: '15 min',
+    pasos: [
+      'Sofrito: calentar el aceite, dorar cebolla y pimiento rojo 5 min a fuego medio hasta que se ablanden.',
+      'Salsa: añadir el tomate triturado, comino, páprika y ajo. Cocinar 5 min hasta que espese ligeramente.',
+      'Huevos: hacer 2 hoyos en la salsa con la cuchara y romper un huevo en cada uno. Sazonar con sal.',
+      'Cuajado: tapar y cocinar 4 min a fuego bajo hasta que la clara cuaje pero la yema quede líquida.',
+      'Servir directo del sartén con el pan integral tostado para mojar en la salsa y la yema.',
+    ],
+  },
+  tortilla_espanola_mini: {
+    label: 'Tortilla española mini al horno',
+    items: [
+      '3 huevos enteros',
+      '100g papas cocidas en cubos pequeños (idealmente del día anterior)',
+      '40g cebolla salteada',
+      '5g aceite de oliva',
+      'Sal, pimienta, perejil fresco',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   3 huevos enteros:                      234 kcal · 18.6 P · 1.8 C · 15 G
+    //   100g papas cocidas:                     87 kcal · 2 P · 20 C · 0.1 G
+    //   40g cebolla:                            16 kcal · 0.4 P · 3.7 C · 0 G
+    //   5g aceite de oliva:                     45 kcal · 0 P · 0 C · 5 G
+    //   Total: 382 kcal · 20 P · 25 C · 20 G
+    baseKcal: 382, p: 20, c: 25, g: 20, tieneHuevo: true, eggsDefault: 3,
+    contiene: ['cebolla_ajo'] as string[],
+    tiempo: '25 min',
+    pasos: [
+      'Preparación previa: cocer las papas con cáscara la noche anterior (o usar sobrantes). Pelar y cortar en cubos pequeños de ~1cm.',
+      'Sofrito: saltear la cebolla en una sartén pequeña con el aceite hasta dorar (~5 min).',
+      'Mezcla: batir los 3 huevos con sal y pimienta. Incorporar las papas y la cebolla.',
+      'Horneado: verter la mezcla en un molde individual de silicona o cerámica untado. Hornear a 180°C por 18 min hasta que cuaje pero quede jugoso al centro.',
+      'Servir tibia, espolvorear perejil fresco. Ideal para meal prep: dura 3-4 días refrigerada.',
+    ],
+  },
+  sandwich_huevo_pavo_palta: {
+    label: 'Sándwich de huevos + jamón pavo + palta',
+    items: [
+      '2 rebanadas pan integral Castaño (63g)',
+      '2 huevos enteros revueltos',
+      '30g jamón de pavo light (Pavo+Mol o equivalente)',
+      '¼ palta madura (40g) en láminas',
+      '60g tomate en rodajas',
+      'Mostaza Dijon opcional',
+    ],
+    // Auditoría INTA Chile + etiquetas (2026-06):
+    //   2 rebanadas pan Castaño 63g:           168 kcal · 6.6 P · 31 C · 2 G
+    //   2 huevos enteros revueltos:            156 kcal · 12.4 P · 1.2 C · 10 G
+    //   30g jamón pavo light:                   30 kcal · 6 P · 0.5 C · 0.4 G
+    //   ¼ palta 40g:                            64 kcal · 0.8 P · 3.4 C · 5.9 G
+    //   60g tomate:                             11 kcal · 0.5 P · 2.3 C · 0.1 G
+    //   Total: 429 kcal · 26 P · 38 C · 18 G
+    baseKcal: 429, p: 26, c: 38, g: 18, tieneHuevo: true, eggsDefault: 2,
+    tienePan: true, panTipoDefault: 'integral',
+    tieneCarne: true, carneTipo: 'pavo', carneGramosBase: 30,
+    tiempo: '12 min',
+    pasos: [
+      'Huevos: revolver los 2 huevos en una sartén antiadherente a fuego medio-bajo con sal y pimienta, hasta que cuajen pero queden jugosos (~3 min).',
+      'Tostadas: tostar levemente las 2 rebanadas de pan integral.',
+      'Armado: untar mostaza Dijon en una de las rebanadas (opcional).',
+      'Capas: colocar los huevos revueltos, encima el jamón pavo, las láminas de palta y las rodajas de tomate.',
+      'Cerrar el sándwich y cortar por la mitad. Servir inmediatamente.',
+    ],
+  },
 }
 
 // ─── COLACIONES MAÑANA y ONCE (mismo pool) ────────────────────────────────────
@@ -1470,6 +1585,41 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Palta: cortar en láminas justo antes de servir para evitar oxidación. Aporta ácido oleico que mejora absorción de vitaminas liposolubles.',
       'Verduras: lavar y secar el mix. Cortar tomate cherry, pepino y zanahoria rallada.',
       'Armado: disponer la quinoa como base, agregar las verduras, el pollo, huevo y palta. Aliñar con aceite de oliva y limón.',
+    ],
+  },
+  bowl_quinoa_huevo: {
+    label: 'Bowl proteico de quinoa + huevo pochado + espinaca',
+    items: [
+      '100g quinoa cocida',
+      '2 huevos enteros pochados',
+      '100g espinaca baby (salteada o cruda)',
+      '80g tomate cherry partido',
+      '¼ palta (40g) en láminas',
+      '5g aceite de oliva',
+      'Limón, sal, pimienta',
+      '💡 Cambia la quinoa por: 100g arroz cocido · 80g fideos cocidos · 150g papas cocidas · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   100g quinoa cocida:        120 kcal · 4.4 P · 21 C · 1.9 G
+    //   2 huevos enteros pochados: 156 kcal · 12.4 P · 1.2 C · 10 G
+    //   100g espinaca baby:         23 kcal · 2.9 P · 3.6 C · 0.4 G
+    //   80g tomate cherry:          14 kcal · 0.7 P · 3.1 C · 0.2 G
+    //   ¼ palta 40g:                64 kcal · 0.8 P · 3.4 C · 5.9 G
+    //   5g aceite de oliva:         45 kcal · 0 P · 0 C · 5 G
+    //   Total: 422 kcal · 21 P · 32 C · 23 G
+    //   Quinoa = proteína completa (los 9 aa esenciales) + bajo IG.
+    //   Excelente perfil para deportistas y objetivo hipertrofia.
+    baseKcal: 422, p: 21, c: 32, g: 23, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['huevo'] as string[],
+    tiempo: '20 min',
+    pasos: [
+      'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar entibiar. La quinoa es proteína completa con índice glicémico bajo.',
+      'Espinaca: lavar y elegir entre crudo (más vitaminas) o salteado rápido 1 min con un toque del aceite (más volumen).',
+      'Huevos: hervir agua con un chorrito de vinagre blanco. Formar un remolino y verter cada huevo sin cáscara. Cocinar 3 min para yema líquida.',
+      'Verduras: cortar tomate cherry por la mitad. Laminar la palta justo antes de servir (con unas gotas de limón evita oxidación).',
+      'Armado: disponer la quinoa como base, agregar la espinaca, los tomates y la palta. Coronar con los huevos pochados. Aliñar con limón, sal, pimienta y un hilo del aceite.',
     ],
   },
   arroz_huevo_saltado: {
