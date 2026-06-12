@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo } from '@/lib/nutrition'
+import { MODALIDAD_PLAN_LABELS, type ModalidadPlan } from '@/lib/porciones'
 import {
   CIRUGIA_BARIATRICA_LABELS,
   FASE_POST_LABELS,
@@ -162,6 +163,48 @@ const MARCA_INFO: Record<string, {
   'Sin marca':          { emoji: '🏷️',                                       accent: '#64748B', chipHover: 'hover:border-slate-400 hover:text-slate-200',     chipSelected: 'bg-slate-500 border-slate-500' },
 }
 const MARCA_DEFAULT = MARCA_INFO['Sin marca']
+
+// ─── Selector de modalidad del plan (menús vs porciones) ────────────────────
+// Toggle simple de 2 cards. Default 'menus' (retrocompat). El profesional
+// decide por paciente si entregar el plan con preparaciones específicas o
+// con la lista de intercambios alimentarios chilena (INTA/Sochinut).
+function ModalidadPlanSelector({
+  form,
+  set,
+}: {
+  form: Partial<FormData>
+  set: <K extends keyof FormData>(key: K, value: FormData[K]) => void
+}) {
+  const modalidad: ModalidadPlan = form.modalidadPlan ?? 'menus'
+  return (
+    <div className="border border-[#D6E3ED] rounded-xl p-4 space-y-3 bg-[#F8FBFD]">
+      <p className="text-sm font-semibold text-[#0C3547]">📋 Modalidad del plan</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+        {(['menus', 'porciones'] as ModalidadPlan[]).map(m => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => set('modalidadPlan', m)}
+            className={cn(
+              'p-3 rounded-lg border-2 text-left transition-all',
+              modalidad === m
+                ? 'bg-[#EAF4FB] border-[#29ABE2]'
+                : 'border-[#D6E3ED] bg-white hover:border-[#29ABE2]',
+            )}
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xl">{MODALIDAD_PLAN_LABELS[m].emoji}</span>
+              <p className="text-sm font-bold text-[#0C3547]">{MODALIDAD_PLAN_LABELS[m].label}</p>
+            </div>
+            <p className="text-[11px] text-[#4a6b80] leading-relaxed">
+              {MODALIDAD_PLAN_LABELS[m].desc}
+            </p>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 // ─── Selector de método de cálculo (Opciones A/B/C + overrides para mezclas) ─
 // Selector colapsable que va al final del step "Objetivo". Default colapsado
@@ -2129,6 +2172,9 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                   placeholder="Ej: mariscos, lácteos, nueces..."
                 />
               </div>
+
+              {/* Modalidad de planificación: menús (actual) vs porciones (intercambios INTA/Sochinut) */}
+              <ModalidadPlanSelector form={form} set={set} />
 
               {/* Método de cálculo (colapsable) - default bmr_pal mantiene flow estándar */}
               <MetodoCalculoSelector form={form} set={set} />

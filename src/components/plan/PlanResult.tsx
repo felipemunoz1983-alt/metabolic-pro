@@ -9,6 +9,7 @@ import { generarPerfilClinico, type ClinicalAlert } from '@/lib/clinicalAlerts'
 import { WeeklyPlan } from './WeeklyPlan'
 import { MenuHoy } from './MenuHoy'
 import { ShoppingList } from './ShoppingList'
+import { PorcionesPlan } from './PorcionesPlan'
 import { NutrievoPanel } from '@/components/nutrevo/NutrievoPanel'
 import { WheyComparativo } from '@/components/educacion/WheyComparativo'
 import { cn } from '@/lib/utils'
@@ -190,8 +191,12 @@ export function PlanResult({ result, form, onReset, userId }: Props) {
         </div>
       </div>
 
-      {/* Menú de hoy */}
-      <MenuHoy plan={weekPlan} nombre={form.nombre} />
+      {/* Modalidad del plan: menús (default) o porciones (intercambios) */}
+      {form.modalidadPlan === 'porciones' ? (
+        <PorcionesPlan result={result} form={form} />
+      ) : (
+        <MenuHoy plan={weekPlan} nombre={form.nombre} />
+      )}
 
       {/* Datos clínicos */}
       <div className="bg-white rounded-2xl border border-[#D6E3ED] p-5">
@@ -250,11 +255,14 @@ export function PlanResult({ result, form, onReset, userId }: Props) {
         </div>
       </div>
 
-      {/* Plan semanal detallado */}
-      <WeeklyPlan plan={weekPlan} />
-
-      {/* Lista de supermercado generada automáticamente */}
-      <ShoppingList plan={weekPlan} userId={userId} />
+      {/* Plan semanal detallado y lista de compras — solo aplican al plan por menús.
+          En plan por porciones, el paciente arma su día con los intercambios. */}
+      {form.modalidadPlan !== 'porciones' && (
+        <>
+          <WeeklyPlan plan={weekPlan} />
+          <ShoppingList plan={weekPlan} userId={userId} />
+        </>
+      )}
 
       {/* Productos Nutrevo recomendados según objetivo */}
       <NutrievoPanel objetivo={form.objetivo} />
