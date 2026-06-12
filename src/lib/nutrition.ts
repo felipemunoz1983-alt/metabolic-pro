@@ -166,6 +166,12 @@ export interface FormData {
   habilidadCulinaria?: 'principiante' | 'intermedio' | 'avanzado'
   /** Lugar habitual de almuerzo — afecta tipo de preparaciones */
   lugarAlmuerzo?: 'casa' | 'oficina' | 'restaurant' | 'colegio'
+  // ── Modalidad de planificación (menús vs porciones) ──
+  /** Modalidad del plan entregado al paciente.
+   *   - 'menus' (default, retrocompat) → preparaciones específicas con foto, pasos, ingredientes.
+   *   - 'porciones' → intercambios alimentarios por grupos (estándar Sochinut/INTA).
+   *  El motor de cálculo nutricional NO cambia — solo cambia el output al paciente. */
+  modalidadPlan?: import('./porciones').ModalidadPlan
   // ── Método de cálculo (Opciones A/B/C + overrides para mezclas) ──
   /** Método de cálculo elegido por el profesional. Default 'bmr_pal' (retrocompat). */
   metodoCalculo?: MetodoCalculo
