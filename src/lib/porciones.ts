@@ -400,3 +400,98 @@ export const MODALIDAD_PLAN_LABELS: Record<ModalidadPlan, { label: string; emoji
   menus:     { label: 'Plan por menús',     emoji: '🍽️', desc: 'Preparaciones específicas con foto, pasos e ingredientes. Más guiado.' },
   porciones: { label: 'Plan por porciones', emoji: '⚖️', desc: 'Intercambios alimentarios por grupos. Más flexible. Lista chilena INTA/Sochinut.' },
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// DISTRIBUCIÓN POR TIEMPOS DE COMIDA (heurística clínica chilena Sochinut)
+// ──────────────────────────────────────────────────────────────────────────────
+
+/** Los 5 tiempos de comida estándar de la práctica nutricional chilena. */
+export type TiempoComidaPorcion = 'desayuno' | 'colacion_manana' | 'almuerzo' | 'once' | 'cena'
+
+export const TIEMPO_COMIDA_PORCION_LABELS: Record<TiempoComidaPorcion, { label: string; emoji: string; horario: string }> = {
+  desayuno:        { label: 'Desayuno',     emoji: '☀️', horario: '7:00 - 9:00'   },
+  colacion_manana: { label: 'Colación AM',  emoji: '☕', horario: '10:30 - 11:30' },
+  almuerzo:        { label: 'Almuerzo',     emoji: '🍽️', horario: '13:00 - 14:30' },
+  once:            { label: 'Once',         emoji: '🍵', horario: '17:00 - 18:30' },
+  cena:            { label: 'Cena',         emoji: '🌙', horario: '20:00 - 21:30' },
+}
+
+/** Distribución de porciones diarias entre tiempos de comida.
+ *  Cada celda = qué fracción del total diario del grupo va a ese tiempo.
+ *  Las columnas suman 1.0 (el 100% del total diario se reparte entre los 5
+ *  tiempos). Base: práctica clínica chilena Sochinut + Atalah & Castillo. */
+const SHARES_POR_TIEMPO: Record<TiempoComidaPorcion, Record<GrupoPorcion, number>> = {
+  // Desayuno robusto chileno: lácteo + cereal + fruta + algo de grasa
+  desayuno:        { lacteos: 0.50, frutas: 0.30, verduras: 0,    cereales: 0.25, proteinas: 0.10, grasas: 0.15 },
+  // Colación AM ligera: solo fruta típicamente
+  colacion_manana: { lacteos: 0,    frutas: 0.30, verduras: 0,    cereales: 0,    proteinas: 0,    grasas: 0    },
+  // Almuerzo: la comida más completa del día (proteína + cereal + verduras)
+  almuerzo:        { lacteos: 0,    frutas: 0,    verduras: 0.45, cereales: 0.35, proteinas: 0.45, grasas: 0.30 },
+  // Once chilena: lácteo + pan/cereal + algo dulce
+  once:            { lacteos: 0.50, frutas: 0.20, verduras: 0,    cereales: 0.20, proteinas: 0.10, grasas: 0.15 },
+  // Cena: proteína + verduras (carbo más liviano)
+  cena:            { lacteos: 0,    frutas: 0.20, verduras: 0.55, cereales: 0.20, proteinas: 0.35, grasas: 0.40 },
+}
+
+/** Resultado por tiempo de comida: # porciones de cada grupo + macros derivados. */
+export interface DistribucionTiempo {
+  tiempo: TiempoComidaPorcion
+  lacteos: number
+  frutas: number
+  verduras: number
+  cereales: number
+  proteinas: number
+  grasas: number
+  /** Macros totales que aporta este tiempo de comida */
+  totales: { kcal: number; p: number; c: number; g: number }
+}
+
+/** Distribuye una distribución diaria entre los 5 tiempos de comida según
+ *  el patrón clínico chileno (Sochinut). Para cada tiempo y grupo:
+ *
+ *      porciones_tiempo = redondeo_0.5(total_diario × share_tiempo)
+ *
+ *  El redondeo a 0.5 puede generar pequeños desvíos (±0.5 porciones) entre
+ *  la suma de tiempos y el total diario; es aceptable clínicamente. */
+export function distribuirPorTiemposDeComida(d: DistribucionPorciones): DistribucionTiempo[] {
+  const tiempos: TiempoComidaPorcion[] = ['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena']
+  return tiempos.map(tiempo => {
+    const share = SHARES_POR_TIEMPO[tiempo]
+    const lacteos   = Math.round(d.lacteos   * share.lacteos   * 2) / 2
+    const frutas    = Math.round(d.frutas    * share.frutas    * 2) / 2
+    const verduras  = Math.round(d.verduras  * share.verduras  * 2) / 2
+    const cereales  = Math.round(d.cereales  * share.cereales  * 2) / 2
+    const proteinas = Math.round(d.proteinas * share.proteinas * 2) / 2
+    const grasas    = Math.round(d.grasas    * share.grasas    * 2) / 2
+
+    // Macros derivados del # de porciones × tabla MACROS_POR_GRUPO
+    const macrosDe = (porciones: number, grupo: GrupoPorcion) => ({
+      kcal: porciones * MACROS_POR_GRUPO[grupo].kcal,
+      p:    porciones * MACROS_POR_GRUPO[grupo].p,
+      c:    porciones * MACROS_POR_GRUPO[grupo].c,
+      g:    porciones * MACROS_POR_GRUPO[grupo].g,
+    })
+    const acc = [
+      macrosDe(lacteos,   'lacteos'),
+      macrosDe(frutas,    'frutas'),
+      macrosDe(verduras,  'verduras'),
+      macrosDe(cereales,  'cereales'),
+      macrosDe(proteinas, 'proteinas'),
+      macrosDe(grasas,    'grasas'),
+    ].reduce(
+      (a, m) => ({ kcal: a.kcal + m.kcal, p: a.p + m.p, c: a.c + m.c, g: a.g + m.g }),
+      { kcal: 0, p: 0, c: 0, g: 0 },
+    )
+
+    return {
+      tiempo,
+      lacteos, frutas, verduras, cereales, proteinas, grasas,
+      totales: {
+        kcal: Math.round(acc.kcal),
+        p:    Math.round(acc.p),
+        c:    Math.round(acc.c),
+        g:    Math.round(acc.g),
+      },
+    }
+  })
+}

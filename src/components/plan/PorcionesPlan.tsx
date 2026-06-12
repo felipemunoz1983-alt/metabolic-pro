@@ -4,11 +4,14 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   distribuirEnPorciones,
+  distribuirPorTiemposDeComida,
   INTERCAMBIOS,
   GRUPO_PORCION_LABELS,
   MACROS_POR_GRUPO,
+  TIEMPO_COMIDA_PORCION_LABELS,
   type GrupoPorcion,
   type DistribucionPorciones,
+  type DistribucionTiempo,
 } from '@/lib/porciones'
 import type { FormData, NutritionResult } from '@/lib/nutrition'
 import { cn } from '@/lib/utils'
@@ -37,6 +40,15 @@ export function PorcionesPlan({ result, form }: Props) {
     ),
     [result, form.objetivo],
   )
+
+  // Distribución por tiempos de comida (heurística Sochinut)
+  const porTiempo = useMemo<DistribucionTiempo[]>(
+    () => distribuirPorTiemposDeComida(distribucion),
+    [distribucion],
+  )
+
+  // Vista activa: 'dia' (resumen por grupo) o 'tiempos' (5 tiempos de comida)
+  const [vista, setVista] = useState<'dia' | 'tiempos'>('dia')
 
   const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
 
@@ -77,12 +89,42 @@ export function PorcionesPlan({ result, form }: Props) {
         )}
       </div>
 
-      {/* Distribución por grupos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {grupos.map(grupo => (
-          <GrupoCard key={grupo} grupo={grupo} porciones={distribucion[grupo]} />
+      {/* Toggle vista: día (resumen por grupo) ↔ tiempos (por comida) */}
+      <div className="bg-white border border-[#D6E3ED] rounded-xl p-1 flex gap-1">
+        {(['dia', 'tiempos'] as const).map(v => (
+          <button
+            key={v}
+            type="button"
+            onClick={() => setVista(v)}
+            className={cn(
+              'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition',
+              vista === v
+                ? 'bg-[#0C3547] text-white shadow-sm'
+                : 'text-[#6B7C93] hover:bg-[#F8FBFD]',
+            )}
+          >
+            {v === 'dia' ? '📊 Resumen del día' : '🕐 Por tiempo de comida'}
+          </button>
         ))}
       </div>
+
+      {/* Vista 'día': cards por grupo */}
+      {vista === 'dia' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {grupos.map(grupo => (
+            <GrupoCard key={grupo} grupo={grupo} porciones={distribucion[grupo]} />
+          ))}
+        </div>
+      )}
+
+      {/* Vista 'tiempos': 5 cards (desayuno, AM, almuerzo, once, cena) */}
+      {vista === 'tiempos' && (
+        <div className="space-y-3">
+          {porTiempo.map(t => (
+            <TiempoCard key={t.tiempo} dist={t} />
+          ))}
+        </div>
+      )}
 
       {/* Cómo usar este plan */}
       <div className="bg-[#EAF4FB] border border-[#29ABE2] rounded-xl p-4">
@@ -188,6 +230,112 @@ function GrupoCard({ grupo, porciones }: { grupo: GrupoPorcion; porciones: numbe
                   </div>
                 ))}
               </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Card por tiempo de comida (desayuno / colación / etc) ───────────────────
+function TiempoCard({ dist }: { dist: DistribucionTiempo }) {
+  const [expandido, setExpandido] = useState(false)
+  const info = TIEMPO_COMIDA_PORCION_LABELS[dist.tiempo]
+
+  // Grupos con asignación > 0 — los demás no se muestran en este tiempo
+  const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
+  const conPorciones = grupos.filter(g => dist[g] > 0)
+
+  if (conPorciones.length === 0) {
+    return null  // Tiempo sin asignación (no debería pasar con SHARES actuales, pero defensivo)
+  }
+
+  return (
+    <div className="rounded-xl border-2 border-[#E2ECF4] bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpandido(e => !e)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#F8FBFD] transition text-left"
+        aria-expanded={expandido}
+      >
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-11 h-11 rounded-xl bg-[#EAF4FB] flex items-center justify-center text-xl flex-shrink-0">
+            {info.emoji}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-[#0C3547]">{info.label}</p>
+            <p className="text-[10px] text-[#8BA5BE] mt-0.5">
+              {info.horario} · {dist.totales.kcal} kcal · {dist.totales.p}g P · {dist.totales.c}g C · {dist.totales.g}g G
+            </p>
+          </div>
+        </div>
+        <svg
+          className={cn('w-4 h-4 text-[#8BA5BE] transition-transform flex-shrink-0', expandido && 'rotate-180')}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {/* Chips compactas con # porciones por grupo (siempre visibles) */}
+      <div className="px-4 pb-3 flex flex-wrap gap-1.5">
+        {conPorciones.map(grupo => {
+          const meta = GRUPO_PORCION_LABELS[grupo]
+          return (
+            <span
+              key={grupo}
+              className="inline-flex items-center gap-1 bg-[#F7FBFE] border border-[#D6E3ED] rounded-full px-2.5 py-1 text-[11px] font-semibold text-[#0C3547]"
+            >
+              <span>{meta.emoji}</span>
+              <span className="text-[#29ABE2] font-black">{dist[grupo]}</span>
+              <span className="text-[#6B7C93]">{meta.label.toLowerCase()}</span>
+            </span>
+          )
+        })}
+      </div>
+
+      {/* Detalle expandido: ejemplos de alimentos del INTA por grupo */}
+      <AnimatePresence initial={false}>
+        {expandido && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-[#E2ECF4] bg-[#F8FBFD]"
+          >
+            <div className="p-3 space-y-3">
+              <p className="text-[10px] uppercase tracking-wider text-[#8BA5BE] font-bold">
+                Sugerencias de alimentos para este tiempo
+              </p>
+              {conPorciones.map(grupo => {
+                const meta = GRUPO_PORCION_LABELS[grupo]
+                // Tomar primeros 3 alimentos de cada grupo como sugerencia
+                const sugerencias = INTERCAMBIOS[grupo].slice(0, 3)
+                return (
+                  <div key={grupo} className="bg-white border border-[#E2ECF4] rounded-lg p-2.5">
+                    <p className="text-[11px] font-bold text-[#0C3547] mb-1.5">
+                      {meta.emoji} {meta.label} — <span className="text-[#29ABE2]">{dist[grupo]} {dist[grupo] === 1 ? 'porción' : 'porciones'}</span>
+                    </p>
+                    <ul className="space-y-1">
+                      {sugerencias.map((s, i) => (
+                        <li key={i} className="text-[11px] text-[#4a6b80] leading-relaxed">
+                          • {s.alimento}
+                          {s.ejemploChileno && (
+                            <span className="text-[10px] text-[#29ABE2] italic"> · 🇨🇱 {s.ejemploChileno}</span>
+                          )}
+                        </li>
+                      ))}
+                      {INTERCAMBIOS[grupo].length > 3 && (
+                        <li className="text-[10px] text-[#8BA5BE] italic mt-1">
+                          + {INTERCAMBIOS[grupo].length - 3} alternativas más en la vista resumen del día
+                        </li>
+                      )}
+                    </ul>
+                  </div>
+                )
+              })}
             </div>
           </motion.div>
         )}
