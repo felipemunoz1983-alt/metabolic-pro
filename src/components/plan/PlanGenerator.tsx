@@ -2252,11 +2252,11 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                 />
               </div>
 
-              {/* Modalidad de planificación: menús (actual) vs porciones (intercambios INTA/Sochinut) */}
-              <ModalidadPlanSelector form={form} set={set} />
-
               {/* Método de cálculo (colapsable) - default bmr_pal mantiene flow estándar */}
               <MetodoCalculoSelector form={form} set={set} />
+
+              {/* Modalidad de planificación: menús (actual) vs porciones (intercambios INTA/Sochinut) */}
+              <ModalidadPlanSelector form={form} set={set} />
             </div>
           )}
 
