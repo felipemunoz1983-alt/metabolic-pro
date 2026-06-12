@@ -189,7 +189,25 @@ export interface FormData {
   /** Override de CHO en g/kg. Rango clínico 3-12 según volumen entrenamiento
    *  (Burke et al. 2011, J Sports Sci 29(S1):S17-S27). */
   choGKgOverride?: number
+  /** Override del PAL (Physical Activity Level). Si definido, reemplaza el PAL
+   *  derivado automáticamente desde diasEjercicio/duracionSesion/tipoEjercicio.
+   *  Niveles FAO/WHO 2001:
+   *    1.200 Sedentario · 1.375 Liviano · 1.550 Moderado ·
+   *    1.725 Activo    · 1.900 Muy activo
+   *  Aplica a métodos 'bmr_pal' y 'kcal_kg_pal'. 'macros_directos' no usa PAL. */
+  palOverride?: number
 }
+
+/** Niveles de actividad física FAO/WHO 2001 — usados como presets clínicos
+ *  estándar en el selector del wizard. Exportado para que la UI los renderice
+ *  sin duplicar valores. */
+export const PAL_NIVELES_FAO = [
+  { value: 1.200, label: 'Sedentario',  desc: 'Trabajo de escritorio, sin ejercicio' },
+  { value: 1.375, label: 'Liviano',     desc: '1-3 días/sem ejercicio ligero' },
+  { value: 1.550, label: 'Moderado',    desc: '3-5 días/sem ejercicio moderado' },
+  { value: 1.725, label: 'Activo',      desc: '6-7 días/sem ejercicio intenso' },
+  { value: 1.900, label: 'Muy activo',  desc: 'Diario intenso + trabajo físico' },
+] as const
 
 export interface Macros {
   p: number
@@ -501,10 +519,13 @@ export function calcularNutricion(form: Pick<FormData,
   'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa' |
   'digCirugiaBariatrica' | 'digFasePostBariatrica' |
   'metodoCalculo' | 'kcalPorKg' |
-  'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride'
+  'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride' | 'palOverride'
 >): NutritionResult {
   const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
-  const pal = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
+  // PAL: si el profesional definió un override manual (típicamente eligió un
+  // nivel FAO/WHO desde el selector), respetarlo. Si no, derivar automático
+  // desde días/duración/tipo del wizard.
+  const pal = form.palOverride ?? factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
   const formula = seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
 
   // bmrEstimado se calcula siempre para mostrar al pro como referencia,

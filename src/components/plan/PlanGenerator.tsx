@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa } from '@/lib/nutrition'
+import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa, PAL_NIVELES_FAO } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo } from '@/lib/nutrition'
 import { MODALIDAD_PLAN_LABELS, type ModalidadPlan } from '@/lib/porciones'
 import {
@@ -301,21 +301,64 @@ function MetodoCalculoSelector({
 
               {/* Inputs específicos por método */}
               {metodo === 'kcal_kg_pal' && (
-                <div className="bg-white border border-[#D6E3ED] rounded-lg p-3">
-                  <label className="block text-xs font-bold text-[#0C3547] uppercase tracking-wide mb-2">
-                    Kcal por kg de peso
-                  </label>
-                  <input
-                    type="number"
-                    min={15} max={60} step={1}
-                    value={form.kcalPorKg ?? ''}
-                    onChange={e => set('kcalPorKg', e.target.value === '' ? undefined : Number(e.target.value))}
-                    placeholder="ej. 30 (mantenimiento sedentario)"
-                    className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
-                  />
-                  <p className="text-[10px] text-[#8BA5BE] mt-1.5 leading-relaxed">
-                    Referencias: 20=déficit profundo · 25-30=déficit/mantenimiento sedentario · 35-40=activo · 45-50=hipertrofia · 50+=ultra-endurance
-                  </p>
+                <div className="bg-white border border-[#D6E3ED] rounded-lg p-3 space-y-3">
+                  <div>
+                    <label className="block text-xs font-bold text-[#0C3547] uppercase tracking-wide mb-2">
+                      Kcal por kg de peso
+                    </label>
+                    <input
+                      type="number"
+                      min={15} max={60} step={1}
+                      value={form.kcalPorKg ?? ''}
+                      onChange={e => set('kcalPorKg', e.target.value === '' ? undefined : Number(e.target.value))}
+                      placeholder="ej. 30 (mantenimiento sedentario)"
+                      className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+                    />
+                    <p className="text-[10px] text-[#8BA5BE] mt-1.5 leading-relaxed">
+                      Referencias: 20=déficit profundo · 25-30=déficit/mantenimiento sedentario · 35-40=activo · 45-50=hipertrofia · 50+=ultra-endurance
+                    </p>
+                  </div>
+
+                  {/* Selector de PAL (factor de actividad) — niveles FAO/WHO 2001 */}
+                  <div className="border-t border-[#E2ECF4] pt-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-bold text-[#0C3547] uppercase tracking-wide">
+                        Factor de actividad (PAL)
+                      </label>
+                      {form.palOverride != null && (
+                        <button
+                          type="button"
+                          onClick={() => set('palOverride', undefined)}
+                          className="text-[10px] text-[#29ABE2] font-semibold hover:underline"
+                        >
+                          Volver a automático
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {PAL_NIVELES_FAO.map(n => (
+                        <button
+                          key={n.value}
+                          type="button"
+                          onClick={() => set('palOverride', n.value)}
+                          className={cn(
+                            'flex flex-col items-center justify-center py-2 px-1 rounded border transition text-center',
+                            form.palOverride === n.value
+                              ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
+                              : 'bg-white border-[#D6E3ED] text-[#0C3547] hover:border-[#29ABE2]'
+                          )}
+                        >
+                          <span className="text-[10px] font-bold">{n.value.toFixed(3)}</span>
+                          <span className="text-[9px] mt-0.5 leading-tight">{n.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-[#8BA5BE] mt-1.5 leading-relaxed">
+                      {form.palOverride != null
+                        ? PAL_NIVELES_FAO.find(n => n.value === form.palOverride)?.desc ?? 'Personalizado'
+                        : 'Sin selección — se usa el PAL derivado desde días/duración/tipo de ejercicio (FAO/WHO 2001).'}
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -396,6 +439,42 @@ function MetodoCalculoSelector({
                       <p className="text-[10px] text-[#4a6b80] italic mt-2">
                         Forzá un macro específico sin cambiar el método base. Dejar vacío para usar el cálculo automático.
                       </p>
+
+                      {/* PAL override — niveles FAO/WHO 2001 */}
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <label className="text-[11px] font-bold text-[#0C3547]">Factor de actividad (PAL)</label>
+                          {form.palOverride != null && (
+                            <button
+                              type="button"
+                              onClick={() => set('palOverride', undefined)}
+                              className="text-[10px] text-[#29ABE2] font-semibold hover:underline"
+                            >
+                              Automático
+                            </button>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-5 gap-1">
+                          {PAL_NIVELES_FAO.map(n => (
+                            <button
+                              key={n.value}
+                              type="button"
+                              onClick={() => set('palOverride', n.value)}
+                              title={n.desc}
+                              className={cn(
+                                'flex flex-col items-center py-1 px-0.5 rounded border transition',
+                                form.palOverride === n.value
+                                  ? 'bg-[#29ABE2] border-[#29ABE2] text-white'
+                                  : 'bg-white border-[#D6E3ED] text-[#0C3547] hover:border-[#29ABE2]'
+                              )}
+                            >
+                              <span className="text-[10px] font-bold">{n.value.toFixed(3)}</span>
+                              <span className="text-[8px] mt-0.5 leading-none">{n.label}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       {([
                         { key: 'proteinaGKgOverride' as const, label: 'Proteína (g/kg)', sug: sugP, ref: 'Phillips 2018' },
                         { key: 'grasaGKgOverride' as const,    label: 'Grasa (g/kg)',    sug: sugG, ref: 'ACSM' },

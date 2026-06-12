@@ -776,3 +776,43 @@ describe('calcularNutricion — mezclas (overrides en cualquier método)', () =>
     expect(r.macros.c).toBe(420)  // 70 × 6
   })
 })
+
+describe('calcularNutricion — palOverride (selector FAO/WHO)', () => {
+  it('bmr_pal + palOverride reemplaza el PAL automático', () => {
+    const base = { peso: 70, talla: 175, edad: 30, sexo: 'masculino' as const, objetivo: 'mantenimiento' as const,
+                   diasEjercicio: 0, duracionSesion: 0, tipoEjercicio: 'ninguno' as const }
+    const auto = calcularNutricion(base)                              // PAL automático ≈ 1.2 (sedentario)
+    const forced = calcularNutricion({ ...base, palOverride: 1.725 }) // forzar Activo
+    expect(forced.pal).toBe(1.725)
+    expect(auto.pal).toBeLessThan(forced.pal)
+    expect(forced.tdee).toBeGreaterThan(auto.tdee)
+  })
+
+  it('kcal_kg_pal respeta palOverride (kcal = peso × kcalPorKg × palOverride)', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'kcal_kg_pal',
+      kcalPorKg: 30,
+      palOverride: 1.550,
+    })
+    expect(r.pal).toBe(1.550)
+    // tdee = 70 × 30 × 1.550 = 3255 antes del ajuste por objetivo (mantenimiento → 1.0)
+    expect(r.tdee).toBe(3255)
+  })
+
+  it('sin palOverride sigue derivando PAL automático desde días/duración/tipo (retrocompat)', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+    })
+    // 3 días → 1.550, fuerza no suma, 60 min no suma → 1.550 exacto
+    expect(r.pal).toBe(1.550)
+  })
+
+  it('PAL_NIVELES_FAO expone los 5 niveles estándar FAO/WHO 2001', async () => {
+    const { PAL_NIVELES_FAO } = await import('./nutrition')
+    expect(PAL_NIVELES_FAO).toHaveLength(5)
+    expect(PAL_NIVELES_FAO.map(n => n.value)).toEqual([1.200, 1.375, 1.550, 1.725, 1.900])
+  })
+})
