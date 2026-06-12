@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS } from '@/lib/nutrition'
-import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento } from '@/lib/nutrition'
+import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa } from '@/lib/nutrition'
+import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo } from '@/lib/nutrition'
 import {
   CIRUGIA_BARIATRICA_LABELS,
   FASE_POST_LABELS,
@@ -162,6 +162,253 @@ const MARCA_INFO: Record<string, {
   'Sin marca':          { emoji: '🏷️',                                       accent: '#64748B', chipHover: 'hover:border-slate-400 hover:text-slate-200',     chipSelected: 'bg-slate-500 border-slate-500' },
 }
 const MARCA_DEFAULT = MARCA_INFO['Sin marca']
+
+// ─── Selector de método de cálculo (Opciones A/B/C + overrides para mezclas) ─
+// Selector colapsable que va al final del step "Objetivo". Default colapsado
+// con bmr_pal — mantiene flow estándar para profesionales que no quieran
+// cambiar nada. Al expandir, permite:
+//   • Elegir entre los 3 métodos
+//   • Si elige B: ingresar kcalPorKg (20-50)
+//   • Si elige C: ingresar 3 g/kg (proteína Phillips, grasa ACSM, CHO Burke)
+//   • Sección "Overrides" para forzar un macro específico en cualquier método
+//   • Preview en vivo de los macros + kcal resultantes
+function MetodoCalculoSelector({
+  form,
+  set,
+}: {
+  form: Partial<FormData>
+  set: <K extends keyof FormData>(key: K, value: FormData[K]) => void
+}) {
+  const [expandido, setExpandido] = useState(false)
+  const [showOverrides, setShowOverrides] = useState(false)
+  const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
+
+  // Sugerencias para mostrar al pro (no auto-llenan)
+  const sugP = sugerirProteina(form.objetivo ?? 'mantenimiento', form.tipoEjercicio ?? 'fuerza')
+  const sugG = sugerirGrasa(form.objetivo ?? 'mantenimiento')
+  const sugC = sugerirCho(form.diasEjercicio ?? 0, form.duracionSesion ?? 0)
+
+  // Preview en vivo
+  const preview = (() => {
+    try {
+      return calcularNutricion(form as Parameters<typeof calcularNutricion>[0])
+    } catch {
+      return null
+    }
+  })()
+
+  const isOverrideActive = form.proteinaGKgOverride != null || form.grasaGKgOverride != null || form.choGKgOverride != null
+  const summary =
+    metodo === 'bmr_pal'         ? 'Mifflin-St Jeor × actividad (default)' :
+    metodo === 'kcal_kg_pal'     ? `${form.kcalPorKg ?? 30} kcal/kg × actividad` :
+                                   'Macros directos (g/kg)'
+
+  return (
+    <div className="border border-[#D6E3ED] rounded-xl overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpandido(e => !e)}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#F8FBFD] transition text-left"
+        aria-expanded={expandido}
+      >
+        <div>
+          <p className="text-sm font-semibold text-[#0C3547]">⚙️ Método de cálculo</p>
+          <p className="text-[11px] text-[#8BA5BE] mt-0.5">
+            {summary}{isOverrideActive && ' · con overrides'}
+          </p>
+        </div>
+        <svg
+          className={cn('w-4 h-4 flex-shrink-0 transition-transform text-[#8BA5BE]', expandido && 'rotate-180')}
+          fill="none" stroke="currentColor" viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {expandido && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden border-t border-[#D6E3ED] bg-[#F8FBFD]"
+          >
+            <div className="p-4 space-y-4">
+              {/* 3 cards de método */}
+              <div className="grid grid-cols-1 gap-2">
+                {(['bmr_pal', 'kcal_kg_pal', 'macros_directos'] as MetodoCalculo[]).map(m => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => set('metodoCalculo', m)}
+                    className={cn(
+                      'p-3 rounded-lg border-2 text-left transition-all',
+                      metodo === m
+                        ? 'bg-[#EAF4FB] border-[#29ABE2]'
+                        : 'border-[#D6E3ED] bg-white hover:border-[#29ABE2]',
+                    )}
+                  >
+                    <p className="text-sm font-bold text-[#0C3547]">{METODO_CALCULO_LABELS[m].label}</p>
+                    <p className="text-[11px] text-[#4a6b80] mt-0.5 leading-relaxed">{METODO_CALCULO_LABELS[m].desc}</p>
+                    <p className="text-[10px] text-[#8BA5BE] mt-1 italic">{METODO_CALCULO_LABELS[m].refs}</p>
+                  </button>
+                ))}
+              </div>
+
+              {/* Inputs específicos por método */}
+              {metodo === 'kcal_kg_pal' && (
+                <div className="bg-white border border-[#D6E3ED] rounded-lg p-3">
+                  <label className="block text-xs font-bold text-[#0C3547] uppercase tracking-wide mb-2">
+                    Kcal por kg de peso
+                  </label>
+                  <input
+                    type="number"
+                    min={15} max={60} step={1}
+                    value={form.kcalPorKg ?? ''}
+                    onChange={e => set('kcalPorKg', e.target.value === '' ? undefined : Number(e.target.value))}
+                    placeholder="ej. 30 (mantenimiento sedentario)"
+                    className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+                  />
+                  <p className="text-[10px] text-[#8BA5BE] mt-1.5 leading-relaxed">
+                    Referencias: 20=déficit profundo · 25-30=déficit/mantenimiento sedentario · 35-40=activo · 45-50=hipertrofia · 50+=ultra-endurance
+                  </p>
+                </div>
+              )}
+
+              {metodo === 'macros_directos' && (
+                <div className="bg-white border border-[#D6E3ED] rounded-lg p-3 space-y-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-[#0C3547] uppercase tracking-wide">
+                        Proteína (g/kg)
+                      </label>
+                      <span className="text-[10px] text-[#29ABE2] font-semibold">
+                        Sugerido: {sugP.min}-{sugP.max}
+                      </span>
+                    </div>
+                    <input
+                      type="number" min={0.5} max={3.5} step={0.1}
+                      value={form.proteinaGKgOverride ?? ''}
+                      onChange={e => set('proteinaGKgOverride', e.target.value === '' ? undefined : Number(e.target.value))}
+                      placeholder="Ej. 2.0 (Phillips/Morton 2018)"
+                      className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-[#0C3547] uppercase tracking-wide">
+                        Grasa (g/kg)
+                      </label>
+                      <span className="text-[10px] text-[#29ABE2] font-semibold">
+                        Sugerido: {sugG.min}-{sugG.max}
+                      </span>
+                    </div>
+                    <input
+                      type="number" min={0.4} max={2.0} step={0.1}
+                      value={form.grasaGKgOverride ?? ''}
+                      onChange={e => set('grasaGKgOverride', e.target.value === '' ? undefined : Number(e.target.value))}
+                      placeholder="Ej. 1.0 (ACSM consensus)"
+                      className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+                    />
+                    <p className="text-[10px] text-rose-600 mt-1">⚠️ Floor crítico 0.5 g/kg — bloquea por riesgo hormonal</p>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="text-xs font-bold text-[#0C3547] uppercase tracking-wide">
+                        CHO (g/kg)
+                      </label>
+                      <span className="text-[10px] text-[#29ABE2] font-semibold">
+                        Sugerido: {sugC.min}-{sugC.max} ({sugC.carga})
+                      </span>
+                    </div>
+                    <input
+                      type="number" min={1} max={15} step={0.5}
+                      value={form.choGKgOverride ?? ''}
+                      onChange={e => set('choGKgOverride', e.target.value === '' ? undefined : Number(e.target.value))}
+                      placeholder="Ej. 5 (Burke 2011 moderate)"
+                      className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Overrides avanzados (mezclas en bmr_pal o kcal_kg_pal) */}
+              {metodo !== 'macros_directos' && (
+                <div className="bg-white border border-[#D6E3ED] rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setShowOverrides(s => !s)}
+                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-[#F8FBFD] text-left"
+                  >
+                    <span className="text-xs font-bold text-[#0C3547]">
+                      🔧 Overrides avanzados (mezclas)
+                    </span>
+                    <svg className={cn('w-3 h-3 text-[#8BA5BE] transition-transform', showOverrides && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showOverrides && (
+                    <div className="px-3 pb-3 space-y-3 border-t border-[#D6E3ED]">
+                      <p className="text-[10px] text-[#4a6b80] italic mt-2">
+                        Forzá un macro específico sin cambiar el método base. Dejar vacío para usar el cálculo automático.
+                      </p>
+                      {([
+                        { key: 'proteinaGKgOverride' as const, label: 'Proteína (g/kg)', sug: sugP, ref: 'Phillips 2018' },
+                        { key: 'grasaGKgOverride' as const,    label: 'Grasa (g/kg)',    sug: sugG, ref: 'ACSM' },
+                        { key: 'choGKgOverride' as const,      label: 'CHO (g/kg)',      sug: { min: sugC.min, max: sugC.max }, ref: 'Burke 2011' },
+                      ]).map(o => (
+                        <div key={o.key}>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-[11px] font-bold text-[#0C3547]">{o.label}</label>
+                            <span className="text-[10px] text-[#8BA5BE]">
+                              Sug: {o.sug.min}-{o.sug.max} ({o.ref})
+                            </span>
+                          </div>
+                          <input
+                            type="number" min={0} max={15} step={0.1}
+                            value={form[o.key] ?? ''}
+                            onChange={e => set(o.key, e.target.value === '' ? undefined : Number(e.target.value))}
+                            placeholder="(automático)"
+                            className="w-full px-2.5 py-1.5 border border-[#D6E3ED] rounded text-xs focus:outline-none focus:border-[#29ABE2]"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Preview en vivo + warnings */}
+              {preview && (
+                <div className="bg-[#0F1419] text-white rounded-lg p-3 space-y-2">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Resultado calculado</p>
+                  <div className="flex items-baseline gap-3 flex-wrap">
+                    <p className="text-2xl font-black">{preview.kcal} <span className="text-xs font-normal text-zinc-400">kcal/día</span></p>
+                    <p className="text-xs text-zinc-300">
+                      <span className="text-violet-300 font-bold">{preview.macros.p}g P</span> ·{' '}
+                      <span className="text-amber-300 font-bold">{preview.macros.c}g C</span> ·{' '}
+                      <span className="text-rose-300 font-bold">{preview.macros.g}g G</span>
+                    </p>
+                  </div>
+                  {preview.warnings && preview.warnings.length > 0 && (
+                    <div className="border-t border-white/10 pt-2 space-y-1">
+                      {preview.warnings.map((w, i) => (
+                        <p key={i} className={cn('text-[10px] leading-relaxed', w.startsWith('🚨') ? 'text-red-300 font-bold' : 'text-amber-300')}>
+                          {w}
+                        </p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
 
 // Agrupado por marca (feedback Felipe): el selector se organiza en BLOQUES
 // colapsables por fabricante (Nestlé, Costa, Savory, etc.) con 'Genérico' al
@@ -1882,6 +2129,9 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                   placeholder="Ej: mariscos, lácteos, nueces..."
                 />
               </div>
+
+              {/* Método de cálculo (colapsable) - default bmr_pal mantiene flow estándar */}
+              <MetodoCalculoSelector form={form} set={set} />
             </div>
           )}
 
