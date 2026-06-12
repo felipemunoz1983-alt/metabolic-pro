@@ -12,6 +12,12 @@ import {
   kcalObjetivo,
   calcMacros,
   calcularNutricion,
+  tdeeKcalPorKg,
+  macrosDirectos,
+  sugerirCho,
+  sugerirProteina,
+  sugerirGrasa,
+  validarMacros,
 } from './nutrition'
 
 /**
@@ -483,5 +489,290 @@ describe('🧪 SMOKE — Perfiles clínicos reales', () => {
     ;[r.bmr, r.tdee, r.kcal, r.pal, r.macros.p, r.macros.c, r.macros.g].forEach(v => {
       expect(Number.isFinite(v)).toBe(true)
     })
+  })
+})
+
+// ─── Opción B: TDEE por kcal/kg × PAL ────────────────────────────────────────
+
+describe('tdeeKcalPorKg', () => {
+  it('70kg × 30 kcal/kg × 1.55 PAL = 3255 kcal', () => {
+    expect(tdeeKcalPorKg(70, 30, 1.55)).toBeCloseTo(3255, 0)
+  })
+
+  it('paciente bariátrico (60kg × 20 kcal/kg × 1.2 sedentario)', () => {
+    expect(tdeeKcalPorKg(60, 20, 1.2)).toBeCloseTo(1440, 0)
+  })
+
+  it('atleta endurance 80kg × 50 kcal/kg × 1.9 PAL', () => {
+    expect(tdeeKcalPorKg(80, 50, 1.9)).toBeCloseTo(7600, 0)
+  })
+})
+
+// ─── Opción C: Macros directos ───────────────────────────────────────────────
+
+describe('macrosDirectos', () => {
+  it('70kg × (2.0 prot, 1.0 grasa, 5 CHO) = 140p 70g 350c, ~2590 kcal', () => {
+    const m = macrosDirectos(70, 2.0, 1.0, 5)
+    expect(m.p).toBe(140)
+    expect(m.g).toBe(70)
+    expect(m.c).toBe(350)
+    expect(m.kcal).toBe(2590)
+  })
+
+  it('atleta endurance 75kg × (1.6P, 1.0G, 10C) → 750c, 4155 kcal', () => {
+    // 75×1.6=120P, 75×1.0=75G, 75×10=750C
+    // kcal = 120*4 + 750*4 + 75*9 = 480 + 3000 + 675 = 4155
+    const m = macrosDirectos(75, 1.6, 1.0, 10)
+    expect(m.p).toBe(120)
+    expect(m.g).toBe(75)
+    expect(m.c).toBe(750)
+    expect(m.kcal).toBe(4155)
+  })
+
+  it('kcal totales son suma de P×4 + C×4 + G×9', () => {
+    const m = macrosDirectos(65, 2.1, 0.8, 4)
+    const calc = m.p * 4 + m.c * 4 + m.g * 9
+    expect(m.kcal).toBe(calc)
+  })
+})
+
+// ─── Helpers de sugerencia (rangos Burke 2011 + Phillips + ACSM) ────────────
+
+describe('sugerirCho (Burke et al. 2011)', () => {
+  it('sedentario (0 días) → light 3-5 g/kg', () => {
+    const s = sugerirCho(0, 0)
+    expect(s).toEqual({ min: 3, max: 5, carga: 'light' })
+  })
+
+  it('moderado (3 días × 60min) → moderate 5-7 g/kg', () => {
+    const s = sugerirCho(3, 60)
+    expect(s).toEqual({ min: 5, max: 7, carga: 'moderate' })
+  })
+
+  it('alto (5 días × 120min) → high 6-10 g/kg', () => {
+    const s = sugerirCho(5, 120)
+    expect(s).toEqual({ min: 6, max: 10, carga: 'high' })
+  })
+
+  it('ultra-endurance (7 días × 300min) → very_high 8-12 g/kg', () => {
+    const s = sugerirCho(7, 300)
+    expect(s).toEqual({ min: 8, max: 12, carga: 'very_high' })
+  })
+})
+
+describe('sugerirProteina (Phillips/Morton 2018, Helms 2014)', () => {
+  it('pérdida grasa → 2.0-2.7 g/kg (preservación masa magra)', () => {
+    expect(sugerirProteina('perdida grasa', 'fuerza')).toEqual({ min: 2.0, max: 2.7 })
+  })
+
+  it('hipertrofia → 1.6-2.2 g/kg (Morton 2018 meta-análisis)', () => {
+    expect(sugerirProteina('hipertrofia', 'fuerza')).toEqual({ min: 1.6, max: 2.2 })
+  })
+
+  it('cardio mantenimiento → 1.2-1.6 g/kg', () => {
+    expect(sugerirProteina('mantenimiento', 'cardio')).toEqual({ min: 1.2, max: 1.6 })
+  })
+
+  it('mantenimiento mixto → 1.4-1.8 g/kg', () => {
+    expect(sugerirProteina('mantenimiento', 'mixto')).toEqual({ min: 1.4, max: 1.8 })
+  })
+})
+
+describe('sugerirGrasa (ACSM/ISSN consensus)', () => {
+  it('déficit → 0.6-1.0 g/kg', () => {
+    expect(sugerirGrasa('perdida grasa')).toEqual({ min: 0.6, max: 1.0 })
+  })
+
+  it('hipertrofia → 1.0-1.5 g/kg', () => {
+    expect(sugerirGrasa('hipertrofia')).toEqual({ min: 1.0, max: 1.5 })
+  })
+
+  it('mantenimiento → 0.8-1.2 g/kg', () => {
+    expect(sugerirGrasa('mantenimiento')).toEqual({ min: 0.8, max: 1.2 })
+  })
+})
+
+// ─── Validación clínica de macros ────────────────────────────────────────────
+
+describe('validarMacros', () => {
+  it('grasa < 0.5 g/kg → BLOQUEO (floor crítico hormonal)', () => {
+    const v = validarMacros(70, 2.0, 0.3, 5, 2300, 4)
+    expect(v.bloqueos.length).toBeGreaterThan(0)
+    expect(v.bloqueos[0]).toMatch(/floor crítico 0.5/)
+  })
+
+  it('grasa entre 0.5 y 0.6 → warning sin bloqueo', () => {
+    const v = validarMacros(70, 2.0, 0.55, 5, 2400, 4)
+    expect(v.bloqueos.length).toBe(0)
+    expect(v.warnings.length).toBeGreaterThan(0)
+  })
+
+  it('proteína > 3.1 g/kg → warning (techo Phillips)', () => {
+    const v = validarMacros(70, 3.5, 1.0, 5, 2800, 4)
+    expect(v.warnings.some(w => /3.1/.test(w))).toBe(true)
+  })
+
+  it('CHO < 3 g/kg + 5 días entrenamiento → warning Burke 2011', () => {
+    const v = validarMacros(70, 2.0, 1.0, 2, 1820, 5)
+    expect(v.warnings.some(w => /CHO|Burke/i.test(w))).toBe(true)
+  })
+
+  it('kcal < 800 → BLOQUEO (umbral fisiológico)', () => {
+    const v = validarMacros(70, 1.0, 0.5, 5, 700, 0)
+    expect(v.bloqueos.some(b => /800/.test(b))).toBe(true)
+  })
+
+  it('macros normales → sin warnings ni bloqueos', () => {
+    const v = validarMacros(70, 1.8, 1.0, 5, 2380, 3)
+    expect(v.warnings.length).toBe(0)
+    expect(v.bloqueos.length).toBe(0)
+  })
+})
+
+// ─── calcularNutricion con los 3 métodos ─────────────────────────────────────
+
+describe('calcularNutricion — método bmr_pal (default, retrocompat)', () => {
+  it('sin metodoCalculo → comportamiento idéntico al actual', () => {
+    const r = calcularNutricion({
+      peso: 75, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+    })
+    expect(r.metodoUsado).toBe('bmr_pal')
+    expect(r.bmr).toBeGreaterThan(1500)
+    expect(r.tdee).toBeGreaterThan(r.bmr)
+  })
+
+  it('metodoCalculo explícito bmr_pal → mismo resultado que sin especificar', () => {
+    const a = calcularNutricion({
+      peso: 75, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+    })
+    const b = calcularNutricion({
+      peso: 75, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'bmr_pal',
+    })
+    expect(a.kcal).toBe(b.kcal)
+    expect(a.macros).toEqual(b.macros)
+  })
+})
+
+describe('calcularNutricion — método kcal_kg_pal', () => {
+  it('70kg × 35 kcal/kg × PAL → TDEE → kcal por objetivo', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'kcal_kg_pal',
+      kcalPorKg: 35,
+    })
+    // 70 × 35 = 2450 base × pal 1.55 = 3797 → mantenimiento = 3797
+    expect(r.metodoUsado).toBe('kcal_kg_pal')
+    expect(r.tdee).toBeGreaterThan(3500)
+    expect(r.kcal).toBe(r.tdee)
+  })
+
+  it('kcal_kg_pal con objetivo pérdida grasa aplica -20%', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'perdida grasa',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'kcal_kg_pal',
+      kcalPorKg: 30,
+    })
+    expect(r.kcal).toBeCloseTo(r.tdee * 0.8, 0)
+  })
+
+  it('sin kcalPorKg → default 30', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 170, edad: 30, sexo: 'femenino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'kcal_kg_pal',
+    })
+    // 70 × 30 × 1.55 = 3255
+    expect(r.tdee).toBeCloseTo(3255, 0)
+  })
+})
+
+describe('calcularNutricion — método macros_directos (Opción C)', () => {
+  it('70kg con (2.0P 1.0G 5C) → 140p 70g 350c, kcal calculado', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'macros_directos',
+      proteinaGKgOverride: 2.0,
+      grasaGKgOverride: 1.0,
+      choGKgOverride: 5,
+    })
+    expect(r.metodoUsado).toBe('macros_directos')
+    expect(r.macros.p).toBe(140)
+    expect(r.macros.g).toBe(70)
+    expect(r.macros.c).toBe(350)
+    expect(r.kcal).toBe(2590)
+  })
+
+  it('macros_directos NO ajusta por objetivo (kcal es resultado)', () => {
+    const mantenimiento = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'macros_directos',
+      proteinaGKgOverride: 2.0, grasaGKgOverride: 1.0, choGKgOverride: 5,
+    })
+    const deficit = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'perdida grasa',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'macros_directos',
+      proteinaGKgOverride: 2.0, grasaGKgOverride: 1.0, choGKgOverride: 5,
+    })
+    expect(mantenimiento.kcal).toBe(deficit.kcal)
+  })
+
+  it('warnings se incluyen cuando macros directos están fuera de rango', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'macros_directos',
+      proteinaGKgOverride: 3.5,  // > techo 3.1
+      grasaGKgOverride: 1.0,
+      choGKgOverride: 5,
+    })
+    expect(r.warnings).toBeDefined()
+    expect(r.warnings!.some(w => /3.1/.test(w))).toBe(true)
+  })
+})
+
+describe('calcularNutricion — mezclas (overrides en cualquier método)', () => {
+  it('bmr_pal + override proteína fuerza prot final = peso × override', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'bmr_pal',
+      proteinaGKgOverride: 2.0,
+    })
+    expect(r.macros.p).toBe(140)  // 70 × 2.0
+  })
+
+  it('bmr_pal + override grasa recalcula kcal totales', () => {
+    const sinOverride = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+    })
+    const conOverride = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 3, duracionSesion: 60, tipoEjercicio: 'fuerza',
+      grasaGKgOverride: 1.5,
+    })
+    // Con override la grasa cambia y kcal debe recalcularse
+    expect(conOverride.macros.g).toBe(105)  // 70 × 1.5
+    expect(conOverride.kcal).not.toBe(sinOverride.kcal)
+  })
+
+  it('kcal_kg_pal + override CHO sobreescribe el CHO calculado', () => {
+    const r = calcularNutricion({
+      peso: 70, talla: 175, edad: 30, sexo: 'masculino', objetivo: 'mantenimiento',
+      diasEjercicio: 5, duracionSesion: 90, tipoEjercicio: 'fuerza',
+      metodoCalculo: 'kcal_kg_pal',
+      kcalPorKg: 35,
+      choGKgOverride: 6,
+    })
+    expect(r.macros.c).toBe(420)  // 70 × 6
   })
 })

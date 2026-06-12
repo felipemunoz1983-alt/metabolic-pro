@@ -11,6 +11,18 @@ export type TipoEjercicio = 'fuerza' | 'cardio' | 'mixto' | 'ninguno'
 export type Crono = 'matutino' | 'vespertino' | 'neutro'
 export type FormulaUsada = 'mifflin_st_jeor' | 'cunningham' | 'harris_benedict_legacy'
 
+/** Método de cálculo de requerimientos energéticos.
+ *  El profesional elige en el wizard. Default 'bmr_pal' (retrocompat planes antiguos).
+ *
+ *  - 'bmr_pal'         → BMR (Mifflin/Cunningham) × PAL → TDEE → macros (actual)
+ *  - 'kcal_kg_pal'     → peso × kcal/kg × PAL → TDEE → macros
+ *  - 'macros_directos' → macros como g/kg directos (Burke + Phillips + ACSM)
+ *
+ *  En cualquier método el profesional puede usar overrides (mezclas):
+ *  proteinaGKgOverride / grasaGKgOverride / choGKgOverride sobrescriben el
+ *  macro respectivo sin importar el método base. */
+export type MetodoCalculo = 'bmr_pal' | 'kcal_kg_pal' | 'macros_directos'
+
 /** Momentos del dia donde el paciente incorpora whey/proteina en polvo.
  *  Multi-select: un mismo paciente puede consumirla en desayuno + post-entreno.
  *  Si wheyIndicado=true y wheyMomentos undefined => default ['desayuno', 'colacion_am', 'colacion_pm']. */
@@ -154,6 +166,23 @@ export interface FormData {
   habilidadCulinaria?: 'principiante' | 'intermedio' | 'avanzado'
   /** Lugar habitual de almuerzo — afecta tipo de preparaciones */
   lugarAlmuerzo?: 'casa' | 'oficina' | 'restaurant' | 'colegio'
+  // ── Método de cálculo (Opciones A/B/C + overrides para mezclas) ──
+  /** Método de cálculo elegido por el profesional. Default 'bmr_pal' (retrocompat). */
+  metodoCalculo?: MetodoCalculo
+  /** Solo para metodoCalculo='kcal_kg_pal'. Rango clínico 20-50 kcal/kg.
+   *  20=déficit profundo bariátrico, 25-30=déficit/mantenimiento sedentario,
+   *  35-40=activo, 45-50=atleta o ganancia. */
+  kcalPorKg?: number
+  /** Override de proteína en g/kg de peso. Permite "mezclas":
+   *  ej. método bmr_pal + proteína forzada a 2.0 g/kg. Si definido, sobrescribe
+   *  el cálculo de proteína del método base. Rango clínico 0.8-3.1 (Phillips). */
+  proteinaGKgOverride?: number
+  /** Override de grasa en g/kg. Mismo patrón. Rango clínico 0.5-1.5 (ACSM).
+   *  Floor crítico 0.5 — por debajo riesgo hormonal. */
+  grasaGKgOverride?: number
+  /** Override de CHO en g/kg. Rango clínico 3-12 según volumen entrenamiento
+   *  (Burke et al. 2011, J Sports Sci 29(S1):S17-S27). */
+  choGKgOverride?: number
 }
 
 export interface Macros {
@@ -171,6 +200,12 @@ export interface NutritionResult {
   pal: number
   /** Fórmula utilizada para BMR. Opcional para compatibilidad con planes guardados anteriores. */
   formulaUsada?: FormulaUsada
+  /** Método de cálculo usado. 'bmr_pal' por default si no se especifica (planes antiguos). */
+  metodoUsado?: MetodoCalculo
+  /** Advertencias clínicas no-bloqueantes detectadas durante el cálculo
+   *  (ej. proteína fuera de techo evidencia-respaldado, grasa cerca del floor).
+   *  El profesional las ve en el reporte para revisión consciente. */
+  warnings?: string[]
 }
 
 // ─── Mifflin-St Jeor 1990 (fórmula activa) ───────────────────────────────────
@@ -303,25 +338,219 @@ export function calcMacros(kcal: number, peso: number, obj: Objetivo): Macros {
   return { p: Math.round(p), c: Math.round(c), g: Math.round(g), nota: '' }
 }
 
+// ─── Opción B: TDEE por kcal/kg × PAL ────────────────────────────────────────
+// Método rápido para profesionales con caso "calibrado" o pacientes en flujo
+// clínico con historia previa de respuesta calórica conocida.
+//
+// kcalPorKg orientativos (no son ley):
+//   20 = déficit profundo / post-bariátrico
+//   25 = déficit moderado
+//   30 = mantenimiento sedentario
+//   35 = activo / mantenimiento moderado
+//   40 = atleta mantenimiento
+//   45 = superávit hipertrofia
+//   50+ = ultra-endurance
+//
+// Después se aplica el PAL igual que en Opción A para sumar el costo de la
+// actividad por encima del baseline metabólico estimado por kcal/kg.
+export function tdeeKcalPorKg(peso: number, kcalKg: number, pal: number): number {
+  return peso * kcalKg * pal
+}
+
+// ─── Opción C: Macros directos por g/kg ──────────────────────────────────────
+// Calcula los macros como g/kg de peso corporal, ignorando el TDEE.
+// Las kcal totales son resultado, no input — la suma de los 3 macros define
+// la energía. Ideal para deportistas serios donde la prescripción de cada
+// macro tiene racional clínico distinto.
+//
+// Referencias bibliográficas activas:
+//   • CHO: Burke LM et al. J Sports Sci. 2011;29(S1):S17-S27.
+//          Rangos 3-12 g/kg/día según volumen de entrenamiento.
+//   • Proteína: Phillips SM, van Loon LJ. J Sports Sci. 2011;29(S1):S29-S38.
+//               Morton RW et al. Br J Sports Med. 2018;52(6):376-384.
+//               Helms ER, Aragon AA, Phillips SM. J Int Soc Sports Nutr. 2014;11:20.
+//               Rangos 0.8-3.1 g/kg según objetivo + déficit.
+//   • Grasa: ACSM/ISSN/IOM consensus. Rango 0.5-1.5 g/kg.
+//            Floor crítico 0.5 g/kg (riesgo hormonal y vitaminas liposolubles).
+export function macrosDirectos(
+  peso: number,
+  proteinaGKg: number,
+  grasaGKg: number,
+  choGKg: number,
+): Macros & { kcal: number } {
+  // Redondear primero los macros y luego calcular kcal sobre los valores
+  // que verá el profesional — evita inconsistencia entre P/C/G mostrados
+  // y kcal total reportado.
+  const p = Math.round(peso * proteinaGKg)
+  const g = Math.round(peso * grasaGKg)
+  const c = Math.round(peso * choGKg)
+  const kcal = p * 4 + c * 4 + g * 9
+  return { p, c, g, kcal, nota: '' }
+}
+
+// ─── Helpers de sugerencia (hints UI, NO auto-llenan) ───────────────────────
+// Muestran al profesional el rango recomendado por evidencia, pero NO escriben
+// el valor automáticamente (decisión clínica del profesional ingresar cada
+// g/kg uno por uno).
+//
+// CHO según Burke 2011 — clasifica volumen de entrenamiento:
+//   light    (0 días o <1h)        → 3-5 g/kg
+//   moderate (1-3 días, ~1h/día)   → 5-7 g/kg
+//   high     (4-5 días, 1-3h/día)  → 6-10 g/kg
+//   veryhigh (6-7 días, >4h/día)   → 8-12 g/kg
+export function sugerirCho(diasEjercicio: number, duracionMin: number): { min: number; max: number; carga: 'light' | 'moderate' | 'high' | 'very_high' } {
+  if (diasEjercicio === 0 || duracionMin < 60) return { min: 3, max: 5, carga: 'light' }
+  if (diasEjercicio <= 3) return { min: 5, max: 7, carga: 'moderate' }
+  if (diasEjercicio <= 5 && duracionMin <= 180) return { min: 6, max: 10, carga: 'high' }
+  return { min: 8, max: 12, carga: 'very_high' }
+}
+
+// Proteína según Phillips 2011/2014, Morton 2018, Helms 2014:
+//   sedentario              → 0.8 g/kg (RDA, mínimo no óptimo)
+//   activo general / cardio → 1.2-1.6 g/kg
+//   hipertrofia / fuerza    → 1.6-2.2 g/kg
+//   déficit calórico        → 2.0-2.7 g/kg (preservación masa magra)
+export function sugerirProteina(
+  objetivo: Objetivo,
+  tipoEjercicio: TipoEjercicio,
+): { min: number; max: number } {
+  if (objetivo === 'perdida grasa')                          return { min: 2.0, max: 2.7 }
+  if (objetivo === 'hipertrofia')                            return { min: 1.6, max: 2.2 }
+  if (tipoEjercicio === 'cardio' || tipoEjercicio === 'ninguno') return { min: 1.2, max: 1.6 }
+  return { min: 1.4, max: 1.8 }
+}
+
+// Grasa según consensus ACSM/ISSN/IOM:
+//   déficit / pérdida grasa → 0.6-1.0 g/kg
+//   mantenimiento           → 0.8-1.2 g/kg
+//   hipertrofia             → 1.0-1.5 g/kg
+// Floor absoluto siempre 0.5 g/kg (no se permite por debajo).
+export function sugerirGrasa(objetivo: Objetivo): { min: number; max: number } {
+  if (objetivo === 'perdida grasa') return { min: 0.6, max: 1.0 }
+  if (objetivo === 'hipertrofia')   return { min: 1.0, max: 1.5 }
+  return { min: 0.8, max: 1.2 }
+}
+
+// ─── Validación clínica de macros (warnings y blocks) ───────────────────────
+// Genera advertencias sin bloquear el cálculo cuando los valores ingresados
+// por el profesional están fuera de rango evidencia-respaldado. Las
+// situaciones críticas (grasa < 0.5 g/kg) sí se bloquean y la app debe
+// mostrar el mensaje en rojo al profesional para corrección.
+export interface MacrosValidacion {
+  warnings: string[]
+  bloqueos: string[]
+}
+
+export function validarMacros(
+  peso: number,
+  proteinaGKg: number,
+  grasaGKg: number,
+  choGKg: number,
+  kcal: number,
+  diasEjercicio: number,
+): MacrosValidacion {
+  const warnings: string[] = []
+  const bloqueos: string[] = []
+
+  if (grasaGKg < 0.5) {
+    bloqueos.push(`Grasa ${grasaGKg.toFixed(2)} g/kg está por debajo del floor crítico 0.5 g/kg (riesgo hormonal y déficit vitaminas liposolubles).`)
+  } else if (grasaGKg < 0.6) {
+    warnings.push(`Grasa ${grasaGKg.toFixed(2)} g/kg cerca del floor crítico. Revisar perfil hormonal a 4 semanas.`)
+  }
+  if (proteinaGKg > 3.1) {
+    warnings.push(`Proteína ${proteinaGKg.toFixed(2)} g/kg supera el techo evidencia-respaldado 3.1 g/kg (Phillips 2018).`)
+  }
+  if (proteinaGKg < 0.8) {
+    warnings.push(`Proteína ${proteinaGKg.toFixed(2)} g/kg por debajo de la RDA 0.8 g/kg.`)
+  }
+  if (choGKg < 3 && diasEjercicio >= 3) {
+    warnings.push(`CHO ${choGKg.toFixed(1)} g/kg inadecuado para ${diasEjercicio} días de entrenamiento (Burke 2011 sugiere ≥${diasEjercicio <= 3 ? 5 : 6} g/kg).`)
+  }
+  if (kcal < 800) {
+    bloqueos.push(`Total ${Math.round(kcal)} kcal por debajo de 800 kcal (umbral fisiológico mínimo).`)
+  }
+  if (kcal > 5500) {
+    bloqueos.push(`Total ${Math.round(kcal)} kcal por encima de 5500 kcal (valida con calorimetría en atletas profesionales).`)
+  }
+  void peso  // reservado para validaciones futuras peso-específicas
+
+  return { warnings, bloqueos }
+}
+
 // ─── Cálculo completo ─────────────────────────────────────────────────────────
-// Selección de fórmula automática:
+// Selección de método según form.metodoCalculo (default 'bmr_pal'):
+//   • 'bmr_pal'         → BMR × PAL → kcalObjetivo → calcMacros (clásico)
+//   • 'kcal_kg_pal'     → peso × kcalPorKg × PAL → kcalObjetivo → calcMacros
+//   • 'macros_directos' → macrosDirectos(p, g, c) → kcal resultante
+//
+// MEZCLAS (overrides): cualquier método base puede tener proteinaGKgOverride /
+// grasaGKgOverride / choGKgOverride seteado. Cuando un override está definido,
+// reemplaza el macro respectivo después del cálculo base y recalcula kcal.
+//
+// Para 'bmr_pal' la selección de fórmula sigue siendo automática:
 //   • Cunningham 1991  → deportista (>=5 días) + BIA medido + bajo % grasa
 //   • Mifflin-St Jeor  → todos los demás casos (default)
 export function calcularNutricion(form: Pick<FormData,
   'peso' | 'talla' | 'edad' | 'sexo' | 'objetivo' |
   'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa' |
-  'digCirugiaBariatrica' | 'digFasePostBariatrica'
+  'digCirugiaBariatrica' | 'digFasePostBariatrica' |
+  'metodoCalculo' | 'kcalPorKg' |
+  'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride'
 >): NutritionResult {
+  const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
+  const pal = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
   const formula = seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
 
-  const bmr = formula === 'cunningham' && form.porcentajeGrasa != null
+  // bmrEstimado se calcula siempre para mostrar al pro como referencia,
+  // aunque el método activo no lo use directamente.
+  const bmrEstimado = formula === 'cunningham' && form.porcentajeGrasa != null
     ? bmrCunningham(form.peso, form.porcentajeGrasa)
     : bmrMifflinStJeor(form.peso, form.talla, form.edad, form.sexo)
 
-  const pal    = factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
-  const tdee   = bmr * pal
-  const kcal   = kcalObjetivo(tdee, form.objetivo)
-  const macros = calcMacros(kcal, form.peso, form.objetivo)
+  let tdee: number
+  let kcal: number
+  let macros: Macros
+
+  if (metodo === 'macros_directos') {
+    // Opción C: macros como g/kg, kcal es resultado
+    const p = form.proteinaGKgOverride ?? 1.6
+    const g = form.grasaGKgOverride    ?? 1.0
+    const c = form.choGKgOverride      ?? 5
+    const res = macrosDirectos(form.peso, p, g, c)
+    macros = { p: res.p, c: res.c, g: res.g, nota: '' }
+    kcal   = res.kcal
+    tdee   = kcal  // en este método no hay TDEE intermedio
+  } else {
+    // Opción A o B: calcular TDEE → kcal → macros
+    if (metodo === 'kcal_kg_pal') {
+      const kcalKg = form.kcalPorKg ?? 30
+      tdee = tdeeKcalPorKg(form.peso, kcalKg, pal)
+    } else {
+      tdee = bmrEstimado * pal
+    }
+    kcal   = kcalObjetivo(tdee, form.objetivo)
+    macros = calcMacros(kcal, form.peso, form.objetivo)
+
+    // Aplicar overrides (mezcla): el pro fuerza un macro específico aunque el
+    // método base haya calculado otro valor. Tras aplicar, recalcular kcal
+    // totales para que el resumen refleje el output real.
+    if (form.proteinaGKgOverride != null) {
+      macros.p = Math.round(form.peso * form.proteinaGKgOverride)
+    }
+    if (form.grasaGKgOverride != null) {
+      macros.g = Math.round(form.peso * form.grasaGKgOverride)
+    }
+    if (form.choGKgOverride != null) {
+      macros.c = Math.round(form.peso * form.choGKgOverride)
+    }
+    if (
+      form.proteinaGKgOverride != null ||
+      form.grasaGKgOverride    != null ||
+      form.choGKgOverride      != null
+    ) {
+      kcal = macros.p * 4 + macros.c * 4 + macros.g * 9
+    }
+  }
 
   // Override post-bariátrico: el cálculo estándar usa peso × 1.9-2.1 que para
   // pacientes con sobrepeso da 200g+ — imposible con capacidad gástrica reducida.
@@ -333,7 +562,6 @@ export function calcularNutricion(form: Pick<FormData,
     macros.p,
   )
   if (protOverride !== null && protOverride !== macros.p) {
-    // Re-calcular carbohidratos para que cuadre con el nuevo total proteico.
     const newP = protOverride
     const remainingKcal = kcal - (newP * 4) - (macros.g * 9)
     const newC = Math.max(50, Math.round(remainingKcal / 4))  // piso 50g (cetosis-evitar)
@@ -342,13 +570,24 @@ export function calcularNutricion(form: Pick<FormData,
     macros.nota = `Proteína ajustada a ${newP}g/día por cirugía bariátrica (Mechanick 2019).`
   }
 
+  // Validación clínica de macros finales (genera warnings + bloqueos)
+  const proteinaGKgFinal = macros.p / form.peso
+  const grasaGKgFinal    = macros.g / form.peso
+  const choGKgFinal      = macros.c / form.peso
+  const validacion = validarMacros(
+    form.peso, proteinaGKgFinal, grasaGKgFinal, choGKgFinal, kcal, form.diasEjercicio,
+  )
+  const warnings = [...validacion.bloqueos.map(b => `🚨 ${b}`), ...validacion.warnings]
+
   return {
-    bmr:          Math.round(bmr),
+    bmr:          Math.round(bmrEstimado),
     tdee:         Math.round(tdee),
     kcal:         Math.round(kcal),
     macros,
     pal,
     formulaUsada: formula,
+    metodoUsado:  metodo,
+    warnings:     warnings.length > 0 ? warnings : undefined,
   }
 }
 
@@ -369,4 +608,22 @@ export const EJERCICIO_LABELS: Record<TipoEjercicio, string> = {
   cardio:  '🏃 Cardio',
   mixto:   '⚡ Mixto',
   ninguno: '🛋️ Ninguno',
+}
+
+export const METODO_CALCULO_LABELS: Record<MetodoCalculo, { label: string; desc: string; refs: string }> = {
+  bmr_pal: {
+    label: 'Metabolismo basal × actividad',
+    desc:  'BMR (Mifflin-St Jeor o Cunningham) multiplicado por factor PAL. Ajusta por objetivo.',
+    refs:  'Mifflin MD et al. 1990. Frankenfield DC et al. 2005. FAO/WHO PAL 2001.',
+  },
+  kcal_kg_pal: {
+    label: 'Kcal por kg × actividad',
+    desc:  'Estima TDEE con kcal/kg de peso (20-50) × PAL. Más rápido en pacientes con caso calibrado.',
+    refs:  'ACSM/ISSN consensus. Tabla referencial 20-50 kcal/kg.',
+  },
+  macros_directos: {
+    label: 'Macros directos (g/kg)',
+    desc:  'Define cada macro como g/kg de peso. Kcal son resultado, no input. Ideal deportistas serios.',
+    refs:  'CHO: Burke et al. 2011. Proteína: Phillips/Morton 2018, Helms 2014. Grasa: ACSM consensus.',
+  },
 }
