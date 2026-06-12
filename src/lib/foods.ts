@@ -1923,7 +1923,10 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // Total ≈ 467 kcal · 21 P · 62 C · 15 G
     baseKcal: 467, p: 21, c: 62, g: 15, tieneHuevo: true, eggsDefault: 2,
     porcionFija: true,
-    foto: USP('1568901346375-23c9450c58cd'),  // puré con huevo y ensalada
+    // foto: pure de papas con huevos pochados encima (Unsplash) - reemplaza
+    // ID anterior 1568901346375-23c9450c58cd que Unsplash reasigno a una foto
+    // de hamburguesa (reportado por Felipe 2026-06).
+    foto: USP('1710445458303-857b8cdab3d0'),
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
     tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
@@ -2488,7 +2491,9 @@ export const cenasOpts: Record<string, MealOption> = {
     // Total ≈ 311 kcal · 12 P · 44 C · 9 G
     baseKcal: 311, p: 12, c: 44, g: 9, tieneHuevo: true, eggsDefault: 1,
     porcionFija: true,
-    foto: USP('1568901346375-23c9450c58cd'),
+    // foto: plato con pure y verduras al lado (Unsplash) - distinta a la
+    // version almuerzo para diferenciar visualmente porcion reducida cena.
+    foto: USP('1707578365462-07f741c24c8f'),
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
     tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 180,
