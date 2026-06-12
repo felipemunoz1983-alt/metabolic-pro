@@ -735,7 +735,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   1 cdta miel 7g:              21 kcal · 0 P · 5.7 C · 0 G
     //   Total: 500 kcal · 18 P · 96 C · 6 G
     baseKcal: 500, p: 18, c: 96, g: 6,
-    foto: USP('1638813133218-4367bd8123f6'),
+    foto: '/img/recetas/unsplash_1638813133218-4367bd8123f6.webp',
     tiempo: '10 min',
     pasos: [
       'Calentar 200ml de leche en una olla a fuego medio.',
@@ -758,7 +758,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     // foto: scoop de proteina sobre superficie (Unsplash) — diferencia
     // visualmente la version proteica de la avena natural (avena_platano),
     // que sigue usando la foto del tazon de avena con frutas.
-    foto: USP('1693996046865-19217d179161'),
+    foto: '/img/recetas/unsplash_1693996046865-19217d179161.webp',
     tiempo: '10 min',
     pasos: [
       'Calentar 200ml de leche en una olla a fuego medio.',
@@ -833,7 +833,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     baseKcal: 523, p: 37, c: 45, g: 24,
     porcionFija: true, // porciones discretas: 1 scoop, 1 plátano, 30g nueces — no escalable
     requiereWhey: true,
-    foto: USP('1622597468620-656aa1f981ea'), // batido proteico de frutilla en vaso transparente
+    foto: '/img/recetas/unsplash_1622597468620-656aa1f981ea.webp', // batido proteico de frutilla en vaso transparente
     tiempo: '5 min',
     pasos: [
       'Colocar todos los ingredientes en la licuadora: leche, plátano congelado, proteína y frutos secos.',
@@ -1215,7 +1215,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     // Sin esto, el motor escalaba el plato al slot kcal del paciente (ej: 537 kcal
     // implica 2.55 scoops = absurdo). Esta colación tiene macros fijos por receta.
     porcionFija: true,
-    foto: USP('1622597468620-656aa1f981ea'), // batido proteico en vaso, colación
+    foto: '/img/recetas/unsplash_1622597468620-656aa1f981ea.webp', // batido proteico en vaso, colación
     tiempo: '3 min',
     requiereWhey: true,
     pasos: [
@@ -1278,7 +1278,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Total: 168 kcal · 3.4 P · 34.5 C · 3 G  (delta <10% — OK, solo redondeo)
     baseKcal: 168, p: 3, c: 35, g: 3,
     porcionFija: true,
-    foto: USP('1504708706948-13d6cbba4062'), // mix de berries y frutos secos, snack saludable
+    foto: '/img/recetas/unsplash_1504708706948-13d6cbba4062.webp', // mix de berries y frutos secos, snack saludable
     tiempo: '2 min',
     pasos: [
       'Opción rápida: barra de cereal + fruta para llevar.',
@@ -1306,7 +1306,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
-    foto: USP('1528735602780-2552fd46c7af'),
+    foto: '/img/recetas/unsplash_1528735602780-2552fd46c7af.webp',
     tiempo: '5 min',
     tendencia: ['omnivoro'],
     alergenosNota: 'Contiene gluten (pan) y lácteos (queso). Si tienes intolerancia a alguno, sustituye por pan sin gluten o queso vegetal.',
@@ -1337,7 +1337,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
-    foto: USP('1525351484163-7529414344d8'),
+    foto: '/img/recetas/unsplash_1525351484163-7529414344d8.webp',
     tiempo: '12 min',
     tendencia: ['omnivoro'],
     tieneHuevo: true,
@@ -1371,7 +1371,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
-    foto: USP('1539252554935-80c8cb01a76d'),
+    foto: '/img/recetas/unsplash_1515041761709-f9fc96e04cd3.webp',
     tiempo: '4 min',
     tendencia: ['omnivoro', 'vegetariano'],
     alergenosNota: 'Contiene gluten (pan) y lácteos (queso). Apto vegetariano. Para vegano: reemplazar queso por hummus o queso vegetal.',
@@ -1402,7 +1402,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 277, p: 21, c: 35, g: 6,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
-    foto: USP('1567234669003-dbbf01c4f7b5'),
+    foto: '/img/recetas/unsplash_1541833000669-8dbe1bfb574a.webp',
     tiempo: '3 min',
     tendencia: ['omnivoro'],
     alergenosNota: 'Contiene gluten (pan). Sin lácteos. Versión más liviana del clásico — ideal para tarde si necesitas economizar calorías.',
@@ -1520,7 +1520,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tienePan: true, panTipoDefault: 'marraqueta',
     tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
-    foto: USP('1509440159596-0249088772ff'),
+    foto: '/img/recetas/unsplash_1509440159596-0249088772ff.webp',
     tiempo: '4 min',
     tendencia: ['omnivoro'],
     alergenosNota: 'Contiene gluten (marraqueta — pan blanco chileno) y lácteos (queso). Mayor índice glucémico que el integral por el pan blanco.',
@@ -1563,7 +1563,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     //   Total: 274 kcal · 11 P · 37 C · 12 G  (+27% kcal vs anterior)
     baseKcal: 274, p: 11, c: 37, g: 12,
     porcionFija: true,
-    foto: USP('1637949385162-e416fb15b2ce'), // bowl de hummus con garnish de aceite, foto real
+    foto: '/img/recetas/unsplash_1637949385162-e416fb15b2ce.webp', // bowl de hummus con garnish de aceite, foto real
     tiempo: '5 min',
     pasos: [
       'Lavar y cortar las verduras en bastones del mismo tamaño.',
@@ -1809,7 +1809,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // (Unsplash) — diferencia visualmente esta receta de la version con
     // papas cocidas blancas planas (carne_papas_cocidas) que sigue usando
     // carne_con_papas..webp.
-    foto: USP('1778784153322-9b20b164012c'),
+    foto: '/img/recetas/unsplash_1778784153322-9b20b164012c.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
@@ -1973,7 +1973,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 413 kcal · 22 P · 73 C · 7 G
     baseKcal: 413, p: 22, c: 73, g: 7,
     porcionFija: true,
-    foto: USP('1503838922633-d7892c7a2bc0'), // porotos/lentejas en bol con cuchara, foto real
+    foto: '/img/recetas/unsplash_1503838922633-d7892c7a2bc0.webp', // porotos/lentejas en bol con cuchara, foto real
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'cebolla_ajo'],
     altoFODMAP: true,
@@ -2006,7 +2006,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // foto: pavo asado con papas en plato blanco (Unsplash) — corrige
     // mismatch previo donde se usaba la foto generica de "carne con papas"
     // que mostraba carne roja en vez de pavo (carne blanca).
-    foto: USP('1642192429402-90e329af29a4'),
+    foto: '/img/recetas/unsplash_1642192429402-90e329af29a4.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'pavo', carneGramosBase: 200,
@@ -2037,7 +2037,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   (Versión anterior MUY sobreestimada — el tofu es menos denso que la carne)
     baseKcal: 347, p: 21, c: 31, g: 16,
     porcionFija: true,
-    foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
+    foto: '/img/recetas/unsplash_1680173073730-852e0ec93bec.webp',
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['soya', 'cruciferas'],   // tofu = soya · champiñones aceptable
@@ -2066,7 +2066,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 591 kcal · 25 P · 83 C · 19 G
     baseKcal: 591, p: 25, c: 83, g: 19,
     porcionFija: true,
-    foto: USP('1512621776951-a52572ce91c9'),
+    foto: '/img/recetas/unsplash_1623428187969-5da2dcea5ebf.webp',
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'cebolla_ajo'],
@@ -2100,7 +2100,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   (Versión anterior subestimaba MUCHO — la leche de coco pesa mucho en kcal y grasa)
     baseKcal: 820, p: 27, c: 101, g: 36,
     porcionFija: true,
-    foto: USP('1565557981-d9a55e1b9e6c'),
+    foto: '/img/recetas/unsplash_1623428188474-b1d532c5e560.webp',
     tiempo: '25 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'cebolla_ajo'],
@@ -2230,7 +2230,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     // foto: pure de papas con huevos pochados encima (Unsplash) - reemplaza
     // ID anterior 1568901346375-23c9450c58cd que Unsplash reasigno a una foto
     // de hamburguesa (reportado por Felipe 2026-06).
-    foto: USP('1710445458303-857b8cdab3d0'),
+    foto: '/img/recetas/unsplash_1710445458303-857b8cdab3d0.webp',
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
     tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
@@ -2471,7 +2471,7 @@ export const cenasOpts: Record<string, MealOption> = {
     porcionFija: true,
     // foto: misma que la version almuerzo de papas salteadas con romero
     // (Unsplash) — porcion cena reducida pero presentacion visual identica.
-    foto: USP('1778784153322-9b20b164012c'),
+    foto: '/img/recetas/unsplash_1778784153322-9b20b164012c.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 120,
@@ -2497,7 +2497,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // foto: pollo a la plancha con verduras coloridas (Unsplash) — corrige
     // mismatch previo donde se reusaba la foto del almuerzo con ARROZ que
     // contradecia la receta de cena sin carbohidrato.
-    foto: USP('1633683789521-99cba8ec5d1b'),
+    foto: '/img/recetas/unsplash_1633683789521-99cba8ec5d1b.webp',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],   // brócoli
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
@@ -2524,7 +2524,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // foto: omelette/tortilla con ensalada verde en plato blanco (Unsplash)
     // — corrige mismatch previo donde se reusaba la foto del omelette de
     // desayuno con PAN integral que no aplica a la version cena.
-    foto: USP('1625536059909-84924b9899ea'),
+    foto: '/img/recetas/unsplash_1625536059909-84924b9899ea.webp',
     tendencia: ['vegetariano'],
     contiene: ['huevo'],
     tiempo: '12 min',
@@ -2578,7 +2578,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // foto: salmon al horno con brocoli en plato negro (Unsplash) — corrige
     // mismatch previo donde se reusaba la foto del almuerzo con QUINOA que
     // contradecia la receta de cena sin carbohidrato.
-    foto: USP('1675209705883-7aec595f5aa8'),
+    foto: '/img/recetas/unsplash_1675209705883-7aec595f5aa8.webp',
     tendencia: ['omnivoro'],
     contiene: ['cruciferas', 'cebolla_ajo'],
     tieneCarne: true, carneTipo: 'salmon', carneGramosBase: 150,
@@ -2604,7 +2604,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // foto: carne grillada con zapallo italiano en plato blanco (Unsplash)
     // — corrige mismatch previo donde se reusaba la foto generica de
     // "carne con PAPAS" que contradice la receta de cena (zapallo, no papa).
-    foto: USP('1627871852845-afb02c53b422'),
+    foto: '/img/recetas/unsplash_1627871852845-afb02c53b422.webp',
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
@@ -2626,7 +2626,7 @@ export const cenasOpts: Record<string, MealOption> = {
     // Total ≈ 187 kcal · 30 P · 9 C · 3 G — sopa ligera proteica
     baseKcal: 187, p: 30, c: 9, g: 3,
     porcionFija: true,
-    foto: USP('1627366422957-3efa9c6df0fc'), // sopa con carne en bol blanco, foto real
+    foto: '/img/recetas/unsplash_1627366422957-3efa9c6df0fc.webp', // sopa con carne en bol blanco, foto real
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'],
     estacional: 'frio',   // sopa caliente — preferida en otoño/invierno
@@ -2652,7 +2652,7 @@ export const cenasOpts: Record<string, MealOption> = {
     baseKcal: 389, p: 25, c: 62, g: 8,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
-    foto: USP('1547592166-9a59b8dddb7f'),
+    foto: '/img/recetas/unsplash_1605909388460-74ec8b204127.webp',
     tiempo: '30 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres', 'gluten', 'cebolla_ajo'],  // pan integral
@@ -2678,7 +2678,7 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 607 kcal · 29 P · 54 C · 31 G  (estaba muy subestimado, +56%)
     baseKcal: 607, p: 29, c: 54, g: 31,
     porcionFija: true,
-    foto: USP('1512621776951-a52572ce91c9'),
+    foto: '/img/recetas/unsplash_1773871614358-41ab249dbd2f.webp',
     tiempo: '15 min',
     tendencia: ['vegetariano'],
     contiene: ['legumbres', 'huevo'],
@@ -2709,7 +2709,7 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 372 kcal · 23 P · 38 C · 15 G
     baseKcal: 372, p: 23, c: 38, g: 15,
     porcionFija: true,
-    foto: USP('1546069930-d8b9-4567-86b8-2f814bbb4f08'),
+    foto: '/img/recetas/unsplash_1694934588452-a1a02b2ec718.webp',
     tiempo: '20 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['soya', 'gluten', 'cruciferas', 'cebolla_ajo'],   // tofu+soya · fideos integrales · brócoli
@@ -2732,7 +2732,7 @@ export const cenasOpts: Record<string, MealOption> = {
     //   Total: 427 kcal · 21 P · 51 C · 18 G
     baseKcal: 427, p: 21, c: 51, g: 18,
     porcionFija: true,
-    foto: USP('1547592166-9a59b8dddb7f'),
+    foto: '/img/recetas/unsplash_1679844784189-3883de9550fe.webp',
     tiempo: '10 min',
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['legumbres'],
@@ -2797,7 +2797,7 @@ export const cenasOpts: Record<string, MealOption> = {
     porcionFija: true,
     // foto: plato con pure y verduras al lado (Unsplash) - distinta a la
     // version almuerzo para diferenciar visualmente porcion reducida cena.
-    foto: USP('1707578365462-07f741c24c8f'),
+    foto: '/img/recetas/unsplash_1707578365462-07f741c24c8f.webp',
     tendencia: ['omnivoro', 'vegetariano'],
     contiene: ['huevo', 'lactosa'],
     tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 180,
