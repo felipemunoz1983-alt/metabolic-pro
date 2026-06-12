@@ -925,6 +925,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Total: 397 kcal · 21 P · 38 C · 17 G
     baseKcal: 397, p: 21, c: 38, g: 17, tieneHuevo: true, eggsDefault: 2,
     tienePan: true, panTipoDefault: 'integral',
+    foto: '/img/recetas/huevos_revueltos_cremosos.webp',
     tiempo: '10 min',
     pasos: [
       'Sartén fría: derretir la mantequilla o entibiar el aceite a fuego BAJO. El cuajado lento es la clave de la textura cremosa.',
@@ -957,6 +958,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tienePan: true, panTipoDefault: 'integral',
     contiene: ['cebolla_ajo'] as string[],
     estacional: 'frio',
+    foto: '/img/recetas/shakshuka_individual.webp',
     tiempo: '15 min',
     pasos: [
       'Sofrito: calentar el aceite, dorar cebolla y pimiento rojo 5 min a fuego medio hasta que se ablanden.',
@@ -983,6 +985,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Total: 382 kcal · 20 P · 25 C · 20 G
     baseKcal: 382, p: 20, c: 25, g: 20, tieneHuevo: true, eggsDefault: 3,
     contiene: ['cebolla_ajo'] as string[],
+    foto: '/img/recetas/tortilla_espanola_mini.webp',
     tiempo: '25 min',
     pasos: [
       'Preparación previa: cocer las papas con cáscara la noche anterior (o usar sobrantes). Pelar y cortar en cubos pequeños de ~1cm.',
@@ -1012,6 +1015,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     baseKcal: 429, p: 26, c: 38, g: 18, tieneHuevo: true, eggsDefault: 2,
     tienePan: true, panTipoDefault: 'integral',
     tieneCarne: true, carneTipo: 'pavo', carneGramosBase: 30,
+    foto: '/img/recetas/sandwich_huevo_pavo_palta.webp',
     tiempo: '12 min',
     pasos: [
       'Huevos: revolver los 2 huevos en una sartén antiadherente a fuego medio-bajo con sal y pimienta, hasta que cuajen pero queden jugosos (~3 min).',
@@ -1042,6 +1046,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     porcionFija: true,
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['frutos_secos', 'gluten'] as string[],
+    foto: '/img/recetas/avena_overnight_mani.webp',
     tiempo: '5 min + reposo nocturno',
     pasos: [
       'En un frasco o bol mezclar la avena con la leche de almendras y la chía.',
@@ -1071,6 +1076,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['gluten', 'sesamo'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    foto: '/img/recetas/tostadas_palta_semillas.webp',
     tiempo: '8 min',
     pasos: [
       'Tostar el pan integral hasta dorar levemente. El tostado baja el índice glicémico.',
@@ -1103,6 +1109,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['frutos_secos', 'gluten'] as string[],
     estacional: 'calor',
+    foto: '/img/recetas/smoothie_bowl_berries.webp',
     tiempo: '7 min',
     pasos: [
       'Licuar la leche de almendras congelada, las berries y el medio plátano congelado hasta obtener textura tipo sorbete espeso.',
@@ -1132,6 +1139,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['gluten', 'sesamo'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    foto: '/img/recetas/pan_hummus_verduras.webp',
     tiempo: '5 min',
     pasos: [
       'Tostar levemente las rebanadas de pan integral (opcional, da mejor textura).',
@@ -1164,6 +1172,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['soya', 'gluten', 'cebolla_ajo'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    foto: '/img/recetas/tofu_revuelto_chileno.webp',
     tiempo: '12 min',
     pasos: [
       'Desmenuzar el tofu firme con un tenedor hasta lograr textura tipo huevo revuelto.',
@@ -1594,6 +1603,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano'],
     contiene: ['gluten', 'lactosa'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    foto: '/img/recetas/tostada_palta_ricotta_chia.webp',
     tiempo: '5 min',
     pasos: [
       'Tostar el pan integral hasta dorar levemente.',
@@ -1623,6 +1633,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano'],
     contiene: ['lactosa', 'frutos_secos'] as string[],
     tieneYogur: true,
+    foto: '/img/recetas/bowl_fruta_yogur_griego.webp',
     tiempo: '5 min',
     pasos: [
       'Colocar el yogur griego en un bol pequeño como base.',
@@ -1655,6 +1666,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tendencia: ['vegetariano'],
     contiene: ['gluten', 'lactosa', 'frutos_secos'] as string[],
+    foto: '/img/recetas/galleton_avena_platano_leche.webp',
     tiempo: '25 min (incluye horneo)',
     pasos: [
       'Aplastar el plátano maduro con tenedor en un bol hasta obtener puré.',
@@ -1686,6 +1698,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tendencia: ['vegetariano', 'vegano'],
     contiene: ['frutos_secos'] as string[],
+    foto: '/img/recetas/chia_pudding_cacao_frutilla.webp',
     tiempo: '5 min + 4h reposo',
     pasos: [
       'En un frasco mezclar las semillas de chía, leche de almendras, cacao y miel/estevia. Batir bien para que el cacao se integre.',
@@ -1715,6 +1728,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['gluten'] as string[],
     estacional: 'calor',
+    foto: '/img/recetas/mote_huesillo_light.webp',
     tiempo: '15 min',
     pasos: [
       'Hidratar los huesillos: remojar en agua hervida con 1 ramita de canela y 2 clavos de olor por 10 min.',
@@ -1918,6 +1932,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     porcionFija: true,
     tendencia: ['vegetariano'],
     contiene: ['huevo'] as string[],
+    foto: '/img/recetas/bowl_quinoa_huevo.webp',
     tiempo: '20 min',
     pasos: [
       'Quinoa: enjuagar bien y cocinar en proporción 1:2 con agua. Hervir 15 min a fuego bajo. Escurrir y dejar entibiar. La quinoa es proteína completa con índice glicémico bajo.',
@@ -2298,6 +2313,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['gluten', 'lacteos'] as string[],
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
+    foto: '/img/recetas/fideos_pollo_tomate.webp',
     tiempo: '15 min',
     pasos: [
       'Fideos: hervir agua con sal, cocinar fideos integrales 8-10 min hasta al dente. Escurrir.',
@@ -2334,6 +2350,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     contiene: ['cebolla_ajo'] as string[],
     estacional: 'frio',
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    foto: '/img/recetas/cazuela_vacuno.webp',
     tiempo: '25 min',
     pasos: [
       'Sofrito: dorar la cebolla picada en olla con aceite 2-3 min. Agregar la carne en trozos y sellar 4 min.',
@@ -2370,6 +2387,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     contiene: ['huevo', 'cebolla_ajo'] as string[],
     estacional: 'frio',
     tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 100,
+    foto: '/img/recetas/charquican_huevo.webp',
     tiempo: '25 min',
     pasos: [
       'Sofrito: dorar la cebolla 3 min en sartén con aceite. Agregar la carne molida, deshacer con espátula y cocinar 5 min hasta sellar.',
@@ -2405,6 +2423,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     contiene: ['pescados'] as string[],
     estacional: 'calor',
     tieneCarne: true, carneTipo: 'atun', carneGramosBase: 120,
+    foto: '/img/recetas/atun_arroz_primavera.webp',
     tiempo: '10 min',
     pasos: [
       'Arroz: si es del día anterior, usar tal cual. Si es nuevo, cocinar arroz en bolsa autoclave 2 min en microondas o cocer 12 min.',
@@ -2439,6 +2458,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'] as string[],
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
+    foto: '/img/recetas/pollo_arvejado.webp',
     tiempo: '20 min',
     pasos: [
       'Sofrito: dorar la cebolla 3 min en sartén con aceite. Agregar ajo picado y comino, mezclar 30 seg.',
@@ -2446,6 +2466,142 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Salsa: agregar la salsa de tomate y las arvejas congeladas (sin descongelar). Cocinar 8 min tapado a fuego medio-bajo.',
       'Arroz: en paralelo, calentar arroz en microondas 1 min o cocer fresco si no hay.',
       'Servir el pollo arvejado sobre cama de arroz. Aliñar con perejil fresco.',
+    ],
+  },
+  arroz_pollo_clasico: {
+    label: 'Arroz con pollo guisado (clásico chileno)',
+    items: [
+      '150g pollo en cubos',
+      '150g arroz blanco cocido',
+      '60g cebolla picada',
+      '50g zanahoria rallada',
+      'Ensalada chilena (100g tomate + 30g cebolla + cilantro)',
+      '1 cdta aceite de oliva',
+      'Ajo, comino, sal',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   150g pollo guisado:                144 kcal · 29.4 P · 0 C · 2.5 G
+    //   150g arroz blanco cocido:          195 kcal · 4 P · 42 C · 0.5 G
+    //   60g cebolla + 50g zanahoria:        30 kcal · 0.7 P · 7 C · 0.1 G
+    //   Ensalada chilena (130g):            25 kcal · 1 P · 5 C · 0.2 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~440 kcal · 35 P · 54 C · 8 G (clasico hogareño)
+    baseKcal: 440, p: 35, c: 54, g: 8,
+    porcionFija: true,
+    foto: '/img/recetas/arroz_pollo_clasico.webp',
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'] as string[],
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
+    tiempo: '25 min',
+    pasos: [
+      'Sofrito: dorar cebolla y zanahoria 3 min en olla con aceite. Agregar ajo y comino, mezclar 30 seg.',
+      'Pollo: incorporar pollo en cubos y sellar 5 min hasta dorar.',
+      'Guiso: agregar 200ml de agua o caldo, sal y tapar. Cocinar 10 min a fuego bajo hasta que el pollo esté tierno y el caldo reduzca a una salsa suave.',
+      'Arroz: en paralelo, calentar arroz cocido del día anterior o cocer fresco (12 min).',
+      'Ensalada chilena: cortar tomate y cebolla, agregar cilantro picado, aceite, limón y sal.',
+      'Servir el pollo guisado sobre cama de arroz blanco, con ensalada al costado. Plato hogareño clásico chileno.',
+    ],
+  },
+  arroz_carne_guisado: {
+    label: 'Arroz con carne molida guisada (clásico chileno)',
+    items: [
+      '150g carne molida magra 5%',
+      '150g arroz blanco cocido',
+      '60g cebolla picada',
+      '60g tomate en cubos',
+      'Ensalada chilena',
+      '1 cdta aceite de oliva',
+      'Ajo, orégano, comino, sal',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   150g carne molida 5%:              225 kcal · 31.5 P · 0 C · 11.3 G
+    //   150g arroz blanco cocido:          195 kcal · 4 P · 42 C · 0.5 G
+    //   60g cebolla + 60g tomate (sofrito): 25 kcal · 1 P · 5 C · 0.1 G
+    //   Ensalada chilena (130g):            30 kcal · 0.5 P · 6 C · 0.1 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~520 kcal · 37 P · 53 C · 17 G (carne mas blanda, apto dispepsia)
+    baseKcal: 520, p: 37, c: 53, g: 17,
+    porcionFija: true,
+    foto: '/img/recetas/arroz_carne_guisado.webp',
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'] as string[],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tiempo: '20 min',
+    pasos: [
+      'Sofrito: dorar la cebolla picada 3 min en sartén con aceite. Agregar ajo y orégano, mezclar 30 seg.',
+      'Carne: incorporar la carne molida deshaciéndola con la espátula. Cocinar 6 min hasta sellar bien.',
+      'Salsa: agregar el tomate en cubos, comino y sal. Cocinar 5 min hasta que el tomate se deshaga y forme salsa natural.',
+      'Arroz: en paralelo, calentar arroz cocido o cocer fresco.',
+      'Ensalada chilena: cortar tomate y cebolla, aliñar con cilantro, aceite, limón y sal.',
+      'Servir la carne guisada sobre cama de arroz blanco, con ensalada al costado. Apto para pacientes con dispepsia (carne molida es más blanda que bistec).',
+    ],
+  },
+  arroz_huevo_caballo: {
+    label: 'Arroz blanco con huevo a caballo (clásico minimal)',
+    items: [
+      '150g arroz blanco cocido',
+      '2 huevos enteros fritos a caballo (yema líquida)',
+      'Ensalada chilena (100g tomate + 30g cebolla + cilantro)',
+      '1 cdta aceite de oliva',
+      'Sal, pimienta',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   150g arroz blanco cocido:          195 kcal · 4 P · 42 C · 0.5 G
+    //   2 huevos fritos:                   180 kcal · 12.4 P · 1.2 C · 13 G
+    //   Ensalada chilena (130g):            30 kcal · 0.5 P · 6 C · 0.1 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~450 kcal · 17 P · 49 C · 19 G (plato minimal, sin tecnica)
+    baseKcal: 450, p: 17, c: 49, g: 19, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
+    foto: '/img/recetas/arroz_huevo_caballo.webp',
+    tendencia: ['vegetariano'],
+    contiene: ['huevo', 'cebolla_ajo'] as string[],
+    tiempo: '12 min',
+    pasos: [
+      'Arroz: calentar arroz blanco cocido en microondas 1 min o cocer fresco (12 min con sal).',
+      'Huevos: en sartén con muy poco aceite, freír los 2 huevos a fuego medio-bajo. Sazonar con sal y pimienta. Tapar 1 min para que la clara cuaje pero la yema quede líquida.',
+      'Ensalada chilena: cortar tomate y cebolla en pluma, agregar cilantro picado, aceite y limón.',
+      'Servir el arroz en plato hondo y colocar los 2 huevos encima ("a caballo"). La yema líquida se integra al arroz al romperla.',
+      'Acompañar con la ensalada chilena al lado. Plato simple para paciente que dice "yo solo como arroz con huevo".',
+    ],
+  },
+  fideos_salsa_carne: {
+    label: 'Fideos con salsa de carne (boloñesa chilena)',
+    items: [
+      '150g carne molida magra 5%',
+      '100g fideos integrales cocidos',
+      '100g salsa de tomate natural Carozzi sin azúcar',
+      '60g cebolla picada',
+      '10g queso parmesano rallado (opcional)',
+      'Albahaca fresca al gusto',
+      '1 cdta aceite de oliva',
+      'Ajo, orégano, sal',
+      '💡 Cambia los fideos por: 100g arroz cocido · 150g papas cocidas · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
+    // Auditoría INTA Chile + etiqueta Carozzi (2026-06):
+    //   150g carne molida 5%:              225 kcal · 31.5 P · 0 C · 11.3 G
+    //   100g fideos integrales cocidos:    158 kcal · 5.8 P · 31 C · 0.8 G
+    //   100g salsa tomate Carozzi nat.:     35 kcal · 1.5 P · 7 C · 0.2 G
+    //   60g cebolla + ajo + oregano:        24 kcal · 0.6 P · 5.5 C · 0.1 G
+    //   10g queso parmesano:                42 kcal · 3.8 P · 0.4 C · 2.9 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~525 kcal · 43 P · 44 C · 20 G (con queso default)
+    baseKcal: 525, p: 43, c: 44, g: 20,
+    porcionFija: true,
+    foto: '/img/recetas/fideos_salsa_carne.webp',
+    tendencia: ['omnivoro'],
+    contiene: ['gluten', 'lacteos', 'cebolla_ajo'] as string[],
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tiempo: '20 min',
+    pasos: [
+      'Fideos: hervir agua con sal, cocinar fideos integrales 8-10 min hasta al dente. Escurrir y reservar.',
+      'Sofrito: dorar cebolla picada 3 min en sartén con aceite. Agregar ajo y orégano, mezclar 30 seg.',
+      'Carne: incorporar la carne molida deshaciéndola con espátula. Cocinar 6 min hasta sellar bien.',
+      'Salsa boloñesa: agregar la salsa de tomate Carozzi natural, sal y cocinar 5 min para que se integren los sabores.',
+      'Servir los fideos en plato hondo, cubrir con la salsa boloñesa. Coronar con queso parmesano rallado y albahaca fresca picada.',
     ],
   },
 }
@@ -2863,6 +3019,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['omnivoro'],
     contiene: [] as string[],
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 120,
+    foto: '/img/recetas/pollo_limon_palta.webp',
     tiempo: '10 min',
     pasos: [
       'Pollo: sazonar con sal, pimienta y jugo de medio limón. Cocinar en plancha o sartén con un toque de aceite 4-5 min por lado.',
@@ -2891,6 +3048,7 @@ export const cenasOpts: Record<string, MealOption> = {
     porcionFija: true,
     tendencia: ['vegetariano'],
     contiene: ['huevo', 'cebolla_ajo'] as string[],
+    foto: '/img/recetas/tortilla_zapallo_italiano.webp',
     tiempo: '15 min',
     pasos: [
       'Verduras: rallar el zapallo italiano (con cáscara), apretar suavemente con las manos para eliminar exceso de agua.',
@@ -2923,6 +3081,7 @@ export const cenasOpts: Record<string, MealOption> = {
     contiene: ['pescados', 'cebolla_ajo'] as string[],
     estacional: 'calor',
     tieneCarne: true, carneTipo: 'pescado_blanco', carneGramosBase: 150,
+    foto: '/img/recetas/merluza_ensalada_chilena.webp',
     tiempo: '15 min',
     pasos: [
       'Merluza: si está congelada, descongelar en agua fría 15 min. Secar bien con papel absorbente.',
@@ -2956,6 +3115,7 @@ export const cenasOpts: Record<string, MealOption> = {
     contiene: ['huevo', 'cebolla_ajo'] as string[],
     estacional: 'calor',
     tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 120,
+    foto: '/img/recetas/causeo_pollo.webp',
     tiempo: '15 min',
     pasos: [
       'Pollo: sazonar con sal y pimienta. Cocinar en plancha 4 min por lado. Cortar en tiras delgadas.',
@@ -2985,6 +3145,7 @@ export const cenasOpts: Record<string, MealOption> = {
     tendencia: ['vegetariano'],
     contiene: ['huevo', 'lacteos'] as string[],
     estacional: 'frio',
+    foto: '/img/recetas/crema_zapallo_huevo.webp',
     tiempo: '20 min',
     pasos: [
       'Zapallo: cortar en cubos. Si tienes pre-cortado de supermercado, listo. Microondas 8 min cubierto con tapa o hervir 12 min.',
