@@ -380,6 +380,9 @@ function MetodoCalculoSelector({
                       placeholder="Ej. 2.0 (Phillips/Morton 2018)"
                       className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
                     />
+                    {form.proteinaGKgOverride == null && (
+                      <p className="text-[10px] text-[#8BA5BE] mt-1 italic">Vacío → usando default <span className="font-semibold">1.6 g/kg</span> en el cálculo</p>
+                    )}
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
@@ -397,6 +400,9 @@ function MetodoCalculoSelector({
                       placeholder="Ej. 1.0 (ACSM consensus)"
                       className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
                     />
+                    {form.grasaGKgOverride == null && (
+                      <p className="text-[10px] text-[#8BA5BE] mt-1 italic">Vacío → usando default <span className="font-semibold">1.0 g/kg</span> en el cálculo</p>
+                    )}
                     <p className="text-[10px] text-rose-600 mt-1">⚠️ Floor crítico 0.5 g/kg — bloquea por riesgo hormonal</p>
                   </div>
                   <div>
@@ -415,6 +421,9 @@ function MetodoCalculoSelector({
                       placeholder="Ej. 5 (Burke 2011 moderate)"
                       className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
                     />
+                    {form.choGKgOverride == null && (
+                      <p className="text-[10px] text-[#8BA5BE] mt-1 italic">Vacío → usando default <span className="font-semibold">5 g/kg</span> en el cálculo</p>
+                    )}
                   </div>
                 </div>
               )}
