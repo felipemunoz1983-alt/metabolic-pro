@@ -215,7 +215,7 @@ describe('Catálogos — integridad estructural', () => {
     })
 
     it('carneTipo es un valor válido del CARNE_MACROS_POR_GRAMO', () => {
-      const tiposValidos = ['pollo', 'pavo', 'carne_roja', 'salmon', 'atun']
+      const tiposValidos = ['pollo', 'pavo', 'carne_roja', 'salmon', 'atun', 'pescado_blanco']
       ;[almuerzosOpts, cenasOpts].forEach(pool => {
         Object.entries(pool).forEach(([key, opt]) => {
           if (opt.carneTipo) {

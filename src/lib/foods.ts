@@ -27,7 +27,7 @@ export interface MealOption {
   /** true = la preparación incluye carne / pescado — activa selector de gramaje */
   tieneCarne?: boolean
   /** Tipo de carne en la preparación, usado para ajustar macros al cambiar gramaje */
-  carneTipo?: 'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun'
+  carneTipo?: 'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun' | 'pescado_blanco'
   /** Gramaje base de la carne en la receta (ej: 150g pollo → 150) */
   carneGramosBase?: number
   /** true = la preparación incluye un carbohidrato principal cuyo gramaje ajusta
@@ -82,14 +82,15 @@ export interface MealOption {
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
 // Usado para reajustar p/c/g cuando el paciente cambia el gramaje en su selector.
 export const CARNE_MACROS_POR_GRAMO: Record<
-  'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun',
+  'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun' | 'pescado_blanco',
   { kcal: number; p: number; g: number }
 > = {
-  pollo:      { kcal: 0.96, p: 0.196, g: 0.017 },  // Super Pollo · etiqueta oficial 100g: 96kcal · 19.6gP · 1.7gG · 0.5gC · 141mg Na — usado en cálculo dinámico de gramaje + base de todos los platos con pollo
-  pavo:       { kcal: 1.35, p: 0.29, g: 0.020 },  // pechuga pavo
-  carne_roja: { kcal: 1.50, p: 0.26, g: 0.050 },  // posta/lomo magro
-  salmon:     { kcal: 2.00, p: 0.22, g: 0.130 },  // salmón fresco
-  atun:       { kcal: 1.05, p: 0.26, g: 0.010 },  // atún en agua
+  pollo:          { kcal: 0.96, p: 0.196, g: 0.017 },  // Super Pollo · etiqueta oficial 100g: 96kcal · 19.6gP · 1.7gG · 0.5gC · 141mg Na — usado en cálculo dinámico de gramaje + base de todos los platos con pollo
+  pavo:           { kcal: 1.35, p: 0.29,  g: 0.020 },  // pechuga pavo
+  carne_roja:     { kcal: 1.50, p: 0.26,  g: 0.050 },  // posta/lomo magro
+  salmon:         { kcal: 2.00, p: 0.22,  g: 0.130 },  // salmón fresco
+  atun:           { kcal: 1.05, p: 0.26,  g: 0.010 },  // atún en agua
+  pescado_blanco: { kcal: 0.88, p: 0.18,  g: 0.013 },  // merluza / reineta / corvina — pescado blanco magro INTA/USDA
 }
 
 // ─── Macros por gramo de carbohidrato principal (USDA, peso COCIDO) ──────────
@@ -1967,6 +1968,179 @@ export const almuerzosOpts: Record<string, MealOption> = {
       'Sazonar: agregar salsa de soya light al final (opcional, ojo con sodio). Pimienta blanca a gusto. Servir caliente.',
     ],
   },
+  fideos_pollo_tomate: {
+    label: 'Fideos con pollo a la plancha + salsa de tomate',
+    items: [
+      '150g pechuga de pollo en cubos',
+      '100g fideos integrales cocidos',
+      '100g salsa de tomate natural Carozzi sin azúcar',
+      '1 cdta aceite de oliva',
+      '10g queso parmesano rallado (opcional)',
+      'Albahaca fresca al gusto',
+      '💡 Cambia los fideos por: 100g arroz cocido · 150g papas cocidas · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
+    // Auditoría INTA Chile + etiqueta Carozzi (2026-06):
+    //   150g pollo plancha:               144 kcal · 29.4 P · 0 C · 2.5 G
+    //   100g fideos integrales cocidos:   158 kcal · 5.8 P · 31 C · 0.8 G
+    //   100g salsa tomate Carozzi nat.:    35 kcal · 1.5 P · 7 C · 0.2 G
+    //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
+    //   10g queso parmesano:               42 kcal · 3.8 P · 0.4 C · 2.9 G
+    //   Total: ~485 kcal · 40 P · 38 C · 11 G (con queso default)
+    baseKcal: 485, p: 38, c: 50, g: 12,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['gluten', 'lacteos'] as string[],
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
+    tiempo: '15 min',
+    pasos: [
+      'Fideos: hervir agua con sal, cocinar fideos integrales 8-10 min hasta al dente. Escurrir.',
+      'Pollo: sazonar con sal, pimienta y ajo en polvo. Sellar en sartén con aceite a fuego alto 4-5 min hasta dorar.',
+      'Salsa: agregar la salsa de tomate Carozzi al pollo, cocinar 2 min para que se integre.',
+      'Armado: incorporar los fideos a la sartén con el pollo+salsa, mezclar bien.',
+      'Servir con albahaca fresca picada y opcional queso parmesano rallado encima.',
+    ],
+  },
+  cazuela_vacuno: {
+    label: 'Cazuela express de vacuno',
+    items: [
+      '150g posta de vacuno (magra)',
+      '150g zapallo amarillo en trozos',
+      '100g papa pelada en cubos',
+      '50g choclo desgranado (congelado)',
+      '100g porotos verdes',
+      '60g cebolla picada',
+      '1 cdta aceite de oliva',
+      'Ajo, orégano, sal',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   150g posta vacuno magra:          225 kcal · 39 P · 0 C · 7.5 G
+    //   150g zapallo amarillo:             39 kcal · 1.5 P · 9 C · 0.3 G
+    //   100g papa cocida:                  87 kcal · 2 P · 20 C · 0.1 G
+    //   50g choclo:                        43 kcal · 1.7 P · 9 C · 0.6 G
+    //   100g porotos verdes:               31 kcal · 1.8 P · 7 C · 0.2 G
+    //   60g cebolla + condimentos:         18 kcal · 0.5 P · 4 C · 0 G
+    //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~430 kcal · 40 P · 45 C · 10 G (calculo en olla + reduccion caldo)
+    baseKcal: 430, p: 40, c: 45, g: 10,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'] as string[],
+    estacional: 'frio',
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 150,
+    tiempo: '25 min',
+    pasos: [
+      'Sofrito: dorar la cebolla picada en olla con aceite 2-3 min. Agregar la carne en trozos y sellar 4 min.',
+      'Caldo base: cubrir con agua hirviendo (~1 litro). Agregar ajo, orégano y sal. Si tienes olla a presión: 15 min desde primer hervor.',
+      'Verduras duras: agregar papa, choclo y zapallo. Cocinar 10 min adicionales.',
+      'Verduras blandas: incorporar porotos verdes los últimos 5 min.',
+      'Servir bien caliente en plato hondo con todo el caldo. Aliñar con perejil fresco picado.',
+    ],
+  },
+  charquican_huevo: {
+    label: 'Charquicán light con huevo a caballo',
+    items: [
+      '100g carne molida magra 5%',
+      '150g zapallo cocido y aplastado',
+      '100g papa cocida y aplastada',
+      '60g cebolla picada',
+      '100g porotos verdes o choclo',
+      '1 huevo entero a la plancha (encima)',
+      '1 cdta aceite de oliva',
+      'Orégano, comino, sal',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   100g carne molida 5%:             150 kcal · 21 P · 0 C · 7.5 G
+    //   150g zapallo:                      39 kcal · 1.5 P · 9 C · 0.3 G
+    //   100g papa cocida:                  87 kcal · 2 P · 20 C · 0.1 G
+    //   60g cebolla + condimentos:         18 kcal · 0.5 P · 4 C · 0 G
+    //   100g porotos verdes:               31 kcal · 1.8 P · 7 C · 0.2 G
+    //   1 huevo plancha:                   78 kcal · 6.2 P · 0.6 C · 5 G
+    //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~490 kcal · 32 P · 50 C · 16 G
+    baseKcal: 490, p: 32, c: 50, g: 16, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['huevo', 'cebolla_ajo'] as string[],
+    estacional: 'frio',
+    tieneCarne: true, carneTipo: 'carne_roja', carneGramosBase: 100,
+    tiempo: '25 min',
+    pasos: [
+      'Sofrito: dorar la cebolla 3 min en sartén con aceite. Agregar la carne molida, deshacer con espátula y cocinar 5 min hasta sellar.',
+      'Verduras: incorporar zapallo y papa previamente cocidos (ideal del día anterior) y aplastar con tenedor mientras se mezcla con la carne.',
+      'Porotos verdes: agregar los porotos verdes precocidos, integrar 3 min con orégano, comino y sal.',
+      'Huevo: en otra sartén o el mismo a un costado, freír 1 huevo a la plancha con muy poco aceite (clara cuajada, yema líquida).',
+      'Servir el charquicán en plato hondo con el huevo encima. La yema líquida se integra al mezclar.',
+    ],
+  },
+  atun_arroz_primavera: {
+    label: 'Atún con arroz primavera (al plato)',
+    items: [
+      '1 lata atún en agua escurrido (120g)',
+      '150g arroz cocido (microondas o sobras)',
+      '50g choclo cocido (congelado descongelado)',
+      '50g zanahoria rallada',
+      '½ palta (60g) en cubos',
+      '15g mayonesa light o yogur natural',
+      'Limón, sal, pimienta',
+      '💡 Cambia el arroz por: 130g fideos cocidos · 250g papas cocidas · 150g quinoa cocida · 150g fideos de arroz cocidos · 80g pan integral (1 marraqueta)',
+    ],
+    // Auditoría INTA Chile + etiqueta Robinson Crusoe (2026-06):
+    //   120g atún en agua escurrido:      126 kcal · 31 P · 0 C · 1.2 G
+    //   150g arroz blanco cocido:         195 kcal · 4 P · 42 C · 0.5 G
+    //   50g choclo cocido:                 43 kcal · 1.7 P · 9 C · 0.6 G
+    //   50g zanahoria rallada:             20 kcal · 0.5 P · 4.5 C · 0.1 G
+    //   60g palta:                         96 kcal · 1.2 P · 5.1 C · 8.8 G
+    //   15g mayonesa light:                36 kcal · 0.1 P · 1.2 C · 3.4 G
+    //   Total: ~485 kcal · 35 P · 50 C · 15 G
+    baseKcal: 485, p: 35, c: 50, g: 15,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['pescados'] as string[],
+    estacional: 'calor',
+    tieneCarne: true, carneTipo: 'atun', carneGramosBase: 120,
+    tiempo: '10 min',
+    pasos: [
+      'Arroz: si es del día anterior, usar tal cual. Si es nuevo, cocinar arroz en bolsa autoclave 2 min en microondas o cocer 12 min.',
+      'Choclo: descongelar el choclo 1 min en microondas (si está congelado).',
+      'Mezcla: en un bowl grande, mezclar el atún escurrido, arroz, choclo, zanahoria rallada y mayonesa light.',
+      'Palta: cortar la palta en cubos justo antes de servir (con limón evita oxidación) y agregar al bowl.',
+      'Sazonar con sal, pimienta y limón. Servir frío o a temperatura ambiente. Ideal verano.',
+    ],
+  },
+  pollo_arvejado: {
+    label: 'Pollo arvejado express',
+    items: [
+      '150g pollo en cubos',
+      '100g arvejas congeladas',
+      '100g salsa de tomate natural Carozzi sin azúcar',
+      '60g cebolla picada',
+      '100g arroz blanco cocido',
+      '1 cdta aceite de oliva',
+      'Ajo, comino, sal',
+      '💡 Cambia el arroz por: 80g fideos cocidos · 150g papas cocidas · 100g quinoa cocida · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
+    ],
+    // Auditoría INTA Chile + etiquetas (2026-06):
+    //   150g pollo plancha:                144 kcal · 29.4 P · 0 C · 2.5 G
+    //   100g arvejas congeladas:            84 kcal · 5.4 P · 14 C · 0.4 G
+    //   100g salsa tomate Carozzi nat.:     35 kcal · 1.5 P · 7 C · 0.2 G
+    //   60g cebolla + ajo + comino:         24 kcal · 0.6 P · 5.5 C · 0.1 G
+    //   100g arroz blanco cocido:          130 kcal · 2.7 P · 28 C · 0.3 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~470 kcal · 38 P · 50 C · 11 G (porción individual)
+    baseKcal: 470, p: 38, c: 50, g: 11,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['cebolla_ajo'] as string[],
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 150,
+    tiempo: '20 min',
+    pasos: [
+      'Sofrito: dorar la cebolla 3 min en sartén con aceite. Agregar ajo picado y comino, mezclar 30 seg.',
+      'Pollo: incorporar pollo en cubos y sellar 5 min hasta dorar por todos lados.',
+      'Salsa: agregar la salsa de tomate y las arvejas congeladas (sin descongelar). Cocinar 8 min tapado a fuego medio-bajo.',
+      'Arroz: en paralelo, calentar arroz en microondas 1 min o cocer fresco si no hay.',
+      'Servir el pollo arvejado sobre cama de arroz. Aliñar con perejil fresco.',
+    ],
+  },
 }
 
 // ─── CENAS ────────────────────────────────────────────────────────────────────
@@ -2356,6 +2530,159 @@ export const cenasOpts: Record<string, MealOption> = {
       'Huevo: hacer un hueco en el centro de la sartén, agregar 1 huevo batido y revolver hasta cuajar. Integrar con las verduras.',
       'Mezcla: incorporar el arroz tibio y saltear todo junto 1-2 min. Sazonar con limón y sal.',
       'Servir caliente. Cena reconfortante baja en grasa, ideal cuando el paciente busca algo simple post-entreno PM.',
+    ],
+  },
+  pollo_limon_palta: {
+    label: 'Pollo al limón con palta y tomate',
+    items: [
+      '120g pechuga de pollo a la plancha',
+      '½ palta (60g) en láminas',
+      '100g tomate en rodajas',
+      'Cilantro fresco picado',
+      'Jugo de medio limón, sal, pimienta',
+      '1 cdta aceite de oliva',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   120g pollo plancha:                115 kcal · 23.5 P · 0 C · 2 G
+    //   60g palta:                          96 kcal · 1.2 P · 5.1 C · 8.8 G
+    //   100g tomate:                        18 kcal · 0.9 P · 3.9 C · 0.2 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Cilantro + limón + sal:              0 kcal
+    //   Total: ~310 kcal · 30 P · 8 C · 18 G (cena sin carbo, política clínica)
+    baseKcal: 310, p: 30, c: 8, g: 18,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: [] as string[],
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 120,
+    tiempo: '10 min',
+    pasos: [
+      'Pollo: sazonar con sal, pimienta y jugo de medio limón. Cocinar en plancha o sartén con un toque de aceite 4-5 min por lado.',
+      'Reposo: retirar el pollo y dejar reposar 1 min antes de cortar en tiras.',
+      'Verduras: cortar tomate en rodajas y palta en láminas (con unas gotas de limón evita oxidación).',
+      'Armado: disponer las tiras de pollo en plato, agregar tomate y palta al lado.',
+      'Finalizar con cilantro fresco picado, sal, pimienta y un hilo de aceite de oliva.',
+    ],
+  },
+  tortilla_zapallo_italiano: {
+    label: 'Tortilla chilena de zapallo italiano',
+    items: [
+      '2 huevos enteros',
+      '150g zapallo italiano rallado',
+      '30g cebolla picada finamente',
+      '1 cdta aceite de oliva',
+      'Sal, pimienta, orégano',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   2 huevos enteros:                  156 kcal · 12.4 P · 1.2 C · 10 G
+    //   150g zapallo italiano:              26 kcal · 1.8 P · 5 C · 0.5 G
+    //   30g cebolla:                        12 kcal · 0.3 P · 2.8 C · 0 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~250 kcal · 16 P · 8 C · 18 G (cena vegetariana liviana)
+    baseKcal: 250, p: 16, c: 8, g: 18, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['huevo', 'cebolla_ajo'] as string[],
+    tiempo: '15 min',
+    pasos: [
+      'Verduras: rallar el zapallo italiano (con cáscara), apretar suavemente con las manos para eliminar exceso de agua.',
+      'Sofrito: saltear cebolla picada y el zapallo rallado en sartén con aceite 4 min hasta que pierdan agua.',
+      'Mezcla: batir los 2 huevos con sal, pimienta y orégano. Incorporar a la sartén sobre las verduras.',
+      'Cocción: cocinar 4 min a fuego bajo hasta que cuaje por debajo. Voltear con plato y cocinar 2 min más.',
+      'Servir tibia. Apta vegetariana. Buena con ensalada verde al lado si se quiere más volumen.',
+    ],
+  },
+  merluza_ensalada_chilena: {
+    label: 'Merluza al sartén + ensalada chilena',
+    items: [
+      '150g filete de merluza (fresca o congelada)',
+      '100g tomate en cubos',
+      '50g cebolla en pluma',
+      'Cilantro fresco picado',
+      '1 cdta aceite de oliva',
+      'Jugo de limón, sal',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   150g merluza al sartén:            132 kcal · 27 P · 0 C · 2 G
+    //   100g tomate:                        18 kcal · 0.9 P · 3.9 C · 0.2 G
+    //   50g cebolla:                        20 kcal · 0.5 P · 4.7 C · 0 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Cilantro + limón + sal:              0 kcal
+    //   Total: ~245 kcal · 32 P · 10 C · 9 G (cena más liviana del set)
+    baseKcal: 245, p: 32, c: 10, g: 9,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['pescados', 'cebolla_ajo'] as string[],
+    estacional: 'calor',
+    tieneCarne: true, carneTipo: 'pescado_blanco', carneGramosBase: 150,
+    tiempo: '15 min',
+    pasos: [
+      'Merluza: si está congelada, descongelar en agua fría 15 min. Secar bien con papel absorbente.',
+      'Cocción: sazonar con sal y limón. Sellar en sartén con poco aceite 3 min por lado a fuego medio-alto.',
+      'Ensalada chilena: remojar cebolla en pluma en agua fría 5 min para suavizar el picor. Escurrir.',
+      'Mezclar tomate en cubos, cebolla escurrida, cilantro picado, aceite y limón. Sal a gusto.',
+      'Servir la merluza con la ensalada chilena al lado. Cena fresca y ligera ideal verano.',
+    ],
+  },
+  causeo_pollo: {
+    label: 'Causeo de pollo (ensalada chilena tibia)',
+    items: [
+      '120g pechuga de pollo a la plancha en tiras',
+      '100g cebolla en pluma (remojada en agua fría)',
+      '150g tomate en cubos',
+      '1 huevo duro (opcional, encima)',
+      'Cilantro fresco picado',
+      '1 cdta aceite de oliva',
+      'Jugo de limón, sal, ají verde a gusto',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   120g pollo plancha:                115 kcal · 23.5 P · 0 C · 2 G
+    //   100g cebolla:                       40 kcal · 1.1 P · 9.3 C · 0.1 G
+    //   150g tomate:                        27 kcal · 1.4 P · 5.8 C · 0.3 G
+    //   1 huevo duro:                       78 kcal · 6.2 P · 0.6 C · 5 G
+    //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~305 kcal · 32 P · 12 C · 13 G
+    baseKcal: 300, p: 32, c: 12, g: 13, tieneHuevo: true, eggsDefault: 1,
+    porcionFija: true,
+    tendencia: ['omnivoro'],
+    contiene: ['huevo', 'cebolla_ajo'] as string[],
+    estacional: 'calor',
+    tieneCarne: true, carneTipo: 'pollo', carneGramosBase: 120,
+    tiempo: '15 min',
+    pasos: [
+      'Pollo: sazonar con sal y pimienta. Cocinar en plancha 4 min por lado. Cortar en tiras delgadas.',
+      'Cebolla: remojar la cebolla en pluma en agua fría con sal 5 min, escurrir. Esto suaviza el picor.',
+      'Huevo: hervir el huevo 10 min para que quede duro. Enfriar en agua fría, pelar y cortar en cuartos.',
+      'Mezcla: en un bowl combinar el pollo tibio en tiras, la cebolla y el tomate cortado en cubos.',
+      'Aliñar con aceite de oliva, limón, sal, ají verde picado fino y cilantro. Servir el huevo en cuartos por encima.',
+    ],
+  },
+  crema_zapallo_huevo: {
+    label: 'Crema de zapallo + huevo pochado',
+    items: [
+      '250g zapallo butternut o camote pelado',
+      '100ml leche descremada',
+      '2 huevos enteros pochados (encima)',
+      '1 cdta aceite de oliva',
+      'Sal, nuez moscada, comino',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   250g zapallo butternut:           113 kcal · 2.5 P · 28 C · 0.3 G
+    //   100ml leche descremada:            33 kcal · 3.1 P · 4.8 C · 0.1 G
+    //   2 huevos pochados:                156 kcal · 12.4 P · 1.2 C · 10 G
+    //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
+    //   Total: ~360 kcal · 18 P · 35 C · 17 G (sopa estacional frío)
+    baseKcal: 360, p: 18, c: 35, g: 17, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['huevo', 'lacteos'] as string[],
+    estacional: 'frio',
+    tiempo: '20 min',
+    pasos: [
+      'Zapallo: cortar en cubos. Si tienes pre-cortado de supermercado, listo. Microondas 8 min cubierto con tapa o hervir 12 min.',
+      'Licuar: pasar el zapallo cocido a la licuadora con la leche descremada, aceite, sal, comino y nuez moscada. Procesar hasta cremosa.',
+      'Calentar: volver a la olla, ajustar consistencia con un poco más de leche si es necesaria. Mantener tibia.',
+      'Huevos pochados: hervir agua con un chorrito de vinagre. Formar remolino, romper cada huevo dentro. Cocinar 3 min para yema líquida.',
+      'Servir la crema en plato hondo y colocar los 2 huevos pochados encima. La yema rompe y se integra a la crema.',
     ],
   },
 }
