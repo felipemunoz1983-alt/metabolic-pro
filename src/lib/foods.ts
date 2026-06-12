@@ -1021,6 +1021,158 @@ export const desayunosOpts: Record<string, MealOption> = {
       'Cerrar el sándwich y cortar por la mitad. Servir inmediatamente.',
     ],
   },
+  avena_overnight_mani: {
+    label: 'Avena overnight + plátano + mantequilla de maní',
+    items: [
+      '60g avena en hojuelas',
+      '200ml leche de almendras sin azúcar',
+      '1 plátano mediano (120g)',
+      '15g mantequilla de maní 100% maní',
+      '5g semillas de chía',
+      'Canela al gusto',
+    ],
+    // Auditoría INTA Chile + etiquetas (2026-06):
+    //   60g avena hojuelas:               227 kcal · 8 P · 40 C · 4 G
+    //   200ml leche almendras:             30 kcal · 0.6 P · 1 C · 2.4 G
+    //   120g plátano:                     110 kcal · 1.3 P · 27 C · 0.4 G
+    //   15g mantequilla maní:              95 kcal · 4 P · 3 C · 8 G
+    //   5g chía:                           24 kcal · 0.8 P · 2 C · 1.5 G
+    //   Total: ~485 kcal · 15 P · 73 C · 16 G (vegano, sin coccion)
+    baseKcal: 485, p: 15, c: 73, g: 16,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['frutos_secos', 'gluten'] as string[],
+    tiempo: '5 min + reposo nocturno',
+    pasos: [
+      'En un frasco o bol mezclar la avena con la leche de almendras y la chía.',
+      'Refrigerar tapado mínimo 4 horas (idealmente toda la noche). La avena absorbe el líquido y la chía gelifica.',
+      'A la mañana siguiente, agregar el plátano cortado en rodajas y la mantequilla de maní encima.',
+      'Espolvorear canela. Servir frío directamente del frasco o transferir a un bol.',
+      'Meal prep: preparar 3-4 frascos individuales para toda la semana.',
+    ],
+  },
+  tostadas_palta_semillas: {
+    label: 'Tostadas con palta + tomate + semillas',
+    items: [
+      '2 rebanadas pan integral Castaño (63g)',
+      '½ palta madura (60g) aplastada',
+      '80g tomate en rodajas',
+      '5g semillas de sésamo o chía',
+      'Jugo de limón, sal, pimienta',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   2 rebanadas pan Castaño 63g:      168 kcal · 6.6 P · 31 C · 2 G
+    //   60g palta:                         96 kcal · 1.2 P · 5.1 C · 8.8 G
+    //   80g tomate:                        14 kcal · 0.7 P · 3.1 C · 0.2 G
+    //   5g sésamo:                         29 kcal · 1 P · 1.2 C · 2.5 G
+    //   Total: ~310 kcal · 10 P · 40 C · 14 G (vegano, sin estufa)
+    baseKcal: 310, p: 10, c: 40, g: 14,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['gluten', 'sesamo'] as string[],
+    tienePan: true, panTipoDefault: 'integral',
+    tiempo: '8 min',
+    pasos: [
+      'Tostar el pan integral hasta dorar levemente. El tostado baja el índice glicémico.',
+      'Aplastar la palta con tenedor, sazonar con sal, pimienta y unas gotas de limón (evita oxidación).',
+      'Untar la palta sobre las tostadas calientes.',
+      'Disponer las rodajas de tomate encima y espolvorear las semillas.',
+      'Finalizar con un toque más de limón. Servir inmediato.',
+    ],
+  },
+  smoothie_bowl_berries: {
+    label: 'Smoothie bowl de berries + granola',
+    items: [
+      '200ml leche de almendras congelada (en cubitos)',
+      '150g berries congeladas (frutillas + frambuesas + arándanos)',
+      '½ plátano congelado (60g)',
+      '30g granola sin azúcar',
+      '15g mantequilla de maní',
+      '5g semillas de chía',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   200ml leche almendras:             30 kcal · 0.6 P · 1 C · 2.4 G
+    //   150g berries congeladas:           81 kcal · 1.6 P · 19 C · 0.6 G
+    //   60g plátano:                       55 kcal · 0.7 P · 13.5 C · 0.2 G
+    //   30g granola sin azúcar:           132 kcal · 3 P · 19 C · 4.5 G
+    //   15g mantequilla maní:              95 kcal · 4 P · 3 C · 8 G
+    //   5g chía:                           24 kcal · 0.8 P · 2 C · 1.5 G
+    //   Total: ~417 kcal · 11 P · 58 C · 17 G (vegano, antioxidantes)
+    baseKcal: 415, p: 11, c: 58, g: 17,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['frutos_secos', 'gluten'] as string[],
+    estacional: 'calor',
+    tiempo: '7 min',
+    pasos: [
+      'Licuar la leche de almendras congelada, las berries y el medio plátano congelado hasta obtener textura tipo sorbete espeso.',
+      'Verter en bol frío. La textura debe ser espesa para que los toppings no se hundan.',
+      'Distribuir encima la granola, la mantequilla de maní en pequeños puntos y las semillas de chía.',
+      'Servir inmediatamente con cuchara — el smoothie se ablanda rápido.',
+      'Opcional: agregar coco rallado sin azúcar o cacao nibs encima.',
+    ],
+  },
+  pan_hummus_verduras: {
+    label: 'Pan integral con hummus + verduras crudas',
+    items: [
+      '2 rebanadas pan integral Castaño (63g)',
+      '60g hummus (envasado o casero)',
+      '30g zanahoria rallada',
+      '30g pepino en rodajas',
+      '30g pimiento rojo en tiras',
+      'Cilantro fresco picado',
+    ],
+    // Auditoría INTA Chile + etiqueta Nutrissette (2026-06):
+    //   2 rebanadas pan Castaño 63g:      168 kcal · 6.6 P · 31 C · 2 G
+    //   60g hummus:                       102 kcal · 4.8 P · 9 C · 6 G
+    //   90g mix verduras crudas:           25 kcal · 1 P · 5 C · 0.2 G
+    //   Total: ~295 kcal · 12 P · 45 C · 8 G (vegano, mas bajo en grasa del set)
+    baseKcal: 295, p: 12, c: 45, g: 8,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['gluten', 'sesamo'] as string[],
+    tienePan: true, panTipoDefault: 'integral',
+    tiempo: '5 min',
+    pasos: [
+      'Tostar levemente las rebanadas de pan integral (opcional, da mejor textura).',
+      'Untar generosamente el hummus sobre cada rebanada.',
+      'Disponer encima la zanahoria rallada, las rodajas de pepino y las tiras de pimiento rojo.',
+      'Espolvorear cilantro fresco picado.',
+      'Servir abierto como tostada o cerrar como sándwich. Sin necesidad de cocción.',
+    ],
+  },
+  tofu_revuelto_chileno: {
+    label: 'Tofu revuelto al estilo chileno + tostadas',
+    items: [
+      '100g tofu firme desmenuzado con tenedor',
+      '60g cebolla picada',
+      '80g tomate en cubos',
+      '½ cdta cúrcuma + comino + paprika',
+      '1 cdta aceite de oliva',
+      '2 rebanadas pan integral Castaño (63g)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   100g tofu firme:                  144 kcal · 17.3 P · 2.8 C · 8.7 G
+    //   60g cebolla:                       24 kcal · 0.7 P · 5.6 C · 0.1 G
+    //   80g tomate:                        14 kcal · 0.7 P · 3.1 C · 0.2 G
+    //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
+    //   2 rebanadas pan Castaño 63g:      168 kcal · 6.6 P · 31 C · 2 G
+    //   Total: ~395 kcal · 25 P · 43 C · 16 G (vegano alto en prot)
+    //   La cúrcuma le da color amarillo identico a huevos revueltos.
+    baseKcal: 395, p: 25, c: 43, g: 16,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['soya', 'gluten', 'cebolla_ajo'] as string[],
+    tienePan: true, panTipoDefault: 'integral',
+    tiempo: '12 min',
+    pasos: [
+      'Desmenuzar el tofu firme con un tenedor hasta lograr textura tipo huevo revuelto.',
+      'Sofrito: en sartén con aceite dorar la cebolla 3 min. Añadir la cúrcuma, comino y paprika, mezclar 30 seg.',
+      'Tofu: incorporar el tofu desmenuzado y revolver 4 min hasta calentar bien y absorber los sabores.',
+      'Tomate: agregar el tomate en cubos los últimos 2 min para que ablande pero no se deshaga.',
+      'Tostar el pan integral. Servir el tofu revuelto sobre las tostadas. Apto vegano y muy similar visualmente a huevos revueltos clásicos.',
+    ],
+  },
 }
 
 // ─── COLACIONES MAÑANA y ONCE (mismo pool) ────────────────────────────────────
@@ -1418,6 +1570,158 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Colocar el hummus en un bol pequeño al centro del plato.',
       'Disponer los bastones de verdura y galletas alrededor del hummus.',
       'Colación alta en fibra y grasas saludables del garbanzo.',
+    ],
+  },
+  tostada_palta_ricotta_chia: {
+    label: 'Tostada de palta + tomate + ricotta + chía',
+    items: [
+      '1 rebanada pan integral Castaño (31g)',
+      '¼ palta (40g) aplastada',
+      '60g tomate en rodajas',
+      '30g ricotta light o cottage',
+      '5g semillas de chía',
+      'Sal, pimienta, limón',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   1 rebanada pan Castaño 31g:        84 kcal · 3.3 P · 15.5 C · 1 G
+    //   40g palta:                         64 kcal · 0.8 P · 3.4 C · 5.9 G
+    //   60g tomate:                        11 kcal · 0.5 P · 2.3 C · 0.1 G
+    //   30g ricotta light:                 39 kcal · 4.5 P · 1.3 C · 1.5 G
+    //   5g chía:                           24 kcal · 0.8 P · 2 C · 1.5 G
+    //   Total: ~222 kcal · 10 P · 25 C · 10 G (premium, ratio prot/kcal alto)
+    baseKcal: 222, p: 10, c: 25, g: 10,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['gluten', 'lactosa'] as string[],
+    tienePan: true, panTipoDefault: 'integral',
+    tiempo: '5 min',
+    pasos: [
+      'Tostar el pan integral hasta dorar levemente.',
+      'Aplastar la palta con tenedor y sazonar con sal, pimienta y unas gotas de limón.',
+      'Untar la palta sobre la tostada caliente.',
+      'Disponer encima las rodajas de tomate y luego cucharadas pequeñas de ricotta light.',
+      'Espolvorear las semillas de chía. Finalizar con pimienta recién molida.',
+    ],
+  },
+  bowl_fruta_yogur_griego: {
+    label: 'Bowl de fruta + yogur griego + miel + nueces',
+    items: [
+      '150g yogur griego natural (Danone Oikos)',
+      '150g manzana o pera en cubos',
+      '7g miel (1 cdta)',
+      '15g nueces partidas',
+      'Canela al gusto',
+    ],
+    // Auditoría INTA Chile + etiqueta Danone Oikos (2026-06):
+    //   150g yogur Oikos griego:          143 kcal · 6.8 P · 15 C · 5.5 G
+    //   150g manzana:                      78 kcal · 0.4 P · 21 C · 0.3 G
+    //   7g miel:                           21 kcal · 0 P · 5.7 C · 0 G
+    //   15g nueces:                        98 kcal · 2.3 P · 2 C · 9.8 G
+    //   Total: ~340 kcal · 10 P · 44 C · 16 G (premium, omega-3 ALA)
+    baseKcal: 340, p: 10, c: 44, g: 16,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['lactosa', 'frutos_secos'] as string[],
+    tieneYogur: true,
+    tiempo: '5 min',
+    pasos: [
+      'Colocar el yogur griego en un bol pequeño como base.',
+      'Cortar la fruta en cubos pequeños (manzana o pera con cáscara para máxima fibra).',
+      'Disponer la fruta sobre el yogur cubriendo toda la superficie.',
+      'Dejar caer la miel en hilos delgados encima.',
+      'Espolvorear las nueces partidas y la canela. Servir inmediato para que las nueces mantengan textura crocante.',
+    ],
+  },
+  galleton_avena_platano_leche: {
+    label: 'Galletón casero de avena + plátano + leche',
+    items: [
+      '3 galletas caseras (avena + plátano + maní · sin azúcar añadida)',
+      '30g avena hojuelas (masa)',
+      '60g plátano maduro aplastado (masa)',
+      '15g mantequilla de maní (masa)',
+      'Canela, esencia de vainilla',
+      '200ml leche descremada (para acompañar)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   3 galletas caseras (~60g masa total):
+    //     30g avena:                      113 kcal · 4 P · 20 C · 2 G
+    //     60g plátano:                     55 kcal · 0.7 P · 13.5 C · 0.2 G
+    //     15g mantequilla maní:            95 kcal · 4 P · 3 C · 8 G
+    //     Subtotal galletas:              263 kcal · 8.7 P · 36.5 C · 10.2 G
+    //   200ml leche descremada:            66 kcal · 6.2 P · 9.6 C · 0.2 G
+    //   Total: ~330 kcal · 15 P · 46 C · 10 G (sin azúcar agregada)
+    //   Meal prep: hacer 12 galletas a la vez (~110 kcal c/u), guardar en frasco.
+    baseKcal: 330, p: 15, c: 46, g: 10,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['gluten', 'lactosa', 'frutos_secos'] as string[],
+    tiempo: '25 min (incluye horneo)',
+    pasos: [
+      'Aplastar el plátano maduro con tenedor en un bol hasta obtener puré.',
+      'Mezclar el plátano con la avena, la mantequilla de maní, canela y vainilla. Formar masa pegajosa.',
+      'Dividir en 3 porciones del tamaño de una cuchara colmada. Aplastar con la mano sobre bandeja con papel mantequilla.',
+      'Hornear a 180°C por 12-15 min hasta dorar los bordes. Dejar enfriar 5 min sobre rejilla (firmán al enfriarse).',
+      'Servir con 200ml de leche descremada bien fría. Meal prep: doblar receta para 12 galletas y guardar en frasco hermético 5 días.',
+    ],
+  },
+  chia_pudding_cacao_frutilla: {
+    label: 'Chía pudding de cacao + frutilla',
+    items: [
+      '20g semillas de chía',
+      '150ml leche de almendras o descremada',
+      '5g cacao 100% sin azúcar (1 cdta)',
+      '80g frutillas frescas',
+      '7g miel o estevia (1 cdta o sobre)',
+      '10g almendras laminadas',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   20g chía:                          97 kcal · 3.4 P · 8.4 C · 6.2 G
+    //   150ml leche almendras:             23 kcal · 0.5 P · 0.7 C · 1.8 G
+    //   5g cacao 100%:                     12 kcal · 1 P · 1 C · 0.5 G
+    //   80g frutillas:                     26 kcal · 0.6 P · 6.2 C · 0.2 G
+    //   7g miel:                           21 kcal · 0 P · 5.7 C · 0 G
+    //   10g almendras:                     58 kcal · 2.1 P · 2 C · 5 G
+    //   Total: ~240 kcal · 8 P · 24 C · 14 G (vegano con estevia, omega-3 ALA)
+    baseKcal: 240, p: 8, c: 24, g: 14,
+    porcionFija: true,
+    tendencia: ['vegetariano', 'vegano'],
+    contiene: ['frutos_secos'] as string[],
+    tiempo: '5 min + 4h reposo',
+    pasos: [
+      'En un frasco mezclar las semillas de chía, leche de almendras, cacao y miel/estevia. Batir bien para que el cacao se integre.',
+      'Tapar y refrigerar mínimo 4 horas (idealmente toda la noche). La chía absorbe el líquido formando textura tipo pudding.',
+      'Cortar las frutillas en cuartos justo antes de servir.',
+      'Servir el pudding en bol o copa. Disponer las frutillas y las almendras laminadas encima.',
+      'Apto vegano si se usa estevia o sirope de agave en vez de miel.',
+    ],
+  },
+  mote_huesillo_light: {
+    label: 'Mote con huesillo light (sin azúcar agregada)',
+    items: [
+      '60g mote (trigo mote) cocido',
+      '1 huesillo (durazno deshidratado, 30g)',
+      '200ml agua con canela y clavo de olor',
+      'Estevia o sin endulzar (no azúcar)',
+    ],
+    // Auditoría INTA Chile (2026-06):
+    //   60g mote (trigo mote) cocido:      95 kcal · 2.8 P · 19 C · 0.5 G
+    //   1 huesillo 30g:                    87 kcal · 1 P · 23 C · 0.2 G
+    //   Agua + canela + clavo + estevia:    0 kcal
+    //   Total: ~182 kcal · 4 P · 42 C · 1 G (clasico chileno reinventado)
+    //   La receta tradicional con almibar es ~350 kcal — esta version baja
+    //   65 kcal manteniendo el sabor por la canela y el clavo.
+    baseKcal: 182, p: 4, c: 42, g: 1,
+    porcionFija: true,
+    tendencia: ['vegano', 'vegetariano'],
+    contiene: ['gluten'] as string[],
+    estacional: 'calor',
+    tiempo: '15 min',
+    pasos: [
+      'Hidratar los huesillos: remojar en agua hervida con 1 ramita de canela y 2 clavos de olor por 10 min.',
+      'Mote: comprar mote pre-cocido del supermercado (Mote La Hoguera o similar) y enjuagar bien. Si es seco, hervir 30 min hasta blando.',
+      'Combinar: en un vaso largo o copa colocar el mote escurrido al fondo.',
+      'Verter encima el huesillo con su líquido aromático (sin azúcar, solo la dulzura natural del durazno y la canela).',
+      'Endulzar con estevia si se desea o servir tal cual. Frío en verano, tibio en invierno. Versión saludable del clásico chileno sin culpas.',
     ],
   },
 }
