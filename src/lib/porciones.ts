@@ -495,3 +495,211 @@ export function distribuirPorTiemposDeComida(d: DistribucionPorciones): Distribu
     }
   })
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PIRÁMIDE ALIMENTARIA CHILENA (13 grupos · INTA-UCH / Sochinut clásico)
+// ═══════════════════════════════════════════════════════════════════════════
+// Esquema usado en consultorios chilenos para planes por intercambios.
+// Granularidad mayor que los 6 grupos básicos: distingue carnes/lácteos por
+// contenido graso, separa leguminosas como grupo propio, agrega azúcar como
+// consumo discrecional.
+//
+// El profesional tiene libertad TOTAL para ajustar # de porciones por grupo.
+// El sistema NO bloquea valores fuera del rango RECOM — solo muestra warning
+// visual. El cálculo de % adecuación es referencial.
+//
+// Referencias:
+//   - Atalah E, Castillo C. Manual de Alimentación y Nutrición. INTA-UCH.
+//   - Carrasco F. Nutrición Clínica. Sochinut.
+//   - Pizarro F, Atalah E. Composición Química de Alimentos Chilenos. INTA.
+
+export type GrupoPiramide =
+  | 'cereales_leguminosas_frescas'  // 1
+  | 'verduras_general'              // 2
+  | 'verduras_libre'                // 3
+  | 'frutas'                        // 4
+  | 'carnes_alto_grasa'             // 5
+  | 'carnes_bajo_grasa'             // 6
+  | 'leguminosas'                   // 7
+  | 'lacteos_alto_grasa'            // 8
+  | 'lacteos_medio_grasa'           // 9
+  | 'lacteos_bajo_grasa'            // 10
+  | 'aceites_grasas'                // 11
+  | 'alimentos_ricos_lipidos'       // 12
+  | 'azucar'                        // 13
+
+export type MetaGrupoPiramide =
+  | 'cereales' | 'verduras' | 'frutas' | 'carnes' | 'lacteos' | 'grasas' | 'azucar'
+
+export interface InfoPiramide {
+  codigo: number
+  label: string
+  metaGrupo: MetaGrupoPiramide
+  /** Macros por porción según INTA Chile (valores promedio del grupo). */
+  macros: { kcal: number; c: number; g: number; p: number }
+  /** Color hex para diferenciar visualmente en la tabla. */
+  color: string
+}
+
+export const PIRAMIDE_INFO: Record<GrupoPiramide, InfoPiramide> = {
+  cereales_leguminosas_frescas: { codigo: 1,  label: 'CEREALES Y LEGUMINOSAS FRESCAS', metaGrupo: 'cereales', macros: { kcal: 140, c: 30,  g: 1,  p: 3  }, color: '#FFF9C4' },
+  verduras_general:              { codigo: 2,  label: 'VERDURAS EN GENERAL',           metaGrupo: 'verduras', macros: { kcal: 30,  c: 5,   g: 0,  p: 2  }, color: '#D4F0CE' },
+  verduras_libre:                { codigo: 3,  label: 'VERDURAS LIBRE CONSUMO',        metaGrupo: 'verduras', macros: { kcal: 10,  c: 2.5, g: 0,  p: 0  }, color: '#D4F0CE' },
+  frutas:                        { codigo: 4,  label: 'FRUTAS',                         metaGrupo: 'frutas',   macros: { kcal: 65,  c: 15,  g: 0,  p: 1  }, color: '#FFE0B2' },
+  carnes_alto_grasa:             { codigo: 5,  label: 'CARNES ALTO EN GRASA',          metaGrupo: 'carnes',   macros: { kcal: 100, c: 0,   g: 7,  p: 7  }, color: '#FFCDD2' },
+  carnes_bajo_grasa:             { codigo: 6,  label: 'CARNES BAJO EN GRASA',          metaGrupo: 'carnes',   macros: { kcal: 65,  c: 1,   g: 2,  p: 11 }, color: '#FFCDD2' },
+  leguminosas:                   { codigo: 7,  label: 'LEGUMINOSAS',                    metaGrupo: 'carnes',   macros: { kcal: 140, c: 27,  g: 0.5,p: 8  }, color: '#FFCDD2' },
+  lacteos_alto_grasa:            { codigo: 8,  label: 'LÁCTEOS ALTO EN GRASA',         metaGrupo: 'lacteos',  macros: { kcal: 120, c: 9,   g: 6,  p: 6  }, color: '#FFE0B2' },
+  lacteos_medio_grasa:           { codigo: 9,  label: 'LÁCTEOS MEDIO EN GRASA',        metaGrupo: 'lacteos',  macros: { kcal: 90,  c: 12,  g: 3,  p: 6  }, color: '#FFE0B2' },
+  lacteos_bajo_grasa:            { codigo: 10, label: 'LÁCTEOS BAJO EN GRASA',         metaGrupo: 'lacteos',  macros: { kcal: 65,  c: 12,  g: 0,  p: 6  }, color: '#FFE0B2' },
+  aceites_grasas:                { codigo: 11, label: 'ACEITES Y GRASAS',              metaGrupo: 'grasas',   macros: { kcal: 180, c: 0,   g: 20, p: 0  }, color: '#F8BBD0' },
+  alimentos_ricos_lipidos:       { codigo: 12, label: 'ALIMENTOS RICOS EN LÍPIDOS',    metaGrupo: 'grasas',   macros: { kcal: 175, c: 5,   g: 15, p: 5  }, color: '#F8BBD0' },
+  azucar:                        { codigo: 13, label: 'AZÚCAR',                         metaGrupo: 'azucar',   macros: { kcal: 20,  c: 5,   g: 0,  p: 0  }, color: '#C8E6C9' },
+}
+
+/** Rangos RECOM por meta-grupo (esquema Sochinut/INTA clásico).
+ *  El rango aplica al SUMATORIO de los grupos del meta-grupo (ej. carnes alto
+ *  + bajo + leguminosas comparten el rango 1-3). El profesional puede salirse
+ *  con libertad — el sistema solo muestra warning visual.
+ *  Azúcar = 0 (consumo discrecional, no se recomienda activamente). */
+export const RECOM_PIRAMIDE: Record<MetaGrupoPiramide, { min: number; max: number }> = {
+  cereales: { min: 3, max: 10 },
+  verduras: { min: 2, max: 5 },
+  frutas:   { min: 2, max: 4 },
+  carnes:   { min: 1, max: 3 },
+  lacteos:  { min: 2, max: 4 },
+  grasas:   { min: 1, max: 3 },
+  azucar:   { min: 0, max: 0 },
+}
+
+export const GRUPOS_PIRAMIDE_ORDEN: GrupoPiramide[] = [
+  'cereales_leguminosas_frescas',
+  'verduras_general',
+  'verduras_libre',
+  'frutas',
+  'carnes_alto_grasa',
+  'carnes_bajo_grasa',
+  'leguminosas',
+  'lacteos_alto_grasa',
+  'lacteos_medio_grasa',
+  'lacteos_bajo_grasa',
+  'aceites_grasas',
+  'alimentos_ricos_lipidos',
+  'azucar',
+]
+
+/** Distribución de porciones por grupo de la pirámide. */
+export type DistribucionPiramide = Record<GrupoPiramide, number>
+
+/** Distribución inicial sugerida basada en el target nutricional del paciente.
+ *  Es un punto de partida — el profesional ajusta cada celda libremente.
+ *  Algoritmo:
+ *   1. Verduras: 4 general + 2 libre (constante, son libres clínicamente)
+ *   2. Frutas: 2 (déficit) · 3 (mantenimiento) · 4 (hipertrofia/alto kcal)
+ *   3. Lácteos medio grasa: 2-3 según objetivo (uno tipo predominante)
+ *   4. Cereales: lo que cuadre con el CHO restante
+ *   5. Carnes bajo grasa: lo que cuadre con la proteína restante
+ *   6. Aceites: lo que cuadre con la grasa restante (mínimo 1)
+ *   7. Resto (alto grasa, leguminosas, alimentos ricos lípidos, azúcar): 0
+ *      El pro los activa manualmente si los quiere usar. */
+export function distribuirInicialPiramide(
+  kcal: number,
+  proteinaG: number,
+  choG: number,
+  grasaG: number,
+  objetivo: 'perdida grasa' | 'mantenimiento' | 'hipertrofia',
+): DistribucionPiramide {
+  const verduras_general = 4
+  const verduras_libre = 2
+  const frutas =
+    kcal <= 1500 ? 2 :
+    kcal <  2300 ? 3 :
+                    4
+
+  const lacteos_medio_grasa = objetivo === 'hipertrofia' ? 3 : 2
+
+  // CHO aportado por verduras + frutas + lácteos
+  const choAportado =
+    verduras_general * PIRAMIDE_INFO.verduras_general.macros.c +
+    verduras_libre   * PIRAMIDE_INFO.verduras_libre.macros.c +
+    frutas           * PIRAMIDE_INFO.frutas.macros.c +
+    lacteos_medio_grasa * PIRAMIDE_INFO.lacteos_medio_grasa.macros.c
+  const choRestante = Math.max(0, choG - choAportado)
+  const cereales_leguminosas_frescas = Math.max(0, Math.round(choRestante / PIRAMIDE_INFO.cereales_leguminosas_frescas.macros.c))
+
+  // Proteína aportada por lo asignado hasta ahora
+  const protAportada =
+    cereales_leguminosas_frescas * PIRAMIDE_INFO.cereales_leguminosas_frescas.macros.p +
+    verduras_general * PIRAMIDE_INFO.verduras_general.macros.p +
+    frutas           * PIRAMIDE_INFO.frutas.macros.p +
+    lacteos_medio_grasa * PIRAMIDE_INFO.lacteos_medio_grasa.macros.p
+  const protRestante = Math.max(0, proteinaG - protAportada)
+  const carnes_bajo_grasa = Math.max(0, Math.round(protRestante / PIRAMIDE_INFO.carnes_bajo_grasa.macros.p))
+
+  // Grasa: aceites cubren el residual
+  const grasaAportada =
+    cereales_leguminosas_frescas * PIRAMIDE_INFO.cereales_leguminosas_frescas.macros.g +
+    lacteos_medio_grasa * PIRAMIDE_INFO.lacteos_medio_grasa.macros.g +
+    carnes_bajo_grasa * PIRAMIDE_INFO.carnes_bajo_grasa.macros.g
+  const grasaRestante = Math.max(0, grasaG - grasaAportada)
+  const aceites_grasas = Math.max(1, Math.round(grasaRestante / PIRAMIDE_INFO.aceites_grasas.macros.g))
+
+  return {
+    cereales_leguminosas_frescas,
+    verduras_general,
+    verduras_libre,
+    frutas,
+    carnes_alto_grasa: 0,
+    carnes_bajo_grasa,
+    leguminosas: 0,
+    lacteos_alto_grasa: 0,
+    lacteos_medio_grasa,
+    lacteos_bajo_grasa: 0,
+    aceites_grasas,
+    alimentos_ricos_lipidos: 0,
+    azucar: 0,
+  }
+}
+
+/** Suma macros totales aportados por una distribución de porciones. */
+export function calcularAportePiramide(dist: DistribucionPiramide): { kcal: number; c: number; g: number; p: number } {
+  return GRUPOS_PIRAMIDE_ORDEN.reduce(
+    (acc, g) => {
+      const m = PIRAMIDE_INFO[g].macros
+      const n = dist[g]
+      return {
+        kcal: acc.kcal + n * m.kcal,
+        c:    acc.c    + n * m.c,
+        g:    acc.g    + n * m.g,
+        p:    acc.p    + n * m.p,
+      }
+    },
+    { kcal: 0, c: 0, g: 0, p: 0 },
+  )
+}
+
+/** Calcula % adecuación de cada macro (aporte/target × 100). */
+export function calcularAdecuacionPiramide(
+  aporte: { kcal: number; c: number; g: number; p: number },
+  target: { kcal: number; c: number; g: number; p: number },
+): { kcal: number; c: number; g: number; p: number } {
+  const pct = (a: number, t: number) => t === 0 ? 0 : Math.round((a / t) * 1000) / 10
+  return {
+    kcal: pct(aporte.kcal, target.kcal),
+    c:    pct(aporte.c,    target.c),
+    g:    pct(aporte.g,    target.g),
+    p:    pct(aporte.p,    target.p),
+  }
+}
+
+/** Suma de porciones asignadas a cada meta-grupo (para evaluar vs RECOM). */
+export function sumaPorMetaGrupo(dist: DistribucionPiramide): Record<MetaGrupoPiramide, number> {
+  const sumas: Record<MetaGrupoPiramide, number> = {
+    cereales: 0, verduras: 0, frutas: 0, carnes: 0, lacteos: 0, grasas: 0, azucar: 0,
+  }
+  GRUPOS_PIRAMIDE_ORDEN.forEach(g => {
+    const meta = PIRAMIDE_INFO[g].metaGrupo
+    sumas[meta] += dist[g]
+  })
+  return sumas
+}

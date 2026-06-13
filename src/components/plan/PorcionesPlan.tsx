@@ -15,6 +15,7 @@ import {
 } from '@/lib/porciones'
 import type { FormData, NutritionResult } from '@/lib/nutrition'
 import { cn } from '@/lib/utils'
+import { PiramidePlan } from './PiramidePlan'
 
 interface Props {
   result: NutritionResult
@@ -47,8 +48,9 @@ export function PorcionesPlan({ result, form }: Props) {
     [distribucion],
   )
 
-  // Vista activa: 'dia' (resumen por grupo) o 'tiempos' (5 tiempos de comida)
-  const [vista, setVista] = useState<'dia' | 'tiempos'>('dia')
+  // Vista activa: 'dia' (resumen por grupo), 'tiempos' (5 tiempos de comida)
+  // o 'piramide' (Pirámide Alimentaria Chilena · 13 grupos · INTA/Sochinut)
+  const [vista, setVista] = useState<'dia' | 'tiempos' | 'piramide'>('dia')
 
   const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
 
@@ -89,21 +91,23 @@ export function PorcionesPlan({ result, form }: Props) {
         )}
       </div>
 
-      {/* Toggle vista: día (resumen por grupo) ↔ tiempos (por comida) */}
+      {/* Toggle vista: día (resumen) ↔ tiempos (por comida) ↔ pirámide (13 grupos) */}
       <div className="bg-white border border-[#D6E3ED] rounded-xl p-1 flex gap-1">
-        {(['dia', 'tiempos'] as const).map(v => (
+        {(['dia', 'tiempos', 'piramide'] as const).map(v => (
           <button
             key={v}
             type="button"
             onClick={() => setVista(v)}
             className={cn(
-              'flex-1 py-2 px-3 rounded-lg text-xs font-bold transition',
+              'flex-1 py-2 px-2 rounded-lg text-[11px] sm:text-xs font-bold transition',
               vista === v
                 ? 'bg-[#0C3547] text-white shadow-sm'
                 : 'text-[#6B7C93] hover:bg-[#F8FBFD]',
             )}
           >
-            {v === 'dia' ? '📊 Resumen del día' : '🕐 Por tiempo de comida'}
+            {v === 'dia'      ? '📊 Resumen del día' :
+             v === 'tiempos'  ? '🕐 Por tiempo de comida' :
+                                 '🇨🇱 Pirámide chilena'}
           </button>
         ))}
       </div>
@@ -115,6 +119,11 @@ export function PorcionesPlan({ result, form }: Props) {
             <GrupoCard key={grupo} grupo={grupo} porciones={distribucion[grupo]} />
           ))}
         </div>
+      )}
+
+      {/* Vista 'piramide': tabla editable de 13 grupos con adecuación */}
+      {vista === 'piramide' && (
+        <PiramidePlan result={result} form={form} />
       )}
 
       {/* Vista 'tiempos': 5 cards (desayuno, AM, almuerzo, once, cena) */}
