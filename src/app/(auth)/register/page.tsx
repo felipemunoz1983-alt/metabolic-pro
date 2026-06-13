@@ -483,12 +483,21 @@ function RegisterForm() {
 export default function RegisterPage() {
   return (
     <div className="auth-page min-h-screen bg-[#060F1A] flex">
-      {/* ── Left panel — branding (dark) ── */}
+      {/* ── Left panel — branding con VIDEO de fondo (solo desktop) ── */}
       <div className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 relative overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#0C1F2C] via-[#0a1a28] to-[#060F1A]" />
-        <div className="absolute top-0 left-0 w-96 h-96 bg-[#29ABE2]/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#29ABE2]/8 rounded-full translate-x-1/3 translate-y-1/3 blur-2xl" />
+        {/* Video de fondo full-panel */}
+        <video
+          autoPlay loop muted playsInline
+          poster="/video/auth-landing-poster.webp"
+          className="absolute inset-0 w-full h-full object-cover"
+          aria-hidden="true"
+        >
+          <source src="/video/auth-landing.mp4" type="video/mp4" />
+        </video>
+        {/* Overlay oscuro para legibilidad del texto encima */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0C1F2C]/85 via-[#0a1a28]/70 to-[#060F1A]/85 pointer-events-none" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-[#29ABE2]/5 rounded-full -translate-x-1/2 -translate-y-1/2 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-64 h-64 bg-[#29ABE2]/8 rounded-full translate-x-1/3 translate-y-1/3 blur-2xl pointer-events-none" />
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
@@ -504,11 +513,11 @@ export default function RegisterPage() {
         {/* Headline */}
         <div className="relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-            <h2 className="text-4xl font-black text-white leading-tight mb-4">
+            <h2 className="text-4xl font-black text-white leading-tight mb-4" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.5)' }}>
               Tu salud,<br />
               <span className="text-[#29ABE2]">personalizada.</span>
             </h2>
-            <p className="text-[#4A7A94] text-sm leading-relaxed max-w-xs">
+            <p className="text-white/70 text-sm leading-relaxed max-w-xs" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
               Planes nutricionales clínicos con motor Harris-Benedict + PAL, alertas digestivas, seguimiento de adherencia y panel profesional.
             </p>
           </motion.div>
@@ -524,29 +533,46 @@ export default function RegisterPage() {
           ].map(f => (
             <div key={f.text} className="flex items-center gap-3">
               <span className="text-base">{f.icon}</span>
-              <span className="text-xs text-[#6B8FA8]">{f.text}</span>
+              <span className="text-xs text-white/80" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{f.text}</span>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── Right panel — form (white, matches login) ── */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-white">
+      <div className="flex-1 flex flex-col bg-white">
+        {/* Mobile: mini hero con video arriba (~30% viewport) */}
+        <div className="lg:hidden relative w-full h-[32vh] min-h-[200px] overflow-hidden bg-[#060F1A]">
+          <video
+            autoPlay loop muted playsInline
+            poster="/video/auth-landing-poster.webp"
+            className="absolute inset-0 w-full h-full object-cover"
+            aria-hidden="true"
+          >
+            <source src="/video/auth-landing.mp4" type="video/mp4" />
+          </video>
+          {/* Overlay con gradient hacia abajo (más oscuro al pie) */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/40 to-black/85 pointer-events-none" />
+          {/* Logo overlay encima del video mobile */}
+          <div className="absolute inset-x-0 bottom-0 p-5 z-10">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] rounded-xl flex items-center justify-center shadow-lg">
+                <Activity size={16} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-extrabold text-white" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>Centro Metabólico <span className="text-[#29ABE2]">Pro</span></p>
+                <p className="text-[10px] text-white/70" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>Motor clínico-comercial</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center p-6 bg-white">
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-sm"
         >
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#29ABE2] to-[#1a6fa0] rounded-xl flex items-center justify-center">
-              <Activity size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-extrabold text-[#0C1F2C]">Centro Metabólico <span className="text-[#29ABE2]">Pro</span></p>
-              <p className="text-[10px] text-[#8BA5BE]">Motor clínico-comercial</p>
-            </div>
-          </div>
 
           <h1 className="text-2xl font-black text-[#0C1F2C] mb-1">Empieza gratis hoy</h1>
           <p className="text-sm text-[#8BA5BE] mb-2">7 días de prueba · Sin tarjeta de crédito</p>
@@ -564,6 +590,7 @@ export default function RegisterPage() {
             <RegisterForm />
           </Suspense>
         </motion.div>
+        </div>
       </div>
     </div>
   )
