@@ -2,7 +2,7 @@
 // Fórmula activa: Mifflin-St Jeor (1990) — estándar actual (Frankenfield et al. 2005)
 // Harris-Benedict conservado solo como referencia comparativa (@deprecated)
 
-import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo } from './foods'
+import type { YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo, UntableTipo } from './foods'
 import { proteinaBariatricaOverride } from './bariatrica'
 
 export type Objetivo = 'perdida grasa' | 'mantenimiento' | 'hipertrofia'
@@ -145,6 +145,13 @@ export interface FormData {
    *  automáticamente con QUESO_TIPOS en foods.ts (4 opciones: gauda / mantecoso /
    *  light / quesillo). */
   quesoTipo?: QuesoTipo
+  /** Untable preferido para preparaciones de panadería (tostadas, waffles, marraqueta…).
+   *  Si la receta tiene `tieneUntable: true` y este campo está set, el motor suma
+   *  `UNTABLE_MACROS_POR_GRAMO[untableTipo] × untableGramos` a los macros de la comida.
+   *  Default `untableGramos`: 20 (1 cda chilena). Catálogo en UNTABLE_TIPOS en foods.ts. */
+  untableTipo?: UntableTipo
+  /** Gramos de untable por porción. Default 20g (1 cda). Permite ajustar para hipertrofia (40g) o déficit (10g). */
+  untableGramos?: number
   /** Snack saludable favorito de Nutrevo. Se extiende automáticamente con SNACK_NUTREVO_TIPOS en foods.ts. */
   snackNutrevoTipo?: SnackNutrevoTipo
   /** Barra de proteína favorita. Se extiende automáticamente con BARRA_PROTEINA_TIPOS en foods.ts. */

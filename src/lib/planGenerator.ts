@@ -1,7 +1,7 @@
 // ── Generador de plan semanal · Centro Metabólico Pro ──
 
 import type { FormData } from './nutrition'
-import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo } from './foods'
+import type { MealOption, UltraOption, YogurTipo, SnackNutrevoTipo, BarraProteinaTipo, PanTipo, QuesoTipo, UntableTipo } from './foods'
 import { factorEscalaBariatrica, estimarVolumenPlatoMl } from './bariatrica'
 import {
   desayunosOpts,
@@ -20,6 +20,8 @@ import {
   tiempoCocinarMax,
   CARNE_MACROS_POR_GRAMO,
   CARBO_MACROS_POR_GRAMO,
+  UNTABLE_MACROS_POR_GRAMO,
+  UNTABLE_TIPOS,
 } from './foods'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -312,21 +314,21 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
 
       if (slot === 'desayuno') {
         const desayuno = getMealOption(desayunosPool, form.desayunos, d)
-        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo))
+        meals.push(buildMeal('desayuno', desayuno, slotKcal, form.eggsQtyDesayuno, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos))
       } else if (slot === 'colacion_manana') {
         const pool = buildColacionPool(form.colacionManana, form, 'AM')
         const opt = pool[d % pool.length]
-        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo)
+        const m = buildMeal('colacion_manana', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos)
         if (form.horarioEntrenamiento === 'AM') m.timingEntreno = 'post_entreno'
         meals.push(m)
       } else if (slot === 'almuerzo') {
         const almuerzo = getMealOption(almuerzosPool, form.almuerzos, d)
         const { carne: carneAlm, carbo: carboAlm } = escalarBariatrica(form.carneGramosAlmuerzo, form.carboGramosAlmuerzo)
-        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, carneAlm, carboAlm, form.panTipo, form.quesoTipo))
+        meals.push(buildMeal('almuerzo', almuerzo, slotKcal, form.eggsQty, undefined, carneAlm, carboAlm, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos))
       } else if (slot === 'once') {
         const pool = buildColacionPool(form.once, form, 'PM')
         const opt = pool[(d + 1) % pool.length]
-        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo)
+        const m = buildMeal('once', opt, slotKcal, form.eggsQtyOnce, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos)
         if (form.horarioEntrenamiento === 'PM') m.timingEntreno = 'post_entreno'
         else if (form.horarioEntrenamiento === 'noche') m.timingEntreno = 'pre_entreno'
         meals.push(m)
@@ -349,12 +351,12 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
           ? (form.carboGramosCena ?? 150)
           : undefined
         const { carne: carneCen, carbo: carboCen } = escalarBariatrica(form.carneGramosCena, carboCenaFinal)
-        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo, form.quesoTipo))
+        meals.push(buildMeal('cena', cena, slotKcal, form.eggsQtyCena, undefined, carneCen, carboCen, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos))
       } else if (slot === 'ultra_extra') {
         // 6ta comida: colación adicional vespertina con snack/barra si opt-in
         const extraPool = buildColacionPool(form.colacionManana, form, 'PM')
         const opt = extraPool[(d + 2) % extraPool.length]
-        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo))
+        meals.push(buildMeal('once', opt, slotKcal, undefined, form.yogurtTipo, undefined, undefined, form.panTipo, form.quesoTipo, form.untableTipo, form.untableGramos))
       }
     }
 
@@ -416,6 +418,8 @@ function buildMeal(
   carboGramos?: number,
   panTipo?: PanTipo,
   quesoTipo?: QuesoTipo,
+  untableTipo?: UntableTipo,
+  untableGramos?: number,
 ): DayMeal {
   // Productos en porción fija (barras, snacks envasados, postres individuales)
   // NO se escalan al kcal del slot — vienen en envase con macros definidos por etiqueta.
@@ -629,12 +633,38 @@ function buildMeal(
     void deltaKcal  // total kcal slot ya fijo
   }
 
+  // Agregar untable (mermelada / nutella / manjar) si la receta es panadería
+  // y el paciente seleccionó un untable. A diferencia de queso (que sustituye),
+  // el untable es ADITIVO: suma kcal+macros sobre la preparación base.
+  // Si no se elige untableTipo, la receta se mantiene "sin untable" (default seguro).
+  let untableKcalExtra = 0
+  let kcalFinal = kcal
+  if (option.tieneUntable && untableTipo) {
+    const macros = UNTABLE_MACROS_POR_GRAMO[untableTipo]
+    const meta = UNTABLE_TIPOS[untableTipo]
+    const gramos = untableGramos ?? option.untableGramosBase ?? 20
+    untableKcalExtra = Math.round(macros.kcal * gramos)
+    p = Math.round(p + macros.p * gramos)
+    c = Math.round(c + macros.c * gramos)
+    g = Math.round(g + macros.g * gramos)
+    kcalFinal = kcal + untableKcalExtra
+    // Reemplazar la línea opcional del untable (si existe) por la elección concreta.
+    // Patrón: "(Opcional) ... untable: ..." → "+ <gramos>g <label> (<marca>)"
+    const untableLineIdx = items.findIndex(it => /\bunt[ae]ble\b/i.test(it) || /\(opcional\)/i.test(it))
+    const untableTxt = `+ ${gramos}g ${meta.label.toLowerCase()} (${meta.marca}) — ${untableKcalExtra} kcal`
+    if (untableLineIdx >= 0) {
+      items[untableLineIdx] = untableTxt
+    } else {
+      items.push(untableTxt)
+    }
+  }
+
   return {
     tipo,
     label,
     icon: MEAL_ICONS[tipo],
     items,
-    kcal,
+    kcal: kcalFinal,
     p,
     c,
     g,

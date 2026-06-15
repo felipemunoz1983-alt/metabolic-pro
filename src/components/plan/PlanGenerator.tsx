@@ -14,8 +14,8 @@ import {
   type CirugiaBariatricaTipo,
   type FasePostBariatrica,
 } from '@/lib/bariatrica'
-import type { MealOption, UltraOption, YogurTipo, PanTipo, QuesoTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
-import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, QUESO_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
+import type { MealOption, UltraOption, YogurTipo, PanTipo, QuesoTipo, UntableTipo, SnackNutrevoTipo, BarraProteinaTipo } from '@/lib/foods'
+import { desayunosOpts, colacionesOpts, almuerzosOpts, cenasOpts, ultraProcOpts, YOGUR_TIPOS, PAN_TIPOS, QUESO_TIPOS, UNTABLE_TIPOS, SNACK_NUTREVO_TIPOS, BARRA_PROTEINA_TIPOS } from '@/lib/foods'
 import { cn } from '@/lib/utils'
 import { SupIAPanel } from '@/components/plan/SupIAPanel'
 
@@ -1480,6 +1480,119 @@ function QuesoTypePicker({
   )
 }
 
+// ─── Untable Picker (mermelada / nutella / manjar) ───────────────────────────
+// Aplica a TODA preparación con tieneUntable=true (panadería en general): tostadas,
+// waffles, marraqueta. Es ADITIVO sobre la receta base — suma kcal+macros por
+// porción de untable (default 20g = 1 cda chilena). El estado por defecto es
+// "Sin untable" (undefined) — el paciente debe elegir explícitamente uno para
+// que aparezca en el plan generado.
+function UntableTypePicker({
+  value,
+  gramos,
+  onChange,
+  onGramosChange,
+}: {
+  value: UntableTipo | undefined
+  gramos: number
+  onChange: (t: UntableTipo | undefined) => void
+  onGramosChange: (g: number) => void
+}) {
+  const entries = Object.entries(UNTABLE_TIPOS) as [UntableTipo, typeof UNTABLE_TIPOS[UntableTipo]][]
+  const selected = value ? UNTABLE_TIPOS[value] : null
+
+  return (
+    <div className="mt-3 p-3 bg-rose-50/60 border border-rose-200 rounded-xl space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <p className="text-xs font-bold text-rose-900">🍓 Untable para panadería</p>
+        <p className="text-[10px] text-rose-700">
+          Aplica a tostadas, waffles, marraqueta. Aditivo · 1 cda = 20g.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+        {/* Tarjeta "Sin untable" */}
+        <button
+          onClick={() => onChange(undefined)}
+          className={cn(
+            'flex flex-col items-center rounded-xl border-2 overflow-hidden text-left transition-all',
+            value === undefined
+              ? 'bg-rose-500 border-rose-500 text-white shadow-md scale-[1.02]'
+              : 'border-rose-200 text-rose-900 hover:border-rose-400 bg-white',
+          )}
+        >
+          <div className="w-full h-16 sm:h-20 flex items-center justify-center bg-rose-50/40">
+            <span className="text-3xl">🚫</span>
+          </div>
+          <div className="w-full px-2 py-1.5 text-center">
+            <div className="text-[10px] sm:text-xs font-bold leading-tight">Sin untable</div>
+            <div className={cn('text-[9px] mt-0.5 font-semibold leading-tight', value === undefined ? 'text-rose-50' : 'text-rose-700')}>
+              0 kcal extra
+            </div>
+          </div>
+        </button>
+
+        {entries.map(([key, info]) => {
+          const isSelected = value === key
+          return (
+            <button
+              key={key}
+              onClick={() => onChange(key)}
+              className={cn(
+                'flex flex-col items-center rounded-xl border-2 overflow-hidden text-left transition-all',
+                isSelected
+                  ? 'bg-rose-500 border-rose-500 text-white shadow-md scale-[1.02]'
+                  : 'border-rose-200 text-rose-900 hover:border-rose-400 bg-white',
+              )}
+            >
+              <div className="w-full h-16 sm:h-20 flex items-center justify-center bg-rose-50/40">
+                <span className="text-3xl">{info.emoji}</span>
+              </div>
+              <div className="w-full px-2 py-1.5 text-center">
+                <div className="text-[10px] sm:text-xs font-bold leading-tight">{info.label}</div>
+                <div className={cn('text-[9px] mt-0.5 font-semibold leading-tight', isSelected ? 'text-rose-50' : 'text-rose-700')}>
+                  {info.kcal20g} kcal · 20g
+                </div>
+              </div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Detalle + slider de gramaje */}
+      {selected && (
+        <div className="bg-white border border-rose-200 rounded-lg p-2.5 text-[10px] space-y-2">
+          <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+            <span className="text-rose-900"><strong>{selected.label}</strong> ({selected.marca}):</span>
+            <span className="text-[#6B7C93]">{selected.kcal20g} kcal</span>
+            <span className="text-[#6B7C93]">{selected.p20g}g P</span>
+            <span className="text-[#6B7C93]">{selected.c20g}g C</span>
+            <span className="text-[#6B7C93]">{selected.g20g}g G</span>
+            {selected.sellos && selected.sellos.length > 0 && (
+              <span className="text-red-600 font-bold">⚠ {selected.sellos.join(' · ')}</span>
+            )}
+          </div>
+          {selected.notas && (
+            <p className="text-[#6B7C93] italic leading-relaxed">{selected.notas}</p>
+          )}
+          <div className="flex items-center gap-2 pt-1 border-t border-rose-100">
+            <label className="text-rose-900 font-semibold">Gramos por porción:</label>
+            <input
+              type="number"
+              min={5}
+              max={60}
+              step={5}
+              value={gramos}
+              onChange={e => onGramosChange(Math.max(5, Math.min(60, Number(e.target.value) || 20)))}
+              className="w-16 px-2 py-1 text-xs border border-rose-300 rounded text-center"
+            />
+            <span className="text-[#6B7C93]">g (1 cda = 20g · déficit: 10g · hipertrofia: 40g)</span>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Catalog Picker genérico (snacks + barras) ────────────────────────────────
 type CatalogItem = {
   label: string
@@ -2674,6 +2787,14 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
               <QuesoTypePicker
                 value={(form.quesoTipo ?? 'gauda') as QuesoTipo}
                 onChange={t => set('quesoTipo', t)}
+              />
+
+              {/* 3️⃣D Selector untable — aplica a panadería (tostadas, waffles, marraqueta) · ADITIVO */}
+              <UntableTypePicker
+                value={form.untableTipo}
+                gramos={form.untableGramos ?? 20}
+                onChange={t => set('untableTipo', t)}
+                onGramosChange={g => set('untableGramos', g)}
               />
 
               {/* 4️⃣ Selector snack saludable Nutrevo — opt-in al plan */}

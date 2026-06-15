@@ -77,10 +77,90 @@ export interface MealOption {
   /** Gramaje base del queso en la receta (típicamente 30g por lámina). Usado
    *  para escalar macros si el paciente cambia el tipo. */
   quesoGramosBase?: number
+  /** true = la preparación es panadería y admite untable (mermelada, nutella,
+   *  manjar, etc.). Activa el selector de untable en el wizard. El untable es
+   *  OPCIONAL — el plan se calcula sin él por default; el paciente decide. */
+  tieneUntable?: boolean
+  /** Tipo de untable que se sugiere por defecto. Si el paciente no elige, se
+   *  asume que no usa untable (sin macros extra). Si elige uno, sus macros se
+   *  suman al total. */
+  untableTipoDefault?: 'mermelada_clasica' | 'mermelada_light' | 'nutella' | 'manjar'
+  /** Gramaje base del untable (típicamente 20g = 1 cda chilena). */
+  untableGramosBase?: number
 }
 
 // ─── Macros por gramo de carne (USDA simplificado) ───────────────────────────
 // Usado para reajustar p/c/g cuando el paciente cambia el gramaje en su selector.
+// ─── Macros por gramo de untable (panadería) — etiquetas oficiales chilenas ──
+// Usado para sumar macros cuando el paciente elige agregar untable al pan/waffle.
+// El untable es OPCIONAL — solo aporta cuando el wizard lo selecciona.
+// Marcas referenciales del mercado chileno (Watt's, Regimel, Ferrero, Nestlé).
+export const UNTABLE_MACROS_POR_GRAMO: Record<
+  'mermelada_clasica' | 'mermelada_light' | 'nutella' | 'manjar',
+  { kcal: number; p: number; c: number; g: number }
+> = {
+  mermelada_clasica: { kcal: 2.50, p: 0.000, c: 0.650, g: 0.000 },  // Watt's frutilla: 50 kcal/20g · 0 P · 13 C · 0 G
+  mermelada_light:   { kcal: 0.60, p: 0.000, c: 0.150, g: 0.000 },  // Regimel light: 12 kcal/20g · 0 P · 3 C · 0 G
+  nutella:           { kcal: 5.40, p: 0.065, c: 0.600, g: 0.300 },  // Ferrero: 108 kcal/20g · 1.3 P · 12 C · 6 G
+  manjar:            { kcal: 4.30, p: 0.125, c: 0.725, g: 0.100 },  // Nestlé La Lechera: 86 kcal/20g · 2.5 P · 14.5 C · 2 G
+}
+
+/** Tipos de untable disponibles para platos con tieneUntable=true. */
+export type UntableTipo = keyof typeof UNTABLE_MACROS_POR_GRAMO
+
+/** Catálogo descriptivo de untables — usado por el UI selector. */
+export const UNTABLE_TIPOS: Record<UntableTipo, {
+  label: string
+  emoji: string
+  marca: string
+  porcion: string
+  kcal20g: number
+  p20g: number
+  c20g: number
+  g20g: number
+  sellos?: string[]
+  alergenos?: string[]
+  notas?: string
+}> = {
+  mermelada_clasica: {
+    label:  'Mermelada clásica',
+    emoji:  '🍓',
+    marca:  'Watt\'s',
+    porcion: '1 cda (20g)',
+    kcal20g: 50, p20g: 0,   c20g: 13,   g20g: 0,
+    sellos: ['Alto en azúcares'],
+    notas:  'Frutilla o frambuesa. Aporte casi puro de azúcar — usar con moderación.',
+  },
+  mermelada_light: {
+    label:  'Mermelada light',
+    emoji:  '🫐',
+    marca:  'Regimel',
+    porcion: '1 cda (20g)',
+    kcal20g: 12, p20g: 0,   c20g: 3,    g20g: 0,
+    notas:  'Sin azúcar añadida (edulcorada con sucralosa). -76% kcal vs clásica.',
+  },
+  nutella: {
+    label:  'Nutella',
+    emoji:  '🍫',
+    marca:  'Ferrero',
+    porcion: '1 cda (20g)',
+    kcal20g: 108, p20g: 1.3, c20g: 12, g20g: 6,
+    sellos: ['Alto en azúcares', 'Alto en grasas saturadas'],
+    alergenos: ['Avellanas', 'Leche', 'Soya'],
+    notas:  'Densidad calórica alta (~5.4 kcal/g) — pesa el doble que mermelada clásica.',
+  },
+  manjar: {
+    label:  'Manjar',
+    emoji:  '🥛',
+    marca:  'Nestlé La Lechera',
+    porcion: '1 cda (20g)',
+    kcal20g: 86, p20g: 2.5, c20g: 14.5, g20g: 2,
+    sellos: ['Alto en azúcares'],
+    alergenos: ['Leche'],
+    notas:  'Clásico chileno. Aporta 2.5g de proteína por cda — mejor perfil que mermelada o nutella en ratio P/kcal.',
+  },
+}
+
 export const CARNE_MACROS_POR_GRAMO: Record<
   'pollo' | 'pavo' | 'carne_roja' | 'salmon' | 'atun' | 'pescado_blanco',
   { kcal: number; p: number; g: number }
@@ -773,6 +853,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     items: ['3 huevos enteros', '2 claras adicionales', 'Espinaca y champiñones', '1 rebanada pan integral', '1 cdta aceite de oliva'],
     baseKcal: 420, p: 28, c: 35, g: 18, tieneHuevo: true, eggsDefault: 3,
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'omelette_pan_integral.jfif',
     tiempo: '12 min',
     pasos: [
@@ -788,6 +869,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     items: ['2 tostadas pan integral', '½ palta madura', '2 huevos pochados', 'Café o té sin azúcar'],
     baseKcal: 460, p: 22, c: 40, g: 22, tieneHuevo: true, eggsDefault: 2,
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'Pan_palta_huevo_pochado.jfif',
     tiempo: '15 min',
     pasos: [
@@ -876,6 +958,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     // Nota: la grasa estaba muy subestimada (era 14g, real 28g) — nueces son densas.
     baseKcal: 471, p: 22, c: 36, g: 28,
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '8 min',
     pasos: [
@@ -1076,6 +1159,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['gluten', 'sesamo'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: '/img/recetas/tostadas_palta_semillas.webp',
     tiempo: '8 min',
     pasos: [
@@ -1139,6 +1223,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     tendencia: ['vegano', 'vegetariano'],
     contiene: ['gluten', 'sesamo'] as string[],
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: '/img/recetas/pan_hummus_verduras.webp',
     tiempo: '5 min',
     pasos: [
@@ -1268,6 +1353,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     baseKcal: 351, p: 15, c: 34, g: 18,
     porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
     tiempo: '5 min',
     pasos: [
@@ -1529,6 +1615,7 @@ export const colacionesOpts: Record<string, MealOption> = {
     porcionFija: true,
     tienePan: true, panTipoDefault: 'marraqueta',
     tieneQueso: true, quesoTipoDefault: 'gauda', quesoGramosBase: 30,
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: '/img/recetas/unsplash_1509440159596-0249088772ff.webp',
     tiempo: '4 min',
     tendencia: ['omnivoro'],
@@ -1736,6 +1823,32 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Combinar: en un vaso largo o copa colocar el mote escurrido al fondo.',
       'Verter encima el huesillo con su líquido aromático (sin azúcar, solo la dulzura natural del durazno y la canela).',
       'Endulzar con estevia si se desea o servir tal cual. Frío en verano, tibio en invierno. Versión saludable del clásico chileno sin culpas.',
+    ],
+  },
+  waffle_great_value: {
+    label: 'Waffles Great Value (2 unidades) + untable opcional',
+    items: [
+      '2 waffles Great Value Estilo Casero (70g, 35g c/u)',
+      '(Opcional) 1 cda untable: mermelada Watt\'s · Regimel light · Nutella · manjar Nestlé',
+      '💡 El untable se elige en el wizard; las kcal se suman al total. Sin untable: 190 kcal · con manjar +86 · con nutella +108 · con mermelada Watt\'s +50 · con Regimel light +12',
+    ],
+    // Auditoría etiqueta Great Value Estilo Casero (Walmart MX/Lider CL):
+    //   2 waffles 70g: 190 kcal · 4 P · 31 C · 6 G · 370 mg sodio
+    //   Sellos chilenos: Alto en grasas saturadas · Alto en sodio (perfil típico waffle industrial).
+    //   Alergenos: trigo (gluten), huevo, leche, soya.
+    baseKcal: 190, p: 4, c: 31, g: 6,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['gluten', 'huevo', 'lactosa', 'soya'] as string[],
+    tieneUntable: true, untableTipoDefault: 'manjar', untableGramosBase: 20,
+    foto: '/img/productos/waffle_great_value.webp',
+    tiempo: '5 min (microondas o tostadora)',
+    pasos: [
+      'Tostar los 2 waffles en tostadora (2 min) o microondas (40 seg) hasta dorar.',
+      'Si el profesional indicó untable: untar 1 cucharada (20g) sobre los waffles tibios.',
+      'Servir inmediato. Acompañar con café/té sin azúcar o un vaso de leche descremada (no cuenta como porción).',
+      'Tip déficit: usar Regimel light en vez de mermelada clásica (-38 kcal por porción).',
+      'Tip hipertrofia: usar manjar (Nestlé La Lechera) — aporta 2.5g proteína extra por cda.',
     ],
   },
 }
