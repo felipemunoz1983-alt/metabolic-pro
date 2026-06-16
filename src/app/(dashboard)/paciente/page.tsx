@@ -52,6 +52,13 @@ const MaterialPaciente = dynamic(
   () => import('@/components/educacion/MaterialPaciente').then(m => ({ default: m.MaterialPaciente })),
   { ssr: false, loading: () => null },
 )
+// Notas clinicas que el nutri escribio para el paciente (Sprint 1-C parte
+// paciente, que faltaba). Solo muestra los 3 campos visibles al paciente
+// (indicaciones, suplementacion, rutina) — los examenes son internos del pro.
+const NotasPaciente = dynamic(
+  () => import('@/components/educacion/NotasPaciente').then(m => ({ default: m.NotasPaciente })),
+  { ssr: false, loading: () => null },
+)
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -690,6 +697,15 @@ export default function PacientePage() {
                       {profile?.role === 'patient' && (
                         <div className="mt-8">
                           <BancoPaciente />
+                        </div>
+                      )}
+
+                      {/* ── Notas clinicas del nutri (Sprint 1-C parte paciente) ──
+                          Las 3 notas visibles al paciente (indicaciones, suplementacion,
+                          rutina). Si todas estan vacias, el componente retorna null. */}
+                      {profile?.role === 'patient' && userId && (
+                        <div className="mt-5">
+                          <NotasPaciente patientId={userId} />
                         </div>
                       )}
 
