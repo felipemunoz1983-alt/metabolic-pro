@@ -19,6 +19,11 @@ import { cn } from '@/lib/utils'
 interface Props {
   result: NutritionResult
   form: FormData
+  /** Callback opcional para que el padre se entere cuando el profesional ajusta
+   *  la distribucion de la piramide. Sin esto, los cambios solo viven en el
+   *  state local de este componente y no se reflejan en el Paso 3 (feedback
+   *  Maria Jose Serrano). */
+  onChange?: (dist: DistribucionPiramide) => void
 }
 
 /**
@@ -30,7 +35,7 @@ interface Props {
  *  - El sistema NO bloquea valores fuera del rango RECOM (solo warning visual)
  *  - Fila resumen al pie: aporte pirámide vs requerimiento paciente vs %
  */
-export function PiramidePlan({ result, form }: Props) {
+export function PiramidePlan({ result, form, onChange }: Props) {
   // Distribución inicial sugerida — el pro la ajusta libremente
   const distInicial = useMemo<DistribucionPiramide>(
     () => distribuirInicialPiramide(
@@ -51,11 +56,16 @@ export function PiramidePlan({ result, form }: Props) {
   const sumasMeta = useMemo(() => sumaPorMetaGrupo(dist), [dist])
 
   function setPorciones(grupo: GrupoPiramide, valor: number) {
-    setDist(d => ({ ...d, [grupo]: Math.max(0, valor) }))
+    setDist(d => {
+      const next = { ...d, [grupo]: Math.max(0, valor) }
+      onChange?.(next)
+      return next
+    })
   }
 
   function resetear() {
     setDist(distInicial)
+    onChange?.(distInicial)
   }
 
   return (

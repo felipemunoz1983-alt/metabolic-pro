@@ -13,6 +13,7 @@ import {
   TIEMPO_COMIDA_PORCION_LABELS,
   type GrupoPorcion,
   type DistribucionPorciones,
+  type DistribucionPiramide,
   type DistribucionTiempo,
   type TiempoComidaPorcion,
 } from '@/lib/porciones'
@@ -34,6 +35,12 @@ interface Props {
  * dentro de cada grupo.
  */
 export function PorcionesPlan({ result, form }: Props) {
+  // State local: cambios in-line del pro en la Piramide editable del Paso 2.
+  // Se inicia en null = sin cambios in-line, usar overrides del form o auto.
+  // Cuando PiramidePlan dispara onChange, queda aqui y se propaga al Paso 3
+  // (feedback Maria Jose: del paso 2 al paso 3 no se reflejaban los cambios).
+  const [piramideDistInline, setPiramideDistInline] = useState<DistribucionPiramide | null>(null)
+
   const distribucion = useMemo<DistribucionPorciones>(
     () => {
       // 1. Distribucion automatica desde target nutricional
@@ -44,13 +51,15 @@ export function PorcionesPlan({ result, form }: Props) {
         result.macros.g,
         form.objetivo,
       )
-      // 2. PRECEDENCIA de overrides:
-      //    a) Si hay porcionesOverridePiramide (13 grupos detallados, feedback
-      //       Maria Jose) -> mapear sumando subtipos a los 6 basicos y aplicar.
-      //    b) Sino, si hay porcionesOverride legacy (6 basicos) -> aplicar.
-      //    c) Sino -> usar auto.
+      // 2. PRECEDENCIA de overrides (mayor a menor):
+      //    a) piramideDistInline: cambios in-line del Paso 2 (PiramidePlan editable)
+      //    b) form.porcionesOverridePiramide: 13 grupos del wizard pre-plan
+      //    c) form.porcionesOverride: legacy 6 basicos
+      //    d) auto: distribucion automatica desde target
+      const inlineOverride = piramideDistInline ?? undefined
       const overrideEfectivo =
-        mapearPiramideAGruposBasicos(form.porcionesOverridePiramide)
+        mapearPiramideAGruposBasicos(inlineOverride)
+        ?? mapearPiramideAGruposBasicos(form.porcionesOverridePiramide)
         ?? form.porcionesOverride
       return aplicarOverridePorciones(auto, overrideEfectivo, {
         kcal: result.kcal,
@@ -59,7 +68,7 @@ export function PorcionesPlan({ result, form }: Props) {
         g:    result.macros.g,
       })
     },
-    [result, form.objetivo, form.porcionesOverride, form.porcionesOverridePiramide],
+    [result, form.objetivo, form.porcionesOverride, form.porcionesOverridePiramide, piramideDistInline],
   )
 
   // Distribución por tiempos de comida (heurística Sochinut)
@@ -483,7 +492,7 @@ export function PorcionesPlan({ result, form }: Props) {
 
           <div className="pt-2">
             <h3 className="text-sm font-black text-[#0C3547] mb-2 uppercase tracking-wide">🇨🇱 Pirámide chilena · 13 subgrupos (editable)</h3>
-            <PiramidePlan result={result} form={form} />
+            <PiramidePlan result={result} form={form} onChange={setPiramideDistInline} />
           </div>
         </div>
       )}
