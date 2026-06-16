@@ -24,6 +24,11 @@ const InformesProfesional = dynamic(
   () => import('@/components/profesional/InformesProfesional').then(m => ({ default: m.InformesProfesional })),
   { ssr: false, loading: () => null },
 )
+// Lazy: el modulo de notas clinicas (Sprint 1-C) solo se carga al entrar al tab 'notas'.
+const NotasClinicas = dynamic(
+  () => import('@/components/profesional/NotasClinicas').then(m => ({ default: m.NotasClinicas })),
+  { ssr: false, loading: () => null },
+)
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
@@ -406,7 +411,7 @@ function PatientDetail({
   const supabase = createClient()
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<'overview' | 'plan'>('overview')
+  const [view, setView] = useState<'overview' | 'plan' | 'notas'>('overview')
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
   const [planForm, setPlanForm] = useState<FormData | null>(null)
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
@@ -569,6 +574,20 @@ Cualquier duda, escríbeme 😊`
     } catch {
       setEmailStatus('error')
     }
+  }
+
+  if (view === 'notas') {
+    return (
+      <div className="px-4 py-4 md:px-8 md:py-6 max-w-3xl mx-auto">
+        <button
+          onClick={() => setView('overview')}
+          className="flex items-center gap-2 text-sm text-[#8BA5BE] hover:text-[#0C1F2C] mb-6 transition-colors"
+        >
+          <ArrowLeft size={14} /> Volver a {patient.nombre}
+        </button>
+        <NotasClinicas patientId={patient.id} professionalId={professionalId} />
+      </div>
+    )
   }
 
   if (view === 'plan') {
@@ -833,6 +852,14 @@ Cualquier duda, escríbeme 😊`
             title="Enviar mensaje al paciente"
           >
             <MessageSquare size={14} /> <span className="hidden sm:inline">Mensaje</span>
+          </button>
+          {/* Notas clinicas del profesional (Sprint 1-C) */}
+          <button
+            onClick={() => setView('notas')}
+            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-violet-500 hover:text-violet-700 transition"
+            title="Indicaciones, suplementacion, rutina, examenes solicitados"
+          >
+            <FileText size={14} /> <span className="hidden sm:inline">Notas clinicas</span>
           </button>
           {/* Eliminar de lista — separador visual + estilo destructivo SIEMPRE visible
               (no solo en hover). Antes el botón vivía pegado a "Mensaje" con el mismo
