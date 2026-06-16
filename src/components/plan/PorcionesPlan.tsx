@@ -6,6 +6,7 @@ import {
   distribuirEnPorciones,
   distribuirPorTiemposDeComida,
   aplicarOverridePorciones,
+  mapearPiramideAGruposBasicos,
   INTERCAMBIOS,
   GRUPO_PORCION_LABELS,
   MACROS_POR_GRUPO,
@@ -43,16 +44,22 @@ export function PorcionesPlan({ result, form }: Props) {
         result.macros.g,
         form.objetivo,
       )
-      // 2. Si el profesional ajusto porciones manualmente en el wizard
-      //    (Step 5, modalidad porciones), aplicar override y recalcular totales.
-      return aplicarOverridePorciones(auto, form.porcionesOverride, {
+      // 2. PRECEDENCIA de overrides:
+      //    a) Si hay porcionesOverridePiramide (13 grupos detallados, feedback
+      //       Maria Jose) -> mapear sumando subtipos a los 6 basicos y aplicar.
+      //    b) Sino, si hay porcionesOverride legacy (6 basicos) -> aplicar.
+      //    c) Sino -> usar auto.
+      const overrideEfectivo =
+        mapearPiramideAGruposBasicos(form.porcionesOverridePiramide)
+        ?? form.porcionesOverride
+      return aplicarOverridePorciones(auto, overrideEfectivo, {
         kcal: result.kcal,
         p:    result.macros.p,
         c:    result.macros.c,
         g:    result.macros.g,
       })
     },
-    [result, form.objetivo, form.porcionesOverride],
+    [result, form.objetivo, form.porcionesOverride, form.porcionesOverridePiramide],
   )
 
   // Distribución por tiempos de comida (heurística Sochinut)

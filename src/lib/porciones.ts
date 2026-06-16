@@ -394,6 +394,52 @@ export function distribuirEnPorciones(
 }
 
 /**
+ * Mapea un override de los 13 grupos de la Piramide Chilena a los 6 grupos
+ * basicos que usa el sistema de distribucion por tiempos de comida.
+ *
+ * Lacteos     = alto + medio + bajo en grasa
+ * Verduras    = general + libre consumo
+ * Cereales    = cereales y leguminosas frescas
+ * Proteinas   = carnes alto + bajo en grasa + leguminosas
+ * Grasas      = aceites/grasas + alimentos ricos en lipidos
+ * Frutas      = frutas
+ * (Azucar no esta en los 6 basicos — consumo discrecional, no se mapea)
+ *
+ * Si un meta-grupo no tiene ningun subtipo override-eado, devuelve undefined
+ * para ese meta-grupo (asi PorcionesPlan usa el calculo automatico).
+ */
+export function mapearPiramideAGruposBasicos(
+  override: Partial<Record<
+    | 'cereales_leguminosas_frescas' | 'verduras_general' | 'verduras_libre'
+    | 'frutas' | 'carnes_alto_grasa' | 'carnes_bajo_grasa' | 'leguminosas'
+    | 'lacteos_alto_grasa' | 'lacteos_medio_grasa' | 'lacteos_bajo_grasa'
+    | 'aceites_grasas' | 'alimentos_ricos_lipidos' | 'azucar',
+    number
+  >> | undefined,
+): Partial<Record<'lacteos' | 'frutas' | 'verduras' | 'cereales' | 'proteinas' | 'grasas', number>> | undefined {
+  if (!override) return undefined
+  const sumarSi = (...keys: (keyof typeof override)[]): number | undefined => {
+    const present = keys.filter(k => override[k] !== undefined)
+    if (present.length === 0) return undefined
+    return present.reduce((acc, k) => acc + (override[k] ?? 0), 0)
+  }
+  const result: Partial<Record<'lacteos' | 'frutas' | 'verduras' | 'cereales' | 'proteinas' | 'grasas', number>> = {}
+  const lacteos   = sumarSi('lacteos_alto_grasa', 'lacteos_medio_grasa', 'lacteos_bajo_grasa')
+  const verduras  = sumarSi('verduras_general', 'verduras_libre')
+  const cereales  = sumarSi('cereales_leguminosas_frescas')
+  const proteinas = sumarSi('carnes_alto_grasa', 'carnes_bajo_grasa', 'leguminosas')
+  const grasas    = sumarSi('aceites_grasas', 'alimentos_ricos_lipidos')
+  const frutas    = sumarSi('frutas')
+  if (lacteos   !== undefined) result.lacteos   = lacteos
+  if (verduras  !== undefined) result.verduras  = verduras
+  if (cereales  !== undefined) result.cereales  = cereales
+  if (proteinas !== undefined) result.proteinas = proteinas
+  if (grasas    !== undefined) result.grasas    = grasas
+  if (frutas    !== undefined) result.frutas    = frutas
+  return Object.keys(result).length > 0 ? result : undefined
+}
+
+/**
  * Aplica un override parcial de porciones sobre la distribución automática.
  * El profesional usa esto desde el wizard (Step 5, modalidad porciones) para
  * ajustar manualmente cuántas porciones quiere de cada grupo antes de generar.

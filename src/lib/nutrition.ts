@@ -243,7 +243,9 @@ export interface FormData {
    *  Solo aplica cuando modalidadPlan='porciones'. El profesional ajusta las
    *  porciones de cada grupo en el wizard (Step 5) y esos valores prevalecen
    *  sobre la distribucion automatica de distribuirEnPorciones() en el plan
-   *  resultante. Cualquier subconjunto de grupos se puede override parcialmente. */
+   *  resultante. Cualquier subconjunto de grupos se puede override parcialmente.
+   *  LEGACY: 6 grupos basicos. Mantenido por compatibilidad. Para detalle mas
+   *  fino usar porcionesOverridePiramide (13 grupos). */
   porcionesOverride?: {
     lacteos?: number
     frutas?: number
@@ -252,6 +254,29 @@ export interface FormData {
     proteinas?: number
     grasas?: number
   }
+  /** Override de porciones con los 13 grupos detallados de la Piramide
+   *  Chilena INTA/Sochinut (feedback Maria Jose: lacteos bajo/medio/alto,
+   *  carnes bajo/alto, leguminosas separado, alimentos ricos en lipidos,
+   *  azucar como grupo propio).
+   *  Tiene PRIORIDAD sobre porcionesOverride: si esta set, el sistema lo
+   *  mapea sumando subtipos a los 6 grupos basicos para la distribucion
+   *  por tiempos. */
+  porcionesOverridePiramide?: Partial<Record<
+    | 'cereales_leguminosas_frescas'
+    | 'verduras_general'
+    | 'verduras_libre'
+    | 'frutas'
+    | 'carnes_alto_grasa'
+    | 'carnes_bajo_grasa'
+    | 'leguminosas'
+    | 'lacteos_alto_grasa'
+    | 'lacteos_medio_grasa'
+    | 'lacteos_bajo_grasa'
+    | 'aceites_grasas'
+    | 'alimentos_ricos_lipidos'
+    | 'azucar',
+    number
+  >>
 }
 
 /** Niveles de actividad física FAO/WHO 2001 — usados como presets clínicos
