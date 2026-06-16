@@ -219,6 +219,14 @@ export interface FormData {
   /** Override de CHO en g/kg. Rango clínico 3-12 según volumen entrenamiento
    *  (Burke et al. 2011, J Sports Sci 29(S1):S17-S27). */
   choGKgOverride?: number
+  /** Override de proteína como % del total calórico (feedback Maria Jose).
+   *  0-60. Si definido, sobrescribe tanto el calculo base como cualquier
+   *  proteinaGKgOverride. gramos = (kcal × pct/100) / 4. */
+  proteinaPctOverride?: number
+  /** Override de CHO como % del total calórico. 0-80. gramos = (kcal × pct/100) / 4. */
+  choPctOverride?: number
+  /** Override de grasa como % del total calórico. 0-50. gramos = (kcal × pct/100) / 9. */
+  grasaPctOverride?: number
   /** Override del PAL (Physical Activity Level). Si definido, reemplaza el PAL
    *  derivado automáticamente desde diasEjercicio/duracionSesion/tipoEjercicio.
    *  Niveles FAO/WHO 2001:
@@ -568,6 +576,7 @@ export function calcularNutricion(form: Pick<FormData,
   'digCirugiaBariatrica' | 'digFasePostBariatrica' |
   'metodoCalculo' | 'kcalPorKg' |
   'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride' | 'palOverride' |
+  'proteinaPctOverride' | 'grasaPctOverride' | 'choPctOverride' |
   'formulaOverride'
 >): NutritionResult {
   const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
@@ -615,19 +624,39 @@ export function calcularNutricion(form: Pick<FormData,
     // Aplicar overrides (mezcla): el pro fuerza un macro específico aunque el
     // método base haya calculado otro valor. Tras aplicar, recalcular kcal
     // totales para que el resumen refleje el output real.
-    if (form.proteinaGKgOverride != null) {
+    //
+    // PRECEDENCIA por macro: pct % > g/kg > calculo automatico del metodo base.
+    // (Si hay PctOverride, el GKgOverride se ignora para ese macro — el ultimo
+    // que se setea gana semanticamente).
+    if (form.proteinaPctOverride != null) {
+      macros.p = Math.round((kcal * form.proteinaPctOverride / 100) / 4)
+    } else if (form.proteinaGKgOverride != null) {
       macros.p = Math.round(form.peso * form.proteinaGKgOverride)
     }
-    if (form.grasaGKgOverride != null) {
+    if (form.grasaPctOverride != null) {
+      macros.g = Math.round((kcal * form.grasaPctOverride / 100) / 9)
+    } else if (form.grasaGKgOverride != null) {
       macros.g = Math.round(form.peso * form.grasaGKgOverride)
     }
-    if (form.choGKgOverride != null) {
+    if (form.choPctOverride != null) {
+      macros.c = Math.round((kcal * form.choPctOverride / 100) / 4)
+    } else if (form.choGKgOverride != null) {
       macros.c = Math.round(form.peso * form.choGKgOverride)
     }
+    // Recalcular kcal solo cuando los overrides son en g/kg (gramos absolutos
+    // mandan, kcal es resultado). Si hay AL MENOS UN override en %, NO se
+    // recalcula: el % se aplica sobre el kcal target original; mantener kcal
+    // significa que el desglose porcentual del pro se respeta tal cual.
+    const hayPctOverride =
+      form.proteinaPctOverride != null ||
+      form.grasaPctOverride    != null ||
+      form.choPctOverride      != null
     if (
-      form.proteinaGKgOverride != null ||
-      form.grasaGKgOverride    != null ||
-      form.choGKgOverride      != null
+      !hayPctOverride && (
+        form.proteinaGKgOverride != null ||
+        form.grasaGKgOverride    != null ||
+        form.choGKgOverride      != null
+      )
     ) {
       kcal = macros.p * 4 + macros.c * 4 + macros.g * 9
     }

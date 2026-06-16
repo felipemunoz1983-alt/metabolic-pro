@@ -225,6 +225,9 @@ function MetodoCalculoSelector({
 }) {
   const [expandido, setExpandido] = useState(false)
   const [showOverrides, setShowOverrides] = useState(false)
+  // Modo de override de macros (feedback Maria Jose): por g/kg de peso o por %
+  // del kcal total. Toggle visual; ambos modos comparten la misma seccion.
+  const [overrideModo, setOverrideModo] = useState<'gkg' | 'pct'>('gkg')
   const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
 
   // Sugerencias para mostrar al pro (no auto-llenan)
@@ -242,6 +245,7 @@ function MetodoCalculoSelector({
   })()
 
   const isOverrideActive = form.proteinaGKgOverride != null || form.grasaGKgOverride != null || form.choGKgOverride != null
+    || form.proteinaPctOverride != null || form.grasaPctOverride != null || form.choPctOverride != null
   const summary =
     metodo === 'bmr_pal'         ? 'Mifflin-St Jeor × actividad (default)' :
     metodo === 'kcal_kg_pal'     ? `${form.kcalPorKg ?? 30} kcal/kg × actividad` :
@@ -546,27 +550,97 @@ function MetodoCalculoSelector({
                         </div>
                       </div>
 
-                      {([
-                        { key: 'proteinaGKgOverride' as const, label: 'Proteína (g/kg)', sug: sugP, ref: 'Phillips 2018' },
-                        { key: 'grasaGKgOverride' as const,    label: 'Grasa (g/kg)',    sug: sugG, ref: 'ACSM' },
-                        { key: 'choGKgOverride' as const,      label: 'CHO (g/kg)',      sug: { min: sugC.min, max: sugC.max }, ref: 'Burke 2011' },
-                      ]).map(o => (
-                        <div key={o.key}>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="text-[11px] font-bold text-[#0C3547]">{o.label}</label>
-                            <span className="text-[10px] text-[#8BA5BE]">
-                              Sug: {o.sug.min}-{o.sug.max} ({o.ref})
-                            </span>
-                          </div>
-                          <input
-                            type="number" min={0} max={15} step={0.1}
-                            value={form[o.key] ?? ''}
-                            onChange={e => set(o.key, e.target.value === '' ? undefined : Number(e.target.value))}
-                            placeholder="(automático)"
-                            className="w-full px-2.5 py-1.5 border border-[#D6E3ED] rounded text-xs focus:outline-none focus:border-[#29ABE2]"
-                          />
+                      {/* Toggle modo override: g/kg vs % del kcal total */}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E2ECF4]">
+                        <label className="text-[11px] font-bold text-[#0C3547]">Override macros</label>
+                        <div className="inline-flex bg-[#F0F6FA] border border-[#E2ECF4] rounded-md p-0.5 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setOverrideModo('gkg')}
+                            className={cn(
+                              'px-2 py-0.5 rounded transition',
+                              overrideModo === 'gkg' ? 'bg-[#0C3547] text-white' : 'text-[#6B7C93] hover:text-[#0C3547]',
+                            )}
+                          >
+                            g/kg
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setOverrideModo('pct')}
+                            className={cn(
+                              'px-2 py-0.5 rounded transition',
+                              overrideModo === 'pct' ? 'bg-[#0C3547] text-white' : 'text-[#6B7C93] hover:text-[#0C3547]',
+                            )}
+                          >
+                            % kcal
+                          </button>
                         </div>
-                      ))}
+                      </div>
+
+                      {overrideModo === 'gkg' ? (
+                        <>
+                          {([
+                            { key: 'proteinaGKgOverride' as const, label: 'Proteína (g/kg)', sug: sugP, ref: 'Phillips 2018' },
+                            { key: 'grasaGKgOverride' as const,    label: 'Grasa (g/kg)',    sug: sugG, ref: 'ACSM' },
+                            { key: 'choGKgOverride' as const,      label: 'CHO (g/kg)',      sug: { min: sugC.min, max: sugC.max }, ref: 'Burke 2011' },
+                          ]).map(o => (
+                            <div key={o.key}>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[11px] font-bold text-[#0C3547]">{o.label}</label>
+                                <span className="text-[10px] text-[#8BA5BE]">
+                                  Sug: {o.sug.min}-{o.sug.max} ({o.ref})
+                                </span>
+                              </div>
+                              <input
+                                type="number" min={0} max={15} step={0.1}
+                                value={form[o.key] ?? ''}
+                                onChange={e => set(o.key, e.target.value === '' ? undefined : Number(e.target.value))}
+                                placeholder="(automático)"
+                                className="w-full px-2.5 py-1.5 border border-[#D6E3ED] rounded text-xs focus:outline-none focus:border-[#29ABE2]"
+                              />
+                            </div>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          {/* Suma de % para feedback inmediato */}
+                          {(() => {
+                            const sumPct = (form.proteinaPctOverride ?? 0) + (form.choPctOverride ?? 0) + (form.grasaPctOverride ?? 0)
+                            const diff   = 100 - sumPct
+                            const cls    = sumPct === 0 ? 'text-[#8BA5BE]'
+                                         : sumPct === 100 ? 'text-emerald-700'
+                                         : Math.abs(diff) <= 5 ? 'text-amber-700'
+                                         : 'text-rose-700'
+                            return (
+                              <p className={cn('text-[10px] font-bold italic mt-1', cls)}>
+                                Suma actual: {sumPct}% {sumPct !== 100 && sumPct > 0 && `· faltan ${diff}% para 100%`}
+                              </p>
+                            )
+                          })()}
+                          {([
+                            { key: 'proteinaPctOverride' as const, label: 'Proteína (% kcal)', sug: '15-30%' },
+                            { key: 'choPctOverride' as const,      label: 'CHO (% kcal)',      sug: '40-60%' },
+                            { key: 'grasaPctOverride' as const,    label: 'Grasa (% kcal)',    sug: '20-35%' },
+                          ]).map(o => (
+                            <div key={o.key}>
+                              <div className="flex items-center justify-between mb-1">
+                                <label className="text-[11px] font-bold text-[#0C3547]">{o.label}</label>
+                                <span className="text-[10px] text-[#8BA5BE]">Sug: {o.sug}</span>
+                              </div>
+                              <input
+                                type="number" min={0} max={100} step={1}
+                                value={form[o.key] ?? ''}
+                                onChange={e => set(o.key, e.target.value === '' ? undefined : Number(e.target.value))}
+                                placeholder="ej. 25"
+                                className="w-full px-2.5 py-1.5 border border-[#D6E3ED] rounded text-xs focus:outline-none focus:border-[#29ABE2]"
+                              />
+                            </div>
+                          ))}
+                          <p className="text-[10px] text-[#6B7C93] italic">
+                            Los gramos se calculan automáticamente: g = (kcal × pct/100) / [4 P/C · 9 G].
+                          </p>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
