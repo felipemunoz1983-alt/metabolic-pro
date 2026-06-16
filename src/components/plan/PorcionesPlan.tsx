@@ -12,6 +12,7 @@ import {
   type GrupoPorcion,
   type DistribucionPorciones,
   type DistribucionTiempo,
+  type TiempoComidaPorcion,
 } from '@/lib/porciones'
 import type { FormData, NutritionResult } from '@/lib/nutrition'
 import { cn } from '@/lib/utils'
@@ -48,6 +49,73 @@ export function PorcionesPlan({ result, form }: Props) {
     [distribucion],
   )
 
+  const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
+
+  // ── Sprint 2-B · Matriz editable de distribución (feedback Maria Jose) ──
+  // El pro puede mover porciones entre tiempos (ej: agregar cereales a un snack
+  // pre-entreno). Estado local: matriz [tiempo][grupo] = # porciones.
+  // Se inicializa desde porTiempo y se reinicia si cambia la distribución base
+  // (porque el paciente / objetivo / requerimientos cambiaron).
+  type MatrizTiempos = Record<TiempoComidaPorcion, Record<GrupoPorcion, number>>
+  const matrizInicial = useMemo<MatrizTiempos>(() => {
+    const m = {} as MatrizTiempos
+    for (const t of porTiempo) {
+      m[t.tiempo] = {
+        lacteos:   t.lacteos,
+        frutas:    t.frutas,
+        verduras:  t.verduras,
+        cereales:  t.cereales,
+        proteinas: t.proteinas,
+        grasas:    t.grasas,
+      }
+    }
+    return m
+  }, [porTiempo])
+
+  // Derived state pattern: si cambia matrizInicial (porque cambió la distribución
+  // base por nuevo paciente/objetivo), reseteamos la matriz editable. Mejor que
+  // useEffect+setState porque evita render extra (regla react-hooks/set-state-in-effect).
+  const [matriz, setMatriz] = useState<MatrizTiempos>(matrizInicial)
+  const [lastInit, setLastInit] = useState<MatrizTiempos>(matrizInicial)
+  if (lastInit !== matrizInicial) {
+    setLastInit(matrizInicial)
+    setMatriz(matrizInicial)
+  }
+
+  function setCelda(tiempo: TiempoComidaPorcion, grupo: GrupoPorcion, valor: number) {
+    const v = Math.max(0, Math.round(valor * 2) / 2)  // pasos de 0.5
+    setMatriz(m => ({ ...m, [tiempo]: { ...m[tiempo], [grupo]: v } }))
+  }
+  function resetMatriz() { setMatriz(matrizInicial) }
+
+  // Totales asignados por grupo (suma de columna) — para validar vs total diario
+  const asignadoPorGrupo = useMemo(() => {
+    const tot: Record<GrupoPorcion, number> = { lacteos: 0, frutas: 0, verduras: 0, cereales: 0, proteinas: 0, grasas: 0 }
+    for (const t of Object.values(matriz)) {
+      tot.lacteos   += t.lacteos
+      tot.frutas    += t.frutas
+      tot.verduras  += t.verduras
+      tot.cereales  += t.cereales
+      tot.proteinas += t.proteinas
+      tot.grasas    += t.grasas
+    }
+    return tot
+  }, [matriz])
+
+  // Macros aportados por un tiempo (suma de fila × MACROS_POR_GRUPO)
+  function macrosDeTiempo(tiempo: TiempoComidaPorcion): { kcal: number; p: number; c: number; g: number } {
+    const fila = matriz[tiempo]
+    const acc = { kcal: 0, p: 0, c: 0, g: 0 }
+    for (const g of grupos) {
+      const m = MACROS_POR_GRUPO[g]
+      acc.kcal += fila[g] * m.kcal
+      acc.p    += fila[g] * m.p
+      acc.c    += fila[g] * m.c
+      acc.g    += fila[g] * m.g
+    }
+    return { kcal: Math.round(acc.kcal), p: Math.round(acc.p), c: Math.round(acc.c), g: Math.round(acc.g) }
+  }
+
   // Wizard secuencial de 4 pasos (flujo clínico: del cálculo abstracto al plato real).
   // Reemplaza el toggle independiente de 3 vistas que existía antes.
   //  Paso 1 · Requerimientos          → kcal + macros del paciente (objetivo + método)
@@ -62,8 +130,6 @@ export function PorcionesPlan({ result, form }: Props) {
     { n: 3, label: 'Distribución por tiempos',  emoji: '🕐' },
     { n: 4, label: 'Alimentos reales',          emoji: '🍽️' },
   ]
-
-  const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
 
   return (
     <div className="space-y-5">
@@ -345,20 +411,127 @@ export function PorcionesPlan({ result, form }: Props) {
         </div>
       )}
 
-      {/* ─── PASO 3 · Distribución por tiempos de comida ─── */}
+      {/* ─── PASO 3 · Distribución por tiempos de comida (editable) ─── */}
       {paso === 3 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="bg-[#EAF4FB] border border-[#29ABE2] rounded-xl p-3 text-xs text-[#4a6b80]">
-            <p className="font-bold text-[#0C3547] mb-1">🕐 De porciones diarias a 5 tiempos</p>
+            <p className="font-bold text-[#0C3547] mb-1">🕐 De porciones diarias a 5 tiempos · Editable</p>
             <p className="leading-relaxed">
-              Las porciones del paso 2 se distribuyen entre los 5 tiempos de comida según la heurística clínica de Sochinut.
-              Toca cada tarjeta para ver qué porciones (y ejemplos de alimentos) corresponden a ese tiempo.
+              La distribución inicial sigue la heurística clínica chilena (Sochinut).
+              <strong> Puedes mover porciones libremente</strong> — por ejemplo, sacar cereales del almuerzo y agregarlos a la colación pre-entreno.
+              El balance abajo te avisa si te falta o sobra alguna porción para cuadrar con el total del Paso 2.
             </p>
           </div>
 
-          {porTiempo.map(t => (
-            <TiempoCard key={t.tiempo} dist={t} />
-          ))}
+          {/* Balance: asignado vs disponible por grupo */}
+          <div className="bg-white border border-[#D6E3ED] rounded-2xl p-3">
+            <div className="flex items-baseline justify-between mb-2">
+              <p className="text-[10px] uppercase tracking-wider text-[#6B7C93] font-bold">Balance por grupo</p>
+              <button
+                type="button"
+                onClick={resetMatriz}
+                className="text-[10px] uppercase tracking-wider font-bold text-[#29ABE2] hover:text-[#0C3547] transition"
+                title="Volver a la distribución sugerida por Sochinut"
+              >
+                ↻ Reiniciar
+              </button>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+              {grupos.map(g => {
+                const total     = distribucion[g]
+                const asignado  = asignadoPorGrupo[g]
+                const delta     = +(asignado - total).toFixed(1)
+                const ok        = Math.abs(delta) < 0.25 || g === 'verduras'  // verduras libres
+                const sobra     = delta > 0.25
+                const meta      = GRUPO_PORCION_LABELS[g]
+                return (
+                  <div
+                    key={g}
+                    className={cn(
+                      'rounded-xl border p-2 text-center transition',
+                      ok    ? 'bg-emerald-50/70 border-emerald-200' :
+                      sobra ? 'bg-rose-50/70 border-rose-200'       :
+                              'bg-amber-50/70 border-amber-200',
+                    )}
+                  >
+                    <p className="text-[16px] leading-none">{meta.emoji}</p>
+                    <p className="text-[10px] font-bold text-[#0C3547] mt-1 uppercase tracking-wide truncate" title={meta.label}>
+                      {meta.label.split(' ')[0]}
+                    </p>
+                    <p className={cn(
+                      'text-sm font-black mt-1',
+                      ok    ? 'text-emerald-700' :
+                      sobra ? 'text-rose-700'    :
+                              'text-amber-700',
+                    )}>
+                      {asignado} / {total}
+                    </p>
+                    <p className="text-[9px] text-[#6B7C93] font-semibold mt-0.5">
+                      {ok ? '✓ OK' : sobra ? `+${delta} sobra` : `${delta} falta`}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+            <p className="text-[10px] text-[#8BA5BE] italic mt-2 leading-relaxed">
+              Verduras son libres — no se valida diferencia. Los demás grupos buscan asignar exactamente el total del Paso 2.
+            </p>
+          </div>
+
+          {/* Editor: una card por tiempo de comida con 6 inputs (uno por grupo) */}
+          {(['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena'] as TiempoComidaPorcion[]).map(tiempo => {
+            const info  = TIEMPO_COMIDA_PORCION_LABELS[tiempo]
+            const macros = macrosDeTiempo(tiempo)
+            return (
+              <div key={tiempo} className="bg-white border-2 border-[#E2ECF4] rounded-2xl overflow-hidden">
+                <div className="bg-[#F8FBFD] border-b border-[#E2ECF4] px-4 py-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-xl flex-shrink-0">{info.emoji}</span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-black text-[#0C3547]">{info.label}</p>
+                      <p className="text-[10px] text-[#8BA5BE]">{info.horario}</p>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-base font-black text-[#0C3547]">{macros.kcal} <span className="text-[10px] font-normal text-[#6B7C93]">kcal</span></p>
+                    <p className="text-[10px] text-[#6B7C93]">
+                      <span className="text-violet-700 font-bold">{macros.p}P</span> · <span className="text-amber-700 font-bold">{macros.c}C</span> · <span className="text-rose-700 font-bold">{macros.g}G</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-3">
+                  {grupos.map(g => {
+                    const meta = GRUPO_PORCION_LABELS[g]
+                    const v    = matriz[tiempo][g]
+                    return (
+                      <div key={g} className="flex flex-col items-center">
+                        <label className="text-[10px] font-bold text-[#6B7C93] uppercase tracking-wide truncate w-full text-center" title={meta.label}>
+                          {meta.emoji} {meta.label.split(' ')[0]}
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.5}
+                          value={v}
+                          onChange={e => setCelda(tiempo, g, Number(e.target.value) || 0)}
+                          className={cn(
+                            'w-full text-center font-bold text-sm rounded-lg border-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#29ABE2]/40 mt-1',
+                            v > 0
+                              ? 'bg-white border-[#29ABE2] text-[#0C3547]'
+                              : 'bg-[#F8FBFD] border-[#E2ECF4] text-[#8BA5BE]',
+                          )}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          <p className="text-[10px] text-[#8BA5BE] text-center italic">
+            Cada celda es editable · pasos de 0.5 porciones · totales se recalculan al instante.
+          </p>
         </div>
       )}
 
@@ -560,112 +733,6 @@ function GrupoCard({ grupo, porciones }: { grupo: GrupoPorcion; porciones: numbe
                   </div>
                 ))}
               </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-// ─── Card por tiempo de comida (desayuno / colación / etc) ───────────────────
-function TiempoCard({ dist }: { dist: DistribucionTiempo }) {
-  const [expandido, setExpandido] = useState(false)
-  const info = TIEMPO_COMIDA_PORCION_LABELS[dist.tiempo]
-
-  // Grupos con asignación > 0 — los demás no se muestran en este tiempo
-  const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
-  const conPorciones = grupos.filter(g => dist[g] > 0)
-
-  if (conPorciones.length === 0) {
-    return null  // Tiempo sin asignación (no debería pasar con SHARES actuales, pero defensivo)
-  }
-
-  return (
-    <div className="rounded-xl border-2 border-[#E2ECF4] bg-white overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpandido(e => !e)}
-        className="w-full flex items-center justify-between gap-3 px-4 py-3 hover:bg-[#F8FBFD] transition text-left"
-        aria-expanded={expandido}
-      >
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-11 h-11 rounded-xl bg-[#EAF4FB] flex items-center justify-center text-xl flex-shrink-0">
-            {info.emoji}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-[#0C3547]">{info.label}</p>
-            <p className="text-[10px] text-[#8BA5BE] mt-0.5">
-              {info.horario} · {dist.totales.kcal} kcal · {dist.totales.p}g P · {dist.totales.c}g C · {dist.totales.g}g G
-            </p>
-          </div>
-        </div>
-        <svg
-          className={cn('w-4 h-4 text-[#8BA5BE] transition-transform flex-shrink-0', expandido && 'rotate-180')}
-          fill="none" stroke="currentColor" viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
-
-      {/* Chips compactas con # porciones por grupo (siempre visibles) */}
-      <div className="px-4 pb-3 flex flex-wrap gap-1.5">
-        {conPorciones.map(grupo => {
-          const meta = GRUPO_PORCION_LABELS[grupo]
-          return (
-            <span
-              key={grupo}
-              className="inline-flex items-center gap-1 bg-[#F7FBFE] border border-[#D6E3ED] rounded-full px-2.5 py-1 text-[11px] font-semibold text-[#0C3547]"
-            >
-              <span>{meta.emoji}</span>
-              <span className="text-[#29ABE2] font-black">{dist[grupo]}</span>
-              <span className="text-[#6B7C93]">{meta.label.toLowerCase()}</span>
-            </span>
-          )
-        })}
-      </div>
-
-      {/* Detalle expandido: ejemplos de alimentos del INTA por grupo */}
-      <AnimatePresence initial={false}>
-        {expandido && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden border-t border-[#E2ECF4] bg-[#F8FBFD]"
-          >
-            <div className="p-3 space-y-3">
-              <p className="text-[10px] uppercase tracking-wider text-[#8BA5BE] font-bold">
-                Sugerencias de alimentos para este tiempo
-              </p>
-              {conPorciones.map(grupo => {
-                const meta = GRUPO_PORCION_LABELS[grupo]
-                // Tomar primeros 3 alimentos de cada grupo como sugerencia
-                const sugerencias = INTERCAMBIOS[grupo].slice(0, 3)
-                return (
-                  <div key={grupo} className="bg-white border border-[#E2ECF4] rounded-lg p-2.5">
-                    <p className="text-[11px] font-bold text-[#0C3547] mb-1.5">
-                      {meta.emoji} {meta.label} — <span className="text-[#29ABE2]">{dist[grupo]} {dist[grupo] === 1 ? 'porción' : 'porciones'}</span>
-                    </p>
-                    <ul className="space-y-1">
-                      {sugerencias.map((s, i) => (
-                        <li key={i} className="text-[11px] text-[#4a6b80] leading-relaxed">
-                          • {s.alimento}
-                          {s.ejemploChileno && (
-                            <span className="text-[10px] text-[#29ABE2] italic"> · 🇨🇱 {s.ejemploChileno}</span>
-                          )}
-                        </li>
-                      ))}
-                      {INTERCAMBIOS[grupo].length > 3 && (
-                        <li className="text-[10px] text-[#8BA5BE] italic mt-1">
-                          + {INTERCAMBIOS[grupo].length - 3} alternativas más en la vista resumen del día
-                        </li>
-                      )}
-                    </ul>
-                  </div>
-                )
-              })}
             </div>
           </motion.div>
         )}
