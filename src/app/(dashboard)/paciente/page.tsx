@@ -46,6 +46,12 @@ const BancoPaciente = dynamic(
   () => import('@/components/banco/BancoPaciente').then(m => ({ default: m.BancoPaciente })),
   { ssr: false, loading: () => null },
 )
+// Material educativo asignado al paciente (Sprint 3-E2). Lazy — solo si el
+// paciente tiene plan generado y abre el tab Plan.
+const MaterialPaciente = dynamic(
+  () => import('@/components/educacion/MaterialPaciente').then(m => ({ default: m.MaterialPaciente })),
+  { ssr: false, loading: () => null },
+)
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -684,6 +690,15 @@ export default function PacientePage() {
                       {profile?.role === 'patient' && (
                         <div className="mt-8">
                           <BancoPaciente />
+                        </div>
+                      )}
+
+                      {/* ── Material educativo del nutri (Sprint 3-E2) ──
+                          Visible para pacientes con profesional asignado. Si no hay
+                          material, el componente devuelve null (no se ve nada). */}
+                      {profile?.role === 'patient' && userId && (
+                        <div className="mt-5">
+                          <MaterialPaciente patientId={userId} />
                         </div>
                       )}
                       {/* Link sutil al tab Educación — antes el comparador de yogures vivía
