@@ -50,7 +50,63 @@ export function PiramidePlan({ result, form, onChange }: Props) {
 
   const [dist, setDist] = useState<DistribucionPiramide>(distInicial)
 
-  const aporte = useMemo(() => calcularAportePiramide(dist), [dist])
+  // Filas extra del profesional para alimentos fuera de los 13 grupos canonicos
+  // (feedback Felipe: "agregar abajo de azucar algun alimento extra que el pro
+  // requiera"). Se suman al aporte/adecuacion del Paso 2 pero NO se propagan al
+  // Paso 3 — son items puntuales que el pro registra para que el balance cuadre.
+  interface FilaCustom {
+    id:        string
+    label:     string
+    kcalPorc:  number  // kcal por porcion
+    cPorc:     number
+    gPorc:     number
+    pPorc:     number
+    porciones: number
+  }
+  const [customs, setCustoms] = useState<FilaCustom[]>([])
+
+  function addCustom() {
+    setCustoms(cs => [
+      ...cs,
+      {
+        id:        `custom-${Date.now()}`,
+        label:     '',
+        kcalPorc:  0,
+        cPorc:     0,
+        gPorc:     0,
+        pPorc:     0,
+        porciones: 1,
+      },
+    ])
+  }
+  function updateCustom(id: string, patch: Partial<FilaCustom>) {
+    setCustoms(cs => cs.map(c => c.id === id ? { ...c, ...patch } : c))
+  }
+  function removeCustom(id: string) {
+    setCustoms(cs => cs.filter(c => c.id !== id))
+  }
+
+  // Aporte de los custom (suma porciones × macros por porcion)
+  const aporteCustom = useMemo(() => {
+    return customs.reduce(
+      (acc, c) => ({
+        kcal: acc.kcal + c.porciones * c.kcalPorc,
+        p:    acc.p    + c.porciones * c.pPorc,
+        c:    acc.c    + c.porciones * c.cPorc,
+        g:    acc.g    + c.porciones * c.gPorc,
+      }),
+      { kcal: 0, p: 0, c: 0, g: 0 },
+    )
+  }, [customs])
+
+  const aportePiramide = useMemo(() => calcularAportePiramide(dist), [dist])
+  // Aporte total = piramide canonica + custom rows del pro
+  const aporte = useMemo(() => ({
+    kcal: aportePiramide.kcal + aporteCustom.kcal,
+    p:    aportePiramide.p    + aporteCustom.p,
+    c:    aportePiramide.c    + aporteCustom.c,
+    g:    aportePiramide.g    + aporteCustom.g,
+  }), [aportePiramide, aporteCustom])
   const target = useMemo(() => ({ kcal: result.kcal, c: result.macros.c, g: result.macros.g, p: result.macros.p }), [result])
   const adecuacion = useMemo(() => calcularAdecuacionPiramide(aporte, target), [aporte, target])
   const sumasMeta = useMemo(() => sumaPorMetaGrupo(dist), [dist])
@@ -172,10 +228,117 @@ export function PiramidePlan({ result, form, onChange }: Props) {
                 )
               })}
 
+              {/* Filas CUSTOM del profesional (feedback Felipe) — alimentos extra
+                  fuera de los 13 grupos canonicos. Label + macros editables. */}
+              {customs.map(c => {
+                const kc = c.porciones * c.kcalPorc
+                const cc = c.porciones * c.cPorc
+                const gc = c.porciones * c.gPorc
+                const pc = c.porciones * c.pPorc
+                return (
+                  <tr key={c.id} className="border-t border-[#E2ECF4] bg-[#FFF8E1]">
+                    <td className="px-2 py-1.5 text-center font-bold text-[#0C3547]">
+                      <button
+                        type="button"
+                        onClick={() => removeCustom(c.id)}
+                        title="Eliminar fila"
+                        className="text-rose-500 hover:text-rose-700 font-black text-base leading-none"
+                      >
+                        ×
+                      </button>
+                    </td>
+                    <td className="px-3 py-1 text-[11px]">
+                      <input
+                        type="text"
+                        value={c.label}
+                        onChange={e => updateCustom(c.id, { label: e.target.value })}
+                        placeholder="Nombre del alimento (ej: aceite oliva extra)"
+                        className="w-full px-2 py-1 border border-amber-300 rounded text-[11px] focus:outline-none focus:border-amber-500 bg-white"
+                      />
+                    </td>
+                    <td className="px-2 py-1.5 text-center text-[10px] text-[#8BA5BE] italic">extra</td>
+                    <td className="px-1 py-1 text-center">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={c.porciones}
+                        onChange={e => updateCustom(c.id, { porciones: Math.max(0, Number(e.target.value) || 0) })}
+                        className="w-16 text-center font-bold text-sm rounded border border-amber-300 bg-white focus:outline-none focus:ring-2 focus:ring-amber-300 py-1"
+                      />
+                    </td>
+                    <td className="px-1 py-1 text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={1}
+                        value={c.kcalPorc}
+                        onChange={e => updateCustom(c.id, { kcalPorc: Math.max(0, Number(e.target.value) || 0) })}
+                        placeholder="0"
+                        className="w-14 text-right font-semibold text-xs rounded border border-amber-200 bg-white px-1 py-0.5 focus:outline-none focus:border-amber-500"
+                        title={`Total: ${Math.round(kc)} kcal`}
+                      />
+                    </td>
+                    <td className="px-1 py-1 text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={c.cPorc}
+                        onChange={e => updateCustom(c.id, { cPorc: Math.max(0, Number(e.target.value) || 0) })}
+                        placeholder="0"
+                        className="w-12 text-right text-xs rounded border border-amber-200 bg-white px-1 py-0.5 focus:outline-none focus:border-amber-500"
+                        title={`Total: ${Math.round(cc)}g`}
+                      />
+                    </td>
+                    <td className="px-1 py-1 text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={c.gPorc}
+                        onChange={e => updateCustom(c.id, { gPorc: Math.max(0, Number(e.target.value) || 0) })}
+                        placeholder="0"
+                        className="w-12 text-right text-xs rounded border border-amber-200 bg-white px-1 py-0.5 focus:outline-none focus:border-amber-500"
+                        title={`Total: ${Math.round(gc)}g`}
+                      />
+                    </td>
+                    <td className="px-1 py-1 text-right">
+                      <input
+                        type="number"
+                        min={0}
+                        step={0.5}
+                        value={c.pPorc}
+                        onChange={e => updateCustom(c.id, { pPorc: Math.max(0, Number(e.target.value) || 0) })}
+                        placeholder="0"
+                        className="w-12 text-right text-xs rounded border border-amber-200 bg-white px-1 py-0.5 focus:outline-none focus:border-amber-500"
+                        title={`Total: ${Math.round(pc)}g`}
+                      />
+                    </td>
+                  </tr>
+                )
+              })}
+
+              {/* Fila para agregar nuevo alimento extra */}
+              <tr className="border-t border-[#E2ECF4] bg-[#FFFBEB]">
+                <td colSpan={8} className="px-3 py-2 text-center">
+                  <button
+                    type="button"
+                    onClick={addCustom}
+                    className="inline-flex items-center gap-1.5 text-[11px] uppercase tracking-wider font-bold text-amber-800 hover:text-amber-900 hover:bg-amber-100 transition rounded-md px-3 py-1.5"
+                  >
+                    + Agregar alimento extra
+                  </button>
+                  <p className="text-[9px] text-[#8BA5BE] italic mt-0.5">
+                    Para alimentos fuera de los 13 grupos canónicos · se suma al aporte total pero no se distribuye en el Paso 3
+                  </p>
+                </td>
+              </tr>
+
               {/* Fila APORTE PIRÁMIDE */}
               <tr className="border-t-2 border-[#0C3547] bg-[#F8FBFD]">
                 <td colSpan={4} className="px-3 py-2 font-black text-[#0C3547] uppercase tracking-wide text-[11px]">
-                  Aporte pirámide
+                  Aporte pirámide{customs.length > 0 && <span className="text-[10px] font-normal text-[#6B7C93] ml-1">(+ {customs.length} extra)</span>}
                 </td>
                 <td className="px-2 py-2 text-right font-black text-[#0C3547]">{Math.round(aporte.kcal)}</td>
                 <td className="px-2 py-2 text-right font-black text-[#0C3547]">{Math.round(aporte.c)}</td>
