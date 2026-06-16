@@ -34,6 +34,11 @@ const ProximoControl = dynamic(
   () => import('@/components/profesional/ProximoControl').then(m => ({ default: m.ProximoControl })),
   { ssr: false, loading: () => null },
 )
+// Lazy: biblioteca de material educativo (Sprint 3-E) — tab 'material' del paciente.
+const MaterialEducativo = dynamic(
+  () => import('@/components/profesional/MaterialEducativo').then(m => ({ default: m.MaterialEducativo })),
+  { ssr: false, loading: () => null },
+)
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
@@ -44,7 +49,7 @@ import {
   Link2, Mail, Copy, X, UserPlus, Send, BarChart2,
   FileText, Flame, Beef, Wheat, Droplets, ChevronRight,
   MessageSquare, Smartphone, Loader2, Trash2,
-  Camera,
+  Camera, BookOpen,
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -435,7 +440,7 @@ function PatientDetail({
   const supabase = createClient()
   const [logs, setLogs] = useState<DailyLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [view, setView] = useState<'overview' | 'plan' | 'notas'>('overview')
+  const [view, setView] = useState<'overview' | 'plan' | 'notas' | 'material'>('overview')
   const [planResult, setPlanResult] = useState<NutritionResult | null>(null)
   const [planForm, setPlanForm] = useState<FormData | null>(null)
   const [allPlans, setAllPlans] = useState<PlanRow[]>([])
@@ -613,6 +618,24 @@ Cualquier duda, escríbeme 😊`
           <ArrowLeft size={14} /> Volver a {patient.nombre}
         </button>
         <NotasClinicas patientId={patient.id} professionalId={professionalId} />
+      </div>
+    )
+  }
+
+  if (view === 'material') {
+    return (
+      <div className="px-4 py-4 md:px-8 md:py-6 max-w-3xl mx-auto">
+        <button
+          onClick={() => setView('overview')}
+          className="flex items-center gap-2 text-sm text-[#8BA5BE] hover:text-[#0C1F2C] mb-6 transition-colors"
+        >
+          <ArrowLeft size={14} /> Volver a {patient.nombre}
+        </button>
+        <MaterialEducativo
+          professionalId={professionalId}
+          patientId={patient.id}
+          patientName={patient.nombre ?? undefined}
+        />
       </div>
     )
   }
@@ -887,6 +910,14 @@ Cualquier duda, escríbeme 😊`
             title="Indicaciones, suplementacion, rutina, examenes solicitados"
           >
             <FileText size={14} /> <span className="hidden sm:inline">Notas clinicas</span>
+          </button>
+          {/* Material educativo (Sprint 3-E) */}
+          <button
+            onClick={() => setView('material')}
+            className="flex items-center gap-2 bg-white border border-[#E2ECF4] text-[#6B7C93] text-sm font-bold px-3 py-2 rounded-xl hover:border-emerald-500 hover:text-emerald-700 transition"
+            title="PDFs, infografias, videos cortos y links que compartis con tus pacientes"
+          >
+            <BookOpen size={14} /> <span className="hidden sm:inline">Material</span>
           </button>
           {/* Eliminar de lista — separador visual + estilo destructivo SIEMPRE visible
               (no solo en hover). Antes el botón vivía pegado a "Mensaje" con el mismo
