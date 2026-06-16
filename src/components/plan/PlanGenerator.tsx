@@ -2768,6 +2768,36 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                 </div>
               )}
 
+              {/* ── Modalidad por porciones: SKIP el bloque de seleccion de menus ──
+                  Feedback Felipe: cuando la modalidad es 'porciones' (intercambios
+                  INTA/Sochinut), el pro NO arma con preparaciones especificas — todo
+                  el bloque de selectores (yogur/pan/queso/untable + MealChips de
+                  desayunos/colaciones/almuerzos/once/cena + disclaimers) es ruido.
+                  Las porciones se ajustan despues en el wizard del resultado
+                  (PorcionesPlan, Paso 2 + Paso 3). */}
+              {(form.modalidadPlan ?? 'menus') === 'porciones' ? (
+                <div className="bg-gradient-to-br from-emerald-50 to-[#F0F9FF] border-2 border-emerald-200 rounded-2xl p-5">
+                  <div className="flex items-start gap-3">
+                    <span className="text-3xl flex-shrink-0">⚖️</span>
+                    <div>
+                      <p className="text-sm font-black text-[#0C3547] mb-1">Modalidad por porciones activa</p>
+                      <p className="text-xs text-[#4a6b80] leading-relaxed">
+                        En este modo no eliges menús específicos — el plan se arma como porciones de los
+                        <strong> 6 grupos básicos</strong> (lácteos, frutas, verduras, cereales, proteínas, grasas)
+                        con intercambios INTA/Sochinut.
+                      </p>
+                      <p className="text-xs text-[#4a6b80] leading-relaxed mt-2">
+                        Después de generar el plan vas a poder <strong>editar las porciones por grupo</strong>
+                        (Paso 2 del resultado) y <strong>moverlas entre tiempos de comida</strong>
+                        (Paso 3 — el editor que pidió María José).
+                      </p>
+                      <p className="text-[11px] text-[#6B7C93] italic mt-2">
+                        💡 Si querés volver al modo con menús específicos, cambia &quot;Modalidad de plan&quot; en el paso anterior.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (<>
               {/* 3️⃣ Selector tipo yogur — filtrado por tendencia + intolerancias */}
               <YogurtTypePicker
                 value={(form.yogurtTipo ?? 'griego') as YogurTipo}
@@ -3010,6 +3040,7 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                   </div>
                 </div>
               )}
+              </>)}{/* fin del bloque condicional "modalidad === menus" — feedback Felipe */}
 
               {/* Disclaimers de barras/snacks: ahora se muestran dentro de los CatalogPicker */}
 
