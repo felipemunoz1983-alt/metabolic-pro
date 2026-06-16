@@ -103,6 +103,10 @@ function RegisterForm() {
   const [email,   setEmail]   = useState(emailParam)
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
+  // Email del nutri (opcional) — para auto-linkear cuando el paciente se
+  // registra sin invite token. Si lo deja vacio, queda como individual.
+  const [nutriEmail,    setNutriEmail]    = useState('')
+  const [linkInfo,      setLinkInfo]      = useState<string | null>(null)  // mensaje post-signup
   const [error,   setError]   = useState(noProfile ? 'Tu sesión anterior no tiene cuenta registrada. Crea una nueva cuenta para continuar.' : '')
   const [loading, setLoading] = useState(false)
   const [done,    setDone]    = useState(false)
@@ -238,6 +242,36 @@ function RegisterForm() {
       }
     }
 
+    // 3a-bis. Auto-linking por email del nutri (sin invite token)
+    //     Si el paciente NO viene con invite link pero escribio el email de su
+    //     nutri, intentamos linkearlo via /api/patients/link-by-email.
+    //     Si el email no existe o ya esta linkeado a otro pro, se muestra
+    //     warning suave y el paciente queda como individual (no aborta).
+    if (!isLinked && !inviteToken && nutriEmail.trim()) {
+      try {
+        const res = await fetch('/api/patients/link-by-email', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({
+            patientId:         userId,
+            professionalEmail: nutriEmail.trim().toLowerCase(),
+          }),
+        })
+        const d = await res.json()
+        if (d.ok) {
+          setLinkInfo(`✓ Vinculado a ${d.professionalName ?? 'tu nutricionista'}${d.grantedTrial ? ' (21 días de prueba premium)' : ''}`)
+        } else if (d.error === 'professional_not_found') {
+          setLinkInfo('⚠ No encontramos un nutricionista con ese email. Tu cuenta quedó activa igual — pídele a tu nutri que te invite desde su panel.')
+        } else if (d.error === 'already_linked_to_another') {
+          setLinkInfo('⚠ Tu cuenta ya estaba vinculada a otro profesional. Si es un error, contactanos.')
+        } else {
+          setLinkInfo('⚠ No pudimos vincularte automáticamente. Tu cuenta quedó creada.')
+        }
+      } catch {
+        setLinkInfo('⚠ Error de conexión al vincular. Tu cuenta quedó creada.')
+      }
+    }
+
     // 3a. Vinculación + notificación al profesional
     //     - Con token firmado → /api/invites/redeem (verifica firma + exp + notifica)
     //     - Sin token (legacy ?pro=) → notifyProfessionalLinked directo
@@ -318,6 +352,11 @@ function RegisterForm() {
             ? 'Vinculada a tu profesional. Redirigiendo...'
             : 'Revisa tu email para confirmar tu cuenta y luego inicia sesión.'}
         </p>
+        {linkInfo && (
+          <p className={`text-xs mt-3 max-w-xs mx-auto leading-relaxed ${linkInfo.startsWith('✓') ? 'text-emerald-700' : 'text-amber-700'}`}>
+            {linkInfo}
+          </p>
+        )}
         <div className="mt-6">
           <a
             href="/login"
@@ -395,6 +434,27 @@ function RegisterForm() {
             />
           </div>
         </div>
+
+        {/* Email del nutri (opcional) — solo si NO viene con invite link */}
+        {!isLinked && !isProfessionalRegister && (
+          <div>
+            <label className="block text-xs font-bold text-[#0C1F2C] mb-1.5 uppercase tracking-wide">
+              Email de tu nutricionista <span className="text-[#8BA5BE] normal-case font-normal">(opcional)</span>
+            </label>
+            <div className="relative">
+              <ShieldCheck size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8BA5BE]" />
+              <input
+                type="email" value={nutriEmail}
+                onChange={e => setNutriEmail(e.target.value)}
+                placeholder="nutri@email.com"
+                className="w-full pl-10 pr-4 py-3 border border-[#E2ECF4] rounded-xl text-sm text-[#0C1F2C] placeholder-[#C8D8E4] focus:outline-none focus:border-[#29ABE2] focus:ring-2 focus:ring-[#29ABE2]/20 transition"
+              />
+            </div>
+            <p className="text-[10px] text-[#8BA5BE] mt-1.5 leading-relaxed">
+              Si tu nutricionista ya tiene cuenta acá, escribe su email y te vinculamos automáticamente (+ 21 días de prueba premium). Si lo dejas vacío, igual puedes usar la app por tu cuenta.
+            </p>
+          </div>
+        )}
 
         {/* Passwords — side by side on wider form */}
         <div className="grid grid-cols-2 gap-3">
