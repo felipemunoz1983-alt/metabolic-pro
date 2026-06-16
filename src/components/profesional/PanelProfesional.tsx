@@ -445,13 +445,13 @@ Cualquier duda, escríbeme 😊`
   })()
 
   /** Desvincula al paciente de este profesional (no elimina su cuenta) */
-  async function handleUnlink() {
+  async function handleUnlink(mode: 'unlink' | 'delete' = 'unlink') {
     setUnlinking(true)
     try {
       const res = await fetch('/api/patients/link', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ patientId: patient.id, professionalId }),
+        body: JSON.stringify({ patientId: patient.id, professionalId, mode }),
       })
       if (!res.ok) {
         const d = await res.json().catch(() => ({}))
@@ -685,29 +685,44 @@ Cualquier duda, escríbeme 😊`
                 <X size={22} className="text-red-500" />
               </div>
               <h3 className="text-base font-black text-[#0C1F2C] text-center mb-1">
-                Eliminar de la lista
+                Eliminar paciente
               </h3>
-              <p className="text-sm text-[#6B7C93] text-center mb-6 leading-relaxed">
-                ¿Quieres eliminar a <strong className="text-[#0C1F2C]">{patient.nombre}</strong> de tu lista de pacientes?
-                <br />
-                <span className="text-xs text-[#8BA5BE] mt-1 block">Su cuenta se mantiene. Solo se desvincula de tu panel.</span>
+              <p className="text-sm text-[#6B7C93] text-center mb-5 leading-relaxed">
+                ¿Qué hacer con <strong className="text-[#0C1F2C]">{patient.nombre}</strong>?
               </p>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setShowUnlink(false)}
-                  disabled={unlinking}
-                  className="flex-1 py-2.5 rounded-xl border border-[#E2ECF4] text-sm font-bold text-[#6B7C93] hover:bg-[#F8FBFD] transition disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleUnlink}
-                  disabled={unlinking}
-                  className="flex-1 py-2.5 rounded-xl bg-red-500 text-white text-sm font-bold hover:bg-red-600 transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {unlinking ? <><Loader2 size={14} className="animate-spin" /> Eliminando...</> : 'Sí, eliminar'}
-                </button>
-              </div>
+
+              {/* Opcion 1: Desvincular */}
+              <button
+                onClick={() => handleUnlink('unlink')}
+                disabled={unlinking}
+                className="w-full text-left p-3 mb-2 rounded-xl border-2 border-[#E2ECF4] hover:border-[#29ABE2] hover:bg-[#F8FBFD] transition disabled:opacity-50"
+              >
+                <p className="text-sm font-bold text-[#0C1F2C] mb-0.5">🔗 Solo desvincular</p>
+                <p className="text-[11px] text-[#6B7C93] leading-snug">
+                  Sale de tu lista pero su cuenta sigue activa (puede seguir usando la app como autónomo).
+                </p>
+              </button>
+
+              {/* Opcion 2: Eliminar completo */}
+              <button
+                onClick={() => handleUnlink('delete')}
+                disabled={unlinking}
+                className="w-full text-left p-3 mb-4 rounded-xl border-2 border-red-200 hover:border-red-500 hover:bg-red-50 transition disabled:opacity-50"
+              >
+                <p className="text-sm font-bold text-red-700 mb-0.5">🗑️ Eliminar completamente</p>
+                <p className="text-[11px] text-red-600 leading-snug">
+                  Borra el paciente y todos sus datos. <strong>Recomendado para pacientes de prueba.</strong>
+                  <br />Recuperable solo vía SQL si te equivocas.
+                </p>
+              </button>
+
+              <button
+                onClick={() => setShowUnlink(false)}
+                disabled={unlinking}
+                className="w-full py-2.5 rounded-xl border border-[#E2ECF4] text-sm font-bold text-[#6B7C93] hover:bg-[#F8FBFD] transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {unlinking ? <><Loader2 size={14} className="animate-spin" /> Procesando...</> : 'Cancelar'}
+              </button>
             </motion.div>
           </motion.div>
         )}
@@ -1703,6 +1718,7 @@ export function PanelProfesional({
       .select('*')
       .eq('professional_id', professionalId)
       .eq('role', 'patient')
+      .is('deleted_at', null)
       .order('nombre', { ascending: true })
 
     if (profilesError) {

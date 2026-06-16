@@ -68,19 +68,29 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
 /**
  * DELETE /api/patients/link
- * Desvincula un paciente del profesional (professional_id → null, role → individual).
- * NO elimina la cuenta del paciente en Supabase Auth.
  *
- * Body: { patientId: string, professionalId: string }
+ * Dos modos (campo `mode` en el body):
+ *  - 'unlink' (default) → Desvincula al paciente del profesional (professional_id=null,
+ *                          role='individual'). La cuenta del paciente queda activa para
+ *                          que siga usando la app como autonomo.
+ *  - 'delete'           → Soft delete completo: deleted_at = NOW(). El paciente
+ *                          desaparece del panel del pro Y no puede loguearse mas
+ *                          (las queries filtran por deleted_at IS NULL).
+ *                          Recuperable manualmente via SQL (UPDATE profiles SET
+ *                          deleted_at = NULL WHERE email = ...).
+ *
+ * Body: { patientId: string, professionalId: string, mode?: 'unlink' | 'delete' }
  */
 export async function DELETE(req: NextRequest): Promise<NextResponse> {
   let patientId: string
   let professionalId: string
+  let mode: 'unlink' | 'delete' = 'unlink'
 
   try {
     const body = await req.json()
     patientId      = body.patientId
     professionalId = body.professionalId
+    if (body.mode === 'delete') mode = 'delete'
     if (!patientId || !professionalId) throw new Error('missing fields')
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 })
@@ -110,15 +120,19 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'Patient not linked to this professional' }, { status: 404 })
   }
 
-  // Desvincular: quitar professional_id y volver a rol individual
+  // Payload segun modo
+  const updatePayload = mode === 'delete'
+    ? { deleted_at: new Date().toISOString() }
+    : { professional_id: null, role: 'individual' as const }
+
   const { error } = await supabase
     .from('profiles')
-    .update({ professional_id: null, role: 'individual' })
+    .update(updatePayload)
     .eq('id', patientId)
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true })
+  return NextResponse.json({ ok: true, mode })
 }
