@@ -572,29 +572,84 @@ function MetodoCalculoSelector({
                 </div>
               )}
 
-              {/* Preview en vivo + warnings */}
-              {preview && (
-                <div className="bg-[#0F1419] text-white rounded-lg p-3 space-y-2">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Resultado calculado</p>
-                  <div className="flex items-baseline gap-3 flex-wrap">
-                    <p className="text-2xl font-black">{preview.kcal} <span className="text-xs font-normal text-zinc-400">kcal/día</span></p>
-                    <p className="text-xs text-zinc-300">
-                      <span className="text-violet-300 font-bold">{preview.macros.p}g P</span> ·{' '}
-                      <span className="text-amber-300 font-bold">{preview.macros.c}g C</span> ·{' '}
-                      <span className="text-rose-300 font-bold">{preview.macros.g}g G</span>
-                    </p>
-                  </div>
-                  {preview.warnings && preview.warnings.length > 0 && (
-                    <div className="border-t border-white/10 pt-2 space-y-1">
-                      {preview.warnings.map((w, i) => (
-                        <p key={i} className={cn('text-[10px] leading-relaxed', w.startsWith('🚨') ? 'text-red-300 font-bold' : 'text-amber-300')}>
-                          {w}
+              {/* Preview en vivo + warnings.
+                  Feedback Felipe: no mostrar el "resultado calculado" cuando los
+                  inputs estan vacios — confunde porque parece definitivo y en
+                  realidad son solo los defaults (P=1.6, G=1.0, C=5 para macros
+                  directos; 30 kcal/kg para kcal_kg_pal). Mejor pedir que el pro
+                  los complete y solo despues mostrar el preview, con una nota
+                  clara de que campos vienen del default si aplica. */}
+              {(() => {
+                const macrosDirectosVacio = metodo === 'macros_directos'
+                  && form.proteinaGKgOverride == null
+                  && form.grasaGKgOverride    == null
+                  && form.choGKgOverride      == null
+                const kcalKgVacio = metodo === 'kcal_kg_pal' && form.kcalPorKg == null
+
+                if (macrosDirectosVacio) {
+                  return (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                      <span className="text-base flex-shrink-0">📝</span>
+                      <div className="text-xs text-amber-900">
+                        <p className="font-bold mb-0.5">Completa los 3 macros para ver el cálculo</p>
+                        <p className="text-[11px] leading-relaxed">
+                          En este método cada macro lo defines tú en g/kg. Las kcal son resultado de la suma — no hay un cálculo automático hasta que escribas al menos uno.
                         </p>
-                      ))}
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  )
+                }
+                if (kcalKgVacio) {
+                  return (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-2">
+                      <span className="text-base flex-shrink-0">📝</span>
+                      <div className="text-xs text-amber-900">
+                        <p className="font-bold mb-0.5">Completa kcal/kg para ver el cálculo</p>
+                        <p className="text-[11px] leading-relaxed">
+                          Ejemplo: 25-30 = mantenimiento sedentario, 35-40 = activo, 45-50 = hipertrofia.
+                        </p>
+                      </div>
+                    </div>
+                  )
+                }
+                if (!preview) return null
+
+                // Detectar defaults aplicados (campos vacios pero metodo permite calcular).
+                // Solo aplica a macros_directos parcial (1-2 de 3 llenos).
+                const defaultsAsumidos: string[] = []
+                if (metodo === 'macros_directos') {
+                  if (form.proteinaGKgOverride == null) defaultsAsumidos.push('P=1.6 g/kg (default)')
+                  if (form.grasaGKgOverride    == null) defaultsAsumidos.push('G=1.0 g/kg (default)')
+                  if (form.choGKgOverride      == null) defaultsAsumidos.push('C=5 g/kg (default)')
+                }
+                return (
+                  <div className="bg-[#0F1419] text-white rounded-lg p-3 space-y-2">
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Resultado calculado</p>
+                    <div className="flex items-baseline gap-3 flex-wrap">
+                      <p className="text-2xl font-black">{preview.kcal} <span className="text-xs font-normal text-zinc-400">kcal/día</span></p>
+                      <p className="text-xs text-zinc-300">
+                        <span className="text-violet-300 font-bold">{preview.macros.p}g P</span> ·{' '}
+                        <span className="text-amber-300 font-bold">{preview.macros.c}g C</span> ·{' '}
+                        <span className="text-rose-300 font-bold">{preview.macros.g}g G</span>
+                      </p>
+                    </div>
+                    {defaultsAsumidos.length > 0 && (
+                      <p className="text-[10px] text-amber-300/90 italic border-t border-white/10 pt-2">
+                        ⚠ Asumiendo defaults para campos vacíos: {defaultsAsumidos.join(' · ')}
+                      </p>
+                    )}
+                    {preview.warnings && preview.warnings.length > 0 && (
+                      <div className="border-t border-white/10 pt-2 space-y-1">
+                        {preview.warnings.map((w, i) => (
+                          <p key={i} className={cn('text-[10px] leading-relaxed', w.startsWith('🚨') ? 'text-red-300 font-bold' : 'text-amber-300')}>
+                            {w}
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           </motion.div>
         )}
