@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa, PAL_NIVELES_FAO, METODO_COMPOSICION_LABELS } from '@/lib/nutrition'
-import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo, MetodoComposicion } from '@/lib/nutrition'
+import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo, MetodoComposicion, FormulaUsada } from '@/lib/nutrition'
 import { MODALIDAD_PLAN_LABELS, type ModalidadPlan } from '@/lib/porciones'
 import {
   CIRUGIA_BARIATRICA_LABELS,
@@ -298,6 +298,67 @@ function MetodoCalculoSelector({
                   </button>
                 ))}
               </div>
+
+              {/* Selector explicito de formula BMR — feedback Maria Jose Serrano.
+                  Solo aplica al metodo 'bmr_pal' (los otros 2 metodos no usan BMR).
+                  Por default queda 'auto' (Cunningham si BIA+deportista, sino Mifflin).
+                  El profesional puede forzar HB×FA o cualquier otra explicitamente. */}
+              {metodo === 'bmr_pal' && (
+                <div className="bg-white border border-[#D6E3ED] rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="text-xs font-bold text-[#0C3547] uppercase tracking-wide">
+                      Formula BMR
+                    </label>
+                    {form.formulaOverride != null && (
+                      <button
+                        type="button"
+                        onClick={() => set('formulaOverride', undefined)}
+                        className="text-[10px] text-[#29ABE2] font-semibold hover:underline"
+                      >
+                        Volver a automatico
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {(
+                      [
+                        { v: 'mifflin_st_jeor',        label: 'Mifflin-St Jeor', sub: 'Default · ±10% error · 2026 estandar' },
+                        { v: 'harris_benedict_legacy', label: 'Harris-Benedict', sub: 'HB × FA · ±15% · clasico historico' },
+                        { v: 'cunningham',             label: 'Cunningham',      sub: 'Requiere % grasa medido (BIA/ISAK)' },
+                      ] as { v: FormulaUsada; label: string; sub: string }[]
+                    ).map(opt => {
+                      const activa = (form.formulaOverride ?? null) === opt.v
+                      const deshabilitada = opt.v === 'cunningham' && (form.porcentajeGrasa == null || form.porcentajeGrasa <= 0)
+                      return (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => !deshabilitada && set('formulaOverride', opt.v)}
+                          disabled={deshabilitada}
+                          className={cn(
+                            'p-2.5 rounded-lg border-2 text-left transition-all text-[11px]',
+                            activa
+                              ? 'bg-[#EAF4FB] border-[#29ABE2] text-[#0C3547]'
+                              : 'border-[#D6E3ED] bg-white text-[#6B7C93] hover:border-[#29ABE2]',
+                            deshabilitada && 'opacity-40 cursor-not-allowed hover:border-[#D6E3ED]',
+                          )}
+                        >
+                          <p className="font-bold">{opt.label}</p>
+                          <p className="text-[10px] mt-0.5 leading-tight">{opt.sub}</p>
+                          {deshabilitada && (
+                            <p className="text-[9px] text-amber-700 mt-1">Falta % grasa en datos del paciente</p>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                  <p className="text-[10px] text-[#8BA5BE] mt-2 italic leading-relaxed">
+                    {form.formulaOverride
+                      ? 'Estas forzando esta formula. El profesional eligio explicitamente.'
+                      : 'En automatico: Cunningham si hay BIA/ISAK + paciente activo, Mifflin-St Jeor en el resto.'}
+                  </p>
+                </div>
+              )}
 
               {/* Inputs específicos por método */}
               {metodo === 'kcal_kg_pal' && (

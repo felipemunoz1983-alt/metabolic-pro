@@ -226,6 +226,11 @@ export interface FormData {
    *    1.725 Activo    · 1.900 Muy activo
    *  Aplica a métodos 'bmr_pal' y 'kcal_kg_pal'. 'macros_directos' no usa PAL. */
   palOverride?: number
+  /** Override de la formula de BMR (feedback Maria Jose Serrano).
+   *  Si NO esta set, se elige automaticamente (Cunningham si hay %GC + deportista,
+   *  Mifflin-St Jeor en el resto). Permite forzar Harris-Benedict × FA para
+   *  consistencia con planes historicos. Solo aplica a metodoCalculo='bmr_pal'. */
+  formulaOverride?: FormulaUsada
 }
 
 /** Niveles de actividad física FAO/WHO 2001 — usados como presets clínicos
@@ -549,19 +554,25 @@ export function calcularNutricion(form: Pick<FormData,
   'diasEjercicio' | 'duracionSesion' | 'tipoEjercicio' | 'porcentajeGrasa' |
   'digCirugiaBariatrica' | 'digFasePostBariatrica' |
   'metodoCalculo' | 'kcalPorKg' |
-  'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride' | 'palOverride'
+  'proteinaGKgOverride' | 'grasaGKgOverride' | 'choGKgOverride' | 'palOverride' |
+  'formulaOverride'
 >): NutritionResult {
   const metodo: MetodoCalculo = form.metodoCalculo ?? 'bmr_pal'
   // PAL: si el profesional definió un override manual (típicamente eligió un
   // nivel FAO/WHO desde el selector), respetarlo. Si no, derivar automático
   // desde días/duración/tipo del wizard.
   const pal = form.palOverride ?? factorActividad(form.diasEjercicio, form.duracionSesion, form.tipoEjercicio)
-  const formula = seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
+  // Formula: si el profesional eligio una explicitamente (formulaOverride),
+  // respetarla. Sino, selecciona auto (Cunningham si BIA + deportista, sino Mifflin).
+  const formula: FormulaUsada = form.formulaOverride
+    ?? seleccionarFormula(form.sexo, form.diasEjercicio, form.porcentajeGrasa)
 
-  // bmrEstimado se calcula siempre para mostrar al pro como referencia,
-  // aunque el método activo no lo use directamente.
-  const bmrEstimado = formula === 'cunningham' && form.porcentajeGrasa != null
-    ? bmrCunningham(form.peso, form.porcentajeGrasa)
+  // bmrEstimado se calcula segun la formula activa.
+  const bmrEstimado =
+    formula === 'cunningham' && form.porcentajeGrasa != null
+      ? bmrCunningham(form.peso, form.porcentajeGrasa)
+    : formula === 'harris_benedict_legacy'
+      ? bmrHarrisBenedictLegacy(form.peso, form.talla, form.edad, form.sexo)
     : bmrMifflinStJeor(form.peso, form.talla, form.edad, form.sexo)
 
   let tdee: number

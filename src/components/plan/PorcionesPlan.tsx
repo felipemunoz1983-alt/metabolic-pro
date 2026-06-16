@@ -124,6 +124,11 @@ export function PorcionesPlan({ result, form }: Props) {
   //  Paso 4 · Alimentos reales         → tabla de intercambios INTA con gramajes y ejemplos
   type Paso = 1 | 2 | 3 | 4
   const [paso, setPaso] = useState<Paso>(1)
+
+  // Toggle de vista del desglose de macros en el Paso 1 (feedback Maria Jose):
+  // "ver si quiero desglosar en gramos por kilo de peso o de manera porcentual".
+  // 'gkg' = g/kg de peso corporal como numero principal · 'pct' = % de kcal como principal.
+  const [vistaMacro, setVistaMacro] = useState<'gkg' | 'pct'>('gkg')
   const PASOS: { n: Paso; label: string; emoji: string }[] = [
     { n: 1, label: 'Requerimientos',            emoji: '🎯' },
     { n: 2, label: 'Porciones de alimentos',    emoji: '🥗' },
@@ -296,42 +301,95 @@ export function PorcionesPlan({ result, form }: Props) {
                 </div>
               </div>
 
-              {/* Macros — cada tarjeta muestra g + g/kg + %kcal (los 3 números clínicos) */}
-              <p className="text-[10px] uppercase tracking-wider text-[#6B7C93] font-bold mb-2">Distribución de macronutrientes</p>
+              {/* Validador de coherencia macros vs GET (feedback Maria Jose):
+                  "ver si los gr por kilo de peso totales se adecuan a la molecula
+                  total para que no sobrepasen mas-menos 5-10%". */}
+              {(() => {
+                const deltaKcal = totalMacrosKcal - result.kcal
+                const deltaCohPct  = result.kcal ? Math.round((deltaKcal / result.kcal) * 100) : 0
+                const absPct    = Math.abs(deltaCohPct)
+                const estado    = absPct <= 5 ? 'ok' : absPct <= 10 ? 'warn' : 'bad'
+                const cls       = estado === 'ok'   ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                                : estado === 'warn' ? 'bg-amber-50   border-amber-300   text-amber-800'
+                                :                     'bg-rose-50    border-rose-300    text-rose-800'
+                const icon      = estado === 'ok' ? '✓' : estado === 'warn' ? '⚠' : '🚨'
+                const label     = estado === 'ok'   ? `Coherente con GET (Δ ${deltaCohPct >= 0 ? '+' : ''}${deltaCohPct}%)`
+                                : estado === 'warn' ? `Cerca del limite (Δ ${deltaCohPct >= 0 ? '+' : ''}${deltaCohPct}%) — revisar`
+                                :                     `Macros NO cuadran con GET (Δ ${deltaCohPct >= 0 ? '+' : ''}${deltaCohPct}%) — ajustar`
+                return (
+                  <div className={`flex items-baseline gap-2 mb-3 rounded-xl border-2 px-3 py-2 ${cls}`}>
+                    <span className="text-base">{icon}</span>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black uppercase tracking-wide">Coherencia macros vs GET</p>
+                      <p className="text-[10px] mt-0.5 leading-tight">
+                        {label} · suma macros = {totalMacrosKcal} kcal vs GET = {result.kcal} kcal
+                      </p>
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* Macros — toggle de vista (g/kg vs %) sobre el desglose */}
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <p className="text-[10px] uppercase tracking-wider text-[#6B7C93] font-bold">Distribución de macronutrientes</p>
+                <div className="inline-flex bg-[#F0F6FA] border border-[#E2ECF4] rounded-lg p-0.5 text-[10px] font-bold">
+                  <button
+                    type="button"
+                    onClick={() => setVistaMacro('gkg')}
+                    className={cn(
+                      'px-2.5 py-1 rounded-md transition',
+                      vistaMacro === 'gkg' ? 'bg-[#0C3547] text-white shadow' : 'text-[#6B7C93] hover:text-[#0C3547]',
+                    )}
+                  >
+                    g/kg
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVistaMacro('pct')}
+                    className={cn(
+                      'px-2.5 py-1 rounded-md transition',
+                      vistaMacro === 'pct' ? 'bg-[#0C3547] text-white shadow' : 'text-[#6B7C93] hover:text-[#0C3547]',
+                    )}
+                  >
+                    % kcal
+                  </button>
+                </div>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="bg-violet-50 rounded-xl p-3 border border-violet-200">
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-[10px] uppercase tracking-wider text-violet-700 font-bold">Proteína</p>
-                    <p className="text-[10px] font-bold text-violet-600">{pPct}% kcal</p>
-                  </div>
-                  <p className="text-2xl font-black text-violet-700 mt-1">{result.macros.p}<span className="text-sm">g</span></p>
-                  {pesoKg > 0 && (
-                    <p className="text-[11px] text-violet-700 font-semibold mt-0.5">{pGKg} <span className="text-[10px] font-normal">g/kg</span></p>
-                  )}
-                  <p className="text-[9px] text-violet-600 mt-0.5">{pKcal} kcal</p>
-                </div>
-                <div className="bg-amber-50 rounded-xl p-3 border border-amber-200">
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-[10px] uppercase tracking-wider text-amber-700 font-bold">Carbohidratos</p>
-                    <p className="text-[10px] font-bold text-amber-600">{cPct}% kcal</p>
-                  </div>
-                  <p className="text-2xl font-black text-amber-700 mt-1">{result.macros.c}<span className="text-sm">g</span></p>
-                  {pesoKg > 0 && (
-                    <p className="text-[11px] text-amber-700 font-semibold mt-0.5">{cGKg} <span className="text-[10px] font-normal">g/kg</span></p>
-                  )}
-                  <p className="text-[9px] text-amber-600 mt-0.5">{cKcal} kcal</p>
-                </div>
-                <div className="bg-rose-50 rounded-xl p-3 border border-rose-200">
-                  <div className="flex items-baseline justify-between">
-                    <p className="text-[10px] uppercase tracking-wider text-rose-700 font-bold">Grasa</p>
-                    <p className="text-[10px] font-bold text-rose-600">{gPct}% kcal</p>
-                  </div>
-                  <p className="text-2xl font-black text-rose-700 mt-1">{result.macros.g}<span className="text-sm">g</span></p>
-                  {pesoKg > 0 && (
-                    <p className="text-[11px] text-rose-700 font-semibold mt-0.5">{gGKg} <span className="text-[10px] font-normal">g/kg</span></p>
-                  )}
-                  <p className="text-[9px] text-rose-600 mt-0.5">{gKcal} kcal</p>
-                </div>
+                {(
+                  [
+                    { key: 'p', label: 'Proteína',       gramos: result.macros.p, gkg: pGKg, pct: pPct, kcal: pKcal, color: 'violet' },
+                    { key: 'c', label: 'Carbohidratos',  gramos: result.macros.c, gkg: cGKg, pct: cPct, kcal: cKcal, color: 'amber'  },
+                    { key: 'g', label: 'Grasa',          gramos: result.macros.g, gkg: gGKg, pct: gPct, kcal: gKcal, color: 'rose'   },
+                  ] as const
+                ).map(m => {
+                  const colorBg     = m.color === 'violet' ? 'bg-violet-50 border-violet-200' : m.color === 'amber' ? 'bg-amber-50 border-amber-200' : 'bg-rose-50 border-rose-200'
+                  const colorText   = m.color === 'violet' ? 'text-violet-700' : m.color === 'amber' ? 'text-amber-700' : 'text-rose-700'
+                  const colorSub    = m.color === 'violet' ? 'text-violet-600' : m.color === 'amber' ? 'text-amber-600' : 'text-rose-600'
+                  // Valor "principal" segun toggle
+                  const principal   = vistaMacro === 'gkg'
+                    ? { v: pesoKg > 0 ? `${m.gkg}` : `${m.gramos}`, u: pesoKg > 0 ? 'g/kg' : 'g' }
+                    : { v: `${m.pct}`, u: '%' }
+                  // Los otros 2 valores como secundarios
+                  const sec1 = vistaMacro === 'gkg'
+                    ? { v: `${m.pct}%`,    label: 'kcal' }
+                    : pesoKg > 0
+                      ? { v: `${m.gkg}`,   label: 'g/kg' }
+                      : { v: `${m.gramos}`,label: 'g totales' }
+                  const sec2 = { v: `${m.gramos}g totales`, label: `${m.kcal} kcal` }
+                  return (
+                    <div key={m.key} className={`rounded-xl p-3 border ${colorBg}`}>
+                      <div className="flex items-baseline justify-between">
+                        <p className={`text-[10px] uppercase tracking-wider font-bold ${colorText}`}>{m.label}</p>
+                        <p className={`text-[10px] font-bold ${colorSub}`}>{sec1.v} {sec1.label}</p>
+                      </div>
+                      <p className={`text-2xl font-black mt-1 ${colorText}`}>
+                        {principal.v}<span className="text-xs ml-1 font-bold">{principal.u}</span>
+                      </p>
+                      <p className={`text-[9px] mt-0.5 ${colorSub}`}>{sec2.v} · {sec2.label}</p>
+                    </div>
+                  )
+                })}
               </div>
 
               {result.macros.nota && (
