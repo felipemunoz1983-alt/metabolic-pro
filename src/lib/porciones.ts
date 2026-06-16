@@ -393,6 +393,59 @@ export function distribuirEnPorciones(
   }
 }
 
+/**
+ * Aplica un override parcial de porciones sobre la distribución automática.
+ * El profesional usa esto desde el wizard (Step 5, modalidad porciones) para
+ * ajustar manualmente cuántas porciones quiere de cada grupo antes de generar.
+ *
+ * Si override es undefined o vacío, devuelve la distribución original sin tocar.
+ * Cualquier grupo no override-eado conserva el valor automático.
+ * Los `totales` y `delta` se recalculan sobre los valores efectivos finales.
+ */
+export function aplicarOverridePorciones(
+  base: DistribucionPorciones,
+  override: Partial<Pick<DistribucionPorciones, 'lacteos' | 'frutas' | 'verduras' | 'cereales' | 'proteinas' | 'grasas'>> | undefined,
+  target: { kcal: number; p: number; c: number; g: number },
+): DistribucionPorciones {
+  if (!override) return base
+
+  const merged: Pick<DistribucionPorciones, 'lacteos' | 'frutas' | 'verduras' | 'cereales' | 'proteinas' | 'grasas'> = {
+    lacteos:   override.lacteos   ?? base.lacteos,
+    frutas:    override.frutas    ?? base.frutas,
+    verduras:  override.verduras  ?? base.verduras,
+    cereales:  override.cereales  ?? base.cereales,
+    proteinas: override.proteinas ?? base.proteinas,
+    grasas:    override.grasas    ?? base.grasas,
+  }
+
+  // Recalcular totales sobre los valores override-eados
+  const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
+  const totales = { kcal: 0, p: 0, c: 0, g: 0 }
+  for (const g of grupos) {
+    const m = MACROS_POR_GRUPO[g]
+    totales.kcal += merged[g] * m.kcal
+    totales.p    += merged[g] * m.p
+    totales.c    += merged[g] * m.c
+    totales.g    += merged[g] * m.g
+  }
+
+  return {
+    ...merged,
+    totales: {
+      kcal: Math.round(totales.kcal),
+      p:    Math.round(totales.p),
+      c:    Math.round(totales.c),
+      g:    Math.round(totales.g),
+    },
+    delta: {
+      kcal: Math.round(totales.kcal - target.kcal),
+      p:    Math.round(totales.p    - target.p),
+      c:    Math.round(totales.c    - target.c),
+      g:    Math.round(totales.g    - target.g),
+    },
+  }
+}
+
 /** Modalidad de planificación elegida por el profesional. */
 export type ModalidadPlan = 'menus' | 'porciones'
 

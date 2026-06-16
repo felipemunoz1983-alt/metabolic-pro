@@ -231,6 +231,19 @@ export interface FormData {
    *  Mifflin-St Jeor en el resto). Permite forzar Harris-Benedict × FA para
    *  consistencia con planes historicos. Solo aplica a metodoCalculo='bmr_pal'. */
   formulaOverride?: FormulaUsada
+  /** Override de la distribucion de porciones por grupo (feedback Felipe).
+   *  Solo aplica cuando modalidadPlan='porciones'. El profesional ajusta las
+   *  porciones de cada grupo en el wizard (Step 5) y esos valores prevalecen
+   *  sobre la distribucion automatica de distribuirEnPorciones() en el plan
+   *  resultante. Cualquier subconjunto de grupos se puede override parcialmente. */
+  porcionesOverride?: {
+    lacteos?: number
+    frutas?: number
+    verduras?: number
+    cereales?: number
+    proteinas?: number
+    grasas?: number
+  }
 }
 
 /** Niveles de actividad física FAO/WHO 2001 — usados como presets clínicos

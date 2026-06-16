@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   distribuirEnPorciones,
   distribuirPorTiemposDeComida,
+  aplicarOverridePorciones,
   INTERCAMBIOS,
   GRUPO_PORCION_LABELS,
   MACROS_POR_GRUPO,
@@ -33,14 +34,25 @@ interface Props {
  */
 export function PorcionesPlan({ result, form }: Props) {
   const distribucion = useMemo<DistribucionPorciones>(
-    () => distribuirEnPorciones(
-      result.kcal,
-      result.macros.p,
-      result.macros.c,
-      result.macros.g,
-      form.objetivo,
-    ),
-    [result, form.objetivo],
+    () => {
+      // 1. Distribucion automatica desde target nutricional
+      const auto = distribuirEnPorciones(
+        result.kcal,
+        result.macros.p,
+        result.macros.c,
+        result.macros.g,
+        form.objetivo,
+      )
+      // 2. Si el profesional ajusto porciones manualmente en el wizard
+      //    (Step 5, modalidad porciones), aplicar override y recalcular totales.
+      return aplicarOverridePorciones(auto, form.porcionesOverride, {
+        kcal: result.kcal,
+        p:    result.macros.p,
+        c:    result.macros.c,
+        g:    result.macros.g,
+      })
+    },
+    [result, form.objetivo, form.porcionesOverride],
   )
 
   // Distribución por tiempos de comida (heurística Sochinut)
