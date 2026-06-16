@@ -4,17 +4,20 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   distribuirEnPorciones,
-  distribuirPorTiemposDeComida,
+  distribuirPiramidePorTiempos,
   aplicarOverridePorciones,
   mapearPiramideAGruposBasicos,
   INTERCAMBIOS,
   GRUPO_PORCION_LABELS,
+  PIRAMIDE_INFO,
+  GRUPOS_PIRAMIDE_ORDEN,
   MACROS_POR_GRUPO,
   TIEMPO_COMIDA_PORCION_LABELS,
   type GrupoPorcion,
+  type GrupoPiramide,
+  type MetaGrupoPiramide,
   type DistribucionPorciones,
   type DistribucionPiramide,
-  type DistribucionTiempo,
   type TiempoComidaPorcion,
 } from '@/lib/porciones'
 import type { FormData, NutritionResult } from '@/lib/nutrition'
@@ -71,38 +74,55 @@ export function PorcionesPlan({ result, form }: Props) {
     [result, form.objetivo, form.porcionesOverride, form.porcionesOverridePiramide, piramideDistInline],
   )
 
-  // Distribución por tiempos de comida (heurística Sochinut)
-  const porTiempo = useMemo<DistribucionTiempo[]>(
-    () => distribuirPorTiemposDeComida(distribucion),
-    [distribucion],
-  )
+  // Nota: distribuirPorTiemposDeComida(6 grupos) ya no se usa — el Paso 3
+  // ahora distribuye los 13 grupos directamente con distribuirPiramidePorTiempos.
 
   const grupos: GrupoPorcion[] = ['lacteos', 'frutas', 'verduras', 'cereales', 'proteinas', 'grasas']
 
-  // ── Sprint 2-B · Matriz editable de distribución (feedback Maria Jose) ──
-  // El pro puede mover porciones entre tiempos (ej: agregar cereales a un snack
-  // pre-entreno). Estado local: matriz [tiempo][grupo] = # porciones.
-  // Se inicializa desde porTiempo y se reinicia si cambia la distribución base
-  // (porque el paciente / objetivo / requerimientos cambiaron).
-  type MatrizTiempos = Record<TiempoComidaPorcion, Record<GrupoPorcion, number>>
-  const matrizInicial = useMemo<MatrizTiempos>(() => {
-    const m = {} as MatrizTiempos
-    for (const t of porTiempo) {
-      m[t.tiempo] = {
-        lacteos:   t.lacteos,
-        frutas:    t.frutas,
-        verduras:  t.verduras,
-        cereales:  t.cereales,
-        proteinas: t.proteinas,
-        grasas:    t.grasas,
-      }
-    }
-    return m
-  }, [porTiempo])
+  // ── Matriz editable de distribución por tiempos · 13 grupos de Pirámide ──
+  // Feedback Maria Jose (iteracion 2): el Paso 3 mostraba solo 6 meta-grupos.
+  // Ahora indexa por los 13 subtipos de la Piramide Chilena para que el pro
+  // pueda decidir, por ejemplo, "1 lácteo bajo grasa en desayuno + 0.5 alto
+  // grasa en once" en lugar de un único "lácteos: 1.5".
+  // Estado: matriz [tiempo][grupoPiramide] = # porciones (pasos de 0.5).
+  type MatrizTiempos = Record<TiempoComidaPorcion, Record<GrupoPiramide, number>>
 
-  // Derived state pattern: si cambia matrizInicial (porque cambió la distribución
-  // base por nuevo paciente/objetivo), reseteamos la matriz editable. Mejor que
-  // useEffect+setState porque evita render extra (regla react-hooks/set-state-in-effect).
+  // Distribución total por grupo de pirámide (suma desde piramideDistInline,
+  // override del wizard, o derivación auto desde la distribución de 6 grupos).
+  const distPiramideTotal: Partial<Record<GrupoPiramide, number>> = useMemo(() => {
+    if (piramideDistInline) return piramideDistInline
+    if (form.porcionesOverridePiramide) return form.porcionesOverridePiramide
+    // Si no hay override pirámide, derivamos desde los 6 básicos repartiendo
+    // proporcionalmente con heurística clínica chilena:
+    //   - Lácteos: 50% bajo, 30% medio, 20% alto (recomendación Sochinut: priorizar bajo grasa)
+    //   - Carnes/proteínas: 40% bajo grasa, 20% alto grasa, 40% leguminosas (vegetal recomendado)
+    //   - Verduras: 40% general, 60% libre consumo (foliar = la mayoría)
+    //   - Grasas: 70% aceites, 30% alimentos ricos en lípidos
+    //   - Cereales: 100% al único grupo
+    //   - Frutas: 100% al único grupo
+    return {
+      cereales_leguminosas_frescas: distribucion.cereales,
+      frutas:                       distribucion.frutas,
+      verduras_general:             Math.round(distribucion.verduras * 0.4 * 2) / 2,
+      verduras_libre:               Math.round(distribucion.verduras * 0.6 * 2) / 2,
+      carnes_bajo_grasa:            Math.round(distribucion.proteinas * 0.4 * 2) / 2,
+      carnes_alto_grasa:            Math.round(distribucion.proteinas * 0.2 * 2) / 2,
+      leguminosas:                  Math.round(distribucion.proteinas * 0.4 * 2) / 2,
+      lacteos_bajo_grasa:           Math.round(distribucion.lacteos * 0.5 * 2) / 2,
+      lacteos_medio_grasa:          Math.round(distribucion.lacteos * 0.3 * 2) / 2,
+      lacteos_alto_grasa:           Math.round(distribucion.lacteos * 0.2 * 2) / 2,
+      aceites_grasas:               Math.round(distribucion.grasas * 0.7 * 2) / 2,
+      alimentos_ricos_lipidos:      Math.round(distribucion.grasas * 0.3 * 2) / 2,
+      azucar:                       0,
+    }
+  }, [piramideDistInline, form.porcionesOverridePiramide, distribucion])
+
+  const matrizInicial = useMemo<MatrizTiempos>(
+    () => distribuirPiramidePorTiempos(distPiramideTotal),
+    [distPiramideTotal],
+  )
+
+  // Derived state pattern: si cambia matrizInicial, reseteamos.
   const [matriz, setMatriz] = useState<MatrizTiempos>(matrizInicial)
   const [lastInit, setLastInit] = useState<MatrizTiempos>(matrizInicial)
   if (lastInit !== matrizInicial) {
@@ -110,39 +130,47 @@ export function PorcionesPlan({ result, form }: Props) {
     setMatriz(matrizInicial)
   }
 
-  function setCelda(tiempo: TiempoComidaPorcion, grupo: GrupoPorcion, valor: number) {
+  function setCelda(tiempo: TiempoComidaPorcion, grupo: GrupoPiramide, valor: number) {
     const v = Math.max(0, Math.round(valor * 2) / 2)  // pasos de 0.5
     setMatriz(m => ({ ...m, [tiempo]: { ...m[tiempo], [grupo]: v } }))
   }
   function resetMatriz() { setMatriz(matrizInicial) }
 
-  // Totales asignados por grupo (suma de columna) — para validar vs total diario
-  const asignadoPorGrupo = useMemo(() => {
-    const tot: Record<GrupoPorcion, number> = { lacteos: 0, frutas: 0, verduras: 0, cereales: 0, proteinas: 0, grasas: 0 }
+  // Totales asignados por subgrupo (suma de columna) y por meta-grupo
+  const asignadoPorGrupoPiramide = useMemo(() => {
+    const tot = {} as Record<GrupoPiramide, number>
+    for (const g of GRUPOS_PIRAMIDE_ORDEN) tot[g] = 0
     for (const t of Object.values(matriz)) {
-      tot.lacteos   += t.lacteos
-      tot.frutas    += t.frutas
-      tot.verduras  += t.verduras
-      tot.cereales  += t.cereales
-      tot.proteinas += t.proteinas
-      tot.grasas    += t.grasas
+      for (const g of GRUPOS_PIRAMIDE_ORDEN) tot[g] += t[g] ?? 0
     }
     return tot
   }, [matriz])
 
-  // Macros aportados por un tiempo (suma de fila × MACROS_POR_GRUPO)
+  // Macros aportados por un tiempo (suma fila × PIRAMIDE_INFO macros)
   function macrosDeTiempo(tiempo: TiempoComidaPorcion): { kcal: number; p: number; c: number; g: number } {
     const fila = matriz[tiempo]
     const acc = { kcal: 0, p: 0, c: 0, g: 0 }
-    for (const g of grupos) {
-      const m = MACROS_POR_GRUPO[g]
-      acc.kcal += fila[g] * m.kcal
-      acc.p    += fila[g] * m.p
-      acc.c    += fila[g] * m.c
-      acc.g    += fila[g] * m.g
+    for (const g of GRUPOS_PIRAMIDE_ORDEN) {
+      const m = PIRAMIDE_INFO[g].macros
+      const v = fila[g] ?? 0
+      acc.kcal += v * m.kcal
+      acc.p    += v * m.p
+      acc.c    += v * m.c
+      acc.g    += v * m.g
     }
     return { kcal: Math.round(acc.kcal), p: Math.round(acc.p), c: Math.round(acc.c), g: Math.round(acc.g) }
   }
+
+  // Agrupacion visual de los 13 subtipos por meta-grupo (mismo orden que PorcionesEditor)
+  const META_GRUPOS_PASO3: { meta: MetaGrupoPiramide; emoji: string; label: string }[] = [
+    { meta: 'cereales', emoji: '🌾', label: 'Cereales' },
+    { meta: 'verduras', emoji: '🥗', label: 'Verduras' },
+    { meta: 'frutas',   emoji: '🍎', label: 'Frutas' },
+    { meta: 'carnes',   emoji: '🍗', label: 'Proteínas' },
+    { meta: 'lacteos',  emoji: '🥛', label: 'Lácteos' },
+    { meta: 'grasas',   emoji: '🥑', label: 'Grasas' },
+    { meta: 'azucar',   emoji: '🍬', label: 'Azúcar' },
+  ]
 
   // Wizard secuencial de 4 pasos (flujo clínico: del cálculo abstracto al plato real).
   // Reemplaza el toggle independiente de 3 vistas que existía antes.
@@ -509,10 +537,12 @@ export function PorcionesPlan({ result, form }: Props) {
             </p>
           </div>
 
-          {/* Balance: asignado vs disponible por grupo */}
+          {/* Balance: asignado vs disponible por SUBGRUPO de la Pirámide.
+              Feedback Maria Jose (iteracion 3): distinguir carnes alto/medio/bajo,
+              lácteos alto/medio/bajo, tipos de verduras, etc. */}
           <div className="bg-white border border-[#D6E3ED] rounded-2xl p-3">
             <div className="flex items-baseline justify-between mb-2">
-              <p className="text-[10px] uppercase tracking-wider text-[#6B7C93] font-bold">Balance por grupo</p>
+              <p className="text-[10px] uppercase tracking-wider text-[#6B7C93] font-bold">Balance por grupo · Pirámide chilena</p>
               <button
                 type="button"
                 onClick={resetMatriz}
@@ -522,49 +552,56 @@ export function PorcionesPlan({ result, form }: Props) {
                 ↻ Reiniciar
               </button>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-              {grupos.map(g => {
-                const total     = distribucion[g]
-                const asignado  = asignadoPorGrupo[g]
-                const delta     = +(asignado - total).toFixed(1)
-                const ok        = Math.abs(delta) < 0.25 || g === 'verduras'  // verduras libres
-                const sobra     = delta > 0.25
-                const meta      = GRUPO_PORCION_LABELS[g]
+            <div className="space-y-2">
+              {META_GRUPOS_PASO3.map(meta => {
+                const sub = GRUPOS_PIRAMIDE_ORDEN.filter(g => PIRAMIDE_INFO[g].metaGrupo === meta.meta)
                 return (
-                  <div
-                    key={g}
-                    className={cn(
-                      'rounded-xl border p-2 text-center transition',
-                      ok    ? 'bg-emerald-50/70 border-emerald-200' :
-                      sobra ? 'bg-rose-50/70 border-rose-200'       :
-                              'bg-amber-50/70 border-amber-200',
-                    )}
-                  >
-                    <p className="text-[16px] leading-none">{meta.emoji}</p>
-                    <p className="text-[10px] font-bold text-[#0C3547] mt-1 uppercase tracking-wide truncate" title={meta.label}>
-                      {meta.label.split(' ')[0]}
+                  <div key={meta.meta} className="bg-[#F8FBFD] rounded-lg border border-[#E2ECF4] p-2">
+                    <p className="text-[10px] font-black text-[#0C3547] uppercase tracking-wide mb-1.5">
+                      {meta.emoji} {meta.label}
                     </p>
-                    <p className={cn(
-                      'text-sm font-black mt-1',
-                      ok    ? 'text-emerald-700' :
-                      sobra ? 'text-rose-700'    :
-                              'text-amber-700',
-                    )}>
-                      {asignado} / {total}
-                    </p>
-                    <p className="text-[9px] text-[#6B7C93] font-semibold mt-0.5">
-                      {ok ? '✓ OK' : sobra ? `+${delta} sobra` : `${delta} falta`}
-                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                      {sub.map(g => {
+                        const total     = distPiramideTotal[g] ?? 0
+                        const asignado  = asignadoPorGrupoPiramide[g]
+                        const delta     = +(asignado - total).toFixed(1)
+                        const esLibre   = g === 'verduras_libre'
+                        const ok        = Math.abs(delta) < 0.25 || esLibre
+                        const sobra     = delta > 0.25
+                        const info      = PIRAMIDE_INFO[g]
+                        return (
+                          <div
+                            key={g}
+                            className={cn(
+                              'rounded-md border px-2 py-1 text-[10px] transition flex items-center justify-between gap-2',
+                              ok    ? 'bg-emerald-50/70 border-emerald-200' :
+                              sobra ? 'bg-rose-50/70 border-rose-200'       :
+                                      'bg-amber-50/70 border-amber-200',
+                            )}
+                          >
+                            <span className="font-semibold text-[#0C3547] truncate" title={info.label}>{info.label}</span>
+                            <span className={cn(
+                              'font-black flex-shrink-0',
+                              ok    ? 'text-emerald-700' :
+                              sobra ? 'text-rose-700'    :
+                                      'text-amber-700',
+                            )}>
+                              {asignado}/{total}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
                 )
               })}
             </div>
             <p className="text-[10px] text-[#8BA5BE] italic mt-2 leading-relaxed">
-              Verduras son libres — no se valida diferencia. Los demás grupos buscan asignar exactamente el total del Paso 2.
+              Verduras libre consumo no se valida (consumo flexible). Los demás subtipos buscan asignar lo definido en el Paso 2.
             </p>
           </div>
 
-          {/* Editor: una card por tiempo de comida con 6 inputs (uno por grupo) */}
+          {/* Editor: una card por tiempo de comida con secciones por meta-grupo */}
           {(['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena'] as TiempoComidaPorcion[]).map(tiempo => {
             const info  = TIEMPO_COMIDA_PORCION_LABELS[tiempo]
             const macros = macrosDeTiempo(tiempo)
@@ -585,28 +622,40 @@ export function PorcionesPlan({ result, form }: Props) {
                     </p>
                   </div>
                 </div>
-                <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 p-3">
-                  {grupos.map(g => {
-                    const meta = GRUPO_PORCION_LABELS[g]
-                    const v    = matriz[tiempo][g]
+                <div className="p-3 space-y-2">
+                  {META_GRUPOS_PASO3.map(meta => {
+                    const sub = GRUPOS_PIRAMIDE_ORDEN.filter(g => PIRAMIDE_INFO[g].metaGrupo === meta.meta)
                     return (
-                      <div key={g} className="flex flex-col items-center">
-                        <label className="text-[10px] font-bold text-[#6B7C93] uppercase tracking-wide truncate w-full text-center" title={meta.label}>
-                          {meta.emoji} {meta.label.split(' ')[0]}
-                        </label>
-                        <input
-                          type="number"
-                          min={0}
-                          step={0.5}
-                          value={v}
-                          onChange={e => setCelda(tiempo, g, Number(e.target.value) || 0)}
-                          className={cn(
-                            'w-full text-center font-bold text-sm rounded-lg border-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#29ABE2]/40 mt-1',
-                            v > 0
-                              ? 'bg-white border-[#29ABE2] text-[#0C3547]'
-                              : 'bg-[#F8FBFD] border-[#E2ECF4] text-[#8BA5BE]',
-                          )}
-                        />
+                      <div key={meta.meta} className="bg-[#F8FBFD] rounded-lg border border-[#E2ECF4] p-2">
+                        <p className="text-[10px] font-black text-[#0C3547] uppercase tracking-wide mb-1.5">
+                          {meta.emoji} {meta.label}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-1.5">
+                          {sub.map(g => {
+                            const pi = PIRAMIDE_INFO[g]
+                            const v  = matriz[tiempo][g] ?? 0
+                            return (
+                              <div key={g} className="flex items-center gap-1.5 bg-white border border-[#E2ECF4] rounded px-2 py-1">
+                                <label className="text-[10px] font-semibold text-[#6B7C93] flex-1 truncate" title={pi.label}>
+                                  {pi.label}
+                                </label>
+                                <input
+                                  type="number"
+                                  min={0}
+                                  step={0.5}
+                                  value={v}
+                                  onChange={e => setCelda(tiempo, g, Number(e.target.value) || 0)}
+                                  className={cn(
+                                    'w-12 text-center font-bold text-sm rounded border py-0.5 focus:outline-none focus:ring-2 focus:ring-[#29ABE2]/40',
+                                    v > 0
+                                      ? 'bg-white border-[#29ABE2] text-[#0C3547]'
+                                      : 'bg-[#F8FBFD] border-[#E2ECF4] text-[#8BA5BE]',
+                                  )}
+                                />
+                              </div>
+                            )
+                          })}
+                        </div>
                       </div>
                     )
                   })}

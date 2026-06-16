@@ -394,6 +394,47 @@ export function distribuirEnPorciones(
 }
 
 /**
+ * Distribuye los 13 grupos de la Piramide Chilena entre los 5 tiempos de
+ * comida, usando los mismos SHARES por meta-grupo (cada subtipo hereda el
+ * share de su meta). Sochinut/INTA — heuristica clinica chilena.
+ *
+ * Por ejemplo: lacteos_alto_grasa, lacteos_medio_grasa y lacteos_bajo_grasa
+ * comparten los mismos shares por tiempo que el meta-grupo 'lacteos'
+ * (0.50 desayuno, 0.50 once, etc).
+ *
+ * Azucar es el unico subtipo que no se reparte automaticamente (queda en 0
+ * en todos los tiempos; el pro lo asigna manualmente cuando aplica).
+ */
+export function distribuirPiramidePorTiempos(
+  dist: Partial<Record<GrupoPiramide, number>>,
+): Record<TiempoComidaPorcion, Record<GrupoPiramide, number>> {
+  const tiempos: TiempoComidaPorcion[] = ['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena']
+  const result = {} as Record<TiempoComidaPorcion, Record<GrupoPiramide, number>>
+
+  for (const tiempo of tiempos) {
+    const sharesMeta = SHARES_POR_TIEMPO[tiempo]
+    const fila = {} as Record<GrupoPiramide, number>
+    for (const g of GRUPOS_PIRAMIDE_ORDEN) {
+      const meta = PIRAMIDE_INFO[g].metaGrupo
+      const total = dist[g] ?? 0
+      // Mapear meta-grupo de Piramide a GrupoPorcion para tomar el share
+      const metaPorcion: GrupoPorcion | null =
+        meta === 'lacteos'  ? 'lacteos'  :
+        meta === 'frutas'   ? 'frutas'   :
+        meta === 'verduras' ? 'verduras' :
+        meta === 'cereales' ? 'cereales' :
+        meta === 'carnes'   ? 'proteinas' :
+        meta === 'grasas'   ? 'grasas'   :
+                              null  // azucar no tiene meta en GrupoPorcion
+      const share = metaPorcion ? sharesMeta[metaPorcion] : 0
+      fila[g] = Math.round(total * share * 2) / 2  // pasos de 0.5
+    }
+    result[tiempo] = fila
+  }
+  return result
+}
+
+/**
  * Mapea un override de los 13 grupos de la Piramide Chilena a los 6 grupos
  * basicos que usa el sistema de distribucion por tiempos de comida.
  *
