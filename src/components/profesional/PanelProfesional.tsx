@@ -29,6 +29,11 @@ const NotasClinicas = dynamic(
   () => import('@/components/profesional/NotasClinicas').then(m => ({ default: m.NotasClinicas })),
   { ssr: false, loading: () => null },
 )
+// Lazy: widget de proximo control (Sprint 2-D) en overview del paciente.
+const ProximoControl = dynamic(
+  () => import('@/components/profesional/ProximoControl').then(m => ({ default: m.ProximoControl })),
+  { ssr: false, loading: () => null },
+)
 import { derivarComidasDePlan } from '@/lib/banco-adapter'
 import type { NutritionResult, FormData } from '@/lib/nutrition'
 import type { Profile } from '@/types'
@@ -122,6 +127,25 @@ function PatientCard({ patient, onClick }: { patient: PatientRow; onClick: () =>
               {patient.nombre}
             </p>
             <p className="text-[10px] text-[#8BA5BE] font-medium">{patient.email}</p>
+            {patient.proximo_control_at && (() => {
+              // display-only, mismo patron que diasDesde (linea 102) — re-renders al cambiar de dia son OK.
+              /* eslint-disable-next-line react-hooks/purity -- display-only Date.now() in render, intentional */
+              const dias = Math.floor((new Date(patient.proximo_control_at).getTime() - Date.now()) / 86_400_000)
+              const txt  = dias < 0       ? `⚠ Control vencido`
+                         : dias === 0     ? `📅 Control HOY`
+                         : dias === 1     ? `📅 Control MAÑANA`
+                         : dias <= 7      ? `📅 Control en ${dias} días`
+                         :                  `📅 Control en ${dias}d`
+              const cls  = dias < 0       ? 'bg-gray-100 text-gray-700'
+                         : dias <= 1      ? 'bg-red-100 text-red-800'
+                         : dias <= 7      ? 'bg-amber-100 text-amber-800'
+                         :                  'bg-sky-50 text-sky-800'
+              return (
+                <span className={`inline-block text-[9px] font-bold px-2 py-0.5 rounded-full mt-1 ${cls}`}>
+                  {txt}
+                </span>
+              )
+            })()}
           </div>
         </div>
         {(() => {
@@ -421,6 +445,9 @@ function PatientDetail({
   const [installCopied,    setInstallCopied]    = useState(false)
   const [showUnlink,       setShowUnlink]       = useState(false)
   const [unlinking,        setUnlinking]        = useState(false)
+  // Proximo control (Sprint 2-D) — state local para reflejar cambios sin recargar
+  const [proximoControlAt,     setProximoControlAt]     = useState<string | null>(patient.proximo_control_at ?? null)
+  const [proximoControlMotivo, setProximoControlMotivo] = useState<string | null>(patient.proximo_control_motivo ?? null)
 
   /** Mensaje WhatsApp con instrucciones de instalación para el paciente */
   const installMessage = (() => {
@@ -957,6 +984,20 @@ Cualquier duda, escríbeme 😊`
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Proximo control programado (Sprint 2-D) ── */}
+      <div className="mb-5">
+        <ProximoControl
+          patientId={patient.id}
+          professionalId={professionalId}
+          proximoControlAt={proximoControlAt}
+          proximoControlMotivo={proximoControlMotivo}
+          onSaved={(newAt, newMotivo) => {
+            setProximoControlAt(newAt)
+            setProximoControlMotivo(newMotivo)
+          }}
+        />
       </div>
 
       {/* ── Alerta clínica si adherencia baja ── */}

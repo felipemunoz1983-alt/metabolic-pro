@@ -13,6 +13,18 @@ export interface Profile {
   whatsapp?: string
   premium_until?: string
   trial_ends_at?: string
+  // Soft delete (Sprint 1-A)
+  deleted_at?: string | null
+  // Notas clinicas del profesional (Sprint 1-C)
+  indicaciones_pro?: string | null
+  suplementacion_pro?: string | null
+  rutina_entrenamiento_pro?: string | null
+  examenes_solicitados_pro?: string | null
+  notas_clinicas_updated_at?: string | null
+  // Proximo control programado (Sprint 2-D)
+  proximo_control_at?: string | null
+  proximo_control_motivo?: string | null
+  proximo_control_updated_at?: string | null
 }
 
 // ── Trial helpers ──────────────────────────────────────────────────────────────
