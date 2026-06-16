@@ -25,6 +25,12 @@ export interface Profile {
   proximo_control_at?: string | null
   proximo_control_motivo?: string | null
   proximo_control_updated_at?: string | null
+  // Safety check de suplementacion (Sprint 3-F)
+  supl_objetivo_actual?: string | null
+  supl_entrenamiento_actual?: string | null
+  supl_condiciones_medicas?: string | null
+  supl_suplementos_actuales?: string | null
+  supl_check_updated_at?: string | null
 }
 
 // ── Trial helpers ──────────────────────────────────────────────────────────────

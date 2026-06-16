@@ -27,6 +27,20 @@ const CAMPOS_PERMITIDOS = [
   'suplementacion_pro',
   'rutina_entrenamiento_pro',
   'examenes_solicitados_pro',
+  // Sprint 3-F: 4 preguntas obligatorias del safety check de suplementacion
+  'supl_objetivo_actual',
+  'supl_entrenamiento_actual',
+  'supl_condiciones_medicas',
+  'supl_suplementos_actuales',
+] as const
+
+// Campos del safety check de suplementacion — al guardarlos actualizamos
+// tambien el timestamp supl_check_updated_at
+const CAMPOS_SUPL_CHECK = [
+  'supl_objetivo_actual',
+  'supl_entrenamiento_actual',
+  'supl_condiciones_medicas',
+  'supl_suplementos_actuales',
 ] as const
 
 export async function PATCH(req: NextRequest): Promise<NextResponse> {
@@ -76,8 +90,16 @@ export async function PATCH(req: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'No fields to update' }, { status: 400 })
   }
 
-  // Timestamp del save
-  ;(updatePayload as Record<string, string>).notas_clinicas_updated_at = new Date().toISOString()
+  // Timestamp del save de notas clinicas
+  const nowIso = new Date().toISOString()
+  ;(updatePayload as Record<string, string>).notas_clinicas_updated_at = nowIso
+
+  // Si se actualizaron campos del safety check de suplementacion, marcar tambien
+  // supl_check_updated_at para que la UI sepa cuando fue la ultima revision.
+  const tocoSafetyCheck = CAMPOS_SUPL_CHECK.some(c => c in body)
+  if (tocoSafetyCheck) {
+    ;(updatePayload as Record<string, string>).supl_check_updated_at = nowIso
+  }
 
   const { error } = await supabase
     .from('profiles')
