@@ -59,6 +59,12 @@ const NotasPaciente = dynamic(
   () => import('@/components/educacion/NotasPaciente').then(m => ({ default: m.NotasPaciente })),
   { ssr: false, loading: () => null },
 )
+// Guía oficial Fundación Convivir — productos certificados sin gluten.
+// Solo se carga si el paciente declaró intolerancia al gluten en su perfil clínico.
+const GuiaCeliacaConvivir = dynamic(
+  () => import('@/components/educacion/GuiaCeliacaConvivir').then(m => ({ default: m.GuiaCeliacaConvivir })),
+  { ssr: false, loading: () => null },
+)
 
 // ── Premium gate ──────────────────────────────────────────────────────────────
 function PremiumGate({ feature, description }: { feature: string; description: string }) {
@@ -715,6 +721,16 @@ export default function PacientePage() {
                       {profile?.role === 'patient' && userId && (
                         <div className="mt-5">
                           <MaterialPaciente patientId={userId} />
+                        </div>
+                      )}
+
+                      {/* ── Guía celíaco Fundación Convivir ──
+                          Visible solo si el paciente declaró intolerancia al gluten
+                          en su perfil clínico. Listado oficial de productos certificados
+                          libres de gluten en Chile (~150 productos por categoría). */}
+                      {(formData?.digIntolerancias ?? []).includes('gluten') && (
+                        <div className="mt-5">
+                          <GuiaCeliacaConvivir />
                         </div>
                       )}
                       {/* Link sutil al tab Educación — antes el comparador de yogures vivía
