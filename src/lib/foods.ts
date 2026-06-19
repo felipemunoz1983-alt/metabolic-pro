@@ -1267,6 +1267,41 @@ export const desayunosOpts: Record<string, MealOption> = {
       'Tostar el pan integral. Servir el tofu revuelto sobre las tostadas. Apto vegano y muy similar visualmente a huevos revueltos clásicos.',
     ],
   },
+  panqueques_proteina_selecta_des: {
+    label: 'Panqueques proteicos Selecta (desayuno completo)',
+    items: [
+      '80g premezcla Selecta proteína (2 porciones de la bolsa de 300g)',
+      '2 huevos enteros (para la masa)',
+      'Agua: ~100ml',
+      '100g fruta fresca encima (frutillas, arándanos, plátano laminado)',
+      '(Opcional) 1 cda manjar Nestlé o miel para hipertrofia',
+      '💡 Desayuno proteico: ~36g de proteína vegetal + animal. Sin lácteos en la receta.',
+    ],
+    // Auditoría etiqueta Selecta + INTA Chile:
+    //   80g premezcla (2 porciones):  297 kcal · 22 P · 44 C · 4 G
+    //   2 huevos enteros:             140 kcal · 12 P · 1 C · 10 G
+    //   100g frutilla/arandano:        35 kcal ·  1 P · 7 C · 0 G
+    //   Total: 472 kcal · 35 P · 52 C · 14 G ≈ 470 / 35 / 52 / 14
+    //   Ratio P/kcal = 30% — excelente desayuno proteico (>= 25% es alto).
+    //   Sellos: ninguno visible (mismo razonamiento que la version colacion).
+    //   Alergenos: gluten (premezcla), huevo. Trazas: leche, soya, mani, nueces, almendras.
+    baseKcal: 470, p: 35, c: 52, g: 14,
+    tendencia: ['vegetariano'],
+    contiene: ['gluten', 'huevo'] as string[],
+    tieneHuevo: true, eggsDefault: 2,
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
+    foto: '/img/productos/panqueques_proteina_selecta.webp',
+    tiempo: '10 min',
+    pasos: [
+      'Mezclar 80g (~6 cdas colmadas) de premezcla Selecta con 2 huevos y ~100ml de agua. Batir hasta masa lisa.',
+      'Calentar sartén antiadherente a fuego medio (sin aceite o con spray). Verter porciones para formar 4 panqueques medianos.',
+      'Cocinar 1.5-2 min por lado hasta dorar. Voltear cuando aparezcan burbujas.',
+      'Lavar y cortar 100g de fruta fresca (frutillas, arándanos o plátano laminado).',
+      'Servir los 4 panqueques con la fruta encima. Acompañar con café/té sin azúcar.',
+      'Tip déficit: usar solo claras (2 claras en vez de 2 huevos = -100 kcal). Sin manjar/miel.',
+      'Tip hipertrofia: agregar 1 cda manjar Nestlé (+86 kcal · +2.5g P) sobre los panqueques tibios.',
+    ],
+  },
 }
 
 // ─── COLACIONES MAÑANA y ONCE (mismo pool) ────────────────────────────────────
@@ -1823,6 +1858,40 @@ export const colacionesOpts: Record<string, MealOption> = {
       'Combinar: en un vaso largo o copa colocar el mote escurrido al fondo.',
       'Verter encima el huesillo con su líquido aromático (sin azúcar, solo la dulzura natural del durazno y la canela).',
       'Endulzar con estevia si se desea o servir tal cual. Frío en verano, tibio en invierno. Versión saludable del clásico chileno sin culpas.',
+    ],
+  },
+  panqueques_proteina_selecta: {
+    label: 'Panqueques proteicos Selecta (2 unidades)',
+    items: [
+      '40g premezcla Selecta proteína (1 porción de la bolsa de 300g)',
+      '1 huevo entero (para preparar la masa)',
+      'Agua: ~50ml (solo agua, sin leche)',
+      '(Opcional) 1 cda untable o 50g fruta fresca encima',
+      '💡 Premezcla vegana base (proteína de arveja + lupino); el huevo agrega proteína y estructura. Sin lácteos en la receta.',
+    ],
+    // Auditoría etiqueta Selecta Premezcla Proteína (300g, ~40g/porción):
+    //   1 porción premezcla:  148 kcal · 11.2 P · 22 C · 1.8 G · 274 mg sodio
+    //   + 1 huevo entero:      70 kcal ·  6.0 P ·  0 C · 5.0 G
+    //   Total preparado:      218 kcal · 17.2 P · 22 C · 6.8 G ≈ 220 / 17 / 22 / 7
+    //   Ratio P/kcal = 31% — excelente como colación proteica.
+    //   Sellos: ninguno visible en etiqueta (azúcar 4.1g/100g · grasa sat 1.4g/100g · sodio 637mg/100g
+    //   en premezcla seca; ya preparado con huevo+agua el sodio se diluye a ~390mg/100g, bajo el umbral).
+    //   Alergenos: gluten (harina trigo), huevo agregado. Trazas: leche, soya, mani, nueces, almendras.
+    baseKcal: 220, p: 17, c: 22, g: 7,
+    porcionFija: true,
+    tendencia: ['vegetariano'],
+    contiene: ['gluten', 'huevo'] as string[],
+    tieneHuevo: true, eggsDefault: 1,
+    tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
+    foto: '/img/productos/panqueques_proteina_selecta.webp',
+    tiempo: '8 min',
+    pasos: [
+      'Mezclar 40g (~3 cdas colmadas) de premezcla Selecta con 1 huevo y ~50ml de agua en un bowl. Batir hasta que quede una masa lisa y sin grumos.',
+      'Calentar una sartén antiadherente a fuego medio (sin aceite o con spray). Verter porción del batido hasta formar 2 panqueques medianos.',
+      'Cocinar 1.5-2 min por lado hasta dorar. Voltear cuando aparezcan burbujas en la superficie.',
+      'Servir tibios. Acompañar con café/té sin azúcar.',
+      'Tip déficit: sin untable y con fruta fresca (50g frutillas = +16 kcal).',
+      'Tip hipertrofia: agregar 1 cda manjar Nestlé (+86 kcal · +2.5g P) para subir kcal sin perder calidad.',
     ],
   },
   waffle_great_value: {
