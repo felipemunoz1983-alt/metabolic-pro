@@ -23,6 +23,7 @@ import {
 import type { FormData, NutritionResult } from '@/lib/nutrition'
 import { cn } from '@/lib/utils'
 import { PiramidePlan } from './PiramidePlan'
+import { GuiaIntercambiosClinica } from './GuiaIntercambiosClinica'
 
 interface Props {
   result: NutritionResult
@@ -740,6 +741,10 @@ export function PorcionesPlan({ result, form }: Props) {
               <li>• Si una porción te suena chica (ej. 30g de pollo), recuerda que una comida real lleva varias porciones del mismo grupo (4-6 de proteína es lo habitual).</li>
             </ul>
           </div>
+
+          {/* Guía clínica oficial Centro Metabólico — tablas frutas + verduras
+              A/B/C + 5 criterios clínicos. Colapsada por default. */}
+          <GuiaIntercambiosClinica />
         </div>
       )}
 

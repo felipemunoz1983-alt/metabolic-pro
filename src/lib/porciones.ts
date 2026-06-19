@@ -89,14 +89,24 @@ export const INTERCAMBIOS: Record<GrupoPorcion, IntercambioPorcion[]> = {
   ],
 
   // ─── FRUTAS (~60 kcal · 15g C) ─────────────────────────────────────────
+  // Fuente: ADA Exchange Lists + Adaptación nutricional chilena (Centro Metabólico
+  // — Lista de Porciones de Intercambio, junio 2026). 1 porción ≈ 15g CHO · 60 kcal.
+  // notas "Bajo IG" segun ADA + practica clinica (berries, manzana, pera, kiwi, citricos).
   frutas: [
-    { alimento: '1 manzana mediana',              gramos: 150, kcal: 78,  p: 0.4, c: 21, g: 0.3 },
+    { alimento: '1 manzana pequeña',               gramos: 120, kcal: 62,  p: 0.3, c: 17, g: 0.2, notas: 'Bajo IG · ideal pre/post entreno y resistencia a la insulina.' },
+    { alimento: '1 manzana mediana',              gramos: 150, kcal: 78,  p: 0.4, c: 21, g: 0.3, notas: 'Bajo IG.' },
     { alimento: '1 plátano chico',                 gramos: 100, kcal: 89,  p: 1.1, c: 23, g: 0.3 },
     { alimento: '1 naranja mediana',                gramos: 150, kcal: 71,  p: 1.4, c: 18, g: 0.2 },
-    { alimento: '1 pera mediana',                    gramos: 150, kcal: 86,  p: 0.5, c: 23, g: 0.2 },
-    { alimento: '1 taza de berries',                 gramos: 150, kcal: 81,  p: 1.5, c: 19, g: 0.6, notas: 'Frutillas, arándanos, frambuesas, moras.' },
-    { alimento: '2 kiwis',                            gramos: 150, kcal: 92,  p: 1.7, c: 22, g: 0.8 },
-    { alimento: '1 durazno mediano',                 gramos: 150, kcal: 59,  p: 1.4, c: 14, g: 0.4 },
+    { alimento: '1 pera pequeña',                    gramos: 120, kcal: 69,  p: 0.4, c: 18, g: 0.2, notas: 'Bajo IG.' },
+    { alimento: '1 pera mediana',                    gramos: 150, kcal: 86,  p: 0.5, c: 23, g: 0.2, notas: 'Bajo IG.' },
+    { alimento: '1 taza de berries',                 gramos: 150, kcal: 81,  p: 1.5, c: 19, g: 0.6, notas: 'Bajo IG · frutillas, arándanos, frambuesas, moras.' },
+    { alimento: '1 taza de frutillas',                gramos: 150, kcal: 48,  p: 1,   c: 12, g: 0.5, notas: 'Bajo IG · pre/post entreno.' },
+    { alimento: '¾ taza de arándanos',                gramos: 110, kcal: 63,  p: 0.8, c: 16, g: 0.4, notas: 'Bajo IG · antioxidantes.' },
+    { alimento: '1 taza de frambuesas o moras',       gramos: 150, kcal: 78,  p: 1.8, c: 18, g: 0.9, notas: 'Bajo IG · alta fibra (~8g).' },
+    { alimento: '2 kiwis',                            gramos: 150, kcal: 92,  p: 1.7, c: 22, g: 0.8, notas: 'Bajo IG · alto en vitamina C.' },
+    { alimento: '1 kiwi grande',                      gramos: 100, kcal: 61,  p: 1.1, c: 15, g: 0.5, notas: 'Bajo IG.' },
+    { alimento: '1 durazno mediano',                 gramos: 130, kcal: 51,  p: 1.2, c: 12, g: 0.3 },
+    { alimento: '1 nectarín mediano',                gramos: 130, kcal: 57,  p: 1.4, c: 14, g: 0.4 },
     { alimento: '1 taza de melón en cubos',          gramos: 170, kcal: 58,  p: 1.4, c: 14, g: 0.3 },
     { alimento: '1 taza de sandía en cubos',          gramos: 200, kcal: 60,  p: 1.2, c: 15, g: 0.3, notas: 'Alta hidratación — IG moderado.' },
     { alimento: '1 racimo chico de uvas',             gramos: 100, kcal: 67,  p: 0.7, c: 16, g: 0.4 },
@@ -110,46 +120,79 @@ export const INTERCAMBIOS: Record<GrupoPorcion, IntercambioPorcion[]> = {
     { alimento: '1 caqui/persimón',                    gramos: 150, kcal: 105, p: 0.9, c: 28, g: 0.3, notas: 'Más calórico — preferir media unidad si paciente en déficit.' },
     { alimento: '1 taza de papaya en cubos',           gramos: 150, kcal: 65,  p: 0.7, c: 16, g: 0.4 },
     { alimento: '3 higos frescos',                     gramos: 150, kcal: 105, p: 1.1, c: 27, g: 0.4 },
-    { alimento: '1 pomelo/toronja',                    gramos: 200, kcal: 84,  p: 1.6, c: 21, g: 0.3, notas: 'Ojo: contraindicado con varios fármacos (estatinas, calcio-antagonistas).' },
-    { alimento: '2 mandarinas',                        gramos: 180, kcal: 95,  p: 1.5, c: 24, g: 0.5 },
+    { alimento: '½ pomelo mediano',                    gramos: 130, kcal: 55,  p: 1,   c: 14, g: 0.2, notas: 'Bajo IG · contraindicado con estatinas y calcio-antagonistas (interacción).' },
+    { alimento: '1 pomelo/toronja',                    gramos: 200, kcal: 84,  p: 1.6, c: 21, g: 0.3, notas: 'Bajo IG · ojo con fármacos: estatinas, calcio-antagonistas.' },
+    { alimento: '2 mandarinas pequeñas',               gramos: 150, kcal: 79,  p: 1.2, c: 20, g: 0.4, notas: 'Bajo IG.' },
+    { alimento: '2 mandarinas medianas',               gramos: 180, kcal: 95,  p: 1.5, c: 24, g: 0.5, notas: 'Bajo IG.' },
     { alimento: '3 maracuyás',                         gramos: 100, kcal: 97,  p: 2.2, c: 23, g: 0.7 },
     { alimento: '½ granada',                            gramos: 130, kcal: 110, p: 2.2, c: 25, g: 1.5 },
     { alimento: '3 ciruelas',                          gramos: 150, kcal: 70,  p: 1.1, c: 17, g: 0.4 },
     { alimento: '1 membrillo',                          gramos: 150, kcal: 84,  p: 0.6, c: 22, g: 0.2, notas: 'Generalmente cocido (compota sin azúcar).' },
     { alimento: '1 lúcuma chica',                       gramos: 80,  kcal: 80,  p: 1.5, c: 19, g: 0.4, ejemploChileno: 'Lúcuma chilena (postre tradicional)' },
-    { alimento: '2 cdas de pasas',                      gramos: 25,  kcal: 75,  p: 0.7, c: 20, g: 0.1, notas: 'Fruta deshidratada — concentra azúcares.' },
+    // ── Frutas deshidratadas: alta densidad calórica, controlar porción ──
+    { alimento: '1 cda colmada de pasas',               gramos: 15,  kcal: 45,  p: 0.4, c: 12, g: 0.1, notas: 'Deshidratada · concentra azúcares (alta densidad).' },
+    { alimento: '2 cdas de pasas',                      gramos: 25,  kcal: 75,  p: 0.7, c: 20, g: 0.1, notas: 'Deshidratada · concentra azúcares.' },
+    { alimento: '2 dátiles',                            gramos: 15,  kcal: 42,  p: 0.3, c: 11, g: 0,   notas: 'Deshidratada · controlar porción precisa.' },
+    { alimento: '3 ciruelas pasas',                     gramos: 20,  kcal: 48,  p: 0.5, c: 13, g: 0.1, notas: 'Deshidratada · efecto laxante natural (sorbitol).' },
+    { alimento: '4 damascos deshidratados',             gramos: 20,  kcal: 48,  p: 0.7, c: 12, g: 0.1, notas: 'Deshidratada · alto en potasio.' },
+    // ── Nota palta ──
+    // La palta NO es fruta de intercambio — cuenta como porción de grasa
+    // (1 porción ≈ 1/3 palta mediana / 50g). Va en INTERCAMBIOS.grasas.
   ],
 
-  // ─── VERDURAS (~25 kcal · 5g C · libres en muchos planes) ──────────────
+  // ─── VERDURAS ──────────────────────────────────────────────────────────
+  // Sistema de Grupos (Centro Metabólico · ADA Exchange + adaptación chilena):
+  //   GRUPO A  → ≤3g CHO/100g · CONSUMO LIBRE · base del plato hipocalórico
+  //   GRUPO B  → ~5g CHO · 25 kcal/porción · contar en glicemia estricta o déficit ajustado
+  //   GRUPO C  → >15g CHO/100g · cuentan como CEREAL/farináceo (papa, choclo, camote,
+  //              arvejas, zapallo amarillo) — NO van acá, ver INTERCAMBIOS.cereales
   verduras: [
-    { alimento: '1 taza de lechuga',                   gramos: 50,  kcal: 8,  p: 0.7, c: 1.6, g: 0.1 },
-    { alimento: '1 tomate mediano',                    gramos: 130, kcal: 23, p: 1.1, c: 5,   g: 0.3 },
-    { alimento: '1 zanahoria mediana',                 gramos: 80,  kcal: 33, p: 0.8, c: 8,   g: 0.2 },
-    { alimento: '½ taza de brócoli cocido',            gramos: 80,  kcal: 27, p: 2.3, c: 5,   g: 0.3 },
-    { alimento: '1 taza de pepino picado',             gramos: 120, kcal: 19, p: 0.8, c: 4,   g: 0.1 },
-    { alimento: '1 taza de zapallo italiano salteado', gramos: 130, kcal: 22, p: 1.6, c: 4,   g: 0.4 },
-    { alimento: '1 taza de espinaca cruda',            gramos: 30,  kcal: 7,  p: 0.9, c: 1.1, g: 0.1 },
-    { alimento: '1 taza de coliflor cocida',           gramos: 120, kcal: 29, p: 2.3, c: 5,   g: 0.6 },
-    { alimento: '1 taza de acelga cocida',             gramos: 130, kcal: 26, p: 2.4, c: 5.4, g: 0.3 },
-    { alimento: '1 taza de espárragos',                gramos: 130, kcal: 27, p: 3,   c: 5,   g: 0.2 },
-    { alimento: '1 pimentón rojo',                     gramos: 130, kcal: 36, p: 1.3, c: 8,   g: 0.4 },
-    { alimento: '1 taza de berenjena cocida',          gramos: 130, kcal: 28, p: 1.1, c: 7,   g: 0.2 },
-    { alimento: '1 taza de repollo',                   gramos: 130, kcal: 33, p: 1.7, c: 7,   g: 0.1 },
-    { alimento: '1 taza de repollo morado',            gramos: 130, kcal: 39, p: 1.8, c: 9,   g: 0.2 },
-    { alimento: '½ taza de cebolla cocida',            gramos: 130, kcal: 52, p: 1.4, c: 12,  g: 0.1 },
-    { alimento: '½ cebolla morada cruda',              gramos: 50,  kcal: 21, p: 0.6, c: 5,   g: 0.1 },
-    { alimento: '1 taza de champiñones',               gramos: 150, kcal: 33, p: 4.6, c: 5,   g: 0.5 },
-    { alimento: '1 taza de apio picado',               gramos: 130, kcal: 22, p: 1,   c: 4,   g: 0.2 },
-    { alimento: '1 taza de rúcula',                    gramos: 50,  kcal: 12, p: 1.3, c: 2,   g: 0.4 },
-    { alimento: '1 taza de kale',                      gramos: 50,  kcal: 25, p: 2.1, c: 4.5, g: 0.4, notas: 'Alta densidad nutricional. Mejor cocido si paciente con tiroides.' },
-    { alimento: '1 taza de berro',                     gramos: 50,  kcal: 6,  p: 1.2, c: 0.7, g: 0.1 },
-    { alimento: '5 rabanitos',                         gramos: 50,  kcal: 8,  p: 0.3, c: 1.7, g: 0.1 },
-    { alimento: '1 taza de pepino dulce',              gramos: 100, kcal: 27, p: 0.5, c: 6,   g: 0.1, ejemploChileno: 'Pepino dulce chileno (Solanum muricatum)' },
-    { alimento: '½ taza de palmitos en conserva',      gramos: 75,  kcal: 18, p: 1.6, c: 3,   g: 0.4 },
-    { alimento: '1 taza de pimentón verde',            gramos: 130, kcal: 26, p: 1.1, c: 6,   g: 0.2 },
-    { alimento: '1 taza de poroto verde cocido',       gramos: 125, kcal: 35, p: 1.9, c: 8,   g: 0.3 },
-    { alimento: '½ alcachofa cocida',                  gramos: 80,  kcal: 38, p: 2.7, c: 8,   g: 0.1, notas: 'Estacional.' },
-    { alimento: '1 betarraga cocida',                  gramos: 100, kcal: 43, p: 1.6, c: 10,  g: 0.2, notas: 'Más calórica — cuenta como ½ cereal si se consume seguido.' },
+    // ── GRUPO A · Hojas verdes (consumo libre) ──
+    { alimento: '1 taza de lechuga',                   gramos: 50,  kcal: 8,  p: 0.7, c: 1.6, g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de espinaca cruda',            gramos: 30,  kcal: 7,  p: 0.9, c: 1.1, g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de acelga cocida',             gramos: 130, kcal: 26, p: 2.4, c: 5.4, g: 0.3, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de kale',                      gramos: 50,  kcal: 25, p: 2.1, c: 4.5, g: 0.4, notas: 'Grupo A · alta densidad nutricional. Mejor cocido si paciente con tiroides.' },
+    { alimento: '1 taza de rúcula',                    gramos: 50,  kcal: 12, p: 1.3, c: 2,   g: 0.4, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de berro',                     gramos: 50,  kcal: 6,  p: 1.2, c: 0.7, g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de repollo',                   gramos: 130, kcal: 33, p: 1.7, c: 7,   g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de endivia',                   gramos: 50,  kcal: 9,  p: 0.6, c: 1.7, g: 0.1, notas: 'Grupo A — libre.' },
+    // ── GRUPO A · Crucíferas ──
+    { alimento: '½ taza de brócoli cocido',            gramos: 80,  kcal: 27, p: 2.3, c: 5,   g: 0.3, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de coliflor cocida',           gramos: 120, kcal: 29, p: 2.3, c: 5,   g: 0.6, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de repollo morado',            gramos: 130, kcal: 39, p: 1.8, c: 9,   g: 0.2, notas: 'Grupo A — libre · alta en antocianinas.' },
+    { alimento: '6 repollitos de Bruselas',            gramos: 90,  kcal: 40, p: 3,   c: 8,   g: 0.3, notas: 'Grupo A — libre.' },
+    // ── GRUPO A · Hortalizas frescas ──
+    { alimento: '1 tomate mediano',                    gramos: 130, kcal: 23, p: 1.1, c: 5,   g: 0.3, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de pepino picado',             gramos: 120, kcal: 19, p: 0.8, c: 4,   g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 taza de apio picado',               gramos: 130, kcal: 22, p: 1,   c: 4,   g: 0.2, notas: 'Grupo A — libre.' },
+    { alimento: '5 rabanitos',                         gramos: 50,  kcal: 8,  p: 0.3, c: 1.7, g: 0.1, notas: 'Grupo A — libre.' },
+    { alimento: '1 pimentón rojo',                     gramos: 130, kcal: 36, p: 1.3, c: 8,   g: 0.4, notas: 'Grupo A — libre · alto en vit C.' },
+    { alimento: '1 taza de pimentón verde',            gramos: 130, kcal: 26, p: 1.1, c: 6,   g: 0.2, notas: 'Grupo A — libre.' },
+    // ── GRUPO A · Frutos verdes ──
+    { alimento: '1 taza de zapallo italiano salteado', gramos: 130, kcal: 22, p: 1.6, c: 4,   g: 0.4, notas: 'Grupo A — libre · zapallo italiano / zapallito.' },
+    { alimento: '1 taza de berenjena cocida',          gramos: 130, kcal: 28, p: 1.1, c: 7,   g: 0.2, notas: 'Grupo A — libre.' },
+    // ── GRUPO A · Otras ──
+    { alimento: '1 taza de champiñones',               gramos: 150, kcal: 33, p: 4.6, c: 5,   g: 0.5, notas: 'Grupo A — libre · alto en proteína para verdura.' },
+    { alimento: '1 taza de espárragos',                gramos: 130, kcal: 27, p: 3,   c: 5,   g: 0.2, notas: 'Grupo A — libre.' },
+    // ── GRUPO A · Pepino dulce (variante chilena) ──
+    { alimento: '1 taza de pepino dulce',              gramos: 100, kcal: 27, p: 0.5, c: 6,   g: 0.1, ejemploChileno: 'Pepino dulce chileno (Solanum muricatum)', notas: 'Grupo A — libre.' },
+    // ── GRUPO B · 5g CHO · 25 kcal por porción (contar en glicemia estricta) ──
+    { alimento: '½ taza de zanahoria rallada (Grupo B)', gramos: 60,  kcal: 25, p: 0.6, c: 6,  g: 0.1, notas: 'Grupo B · contar en pacientes con control glicémico estricto o déficit ajustado.' },
+    { alimento: '½ taza de zanahoria cocida (Grupo B)',  gramos: 75,  kcal: 30, p: 0.7, c: 7,  g: 0.2, notas: 'Grupo B · IG sube con cocción.' },
+    { alimento: '1 zanahoria mediana cruda',            gramos: 80,  kcal: 33, p: 0.8, c: 8,   g: 0.2, notas: 'Grupo B — equivale ~1.5 porciones.' },
+    { alimento: '½ taza de betarraga cocida (Grupo B)',  gramos: 75,  kcal: 32, p: 1.2, c: 7,  g: 0.1, notas: 'Grupo B · alta en nitratos (rendimiento aerobico).' },
+    { alimento: '1 betarraga cocida',                  gramos: 100, kcal: 43, p: 1.6, c: 10,  g: 0.2, notas: 'Grupo B — equivale ~1.5 porciones; cuenta como ½ cereal si se consume seguido.' },
+    { alimento: '1 alcachofa mediana corazón (Grupo B)', gramos: 60,  kcal: 28, p: 2,  c: 6,   g: 0.1, notas: 'Grupo B · estacional.' },
+    { alimento: '½ alcachofa cocida',                  gramos: 80,  kcal: 38, p: 2.7, c: 8,   g: 0.1, notas: 'Grupo B.' },
+    { alimento: '½ taza de habas verdes (Grupo B)',     gramos: 75,  kcal: 38, p: 3,   c: 7,   g: 0.2, notas: 'Grupo B.' },
+    { alimento: '½ taza de cebolla cocida',            gramos: 80,  kcal: 32, p: 0.8, c: 7,   g: 0.1, notas: 'Grupo B.' },
+    { alimento: '½ cebolla morada cruda',              gramos: 50,  kcal: 21, p: 0.6, c: 5,   g: 0.1, notas: 'Grupo B (porción chica).' },
+    { alimento: '½ taza de porotos verdes (Grupo B)',   gramos: 80,  kcal: 22, p: 1.3, c: 5,   g: 0.2, notas: 'Grupo B.' },
+    { alimento: '1 taza de poroto verde cocido',       gramos: 125, kcal: 35, p: 1.9, c: 8,   g: 0.3, notas: 'Grupo B — equivale ~1.5 porciones.' },
+    { alimento: '½ taza de palmitos en conserva',      gramos: 80,  kcal: 19, p: 1.7, c: 3.2, g: 0.4, notas: 'Grupo B · revisar sodio del envase.' },
+    // ── Nota Grupo C ──
+    // Choclo, arvejas, papa, camote y zapallo amarillo NO van en verduras —
+    // cuentan como porción de cereal/farináceo (>15g CHO/100g). Ver INTERCAMBIOS.cereales.
   ],
 
   // ─── CEREALES / FÉCULAS (~80 kcal · 15g C) ─────────────────────────────
