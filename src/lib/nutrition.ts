@@ -170,6 +170,15 @@ export interface FormData {
   carboGramosCena?: number
   /** Horario habitual de entrenamiento — define timing peri-entreno de snack/barra */
   horarioEntrenamiento?: 'AM' | 'PM' | 'noche' | 'sin_entreno'
+  /** Hora exacta del entreno en formato HH:MM (ej. "07:30"). Opcional —
+   *  cuando está definida, el módulo de colación pre-entreno calcula la
+   *  hora sugerida (horaEntreno − anticipacionColacionPreMin) y sugiere
+   *  opciones específicas según objetivo + categoría de anticipación. */
+  horaEntrenamientoExacta?: string
+  /** Minutos de anticipación entre la colación pre-entreno y el inicio del
+   *  entreno. Default 60. Rangos clínicos: <30 inmediata · 30-60 corta ·
+   *  60-90 óptima · >90 larga (Sochinut + ACSM 2016). */
+  anticipacionColacionPreMin?: number
   // ── Contexto operativo del paciente (skill nutriapp-pro: variables obligatorias) ──
   /** Cantidad de comidas reales por día — usado para distribución de macros y rotación.
    *  NOTA: si `tiemposComida` esta definido y no vacio, se usa ESE como fuente de

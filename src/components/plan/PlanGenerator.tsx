@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { calcularNutricion, OBJETIVO_LABELS, SEXO_LABELS, EJERCICIO_LABELS, usaraCunningham, WHEY_MOMENTO_LABELS, METODO_CALCULO_LABELS, sugerirCho, sugerirProteina, sugerirGrasa, PAL_NIVELES_FAO, METODO_COMPOSICION_LABELS } from '@/lib/nutrition'
 import type { FormData, NutritionResult, Objetivo, Sexo, TipoEjercicio, WheyMomento, MetodoCalculo, MetodoComposicion, FormulaUsada } from '@/lib/nutrition'
+import { sugerirColacionPreEntreno, DEFAULT_ANTICIPACION_MIN } from '@/lib/colacionPreEntreno'
 import { MODALIDAD_PLAN_LABELS, type ModalidadPlan } from '@/lib/porciones'
 import { PorcionesEditor } from './PorcionesEditor'
 import {
@@ -216,6 +217,164 @@ function ModalidadPlanSelector({
 //   • Si elige C: ingresar 3 g/kg (proteína Phillips, grasa ACSM, CHO Burke)
 //   • Sección "Overrides" para forzar un macro específico en cualquier método
 //   • Preview en vivo de los macros + kcal resultantes
+
+// ─── Módulo: colación pre-entreno según hora + objetivo + anticipación ────────
+// Aparece en el step Ejercicio cuando el paciente entrena. Permite al
+// profesional:
+//   - Definir hora exacta del entreno (HH:MM)
+//   - Ajustar anticipación de la colación pre (slider 15-150 min, default 60)
+// Y le muestra:
+//   - Hora calculada para tomar la colación
+//   - Categoría clínica de la anticipación (inmediata/corta/óptima/larga)
+//   - Racional clínico (justificación de la recomendación)
+//   - 3-5 opciones de colación con macros, adaptadas al objetivo del paciente
+function ColacionPreEntrenoModule({
+  form,
+  set,
+}: {
+  form: Partial<FormData>
+  set: <K extends keyof FormData>(key: K, value: FormData[K]) => void
+}) {
+  const horaDefaultPorHorario: Record<string, string> = {
+    AM: '07:00',
+    PM: '17:00',
+    noche: '20:00',
+    sin_entreno: '',
+  }
+  const horaEntreno = form.horaEntrenamientoExacta
+    ?? horaDefaultPorHorario[form.horarioEntrenamiento ?? 'PM']
+    ?? '17:00'
+  const anticipacion = form.anticipacionColacionPreMin ?? DEFAULT_ANTICIPACION_MIN
+  const duracionEntreno = form.duracionSesion ?? 60
+  const objetivo = form.objetivo ?? 'mantenimiento'
+
+  const sugerencia = sugerirColacionPreEntreno(horaEntreno, objetivo, {
+    anticipacionMin: anticipacion,
+    duracionEntrenoMin: duracionEntreno,
+  })
+
+  const categoriaColors: Record<string, string> = {
+    inmediata: 'bg-rose-50 border-rose-200 text-rose-700',
+    corta:     'bg-amber-50 border-amber-200 text-amber-700',
+    optima:    'bg-emerald-50 border-emerald-200 text-emerald-700',
+    larga:     'bg-sky-50 border-sky-200 text-sky-700',
+  }
+  const categoriaLabel: Record<string, string> = {
+    inmediata: '⚡ Inmediata',
+    corta:     '⏱️ Corta',
+    optima:    '✅ Óptima',
+    larga:     '🍽️ Larga',
+  }
+
+  return (
+    <div className="border border-[#29ABE2]/30 bg-gradient-to-br from-[#EAF4FB] to-white rounded-xl p-4 space-y-4">
+      <div>
+        <label className="block text-sm font-semibold text-[#0C3547] mb-0.5">
+          ⚡ Colación pre-entreno
+          <span className="ml-2 text-xs font-normal text-[#6B7C93]">opcional · sugerido por objetivo + hora</span>
+        </label>
+        <p className="text-xs text-[#6B7C93]">
+          Define la hora exacta del entreno y la app calcula la hora de la colación pre-entreno + propone opciones
+          adaptadas al objetivo del paciente.
+        </p>
+      </div>
+
+      {/* Inputs: hora + anticipación */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[11px] font-bold text-[#0C3547] uppercase tracking-wide mb-1.5">
+            Hora del entreno
+          </label>
+          <input
+            type="time"
+            value={horaEntreno}
+            onChange={e => set('horaEntrenamientoExacta', e.target.value)}
+            className="w-full px-3 py-2 border border-[#D6E3ED] rounded-lg text-sm focus:outline-none focus:border-[#29ABE2]"
+          />
+        </div>
+        <div>
+          <label className="block text-[11px] font-bold text-[#0C3547] uppercase tracking-wide mb-1.5">
+            Anticipación · <span className="text-[#29ABE2]">{anticipacion} min antes</span>
+          </label>
+          <input
+            type="range"
+            min={15} max={150} step={15}
+            value={anticipacion}
+            onChange={e => set('anticipacionColacionPreMin', Number(e.target.value))}
+            className="w-full"
+          />
+          <div className="flex justify-between text-[9px] text-[#8BA5BE] mt-0.5">
+            <span>15</span><span>60</span><span>90</span><span>150</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Resumen calculado */}
+      {sugerencia && (
+        <>
+          <div className="bg-white border border-[#D6E3ED] rounded-lg p-3 flex items-center justify-between flex-wrap gap-2">
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-[#8BA5BE] font-bold">Hora sugerida colación</p>
+              <p className="text-2xl font-black text-[#0C3547] leading-none mt-0.5">{sugerencia.horaColacion}</p>
+              <p className="text-[10px] text-[#6B7C93] mt-1">
+                {sugerencia.anticipacionMin} min antes de las {sugerencia.horaEntreno}
+              </p>
+            </div>
+            <span className={cn('text-[11px] font-bold px-2.5 py-1 rounded-full border', categoriaColors[sugerencia.categoria])}>
+              {categoriaLabel[sugerencia.categoria]}
+            </span>
+          </div>
+
+          {/* Racional clínico */}
+          <div className="bg-[#0F1419] text-zinc-200 rounded-lg p-3 text-[11px] leading-relaxed">
+            <p className="text-[9px] uppercase tracking-wider text-zinc-500 font-bold mb-1">Racional clínico</p>
+            {sugerencia.racional}
+          </div>
+
+          {/* Opciones sugeridas */}
+          <div>
+            <p className="text-[11px] font-bold text-[#0C3547] uppercase tracking-wide mb-2">
+              Opciones sugeridas ({sugerencia.opciones.length})
+            </p>
+            <div className="space-y-2">
+              {sugerencia.opciones.map((opt, i) => (
+                <div key={i} className="bg-white border border-[#D6E3ED] rounded-lg p-3">
+                  <div className="flex items-baseline justify-between gap-2 mb-1">
+                    <p className="text-sm font-bold text-[#0C3547]">
+                      {opt.label}
+                      {opt.vegano && (
+                        <span className="ml-2 text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded font-semibold">
+                          VEGANO
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-[#29ABE2] font-bold flex-shrink-0">{opt.kcal} kcal</p>
+                  </div>
+                  <ul className="text-[11px] text-[#4a6b80] space-y-0.5 mb-2">
+                    {opt.items.map((it, j) => (
+                      <li key={j}>• {it}</li>
+                    ))}
+                  </ul>
+                  <p className="text-[10px] text-[#6B7C93]">
+                    <span className="font-bold text-violet-600">{opt.p}g P</span> ·{' '}
+                    <span className="font-bold text-amber-600">{opt.c}g C</span> ·{' '}
+                    <span className="font-bold text-rose-600">{opt.g}g G</span>
+                  </p>
+                  {opt.nota && (
+                    <p className="text-[10px] text-[#6B7C93] italic mt-1.5 leading-relaxed">
+                      💡 {opt.nota}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function MetodoCalculoSelector({
   form,
   set,
@@ -2390,6 +2549,11 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* ⚡ Módulo: hora exacta de entreno + sugerencia de colación pre-entreno */}
+              {(form.tipoEjercicio !== 'ninguno' && form.horarioEntrenamiento !== 'sin_entreno') && (
+                <ColacionPreEntrenoModule form={form} set={set} />
               )}
 
               {/* 📊 Composición corporal — BIA / InBody / ISAK */}
