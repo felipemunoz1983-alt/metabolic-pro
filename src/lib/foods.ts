@@ -852,6 +852,14 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Omelette proteico + pan integral',
     items: ['3 huevos enteros', '2 claras adicionales', 'Espinaca y champiñones', '1 rebanada pan integral', '1 cdta aceite de oliva'],
     baseKcal: 420, p: 28, c: 35, g: 18, tieneHuevo: true, eggsDefault: 3,
+    // porcionFija: items 100% discretos (3 huevos enteros, 2 claras, 1 rebanada,
+    // 1 cdta aceite) — escalar al slot del paciente produce porciones absurdas.
+    // Bug reportado por Felipe: paciente con target alto veía 1820 kcal mostrando
+    // "2 huevos enteros" (factor de escalado 4.3x sobre los 420 kcal base, por
+    // doble escalado: buildMeal aplica scale del slot + compensarPorcionesFijas
+    // aplica factor encima). Fix surgical idéntico al de tostadas_ricotta.
+    // El déficit del slot se compensa en otras meals via compensarPorcionesFijas.
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'omelette_pan_integral.jfif',
