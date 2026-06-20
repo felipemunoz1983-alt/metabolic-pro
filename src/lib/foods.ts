@@ -815,6 +815,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   1 cdta miel 7g:              21 kcal · 0 P · 5.7 C · 0 G
     //   Total: 500 kcal · 18 P · 96 C · 6 G
     baseKcal: 500, p: 18, c: 96, g: 6,
+    porcionFija: true,  // items discretos (80g avena, 1 plátano, 200ml leche, 1 cdta miel) — escalar produce porciones absurdas
     foto: '/img/recetas/unsplash_1638813133218-4367bd8123f6.webp',
     tiempo: '10 min',
     pasos: [
@@ -834,6 +835,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   200ml leche descremada:      66 kcal · 6.2 P · 9.6 C · 0.2 G
     //   Total: 599 kcal · 42 P · 93 C · 7 G
     baseKcal: 599, p: 42, c: 93, g: 7,
+    porcionFija: true,  // items discretos (1 scoop, 1 plátano, 80g avena, 200ml leche) — scoop es porción única por definición
     requiereWhey: true,
     // foto: scoop de proteina sobre superficie (Unsplash) — diferencia
     // visualmente la version proteica de la avena natural (avena_platano),
@@ -876,6 +878,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     label: 'Pan integral + palta + huevo pochado',
     items: ['2 tostadas pan integral', '½ palta madura', '2 huevos pochados', 'Café o té sin azúcar'],
     baseKcal: 460, p: 22, c: 40, g: 22, tieneHuevo: true, eggsDefault: 2,
+    porcionFija: true,  // items discretos (2 tostadas, ½ palta, 2 huevos pochados) — escalar produce porciones absurdas
     tienePan: true, panTipoDefault: 'integral',
     tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'Pan_palta_huevo_pochado.jfif',
@@ -899,6 +902,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Total: 318 kcal · 13 P · 31 C · 17 G
     // (El selector tieneYogur ajusta macros si el paciente elige otro yogur — FullPro, Soprole Protein+, etc.)
     baseKcal: 318, p: 13, c: 31, g: 17,
+    porcionFija: true,  // items discretos (150g yogur, ½ taza berries, 1 cda chía, 10-15 almendras) — escalar produce porciones absurdas
     tieneYogur: true,
     foto: IMG + 'Yogurt_griego_con_berries_semillas.jfif',
     tiempo: '5 min',
@@ -943,6 +947,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Canela/vainilla:                        0 kcal
     //   Total: 301 kcal · 19 P · 38 C · 9 G — redondeado a 305/16/40/10
     baseKcal: 305, p: 16, c: 40, g: 10,
+    porcionFija: true,  // items discretos (2 cdas chía, 150g yogur, 1 fruta) — escalar produce porciones absurdas
     tieneYogur: true,
     foto: IMG + 'chia_pudding.jfif',
     tiempo: '5 min + reposo 2h',
@@ -995,6 +1000,7 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Canela/limón:                      0 kcal
     //   Total: 288 kcal · 22 P · 24 C · 12 G
     baseKcal: 288, p: 22, c: 24, g: 12,
+    porcionFija: true,  // items discretos (175g cottage, 1 fruta, 1 cda semillas) — escalar produce porciones absurdas
     foto: IMG + 'cottage_frutas_semillas.jfif',
     tiempo: '5 min',
     pasos: [
