@@ -957,6 +957,14 @@ export const desayunosOpts: Record<string, MealOption> = {
     //   Total: 471 kcal · 22 P · 36 C · 28 G
     // Nota: la grasa estaba muy subestimada (era 14g, real 28g) — nueces son densas.
     baseKcal: 471, p: 22, c: 36, g: 28,
+    // porcionFija: los items tienen cantidades DISCRETAS (90g ricotta, 10 nueces,
+    // 1 cdta miel, 2 tostadas) — no tiene sentido escalarlas al slot del paciente.
+    // Sin este flag, target alto (ej. hipertrofia 3500 kcal) inflaba el desayuno
+    // a >1000 kcal mostrando "2 tostadas + 90g ricotta + 10 nueces" pero macros
+    // x2.3 (bug reportado por Felipe en plan de Gaspar). Las hermanas
+    // tostadas_ricotta_col y tostada_palta_ricotta_chia ya tienen porcionFija.
+    // El déficit del slot se compensa en otras meals via compensarPorcionesFijas.
+    porcionFija: true,
     tienePan: true, panTipoDefault: 'integral',
     tieneUntable: true, untableTipoDefault: 'mermelada_light', untableGramosBase: 20,
     foto: IMG + 'tostadas_ricotta_miel_nueces.jfif',
