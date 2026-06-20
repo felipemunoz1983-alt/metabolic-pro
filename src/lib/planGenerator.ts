@@ -289,8 +289,18 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
   // slots; con override el profesional puede armar combinaciones inusuales
   // (ej. solo desayuno + almuerzo + cena, sin colaciones, para un paciente
   // intermitente; o desayuno + cena para un paciente OMAD-like).
+  //
+  // Orden canónico — la PWA del paciente SIEMPRE muestra los tiempos en este
+  // orden, sin importar cómo quedó el array en el plan_json guardado. Defensa
+  // para planes viejos donde el chip-picker del wizard agregaba en orden de
+  // click (ej. profesional clickeó "Cena" antes que "Once" y la PWA mostraba
+  // cena antes que once en el menú del paciente).
+  const ORDEN_CANONICO_SLOTS = ['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena', 'ultra_extra'] as const
+  type SlotTipo = typeof ORDEN_CANONICO_SLOTS[number]
+  const ordenarSlots = (arr: readonly string[]): SlotTipo[] =>
+    ORDEN_CANONICO_SLOTS.filter(s => arr.includes(s))
   const slots = (form.tiemposComida && form.tiemposComida.length > 0)
-    ? form.tiemposComida
+    ? ordenarSlots(form.tiemposComida)
     : buildMealSlots(form.comidasPorDia ?? 5, form.horarioEntrenamiento)
 
   // Recalcular % kcal por comida para que sume ~100% según slots presentes

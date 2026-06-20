@@ -2798,15 +2798,25 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                     sin marcar, se usa el atajo numérico de arriba ({form.comidasPorDia ?? 5} comidas/día).
                   </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                    {([
-                      { v: 'desayuno',         l: '☀️ Desayuno' },
-                      { v: 'colacion_manana',  l: '☕ Colación AM' },
-                      { v: 'almuerzo',         l: '🍽️ Almuerzo' },
-                      { v: 'once',             l: '🍵 Once / PM' },
-                      { v: 'cena',             l: '🌙 Cena' },
-                      { v: 'ultra_extra',      l: '🍿 Snack extra' },
-                    ] as const).map(opt => {
-                      const tiempos = form.tiemposComida ?? []
+                    {(() => {
+                      // Orden canónico de tiempos de comida (la app SIEMPRE renderiza en
+                      // este orden, sin importar el orden de click del profesional). Sin
+                      // esto, hacer click en "Cena" antes que "Once" dejaba el array como
+                      // [..., 'cena', 'once'] y el motor generaba meals con cena antes
+                      // que once en el menú del paciente. Bug visible en la PWA.
+                      const ORDEN_CANONICO = ['desayuno', 'colacion_manana', 'almuerzo', 'once', 'cena', 'ultra_extra'] as const
+                      type Tiempo = typeof ORDEN_CANONICO[number]
+                      const ordenar = (arr: Tiempo[]): Tiempo[] =>
+                        ORDEN_CANONICO.filter(t => arr.includes(t))
+                      return ([
+                        { v: 'desayuno',         l: '☀️ Desayuno' },
+                        { v: 'colacion_manana',  l: '☕ Colación AM' },
+                        { v: 'almuerzo',         l: '🍽️ Almuerzo' },
+                        { v: 'once',             l: '🍵 Once / PM' },
+                        { v: 'cena',             l: '🌙 Cena' },
+                        { v: 'ultra_extra',      l: '🍿 Snack extra' },
+                      ] as const).map(opt => {
+                      const tiempos = (form.tiemposComida ?? []) as Tiempo[]
                       const checked = tiempos.includes(opt.v)
                       return (
                         <button
@@ -2814,7 +2824,7 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                           onClick={() => {
                             const next = checked
                               ? tiempos.filter(t => t !== opt.v)
-                              : [...tiempos, opt.v]
+                              : ordenar([...tiempos, opt.v])
                             set('tiemposComida', next.length > 0 ? next : undefined as never)
                           }}
                           className={cn(
@@ -2828,7 +2838,8 @@ export function PlanGenerator({ onResult, initialData, patientId }: Props) {
                           {checked && <span className="mr-1">✓</span>}{opt.l}
                         </button>
                       )
-                    })}
+                    })
+                    })()}
                   </div>
                   {form.tiemposComida && form.tiemposComida.length > 0 && (
                     <div className="mt-2 flex gap-2 items-start bg-[#EAF4FB] border border-[#29ABE2]/30 rounded-lg p-2">
