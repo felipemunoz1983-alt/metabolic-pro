@@ -44,6 +44,11 @@ export interface DayMeal {
   esUltra?: boolean
   /** Etiqueta de timing peri-entreno aplicada al meal según horario de entrenamiento del paciente */
   timingEntreno?: 'pre_entreno' | 'post_entreno'
+  /** True si el meal vino de una opción con porcionFija (producto envasado,
+   *  porción discreta). Cuando es true, la compensación de déficit/exceso
+   *  vs targetKcal NO redistribuye sobre este meal — sus kcal son los del
+   *  producto real y no se escalan. */
+  porcionFija?: boolean
 }
 
 export interface DayPlan {
@@ -369,16 +374,21 @@ export function generarPlan(form: FormData, targetKcal: number): WeekPlan {
       if (uOpt) meals.push(buildUltraMeal(uOpt))
     }
 
-    const totalKcal = meals.reduce((s, m) => s + m.kcal, 0)
-    const totalP    = meals.reduce((s, m) => s + m.p, 0)
-    const totalC    = meals.reduce((s, m) => s + m.c, 0)
-    const totalG    = meals.reduce((s, m) => s + m.g, 0)
+    // Compensar déficit/exceso vs target redistribuyendo entre meals escalables.
+    // Necesario porque las porciones fijas (barras, snacks envasados, ultra) NO
+    // se escalan al slot; sin esto el día puede quedar ~800 kcal por debajo.
+    const mealsCompensados = compensarPorcionesFijas(meals, targetKcal)
+
+    const totalKcal = mealsCompensados.reduce((s, m) => s + m.kcal, 0)
+    const totalP    = mealsCompensados.reduce((s, m) => s + m.p, 0)
+    const totalC    = mealsCompensados.reduce((s, m) => s + m.c, 0)
+    const totalG    = mealsCompensados.reduce((s, m) => s + m.g, 0)
 
     dias.push({
       dia: diaSemana + 1,
       semana,
       nombre: diaNombre,
-      meals,
+      meals: mealsCompensados,
       totalKcal,
       totalP,
       totalC,
@@ -673,7 +683,58 @@ function buildMeal(
     pasos: option.pasos,
     sellos: option.sellos,
     alergenosNota,
+    porcionFija: isPorcionFija,
   }
+}
+
+// ─── Compensación de déficit por porciones fijas ─────────────────────────────
+// Cuando una o más meals tienen porcionFija (productos envasados con macros
+// del envase, no escalables al slot), la suma del día puede quedar lejos del
+// targetKcal. Esta función redistribuye el déficit/exceso entre las meals
+// escalables manteniendo la proporcionalidad de sus macros.
+//
+// Tolerancia: si la diferencia es < TOLERANCIA_KCAL, no se ajusta (evita
+// micro-cambios visualmente molestos).
+//
+// Caso edge: si TODAS las meals son porcionFija, no hay nada que escalar —
+// se respeta el total real. Si las porcionFija ya superan el target, el
+// factor de escalado de las restantes se limita a MIN_FACTOR=0.5 para no
+// dejar comidas inviablemente pequeñas.
+const TOLERANCIA_KCAL = 50
+const MIN_FACTOR = 0.5
+const MAX_FACTOR = 2.0
+
+function compensarPorcionesFijas(meals: DayMeal[], targetKcal: number): DayMeal[] {
+  // 'ultra' también es un producto envasado fijo — tratarlo igual que porcionFija.
+  const esFija = (m: DayMeal) => m.porcionFija === true || m.tipo === 'ultra'
+
+  const escalables = meals.filter(m => !esFija(m))
+  if (escalables.length === 0) return meals  // todas fijas — no se puede compensar
+
+  const kcalFijas = meals.filter(esFija).reduce((s, m) => s + m.kcal, 0)
+  const kcalEscalablesActual = escalables.reduce((s, m) => s + m.kcal, 0)
+  if (kcalEscalablesActual === 0) return meals
+
+  const kcalDisponibleEscalables = targetKcal - kcalFijas
+  const diferencia = kcalDisponibleEscalables - kcalEscalablesActual
+
+  // Si ya está cerca del target, no tocar.
+  if (Math.abs(diferencia) < TOLERANCIA_KCAL) return meals
+
+  // Factor de escalado para meals escalables. Limitado a [MIN_FACTOR, MAX_FACTOR].
+  const factorBruto = kcalDisponibleEscalables / kcalEscalablesActual
+  const factor = Math.max(MIN_FACTOR, Math.min(MAX_FACTOR, factorBruto))
+
+  return meals.map(m => {
+    if (esFija(m)) return m
+    return {
+      ...m,
+      kcal: Math.round(m.kcal * factor),
+      p:    Math.round(m.p    * factor),
+      c:    Math.round(m.c    * factor),
+      g:    Math.round(m.g    * factor),
+    }
+  })
 }
 
 // ─── Inyección dinámica de snack/barra favoritos en pool de colaciones ────────

@@ -383,3 +383,51 @@ describe('generarPlan — robustez (no rompe en edge cases)', () => {
     })
   })
 })
+
+// ─── Compensación por porciones fijas (fix bug ~806 kcal de Guillermo) ────────
+//
+// Cuando hay meals con porcionFija (barras, snacks envasados, ultra), las kcal
+// reales NO se escalan al slot. Sin compensación el día puede quedar muy por
+// debajo del target. Esta suite valida que la compensación lleve el día a
+// kcal cercanas al target cuando hay porciones fijas en la rotación.
+describe('generarPlan — compensación de porciones fijas', () => {
+  it('día sin porciones fijas: totalKcal ≈ targetKcal (±5%)', () => {
+    const plan = generarPlan(baseForm({
+      incluirSnackEnPlan: false,
+      incluirBarraEnPlan: false,
+      ultraDias: 0,
+      ultraProcesados: [],
+    }), 2500)
+    plan.dias.forEach(d => {
+      const diff = Math.abs(d.totalKcal - 2500)
+      expect(diff, `día ${d.nombre}: ${d.totalKcal} vs 2500 target`).toBeLessThan(2500 * 0.05)
+    })
+  })
+
+  it('día con ultra procesado: la compensación mantiene total cerca del target (±10%)', () => {
+    const plan = generarPlan(baseForm({
+      ultraDias: 7,
+      ultraProcesados: ['bebida_cola'],
+    }), 3000)
+    plan.dias.forEach(d => {
+      const ultraMeal = d.meals.find(m => m.tipo === 'ultra')
+      if (!ultraMeal) return
+      const diff = Math.abs(d.totalKcal - 3000)
+      expect(diff, `día ${d.nombre} con ultra: ${d.totalKcal} vs 3000`).toBeLessThan(3000 * 0.10)
+    })
+  })
+
+  it('meals porcionFija conservan kcal del envase (no se escalan)', () => {
+    const plan = generarPlan(baseForm({
+      ultraDias: 7,
+      ultraProcesados: ['bebida_cola'],
+    }), 2500)
+    const ultras = plan.dias.flatMap(d => d.meals.filter(m => m.tipo === 'ultra'))
+    expect(ultras.length).toBeGreaterThan(0)
+    // Todos los días con el mismo ultra deben tener exactamente la misma kcal
+    if (ultras.length > 1) {
+      const kcalUltra = ultras[0].kcal
+      ultras.forEach(u => expect(u.kcal).toBe(kcalUltra))
+    }
+  })
+})
