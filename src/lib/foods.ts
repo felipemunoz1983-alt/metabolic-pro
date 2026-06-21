@@ -2060,6 +2060,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 600 kcal · 50 P · 29 C · 33 G
     //   (Versión anterior subestimaba la grasa del salmón y sobreestimaba CHO)
     baseKcal: 600, p: 50, c: 29, g: 33,
+    tieneCarboPrincipal: true, carboTipo: 'quinoa', carboGramosBase: 100,
     porcionFija: true,
     foto: IMG + 'salmon_quinoa.webp',
     tendencia: ['omnivoro'],
@@ -2094,6 +2095,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
       '💡 Cambia la quinoa por: 100g arroz cocido · 80g fideos cocidos · 150g papas cocidas · 100g fideos de arroz cocidos · 50g pan integral (1 rebanada)',
     ],
     baseKcal: 612, p: 42, c: 40, g: 32, tieneHuevo: true, eggsDefault: 1,
+    tieneCarboPrincipal: true, carboTipo: 'quinoa', carboGramosBase: 100,
     porcionFija: true,
     foto: IMG + 'ensalada_proteica.webp',
     tendencia: ['omnivoro'],
@@ -2133,6 +2135,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Quinoa = proteína completa (los 9 aa esenciales) + bajo IG.
     //   Excelente perfil para deportistas y objetivo hipertrofia.
     baseKcal: 422, p: 21, c: 32, g: 23, tieneHuevo: true, eggsDefault: 2,
+    tieneCarboPrincipal: true, carboTipo: 'quinoa', carboGramosBase: 100,
     porcionFija: true,
     tendencia: ['vegetariano'],
     contiene: ['huevo'] as string[],
@@ -2162,6 +2165,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite + soya:      55 kcal · 1 P · 0 C · 5 G
     //   Total: 532 kcal · 25 P · 54 C · 21 G
     baseKcal: 532, p: 25, c: 54, g: 21, tieneHuevo: true, eggsDefault: 3,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 160,
     porcionFija: true,
     foto: IMG + 'salteado_de_arroz_con_huevo.webp',
     tendencia: ['vegetariano'],
@@ -2191,6 +2195,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Ensalada mixta 100g:      20 kcal · 1 P · 4 C · 0 G
     //   Total: 413 kcal · 22 P · 73 C · 7 G
     baseKcal: 413, p: 22, c: 73, g: 7,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_integral', carboGramosBase: 100,
     porcionFija: true,
     foto: '/img/recetas/unsplash_1503838922633-d7892c7a2bc0.webp', // porotos/lentejas en bol con cuchara, foto real
     tendencia: ['vegetariano', 'vegano'],
@@ -2221,6 +2226,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 466 kcal · 62 P · 34 C · 9 G
     //   (Versión anterior subestimaba proteína — pavo es más magro que pollo)
     baseKcal: 466, p: 62, c: 34, g: 9,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 150,
     porcionFija: true,
     // foto: pavo asado con papas en plato blanco (Unsplash) — corrige
     // mismatch previo donde se usaba la foto generica de "carne con papas"
@@ -2255,6 +2261,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 347 kcal · 21 P · 31 C · 16 G
     //   (Versión anterior MUY sobreestimada — el tofu es menos denso que la carne)
     baseKcal: 347, p: 21, c: 31, g: 16,
+    tieneCarboPrincipal: true, carboTipo: 'quinoa', carboGramosBase: 100,
     porcionFija: true,
     foto: '/img/recetas/unsplash_1680173073730-852e0ec93bec.webp',
     tiempo: '25 min',
@@ -2284,6 +2291,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   80g arroz integral:      89 kcal · 2.1 P · 18 C · 0.7 G
     //   Total: 591 kcal · 25 P · 83 C · 19 G
     baseKcal: 591, p: 25, c: 83, g: 19,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_integral', carboGramosBase: 80,
     porcionFija: true,
     foto: '/img/recetas/unsplash_1623428187969-5da2dcea5ebf.webp',
     tiempo: '30 min',
@@ -2318,6 +2326,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   Total: 820 kcal · 27 P · 101 C · 36 G
     //   (Versión anterior subestimaba MUCHO — la leche de coco pesa mucho en kcal y grasa)
     baseKcal: 820, p: 27, c: 101, g: 36,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_integral', carboGramosBase: 150,
     porcionFija: true,
     foto: '/img/recetas/unsplash_1623428188474-b1d532c5e560.webp',
     tiempo: '25 min',
@@ -2348,6 +2357,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite + mostaza:   45 kcal · 0 P · 0 C · 5 G
     //   Total: 399 kcal · 14 P · 64 C · 10 G
     baseKcal: 399, p: 14, c: 64, g: 10,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 200,
     porcionFija: true,
     foto: IMG + 'vegetal_burguer_abuelo.jpg',
     tiempo: '25 min',
@@ -2379,6 +2389,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite + mostaza:         45 kcal · 0 P · 0 C · 5 G
     //   Total: 436 kcal · 25 P · 43 C · 19 G
     baseKcal: 436, p: 25, c: 43, g: 19,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 150,
     porcionFija: true,
     foto: IMG + 'beyond_burguer.jpg',
     tiempo: '20 min',
@@ -2513,6 +2524,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   10g queso parmesano:               42 kcal · 3.8 P · 0.4 C · 2.9 G
     //   Total: ~485 kcal · 40 P · 38 C · 11 G (con queso default)
     baseKcal: 485, p: 38, c: 50, g: 12,
+    tieneCarboPrincipal: true, carboTipo: 'fideos', carboGramosBase: 100,
     porcionFija: true,
     tendencia: ['omnivoro'],
     contiene: ['gluten', 'lacteos'] as string[],
@@ -2549,6 +2561,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
     //   Total: ~430 kcal · 40 P · 45 C · 10 G (calculo en olla + reduccion caldo)
     baseKcal: 430, p: 40, c: 45, g: 10,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 100,
     porcionFija: true,
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'] as string[],
@@ -2586,6 +2599,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
     //   Total: ~490 kcal · 32 P · 50 C · 16 G
     baseKcal: 490, p: 32, c: 50, g: 16, tieneHuevo: true, eggsDefault: 1,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 100,
     porcionFija: true,
     tendencia: ['omnivoro'],
     contiene: ['huevo', 'cebolla_ajo'] as string[],
@@ -2622,6 +2636,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   15g mayonesa light:                36 kcal · 0.1 P · 1.2 C · 3.4 G
     //   Total: ~485 kcal · 35 P · 50 C · 15 G
     baseKcal: 485, p: 35, c: 50, g: 15,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
     porcionFija: true,
     tendencia: ['omnivoro'],
     contiene: ['pescados'] as string[],
@@ -2658,6 +2673,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
     //   Total: ~470 kcal · 38 P · 50 C · 11 G (porción individual)
     baseKcal: 470, p: 38, c: 50, g: 11,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 100,
     porcionFija: true,
     tendencia: ['omnivoro'],
     contiene: ['cebolla_ajo'] as string[],
@@ -2692,6 +2708,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
     //   Total: ~440 kcal · 35 P · 54 C · 8 G (clasico hogareño)
     baseKcal: 440, p: 35, c: 54, g: 8,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
     porcionFija: true,
     foto: '/img/recetas/arroz_pollo_clasico.webp',
     tendencia: ['omnivoro'],
@@ -2727,6 +2744,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
     //   Total: ~520 kcal · 37 P · 53 C · 17 G (carne mas blanda, apto dispepsia)
     baseKcal: 520, p: 37, c: 53, g: 17,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
     porcionFija: true,
     foto: '/img/recetas/arroz_carne_guisado.webp',
     tendencia: ['omnivoro'],
@@ -2759,6 +2777,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
     //   Total: ~450 kcal · 17 P · 49 C · 19 G (plato minimal, sin tecnica)
     baseKcal: 450, p: 17, c: 49, g: 19, tieneHuevo: true, eggsDefault: 2,
+    tieneCarboPrincipal: true, carboTipo: 'arroz_blanco', carboGramosBase: 150,
     porcionFija: true,
     foto: '/img/recetas/arroz_huevo_caballo.webp',
     tendencia: ['vegetariano'],
@@ -2794,6 +2813,7 @@ export const almuerzosOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:                45 kcal · 0 P · 0 C · 5 G
     //   Total: ~525 kcal · 43 P · 44 C · 20 G (con queso default)
     baseKcal: 525, p: 43, c: 44, g: 20,
+    tieneCarboPrincipal: true, carboTipo: 'fideos', carboGramosBase: 100,
     porcionFija: true,
     foto: '/img/recetas/fideos_salsa_carne.webp',
     tendencia: ['omnivoro'],
@@ -3068,6 +3088,7 @@ export const cenasOpts: Record<string, MealOption> = {
     //   1 cdta sésamo + soya: 55 kcal · 1 P · 0 C · 5 G
     //   Total: 372 kcal · 23 P · 38 C · 15 G
     baseKcal: 372, p: 23, c: 38, g: 15,
+    tieneCarboPrincipal: true, carboTipo: 'fideos', carboGramosBase: 100,
     porcionFija: true,
     foto: '/img/recetas/unsplash_1694934588452-a1a02b2ec718.webp',
     tiempo: '20 min',
@@ -3345,6 +3366,7 @@ export const cenasOpts: Record<string, MealOption> = {
     //   1 cdta aceite oliva:               45 kcal · 0 P · 0 C · 5 G
     //   Total: ~360 kcal · 18 P · 35 C · 17 G (sopa estacional frío)
     baseKcal: 360, p: 18, c: 35, g: 17, tieneHuevo: true, eggsDefault: 2,
+    tieneCarboPrincipal: true, carboTipo: 'papas', carboGramosBase: 250,
     porcionFija: true,
     tendencia: ['vegetariano'],
     contiene: ['huevo', 'lacteos'] as string[],
