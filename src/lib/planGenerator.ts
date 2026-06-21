@@ -49,6 +49,12 @@ export interface DayMeal {
    *  vs targetKcal NO redistribuye sobre este meal — sus kcal son los del
    *  producto real y no se escalan. */
   porcionFija?: boolean
+  /** Handles de componentes escalables (gram-based) para la compensación
+   *  POR-COMPONENTE: en vez de escalar el meal entero (desincroniza el texto),
+   *  la compensación sube los gramos de arroz/proteína actualizando texto+macros.
+   *  Los items discretos (1 plátano, 1 huevo) quedan fijos. */
+  compCarbo?: { tipo: keyof typeof CARBO_MACROS_POR_GRAMO; gramos: number; itemIdx: number }
+  compCarne?: { tipo: keyof typeof CARNE_MACROS_POR_GRAMO; gramos: number; itemIdx: number }
 }
 
 export interface DayPlan {
@@ -679,6 +685,30 @@ function buildMeal(
     }
   }
 
+  // Recomputar kcal desde los macros finales (Atwater 4/4/9) para que refleje
+  // la comida real tras sustituciones — necesario para que la compensación
+  // POR-COMPONENTE (subir gramos de arroz/proteína) se vea en el kcal del meal.
+  kcalFinal = Math.round(p * 4 + c * 4 + g * 9)
+
+  // Handles de componentes escalables (solo si la receta declara gramaje + tipo).
+  // itemIdx = línea de items con el gramaje (para actualizar el texto al escalar).
+  const carboGramosActual = carboGramos ?? option.carboGramosBase ?? 0
+  const carneGramosActual = carneGramos ?? option.carneGramosBase ?? 0
+  const compCarbo = (option.tieneCarboPrincipal && option.carboTipo && option.carboGramosBase)
+    ? {
+        tipo: option.carboTipo as keyof typeof CARBO_MACROS_POR_GRAMO,
+        gramos: carboGramosActual,
+        itemIdx: items.findIndex(it => new RegExp(`\\b${carboGramosActual}\\s*g\\b`).test(it)),
+      }
+    : undefined
+  const compCarne = (option.tieneCarne && option.carneTipo && option.carneGramosBase)
+    ? {
+        tipo: option.carneTipo as keyof typeof CARNE_MACROS_POR_GRAMO,
+        gramos: carneGramosActual,
+        itemIdx: items.findIndex((it, i) => i !== (compCarbo?.itemIdx ?? -1) && new RegExp(`\\b${carneGramosActual}\\s*g\\b`).test(it)),
+      }
+    : undefined
+
   return {
     tipo,
     label,
@@ -694,6 +724,8 @@ function buildMeal(
     sellos: option.sellos,
     alergenosNota,
     porcionFija: isPorcionFija,
+    compCarbo,
+    compCarne,
   }
 }
 
@@ -711,39 +743,73 @@ function buildMeal(
 // factor de escalado de las restantes se limita a MIN_FACTOR=0.5 para no
 // dejar comidas inviablemente pequeñas.
 const TOLERANCIA_KCAL = 50
-const MIN_FACTOR = 0.5
-const MAX_FACTOR = 2.0
+// Topes clínicos de gramaje cocido por componente al auto-escalar (Fase 1).
+const CAP_COMP = { carbo: { max: 400, min: 60 }, carne: { max: 300, min: 60 } } as const
 
+// ─── Compensación POR-COMPONENTE (Fase 1) ────────────────────────────────────
+// En vez de escalar el meal entero (que desincroniza el texto de ingredientes),
+// cierra el déficit/exceso vs targetKcal subiendo/bajando SOLO los gramos de los
+// componentes continuos (arroz/proteína) que cada receta declara. Actualiza
+// texto + macros + kcal de forma coherente. Los items discretos (1 plátano,
+// 1 huevo, 1 cda aceite) y las recetas sin componente quedan FIJOS (su kcal real).
 function compensarPorcionesFijas(meals: DayMeal[], targetKcal: number): DayMeal[] {
-  // 'ultra' también es un producto envasado fijo — tratarlo igual que porcionFija.
-  const esFija = (m: DayMeal) => m.porcionFija === true || m.tipo === 'ultra'
+  const total = meals.reduce((s, m) => s + m.kcal, 0)
+  const deficit = targetKcal - total
+  if (Math.abs(deficit) < TOLERANCIA_KCAL) return meals
 
-  const escalables = meals.filter(m => !esFija(m))
-  if (escalables.length === 0) return meals  // todas fijas — no se puede compensar
-
-  const kcalFijas = meals.filter(esFija).reduce((s, m) => s + m.kcal, 0)
-  const kcalEscalablesActual = escalables.reduce((s, m) => s + m.kcal, 0)
-  if (kcalEscalablesActual === 0) return meals
-
-  const kcalDisponibleEscalables = targetKcal - kcalFijas
-  const diferencia = kcalDisponibleEscalables - kcalEscalablesActual
-
-  // Si ya está cerca del target, no tocar.
-  if (Math.abs(diferencia) < TOLERANCIA_KCAL) return meals
-
-  // Factor de escalado para meals escalables. Limitado a [MIN_FACTOR, MAX_FACTOR].
-  const factorBruto = kcalDisponibleEscalables / kcalEscalablesActual
-  const factor = Math.max(MIN_FACTOR, Math.min(MAX_FACTOR, factorBruto))
-
-  return meals.map(m => {
-    if (esFija(m)) return m
-    return {
-      ...m,
-      kcal: Math.round(m.kcal * factor),
-      p:    Math.round(m.p    * factor),
-      c:    Math.round(m.c    * factor),
-      g:    Math.round(m.g    * factor),
+  // Reunir componentes ajustables con su headroom en la dirección del déficit.
+  type Comp = { mealIdx: number; perGramKcal: number; macros: { p: number; c: number; g: number }; gramos: number; itemIdx: number; headroomG: number }
+  const comps: Comp[] = []
+  meals.forEach((m, mealIdx) => {
+    const add = (h: { tipo: string; gramos: number; itemIdx: number } | undefined, table: Record<string, { kcal: number; p: number; g: number; c?: number }>, cap: { max: number; min: number }) => {
+      if (!h || h.itemIdx < 0) return
+      const t = table[h.tipo]
+      if (!t) return
+      // la carne no declara 'c' (0 carbohidratos) → normalizar a 0
+      const macros = { p: t.p, c: t.c ?? 0, g: t.g }
+      const headroomG = deficit > 0 ? cap.max - h.gramos : h.gramos - cap.min
+      if (headroomG > 0) comps.push({ mealIdx, perGramKcal: t.kcal, macros, gramos: h.gramos, itemIdx: h.itemIdx, headroomG })
     }
+    // Solo CARBO: el carbo es el lever de energía flexible. La proteína se deja
+    // en su meta g/kg (no se infla para llenar kcal) y los items discretos quedan
+    // fijos. (La carne solo cambia por slider manual del profesional, no aquí.)
+    add(m.compCarbo, CARBO_MACROS_POR_GRAMO, CAP_COMP.carbo)
+  })
+  if (comps.length === 0) return meals  // sin componentes escalables — respeta el total real
+
+  const headroomKcalTotal = comps.reduce((s, c) => s + c.headroomG * c.perGramKcal, 0)
+  if (headroomKcalTotal <= 0) return meals
+  // Cubrimos el déficit hasta donde alcance el headroom (parcial si no alcanza).
+  const aCubrir = Math.sign(deficit) * Math.min(Math.abs(deficit), headroomKcalTotal)
+
+  // Acumular deltas por meal (un meal puede tener carbo + carne).
+  const adj = new Map<number, { dp: number; dc: number; dg: number; texto: Array<{ itemIdx: number; from: number; to: number }> }>()
+  for (const c of comps) {
+    const deltaKcal = aCubrir * ((c.headroomG * c.perGramKcal) / headroomKcalTotal)
+    let deltaG = Math.round(deltaKcal / c.perGramKcal)
+    deltaG = deficit > 0 ? Math.min(deltaG, c.headroomG) : Math.max(deltaG, -c.headroomG)
+    if (deltaG === 0) continue
+    const e = adj.get(c.mealIdx) ?? { dp: 0, dc: 0, dg: 0, texto: [] }
+    e.dp += deltaG * c.macros.p
+    e.dc += deltaG * c.macros.c
+    e.dg += deltaG * c.macros.g
+    e.texto.push({ itemIdx: c.itemIdx, from: c.gramos, to: c.gramos + deltaG })
+    adj.set(c.mealIdx, e)
+  }
+
+  return meals.map((m, idx) => {
+    const e = adj.get(idx)
+    if (!e) return m
+    const p = Math.max(0, Math.round(m.p + e.dp))
+    const c = Math.max(0, Math.round(m.c + e.dc))
+    const g = Math.max(0, Math.round(m.g + e.dg))
+    const items = [...m.items]
+    for (const t of e.texto) {
+      if (t.itemIdx >= 0 && t.itemIdx < items.length) {
+        items[t.itemIdx] = items[t.itemIdx].replace(new RegExp(`\\b${t.from}\\s*g\\b`), `${t.to}g`)
+      }
+    }
+    return { ...m, p, c, g, items, kcal: Math.round(p * 4 + c * 4 + g * 9) }
   })
 }
 
