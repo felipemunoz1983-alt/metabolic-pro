@@ -62,6 +62,14 @@ self.addEventListener('fetch', event => {
   // Solo interceptar peticiones al mismo origen
   if (url.origin !== self.location.origin) return
 
+  // ── FCM: no tocar el SW de Firebase ni su scope ───────────────────────────
+  // firebase-messaging-sw.js se actualiza/controla solo; cachearlo serviría
+  // versiones viejas del worker de notificaciones.
+  if (url.pathname.startsWith('/firebase-messaging-sw.js')
+    || url.pathname.startsWith('/firebase-cloud-messaging-push-scope')) {
+    return
+  }
+
   // ── API: network-only, sin cache ──────────────────────────────────────────
   if (url.pathname.startsWith('/api/')) {
     // No event.respondWith → el browser hace fetch normal

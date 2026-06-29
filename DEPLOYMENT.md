@@ -49,6 +49,41 @@ Genera el par con:
 npx web-push generate-vapid-keys
 ```
 
+### Firebase Cloud Messaging (FCM) — opcional, segundo transporte de push
+
+FCM **convive** con el Web Push de arriba: no reemplaza nada. Cuando un dispositivo
+activa notificaciones, además de la suscripción VAPID se registra un token FCM, y el
+servidor envía por ambos canales (`sendPushToUser` en `src/lib/push.ts`). Si estas
+variables faltan, FCM hace no-op silencioso y todo sigue funcionando con Web Push.
+
+Setup completo y detallado en **`docs/firebase-cloud-messaging.md`**.
+
+**Cliente (públicas — `NEXT_PUBLIC_`, no secretas).** Firebase Console → Project
+settings → General → "Your apps" (Web app) → SDK config:
+
+| Variable | Valor |
+|---|---|
+| `NEXT_PUBLIC_FIREBASE_API_KEY` | `apiKey` |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | `authDomain` |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | `projectId` |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
+| `NEXT_PUBLIC_FIREBASE_APP_ID` | `appId` |
+| `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | Cloud Messaging → Web configuration → "Web Push certificates" → key pair |
+
+**Servidor (secretas).** Firebase Console → Project settings → Service accounts →
+"Generate new private key". Usa **una** de estas dos formas:
+
+| Variable | Valor |
+|---|---|
+| `FIREBASE_SERVICE_ACCOUNT` | El JSON completo del service account, en una sola línea |
+| — o bien — | |
+| `FIREBASE_PROJECT_ID` | `project_id` del JSON |
+| `FIREBASE_CLIENT_EMAIL` | `client_email` del JSON |
+| `FIREBASE_PRIVATE_KEY` | `private_key` del JSON (con `\n` literales; el código los des-escapa) |
+
+> En Vercel, si pegas `FIREBASE_PRIVATE_KEY` con saltos de línea reales también
+> funciona. El código maneja ambos casos (`\n` escapado o real).
+
 ### Email transaccional — opcional pero recomendado
 
 | Variable | Valor |
@@ -142,6 +177,9 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
 
 # Generar par VAPID
 npx web-push generate-vapid-keys
+
+# Pasar el JSON del service account de Firebase a una sola línea (para FIREBASE_SERVICE_ACCOUNT)
+node -e "console.log(JSON.stringify(require('./serviceAccountKey.json')))"
 
 # Generar CRON_SECRET
 openssl rand -base64 32

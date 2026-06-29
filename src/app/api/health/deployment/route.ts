@@ -85,6 +85,45 @@ export async function GET() {
       hint:     "mailto: o URL del servicio. Ej: mailto:soporte@centrometabolico.cl",
     },
 
+    // ── Firebase Cloud Messaging (segundo transporte de push, opcional) ──────
+    NEXT_PUBLIC_FIREBASE_API_KEY: {
+      status:   present("NEXT_PUBLIC_FIREBASE_API_KEY"),
+      required: false,
+      hint:     "Config web pública de Firebase. Sin esto, FCM no se activa (Web Push sigue funcionando).",
+    },
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: {
+      status:   present("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
+      required: false,
+      hint:     "projectId de Firebase (cliente).",
+    },
+    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: {
+      status:   present("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
+      required: false,
+      hint:     "messagingSenderId de Firebase (cliente).",
+    },
+    NEXT_PUBLIC_FIREBASE_APP_ID: {
+      status:   present("NEXT_PUBLIC_FIREBASE_APP_ID"),
+      required: false,
+      hint:     "appId de Firebase (cliente).",
+    },
+    NEXT_PUBLIC_FIREBASE_VAPID_KEY: {
+      status:   present("NEXT_PUBLIC_FIREBASE_VAPID_KEY"),
+      required: false,
+      hint:     "Web Push certificate (key pair) de Firebase Cloud Messaging → Web.",
+    },
+    FIREBASE_SERVER_CREDENTIALS: {
+      // Acepta el JSON completo O el trío projectId/clientEmail/privateKey.
+      status:
+        present("FIREBASE_SERVICE_ACCOUNT") === "ok" ||
+        (present("FIREBASE_PROJECT_ID") === "ok" &&
+          present("FIREBASE_CLIENT_EMAIL") === "ok" &&
+          present("FIREBASE_PRIVATE_KEY") === "ok")
+          ? "ok"
+          : "missing",
+      required: false,
+      hint:     "Service account (secreto): FIREBASE_SERVICE_ACCOUNT (JSON) o FIREBASE_PROJECT_ID+CLIENT_EMAIL+PRIVATE_KEY. Necesario para ENVIAR por FCM.",
+    },
+
     // ── Email (importante para notificaciones, no bloqueante) ────────────────
     GMAIL_USER: {
       status:   present("GMAIL_USER"),

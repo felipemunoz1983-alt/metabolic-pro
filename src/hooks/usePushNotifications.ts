@@ -110,6 +110,16 @@ export function usePushNotifications(userId: string | null): UsePushResult {
       }
 
       setSubscribed(true)
+
+      // Además del Web Push clásico, registra un token de Firebase Cloud
+      // Messaging si FCM está configurado. Best-effort: no debe romper el flujo
+      // si Firebase no está disponible o no configurado.
+      try {
+        const { registerFcmToken } = await import('@/lib/firebase-messaging')
+        await registerFcmToken()
+      } catch (fcmErr) {
+        console.error('[push] FCM token registration skipped:', fcmErr)
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[push] subscribe error:', msg)
@@ -137,6 +147,14 @@ export function usePushNotifications(userId: string | null): UsePushResult {
         })
       }
       setSubscribed(false)
+
+      // Borra también el token de FCM de este dispositivo (best-effort).
+      try {
+        const { deleteFcmToken } = await import('@/lib/firebase-messaging')
+        await deleteFcmToken()
+      } catch (fcmErr) {
+        console.error('[push] FCM token deletion skipped:', fcmErr)
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       console.error('[push] unsubscribe error:', msg)

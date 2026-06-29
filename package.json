@@ -24,6 +24,8 @@
     "@types/nodemailer": "^8.0.0",
     "clsx": "^2.1.1",
     "es-toolkit": "^1.46.1",
+    "firebase": "^12.15.0",
+    "firebase-admin": "^14.1.0",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "next": "16.2.6",

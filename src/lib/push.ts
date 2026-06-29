@@ -87,39 +87,58 @@ export async function sendPush(
 }
 
 /**
- * Send a push to all subscriptions for a user.
- * Automatically removes expired subscriptions from the DB.
+ * Send a push to all of a user's devices, across BOTH transports:
+ *   - Web Push (VAPID)            → push_subscriptions
+ *   - Firebase Cloud Messaging    → fcm_tokens   (vía src/lib/fcm.ts)
+ *
+ * Cada transporte limpia sus propios registros muertos. Si FCM no está
+ * configurado (sin credenciales de firebase-admin), su parte hace no-op.
+ * Los contadores devueltos suman ambos transportes.
  */
 export async function sendPushToUser(
   supabase: ReturnType<typeof import('@/lib/supabase-server').createServiceClient>,
   userId: string,
   payload: PushPayload,
 ): Promise<{ sent: number; removed: number }> {
-  const { data: subs } = await supabase
-    .from('push_subscriptions')
-    .select('id, endpoint, p256dh, auth')
-    .eq('user_id', userId)
+  // ── Web Push (VAPID) ────────────────────────────────────────────────────────
+  const webPush = (async () => {
+    const { data: subs } = await supabase
+      .from('push_subscriptions')
+      .select('id, endpoint, p256dh, auth')
+      .eq('user_id', userId)
 
-  if (!subs || subs.length === 0) return { sent: 0, removed: 0 }
+    if (!subs || subs.length === 0) return { sent: 0, removed: 0 }
 
-  let sent = 0
-  const expiredIds: string[] = []
+    let sent = 0
+    const expiredIds: string[] = []
 
-  await Promise.all(
-    subs.map(async sub => {
-      const result = await sendPush({ endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth }, payload)
-      if (result.ok) {
-        sent++
-      } else if (result.gone) {
-        expiredIds.push(sub.id)
-      }
-    })
-  )
+    await Promise.all(
+      subs.map(async sub => {
+        const result = await sendPush({ endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth }, payload)
+        if (result.ok) sent++
+        else if (result.gone) expiredIds.push(sub.id)
+      })
+    )
 
-  // Clean up expired subscriptions
-  if (expiredIds.length > 0) {
-    await supabase.from('push_subscriptions').delete().in('id', expiredIds)
-  }
+    if (expiredIds.length > 0) {
+      await supabase.from('push_subscriptions').delete().in('id', expiredIds)
+    }
+    return { sent, removed: expiredIds.length }
+  })()
 
-  return { sent, removed: expiredIds.length }
+  // ── Firebase Cloud Messaging ─────────────────────────────────────────────────
+  // Dynamic import: firebase-admin sólo se carga si esta función corre, no en
+  // cada cold-start de rutas que importan push.ts.
+  const fcm = (async () => {
+    try {
+      const { sendFcmToUser } = await import('@/lib/fcm')
+      return await sendFcmToUser(supabase, userId, payload)
+    } catch (err) {
+      console.error('[push] FCM dispatch error:', err instanceof Error ? err.message : err)
+      return { sent: 0, removed: 0 }
+    }
+  })()
+
+  const [w, f] = await Promise.all([webPush, fcm])
+  return { sent: w.sent + f.sent, removed: w.removed + f.removed }
 }
